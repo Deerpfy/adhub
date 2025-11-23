@@ -1,0 +1,78 @@
+═══════════════════════════════════════════════════════════════
+INSTALACE FFMPEG - PRO KONVERZI DO MP3
+═══════════════════════════════════════════════════════════════
+
+⚠️ DŮLEŽITÉ: Pro stahování v MP3 formátu potřebujete ffmpeg!
+
+YouTube poskytuje videa ve formátech jako m4a, webm, opus.
+Pro konverzi do MP3 je potřeba ffmpeg.
+
+═══════════════════════════════════════════════════════════════
+METODA 1: Stáhnout binárky (NEJLEPŠÍ pro Windows)
+═══════════════════════════════════════════════════════════════
+
+1. Jděte na: https://www.gyan.dev/ffmpeg/builds/
+   Nebo: https://ffmpeg.org/download.html
+
+2. Stáhněte "ffmpeg-release-essentials.zip"
+
+3. Rozbalte ZIP soubor
+
+4. Najděte složku "bin" uvnitř
+
+5. Zkopírujte tyto soubory do C:\Windows\System32:
+   - ffmpeg.exe
+   - ffprobe.exe (volitelné, ale doporučené)
+
+6. Otestujte:
+   - Otevřete CMD
+   - Zadejte: ffmpeg -version
+   - Měli byste vidět verzi ffmpeg
+
+═══════════════════════════════════════════════════════════════
+METODA 2: Pomocí Chocolatey
+═══════════════════════════════════════════════════════════════
+
+1. Nainstalujte Chocolatey (pokud nemáte):
+   https://chocolatey.org/install
+
+2. V PowerShell (jako administrátor):
+   choco install ffmpeg
+
+3. Restartujte terminál
+
+═══════════════════════════════════════════════════════════════
+METODA 3: Pomocí winget (Windows 10/11)
+═══════════════════════════════════════════════════════════════
+
+1. Otevřete PowerShell
+
+2. Zadejte:
+   winget install ffmpeg
+
+═══════════════════════════════════════════════════════════════
+JAK OVĚŘIT, ŽE FUNGUJE:
+═══════════════════════════════════════════════════════════════
+
+V CMD zadejte:
+  ffmpeg -version
+
+Pokud vidíte verzi (např. "ffmpeg version 6.x"), ffmpeg je nainstalovaný!
+
+Pokud vidíte chybu "is not recognized", ffmpeg NENÍ v PATH.
+
+═══════════════════════════════════════════════════════════════
+POZNÁMKA:
+═══════════════════════════════════════════════════════════════
+
+- MP4 videa NEPOTŘEBUJÍ ffmpeg (YouTube poskytuje MP4 přímo)
+- MP3 audio POTŘEBUJE ffmpeg (konverze z m4a/webm do MP3)
+- Po instalaci ffmpeg restartujte server!
+
+═══════════════════════════════════════════════════════════════
+
+
+
+
+
+

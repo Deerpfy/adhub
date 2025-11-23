@@ -1,0 +1,12 @@
+node_modules/
+downloads/
+*.log
+.env
+.DS_Store
+Thumbs.db
+
+
+
+
+
+

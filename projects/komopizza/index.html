@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Komopizza - Nejlepší kebab a pizza v okolí. Čerstvé suroviny, tradiční recepty, rychlá obsluha. Kebab talíř, box, tortilla, durum a různé druhy pizzy.">
+    <meta name="keywords" content="kebab, pizza, Komopizza, kebab talíř, kebab box, tortilla, durum, rychlé občerstvení, turecká kuchyně, italská pizza">
+    <title>Komopizza - Nejlepší Kebab a Pizza</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <!-- Theme 1: Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Theme 2: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Theme 3: Bebas Neue -->
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <!-- Theme 4: Orbitron -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Theme 5: Playfair Display -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700;900&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Theme 6: Roboto -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Roboto+Condensed:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Theme 7: Raleway -->
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- Theme 8: Open Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700;800&family=Source+Sans+Pro:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <!-- Theme 9: Nunito -->
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@300;400;600;700;800;900&family=Comfortaa:wght@300;400;700&display=swap" rel="stylesheet">
+    <!-- Theme 10: Space Grotesk -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <!-- Theme 11: Rubik (Modern Kebab Style) -->
+    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="theme-1">
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <div class="logo-icon">🥙</div>
+                <div class="logo-icon">🌯</div>
+                <span class="logo-text">Komopizza</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="#home" class="nav-link">Domů</a></li>
+                <li><a href="#menu" class="nav-link">Menu</a></li>
+                <li><a href="#about" class="nav-link">O nás</a></li>
+                <li><a href="#contact" class="nav-link">Kontakt</a></li>
+            </ul>
+            <div class="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Vítejte v <span class="highlight">Komopizza</span></h1>
+            <p class="hero-subtitle">Nejlepší kebab a pizza s tradiční chutí</p>
+            <a href="#menu" class="cta-button">Prohlédnout menu</a>
+        </div>
+        <div class="hero-animation">
+            <div class="pizza-icon rotating">🥙</div>
+            <div class="pizza-icon-2 rotating-delayed">🌯</div>
+            <div class="pizza-icon rotating-delayed-2">🌮</div>
+        </div>
+    </section>
+
+    <!-- Menu Section -->
+    <section id="menu" class="menu-section">
+        <div class="container">
+            <h2 class="section-title">Naše Menu</h2>
+            
+            <!-- Kebab Category -->
+            <div class="menu-category">
+                <h3 class="category-title">
+                    <span class="category-icon">🥙</span>
+                    Kebab Speciality
+                </h3>
+                <div class="menu-grid">
+                    <div class="menu-item" data-category="kebab">
+                        <div class="menu-icon pizza-icon-interactive">
+                            <div style="font-size: 5rem;">🥙</div>
+                        </div>
+                        <h3>Kebab Talíř</h3>
+                        <p>Čerstvé maso na döner kebab, rýže, salát, zelenina a omáčka na talíři</p>
+                        <span class="price">189 Kč</span>
+                    </div>
+
+                    <div class="menu-item" data-category="kebab">
+                        <div class="menu-icon pizza-icon-interactive">
+                            <svg viewBox="0 0 100 130" class="kebab-box-svg">
+                                <!-- Válcovitý box - perspektivní pohled -->
+                                <!-- Spodní elipsa (viditelná spodní část válce) -->
+                                <ellipse cx="50" cy="110" rx="38" ry="6" fill="#4CAF50" opacity="0.7"/>
+                                
+                                <!-- Hlavní válcovité tělo boxu -->
+                                <path d="M 12 25 Q 12 20 17 20 L 83 20 Q 88 20 88 25 L 88 95 Q 88 100 83 100 L 17 100 Q 12 100 12 95 Z" fill="#4CAF50"/>
+                                
+                                <!-- Oranžová horní část -->
+                                <path d="M 12 25 Q 12 20 17 20 L 83 20 Q 88 20 88 25 L 88 55 L 12 55 Z" fill="#FF9800"/>
+                                
+                                <!-- Zelená dolní část -->
+                                <path d="M 12 55 L 88 55 L 88 95 Q 88 100 83 100 L 17 100 Q 12 100 12 95 Z" fill="#4CAF50"/>
+                                
+                                <!-- Text DONER BOX na zelené části -->
+                                <text x="50" y="72" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="white" text-anchor="middle" opacity="0.95">DONER</text>
+                                <text x="50" y="83" font-family="Arial, sans-serif" font-size="9" font-weight="bold" fill="white" text-anchor="middle" opacity="0.95">BOX</text>
+                                
+                                <!-- Dekorativní kousky jídla na zelené části (zjednodušené) -->
+                                <rect x="20" y="60" width="4" height="8" rx="1" fill="white" opacity="0.5" transform="rotate(-15 22 64)"/>
+                                <rect x="76" y="60" width="4" height="8" rx="1" fill="white" opacity="0.5" transform="rotate(15 78 64)"/>
+                                <rect x="20" y="88" width="4" height="8" rx="1" fill="white" opacity="0.5" transform="rotate(-15 22 92)"/>
+                                <rect x="76" y="88" width="4" height="8" rx="1" fill="white" opacity="0.5" transform="rotate(15 78 92)"/>
+                                
+                                <!-- Horní chlopně (4 části) -->
+                                <path d="M 12 25 Q 12 18 17 18 L 27 18 Q 32 18 32 25" fill="#FF9800" opacity="0.9"/>
+                                <path d="M 32 25 Q 32 18 37 18 L 63 18 Q 68 18 68 25" fill="#FF9800" opacity="0.9"/>
+                                <path d="M 68 25 Q 68 18 73 18 L 83 18 Q 88 18 88 25" fill="#FF9800" opacity="0.9"/>
+                                
+                                <!-- Stín pro hloubku -->
+                                <ellipse cx="50" cy="25" rx="38" ry="4" fill="#E65100" opacity="0.3"/>
+                            </svg>
+                        </div>
+                        <h3>Kebab Box</h3>
+                        <p>Kebab maso, hranolky, salát, zelenina a omáčka v papírovém boxu na jídlo</p>
+                        <span class="price">199 Kč</span>
+                    </div>
+
+                    <div class="menu-item" data-category="kebab">
+                        <div class="menu-icon pizza-icon-interactive">
+                            <div style="font-size: 5rem;">🌯</div>
+                        </div>
+                        <h3>Kebab Tortilla</h3>
+                        <p>Döner kebab zabalený v pšeničné tortille s čerstvou zeleninou a omáčkou</p>
+                        <span class="price">169 Kč</span>
+                    </div>
+
+                    <div class="menu-item" data-category="kebab">
+                        <div class="menu-icon pizza-icon-interactive">
+                            <div style="font-size: 5rem;">🌮</div>
+                        </div>
+                        <h3>Kebab Durum</h3>
+                        <p>Tradiční durum zabalený v lavash chlebu s döner masem, zeleninou a omáčkou</p>
+                        <span class="price">179 Kč</span>
+                    </div>
+
+                    <div class="menu-item" data-category="kebab">
+                        <div class="menu-icon pizza-icon-interactive">
+                            <div style="font-size: 5rem;">🥙</div>
+                        </div>
+                        <h3>Kebab Talíř Special</h3>
+                        <p>Velký talíř s döner masem, rýží, falafelem, salátem a výběrem omáček</p>
+                        <span class="price">229 Kč</span>
+                    </div>
+
+                    <div class="menu-item" data-category="kebab">
+                        <div class="menu-icon pizza-icon-interactive">
+                            <div style="font-size: 5rem;">🌯</div>
+                        </div>
+                        <h3>Chicken Kebab</h3>
+                        <p>Kebab z kuřecího masa v tortille s čerstvou zeleninou a pikantní omáčkou</p>
+                        <span class="price">179 Kč</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pizza Category -->
+            <div class="menu-category">
+                <h3 class="category-title">
+                    <span class="category-icon">🍕</span>
+                    Pizza Variace
+                </h3>
+                <div class="menu-grid">
+                <div class="menu-item" data-category="pizza">
+                    <div class="menu-icon pizza-icon-interactive">
+                        <svg viewBox="0 0 100 100" class="pizza-svg">
+                            <circle cx="50" cy="50" r="40" class="pizza-base" />
+                            <circle cx="40" cy="40" r="3" class="pizza-topping" />
+                            <circle cx="60" cy="40" r="3" class="pizza-topping" />
+                            <circle cx="50" cy="50" r="3" class="pizza-topping" />
+                            <circle cx="35" cy="60" r="3" class="pizza-topping" />
+                            <circle cx="65" cy="60" r="3" class="pizza-topping" />
+                        </svg>
+                    </div>
+                    <h3>Margherita</h3>
+                    <p>Klasická pizza s rajčaty, mozzarellou a bazalkou</p>
+                    <span class="price">199 Kč</span>
+                </div>
+
+                <div class="menu-item" data-category="pizza">
+                    <div class="menu-icon pizza-icon-interactive">
+                        <svg viewBox="0 0 100 100" class="pizza-svg">
+                            <circle cx="50" cy="50" r="40" class="pizza-base" />
+                            <rect x="35" y="40" width="8" height="20" rx="2" class="pizza-topping" />
+                            <rect x="50" y="40" width="8" height="20" rx="2" class="pizza-topping" />
+                            <rect x="57" y="40" width="8" height="20" rx="2" class="pizza-topping" />
+                            <circle cx="40" cy="35" r="2" class="pizza-topping" />
+                            <circle cx="60" cy="35" r="2" class="pizza-topping" />
+                        </svg>
+                    </div>
+                    <h3>Pizza Special</h3>
+                    <p>Pizza s šunkou, žampiony, cibulí a olivami</p>
+                    <span class="price">229 Kč</span>
+                </div>
+
+                <div class="menu-item" data-category="pizza">
+                    <div class="menu-icon pizza-icon-interactive">
+                        <svg viewBox="0 0 100 100" class="pizza-svg">
+                            <circle cx="50" cy="50" r="40" class="pizza-base" />
+                            <circle cx="40" cy="40" r="4" class="pizza-topping" />
+                            <circle cx="60" cy="40" r="4" class="pizza-topping" />
+                            <circle cx="50" cy="50" r="4" class="pizza-topping" />
+                            <circle cx="35" cy="60" r="4" class="pizza-topping" />
+                            <circle cx="65" cy="60" r="4" class="pizza-topping" />
+                            <rect x="38" y="35" width="24" height="2" rx="1" class="pizza-topping" />
+                        </svg>
+                    </div>
+                    <h3>Pepperoni</h3>
+                    <p>Pizza s pepperoni, sýrem a kořením</p>
+                    <span class="price">219 Kč</span>
+                </div>
+
+                <div class="menu-item" data-category="pizza">
+                    <div class="menu-icon pizza-icon-interactive">
+                        <svg viewBox="0 0 100 100" class="pizza-svg">
+                            <circle cx="50" cy="50" r="40" class="pizza-base" />
+                            <circle cx="35" cy="35" r="3" class="pizza-topping" />
+                            <circle cx="50" cy="30" r="3" class="pizza-topping" />
+                            <circle cx="65" cy="35" r="3" class="pizza-topping" />
+                            <circle cx="45" cy="50" r="3" class="pizza-topping" />
+                            <circle cx="55" cy="50" r="3" class="pizza-topping" />
+                            <circle cx="40" cy="65" r="3" class="pizza-topping" />
+                            <circle cx="60" cy="65" r="3" class="pizza-topping" />
+                        </svg>
+                    </div>
+                    <h3>Capricciosa</h3>
+                    <p>Pizza se šunkou, žampiony, artyčoky a olivami</p>
+                    <span class="price">239 Kč</span>
+                </div>
+
+                <div class="menu-item" data-category="pizza">
+                    <div class="menu-icon pizza-icon-interactive">
+                        <svg viewBox="0 0 100 100" class="pizza-svg">
+                            <circle cx="50" cy="50" r="40" class="pizza-base" />
+                            <rect x="38" y="40" width="24" height="4" rx="2" class="pizza-topping" />
+                            <rect x="38" y="50" width="24" height="4" rx="2" class="pizza-topping" />
+                            <rect x="38" y="60" width="24" height="4" rx="2" class="pizza-topping" />
+                            <circle cx="35" cy="35" r="2" class="pizza-topping" />
+                            <circle cx="65" cy="35" r="2" class="pizza-topping" />
+                        </svg>
+                    </div>
+                    <h3>Quattro Formaggi</h3>
+                    <p>Pizza se čtyřmi druhy sýra</p>
+                    <span class="price">229 Kč</span>
+                </div>
+
+                <div class="menu-item" data-category="pizza">
+                    <div class="menu-icon pizza-icon-interactive">
+                        <svg viewBox="0 0 100 100" class="pizza-svg">
+                            <circle cx="50" cy="50" r="40" class="pizza-base" />
+                            <circle cx="40" cy="40" r="3" class="pizza-topping" />
+                            <circle cx="60" cy="40" r="3" class="pizza-topping" />
+                            <circle cx="50" cy="50" r="3" class="pizza-topping" />
+                            <circle cx="35" cy="60" r="3" class="pizza-topping" />
+                            <circle cx="65" cy="60" r="3" class="pizza-topping" />
+                            <rect x="45" y="30" width="10" height="2" rx="1" class="pizza-topping" />
+                        </svg>
+                    </div>
+                    <h3>Diavola</h3>
+                    <p>Pikantní pizza s feferonkami a salámem</p>
+                    <span class="price">219 Kč</span>
+                </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="about-section">
+        <div class="container">
+            <div class="about-content">
+                <div class="about-text">
+                    <h2 class="section-title">O nás</h2>
+                    <p>Komopizza je rodinný podnik, který se specializuje na přípravu autentického kebabu a chutné pizzy. Používáme pouze čerstvé suroviny a tradiční recepty, které jsme zdokonalili během let praxe. Nabízíme kebab talíř, box, tortillu, durum i různé druhy pizzy.</p>
+                    <div class="features">
+                        <div class="feature-item">
+                            <div class="feature-icon">✓</div>
+                            <div>
+                                <h4>Čerstvé suroviny</h4>
+                                <p>Každý den čerstvé maso na döner a zelenina</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">✓</div>
+                            <div>
+                                <h4>Tradiční recepty</h4>
+                                <p>Autentické turecké chutě z původních receptů</p>
+                            </div>
+                        </div>
+                        <div class="feature-item">
+                            <div class="feature-icon">✓</div>
+                            <div>
+                                <h4>Rychlá obsluha</h4>
+                                <p>Vaše objednávka připravena do 10 minut</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="about-visual">
+                    <div class="floating-icon">🥙</div>
+                    <div class="floating-icon delayed">🌯</div>
+                    <div class="floating-icon delayed-2">🥙</div>
+                    <div class="floating-icon delayed-3">🌮</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact-section">
+        <div class="container">
+            <h2 class="section-title">Kontakt</h2>
+            <div class="contact-grid">
+                <div class="contact-card">
+                    <div class="contact-icon">📍</div>
+                    <h3>Adresa</h3>
+                    <p>Hlavní ulice 123<br>Praha 1, 110 00</p>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-icon">📞</div>
+                    <h3>Telefon</h3>
+                    <p>+420 123 456 789</p>
+                </div>
+                <div class="contact-card">
+                    <div class="contact-icon">🕒</div>
+                    <h3>Otevírací doba</h3>
+                    <p>Po - Ne: 10:00 - 22:00</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Komopizza. Všechna práva vyhrazena.</p>
+        </div>
+    </footer>
+
+    <!-- Style Switcher -->
+    <button class="style-switcher-toggle" id="styleToggle" aria-label="Přepnout výběr stylu">🎨</button>
+    <div class="style-switcher" id="styleSwitcher">
+        <h3>Styl</h3>
+        <div class="style-buttons">
+            <button class="style-btn active" data-theme="1" title="Klasický (Výchozí)">1</button>
+            <button class="style-btn" data-theme="2" title="Moderní Minimalistický">2</button>
+            <button class="style-btn" data-theme="3" title="Energetický Dynamic">3</button>
+            <button class="style-btn" data-theme="4" title="Tmavý Futuristický">4</button>
+            <button class="style-btn" data-theme="5" title="Elegantní Premium">5</button>
+            <button class="style-btn" data-theme="6" title="Bold Industrial">6</button>
+            <button class="style-btn" data-theme="7" title="Elegantní Luxusní">7</button>
+            <button class="style-btn" data-theme="8" title="Čistý Moderní">8</button>
+            <button class="style-btn" data-theme="9" title="Hravý Friendly">9</button>
+            <button class="style-btn" data-theme="10" title="Tech Minimalistický">10</button>
+            <button class="style-btn" data-theme="11" title="Moderní Kebab">11</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+

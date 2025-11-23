@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Panel - Unified Streaming Chat</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/tmi.js@2.1.2/dist/tmi.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Chat Panel</h1>
+            <div class="controls">
+                <div class="server-controls">
+                    <button id="serverToggleBtn" class="btn btn-server-toggle">Zapnout Server</button>
+                    <div class="server-status-container">
+                        <span id="serverStatus" class="server-status server-status-off"></span>
+                        <span id="serverStatusText" class="server-status-text">Kontroluji...</span>
+                    </div>
+                </div>
+                <div class="chat-controls">
+                <button id="addChatBtn" class="btn btn-primary">Přidat Chat</button>
+                <button id="settingsBtn" class="btn btn-secondary">⚙️ Nastavení</button>
+                <button id="kickAuthBtn" class="btn btn-secondary">🔐 Kick OAuth</button>
+                <button id="clearAllBtn" class="btn btn-danger">Vymazat Vše</button>
+                </div>
+            </div>
+        </header>
+
+        <div id="chatModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Přidat Chat Zdroj</h2>
+                <form id="chatForm">
+                    <label for="platform">Platforma: <span style="color: #f44336;">*</span></label>
+                    <select id="platform" required>
+                        <option value="twitch">Twitch</option>
+                        <option value="youtube">YouTube</option>
+                        <option value="kick">Kick</option>
+                        <option value="other">Jiné</option>
+                    </select>
+                    
+                    <label for="chatUrl" id="chatUrlLabel">URL kanálu nebo chatu: <span style="color: #f44336;">*</span></label>
+                    <input type="text" id="chatUrl" placeholder="Zadejte URL..." required>
+                    <small id="chatUrlHint" style="color: #aaa; font-size: 12px; display: block; margin-top: 5px; margin-bottom: 15px;">
+                        Pro Twitch: zadejte URL kanálu (např. https://www.twitch.tv/USERNAME)
+                    </small>
+                    
+                    <div id="kickOAuthWarning" style="display: none; background: rgba(255, 152, 0, 0.2); border: 1px solid rgba(255, 152, 0, 0.5); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+                        <strong style="color: #ff9800;">⚠️ Pozor:</strong>
+                        <p style="margin: 8px 0 0 0; color: #fff; font-size: 13px;">
+                            Pro Kick chat je potřeba OAuth autentizace. Ujistěte se, že jste přihlášeni přes tlačítko "🔐 Kick OAuth" v hlavičce.
+                        </p>
+                    </div>
+                    
+                    <label for="chatName">Název chatu (volitelné):</label>
+                    <input type="text" id="chatName" placeholder="Automaticky se vygeneruje z kanálu">
+                    <small style="color: #aaa; font-size: 11px; display: block; margin-top: 5px; margin-bottom: 15px;">
+                        Pokud necháte prázdné, název se vygeneruje automaticky z názvu kanálu
+                    </small>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Přidat</button>
+                        <button type="button" class="btn btn-secondary" id="cancelBtn">Zrušit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="editChatModal" class="modal">
+            <div class="modal-content">
+                <span class="close-edit">&times;</span>
+                <h2>Upravit Chat</h2>
+                <form id="editChatForm">
+                    <label for="editPlatform">Platforma: <span style="color: #f44336;">*</span></label>
+                    <select id="editPlatform" required>
+                        <option value="twitch">Twitch</option>
+                        <option value="youtube">YouTube</option>
+                        <option value="kick">Kick</option>
+                        <option value="other">Jiné</option>
+                    </select>
+                    
+                    <label for="editChatUrl" id="editChatUrlLabel">URL kanálu nebo chatu: <span style="color: #f44336;">*</span></label>
+                    <input type="text" id="editChatUrl" placeholder="Zadejte URL..." required>
+                    <small id="editChatUrlHint" style="color: #aaa; font-size: 12px; display: block; margin-top: 5px; margin-bottom: 15px;">
+                        Pro Twitch: zadejte URL kanálu (např. https://www.twitch.tv/USERNAME)
+                    </small>
+                    
+                    <div id="editKickOAuthWarning" style="display: none; background: rgba(255, 152, 0, 0.2); border: 1px solid rgba(255, 152, 0, 0.5); border-radius: 8px; padding: 12px; margin-bottom: 15px;">
+                        <strong style="color: #ff9800;">⚠️ Pozor:</strong>
+                        <p style="margin: 8px 0 0 0; color: #fff; font-size: 13px;">
+                            Pro Kick chat je potřeba OAuth autentizace. Ujistěte se, že jste přihlášeni přes tlačítko "🔐 Kick OAuth" v hlavičce.
+                        </p>
+                    </div>
+                    
+                    <label for="editChatName">Název chatu (volitelné):</label>
+                    <input type="text" id="editChatName" placeholder="Automaticky se vygeneruje z kanálu">
+                    <small style="color: #aaa; font-size: 11px; display: block; margin-top: 5px; margin-bottom: 15px;">
+                        Pokud necháte prázdné, název se vygeneruje automaticky z názvu kanálu
+                    </small>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">Uložit</button>
+                        <button type="button" class="btn btn-secondary" id="cancelEditBtn">Zrušit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="settingsModal" class="modal">
+            <div class="modal-content settings-modal-content" style="max-width: 600px;">
+                <h2>⚙️ Nastavení API</h2>
+                <form id="settingsForm">
+                    <div style="margin-bottom: 25px; padding: 15px; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 8px;">
+                        <strong style="color: #3b82f6;">ℹ️ Informace:</strong>
+                        <p style="margin: 8px 0 0 0; color: #aaa; font-size: 13px;">
+                            API klíče se ukládají na serveru. Po změně je nutný restart serveru, aby se změny projevily.
+                        </p>
+                    </div>
+                    
+                    <h3 style="color: #fff; margin-top: 20px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">🎮 Kick OAuth</h3>
+                    <label for="kickClientId">Kick Client ID:</label>
+                    <input type="text" id="kickClientId" placeholder="Zadejte Kick Client ID">
+                    <small style="color: #aaa; font-size: 12px; display: block; margin-top: 5px; margin-bottom: 15px;">
+                        Získáte na <a href="https://kick.com/settings/developer" target="_blank" style="color: #3b82f6;">kick.com/settings/developer</a>
+                    </small>
+                    
+                    <label for="kickClientSecret">Kick Client Secret:</label>
+                    <input type="password" id="kickClientSecret" placeholder="Zadejte Kick Client Secret">
+                    <small style="color: #aaa; font-size: 12px; display: block; margin-top: 5px; margin-bottom: 15px;">
+                        Citlivá informace - ukládá se na serveru
+                    </small>
+                    
+                    <h3 style="color: #fff; margin-top: 25px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">📺 YouTube</h3>
+                    <label for="youtubeApiKey">YouTube API Key:</label>
+                    <input type="text" id="youtubeApiKey" placeholder="Zadejte YouTube Data API v3 Key">
+                    <small style="color: #aaa; font-size: 12px; display: block; margin-top: 5px; margin-bottom: 15px;">
+                        Získáte v <a href="https://console.cloud.google.com/" target="_blank" style="color: #3b82f6;">Google Cloud Console</a> (formát: AIzaSy...)
+                    </small>
+                    
+                    <h3 style="color: #fff; margin-top: 25px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">🎯 Twitch</h3>
+                    <label for="twitchChannelName">Název Twitch profilu (volitelné):</label>
+                    <input type="text" id="twitchChannelName" placeholder="např. gamezense">
+                    <small style="color: #aaa; font-size: 12px; display: block; margin-top: 5px; margin-bottom: 15px;">
+                        Výchozí Twitch kanál (volitelné). Kanály se většinou zadávají při přidávání konkrétního chatu. Toto pole slouží pro případné budoucí funkce.
+                    </small>
+                    
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">💾 Uložit</button>
+                        <button type="button" class="btn btn-secondary" id="cancelSettingsBtn">Zrušit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="chatContainer" class="chat-container">
+            <div class="empty-state" id="emptyState">
+                <p>Žádné chaty nejsou přidané. Klikněte na "Přidat Chat" pro začátek.</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+

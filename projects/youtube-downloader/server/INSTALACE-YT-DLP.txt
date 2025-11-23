@@ -1,0 +1,78 @@
+═══════════════════════════════════════════════════════════════
+INSTALACE YT-DLP - NÁSTROJ PRO STAHOVÁNÍ YOUTUBE VIDEÍ
+═══════════════════════════════════════════════════════════════
+
+⚠️ DŮLEŽITÉ: Pro stahování videí potřebujete yt-dlp!
+
+═══════════════════════════════════════════════════════════════
+METODA 1: Stáhnout .exe soubor (NEJLEPŠÍ pro Windows)
+═══════════════════════════════════════════════════════════════
+
+1. Jděte na: https://github.com/yt-dlp/yt-dlp/releases
+
+2. Stáhněte: yt-dlp.exe (nebo yt-dlp_x86.exe pro 32-bit)
+
+3. Umístěte soubor do jedné z těchto složek:
+   - C:\Windows\System32 (doporučeno - funguje všude)
+   - Nebo do složky projektu: H:\CursorProjects\Test\youtube-downloader\server
+
+4. Otestujte:
+   - Otevřete CMD
+   - Zadejte: yt-dlp --version
+   - Měli byste vidět verzi (např. 2024.1.7)
+
+═══════════════════════════════════════════════════════════════
+METODA 2: Pomocí pip (pokud máte Python)
+═══════════════════════════════════════════════════════════════
+
+1. Otevřete CMD jako administrátor
+
+2. Zadejte:
+   pip install yt-dlp
+
+3. Otestujte:
+   yt-dlp --version
+
+═══════════════════════════════════════════════════════════════
+METODA 3: Pomocí winget (Windows 10/11)
+═══════════════════════════════════════════════════════════════
+
+1. Otevřete PowerShell
+
+2. Zadejte:
+   winget install yt-dlp
+
+3. Otestujte:
+   yt-dlp --version
+
+═══════════════════════════════════════════════════════════════
+JAK OVĚŘIT, ŽE FUNGUJE:
+═══════════════════════════════════════════════════════════════
+
+V CMD zadejte:
+  yt-dlp --version
+
+Pokud vidíte verzi (např. "2024.1.7"), yt-dlp je nainstalovaný!
+
+Pokud vidíte chybu "is not recognized", yt-dlp NENÍ v PATH.
+
+═══════════════════════════════════════════════════════════════
+ŘEŠENÍ PROBLÉMŮ:
+═══════════════════════════════════════════════════════════════
+
+❌ "yt-dlp is not recognized"
+   → Umístěte yt-dlp.exe do C:\Windows\System32
+   → Nebo restartujte počítač po instalaci
+   → Nebo přidejte složku s yt-dlp.exe do PATH
+
+❌ "pip is not recognized"
+   → Nainstalujte Python z python.org
+   → Nebo použijte METODU 1 (stáhnout .exe)
+
+═══════════════════════════════════════════════════════════════
+
+
+
+
+
+

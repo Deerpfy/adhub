@@ -1,0 +1,54 @@
+═══════════════════════════════════════════════════════════════
+  RYCHLÉ ŘEŠENÍ PROBLÉMU S POWERSHELL NA WINDOWS
+═══════════════════════════════════════════════════════════════
+
+PROBLÉM:
+PowerShell blokuje npm kvůli Execution Policy.
+
+ŘEŠENÍ - Vyberte jedno:
+
+═══════════════════════════════════════════════════════════════
+MOŽNOST 1: Použít CMD místo PowerShell (NEJLEPŠÍ)
+═══════════════════════════════════════════════════════════════
+
+1. Otevřete CMD (ne PowerShell):
+   → Stiskněte Win+R
+   → Napište: cmd
+   → Enter
+
+2. Přejděte do složky:
+   cd H:\CursorProjects\Test\chat-panel\server
+
+3. Nainstalujte:
+   npm install
+
+4. Spusťte:
+   npm start
+
+═══════════════════════════════════════════════════════════════
+MOŽNOST 2: Povolit skripty v PowerShell (JEDNOHOČNĚ)
+═══════════════════════════════════════════════════════════════
+
+V PowerShell spusťte (jako administrátor):
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+Pak zkuste znovu:
+npm install
+
+═══════════════════════════════════════════════════════════════
+MOŽNOST 3: Použít npm.cmd místo npm
+═══════════════════════════════════════════════════════════════
+
+V PowerShell zadejte:
+npm.cmd install
+npm.cmd start
+
+═══════════════════════════════════════════════════════════════
+
+Doporučuji MOŽNOST 1 (CMD) - je nejjednodušší!
+
+
+
+
+
+
