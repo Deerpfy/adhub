@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#8b5cf6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>AdHUB - Centrální Hub</title>
+    <link rel="stylesheet" href="styles.css">
+    <script defer src="script.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <h1 class="logo">
+                    <span class="logo-icon">🎯</span>
+                    AdHUB
+                </h1>
+                <div class="search-container">
+                    <input 
+                        type="text" 
+                        id="searchInput" 
+                        class="search-input" 
+                        placeholder="Vyhledat nástroj, odkaz..."
+                        autocomplete="off"
+                    >
+                    <span class="search-icon">🔍</span>
+                </div>
+            </div>
+        </header>
+
+        <div class="controls">
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all">Vše</button>
+                <button class="filter-tab" data-filter="tools">Nástroje</button>
+                <button class="filter-tab" data-filter="links">Odkazy</button>
+            </div>
+            <div class="category-filters" id="categoryFilters"></div>
+        </div>
+
+        <div class="status-bar" id="statusBar">
+            <span class="status-text">Načítání...</span>
+            <button class="refresh-btn" id="refreshBtn" title="Obnovit">🔄</button>
+        </div>
+
+        <main class="main-content">
+            <div class="tools-grid" id="toolsGrid">
+                <!-- Nástroje budou načteny zde -->
+            </div>
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="empty-icon">🔍</div>
+                <p class="empty-text">Žádné výsledky</p>
+                <p class="empty-subtext">Zkuste změnit vyhledávání nebo filtry</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Konfigurace nástrojů - lze upravit přímo zde nebo v script.js -->
+    <script>
+        // Pokud potřebujete upravit konfiguraci, můžete ji přepsat zde:
+        // window.CUSTOM_CONFIG = { tools: [...], links: [...] };
+        // Nebo upravte DEFAULT_CONFIG v script.js
+    </script>
+</body>
+</html>
+

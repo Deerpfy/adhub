@@ -1,0 +1,97 @@
+╔═══════════════════════════════════════════════════════════════╗
+║         MULTISTREAM CHAT - JEDNODUCHÝ NÁVOD K SPUŠTĚNÍ        ║
+╚═══════════════════════════════════════════════════════════════╝
+
+Python NENÍ POTŘEBA! Pouze Node.js pro backend server.
+
+═══════════════════════════════════════════════════════════════
+
+KROK 1: SPUŠTĚTE BACKEND SERVER
+═══════════════════════════════════════════════════════════════
+
+1. Otevřete terminál (cmd na Windows):
+   
+   Windows: Stiskněte Win+R, napište "cmd" a Enter
+   
+2. Přejděte do složky serveru:
+   
+   cd chat-panel\server
+   
+   (Nebo použijte: cd H:\CursorProjects\Test\chat-panel\server)
+
+3. Nainstalujte závislosti:
+   
+   npm install
+   
+4. Spusťte server:
+   
+   npm start
+   
+Měli byste vidět:
+   🚀 Multistream Chat Server running on port 3001
+   
+NEVYPÍNĚJTE tento terminál! Nechte ho běžet.
+
+═══════════════════════════════════════════════════════════════
+
+KROK 2: OTEVŘETE FRONTEND
+═══════════════════════════════════════════════════════════════
+
+Možnost A (NEJSNADNĚJŠÍ):
+   → Najděte soubor: chat-panel\index.html
+   → Dvojklikněte na něj
+   → Otevře se v prohlížeči
+
+Možnost B (Pokud máte Node.js):
+   → Otevřete nový terminál
+   → Přejděte do: cd chat-panel
+   → Spusťte: npx http-server -p 8000
+   → Otevřete prohlížeč: http://localhost:8000
+
+═══════════════════════════════════════════════════════════════
+
+KROK 3: PŘIDEJTE CHATY
+═══════════════════════════════════════════════════════════════
+
+1. Klikněte na tlačítko "PŘIDAT CHAT"
+
+2. Pro Twitch zadejte:
+   → URL: https://www.twitch.tv/gamezense
+   → Nebo jen: gamezense
+   → Platforma: Twitch
+
+3. Pro Kick zadejte:
+   → URL: https://kick.com/username
+   → Nebo jen: username
+   → Platforma: Kick
+
+4. Klikněte "Přidat"
+
+5. Chat se automaticky připojí!
+
+═══════════════════════════════════════════════════════════════
+
+ŘEŠENÍ PROBLÉMŮ
+═══════════════════════════════════════════════════════════════
+
+❌ "npm není rozpoznán"
+   → Stáhněte a nainstalujte Node.js z: https://nodejs.org/
+   → Po instalaci restartujte terminál
+
+❌ "Cannot connect to backend server"
+   → Ujistěte se, že backend server běží (KROK 1)
+   → Zkontrolujte, že vidíte zprávu "🚀 Multistream Chat Server..."
+
+❌ Frontend se nenačte
+   → Zkuste použít Možnost B (npx http-server)
+   → Nebo použijte Iframe režim místo Streamlabs režimu
+
+═══════════════════════════════════════════════════════════════
+
+Poznámka: Python NENÍ potřeba. Pouze Node.js pro backend.
+
+
+
+
+
+
