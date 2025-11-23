@@ -1,0 +1,49 @@
+╔═══════════════════════════════════════════════════════════════╗
+║              NEJEDNODUŠŠÍ SPUŠTĚNÍ - 1 KLIK!                   ║
+╚═══════════════════════════════════════════════════════════════╝
+
+ŘEŠENÍ PROBLÉMU S POWERSHELL:
+
+═══════════════════════════════════════════════════════════════
+
+METODA 1: Použijte start.bat (NEJLEPŠÍ)
+═══════════════════════════════════════════════════════════════
+
+1. Najděte soubor: chat-panel\server\start.bat
+2. Dvojklikněte na něj
+3. Hotovo! Server se spustí automaticky.
+
+═══════════════════════════════════════════════════════════════
+
+METODA 2: Použijte CMD místo PowerShell
+═══════════════════════════════════════════════════════════════
+
+1. Otevřete CMD (Win+R, napište "cmd", Enter)
+2. Zadejte:
+
+   cd H:\CursorProjects\Test\chat-panel\server
+   npm install
+   npm start
+
+═══════════════════════════════════════════════════════════════
+
+METODA 3: Opravte PowerShell (pokud chcete používat PowerShell)
+═══════════════════════════════════════════════════════════════
+
+V PowerShell spusťte (pravý klik → Spustit jako správce):
+
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+Nebo použijte npm.cmd:
+   npm.cmd install
+   npm.cmd start
+
+═══════════════════════════════════════════════════════════════
+
+DOPORUČENÍ: Použijte METODU 1 (start.bat) - je nejjednodušší!
+
+
+
+
+
+

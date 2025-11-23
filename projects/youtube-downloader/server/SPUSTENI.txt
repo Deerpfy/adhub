@@ -1,0 +1,62 @@
+╔═══════════════════════════════════════════════════════════════╗
+║        NEJEDNODUŠŠÍ SPUŠTĚNÍ - 1 KLIK!                         ║
+╚═══════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════
+
+METODA 1: Použijte start.bat (NEJLEPŠÍ - DOPORUČENO)
+═══════════════════════════════════════════════════════════════
+
+1. Najděte soubor: youtube-downloader\server\start.bat
+2. Dvojklikněte na něj
+3. Server automaticky:
+   - Zkontroluje Node.js
+   - Nainstaluje závislosti (pokud chybí)
+   - Spustí server
+4. Hotovo! Server běží na http://localhost:3003
+
+═══════════════════════════════════════════════════════════════
+
+METODA 2: Ruční instalace a spuštění (CMD)
+═══════════════════════════════════════════════════════════════
+
+1. Otevřete CMD (Win+R, napište "cmd", Enter)
+2. Zadejte:
+
+   cd H:\CursorProjects\Test\youtube-downloader\server
+   npm install
+   npm start
+
+═══════════════════════════════════════════════════════════════
+
+METODA 3: Použijte helper server pro ovládání z webu
+═══════════════════════════════════════════════════════════════
+
+1. Spusťte: start-helper.bat
+2. Helper server běží na portu 3004
+3. Můžete ovládat server z webového rozhraní
+
+═══════════════════════════════════════════════════════════════
+
+ŘEŠENÍ PROBLÉMŮ:
+═══════════════════════════════════════════════════════════════
+
+❌ "npm není rozpoznán jako příkaz"
+   → Použijte start.bat (automaticky řeší problémy)
+   → Nebo restartujte počítač (aby se načetla PATH)
+
+❌ "Cannot find package 'express'"
+   → Spusťte start.bat (automaticky nainstaluje závislosti)
+   → Nebo ručně: npm install v CMD
+
+❌ "Port already in use"
+   → Zavřete jiný program používající port 3003
+   → Nebo změňte PORT v server.js
+
+═══════════════════════════════════════════════════════════════
+
+
+
+
+
+

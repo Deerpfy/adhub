@@ -1,0 +1,40 @@
+═══════════════════════════════════════════════
+INSTALACE ZÁVISLOSTÍ - YouTube Downloader Server
+═══════════════════════════════════════════════
+
+⚠️ DŮLEŽITÉ: Před spuštěním serveru musíte nainstalovat závislosti!
+
+KROKY:
+
+1. Otevřete příkazovou řádku (CMD, ne PowerShell)
+   - Stiskněte Win+R
+   - Zadejte: cmd
+   - Stiskněte Enter
+
+2. Přejděte do složky serveru:
+   cd H:\CursorProjects\Test\youtube-downloader\server
+
+3. Nainstalujte závislosti:
+   npm install
+
+4. Po úspěšné instalaci můžete spustit server:
+   npm start
+
+   Nebo použijte soubor start.bat (dvojitý klik)
+
+═══════════════════════════════════════════════
+ALTERNATIVA: Pokud npm nefunguje
+
+Pokud npm příkaz nefunguje, zkuste:
+
+1. Zavřít a znovu otevřít příkazovou řádku
+2. Restartovat počítač (aby se načetla PATH proměnná)
+3. Zkontrolovat instalaci Node.js na: https://nodejs.org/
+
+═══════════════════════════════════════════════
+
+
+
+
+
+

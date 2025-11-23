@@ -1,0 +1,33 @@
+{
+  "name": "multistream-chat-server",
+  "version": "1.0.0",
+  "description": "Backend server pro multistream chat - alternativa k Streamlabs Multistream",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "twitch",
+    "kick",
+    "youtube",
+    "chat",
+    "multistream"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "tmi.js": "^1.8.5",
+    "ws": "^8.14.2",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "node-fetch": "^3.3.2"
+  }
+}
+
+
+
+
+
+

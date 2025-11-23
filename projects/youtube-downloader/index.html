@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTube Downloader - Stahování videí MP4 a MP3</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎥 YouTube Downloader</h1>
+            <div class="controls">
+                <div class="server-controls">
+                    <button id="serverToggleBtn" class="btn btn-server-toggle">Zapnout Server</button>
+                    <button id="serverRestartBtn" class="btn btn-server-restart">🔄 Restartovat</button>
+                    <div class="server-status-container">
+                        <span id="serverStatus" class="server-status server-status-off"></span>
+                        <span id="serverStatusText" class="server-status-text">Kontroluji...</span>
+                    </div>
+                </div>
+                <div class="chat-controls">
+                    <button id="settingsBtn" class="btn btn-secondary">⚙️ Nastavení</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-content">
+            <div class="download-section">
+                <div class="input-card">
+                    <h2>🔗 Zadejte URL YouTube videa</h2>
+                    <form id="videoForm">
+                        <div class="input-group">
+                            <label for="videoUrl">YouTube URL:</label>
+                            <input 
+                                type="text" 
+                                id="videoUrl" 
+                                placeholder="https://www.youtube.com/watch?v=..." 
+                                required
+                            >
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary" id="fetchInfoBtn">
+                            📋 Získat informace
+                        </button>
+                    </form>
+                </div>
+
+                <div id="videoInfoCard" class="video-info-card" style="display: none;">
+                    <div class="video-thumbnail">
+                        <img id="videoThumbnail" src="" alt="Video thumbnail">
+                    </div>
+                    <div class="video-details">
+                        <h3 id="videoTitle"></h3>
+                        <div class="video-meta">
+                            <span id="videoUploader"></span>
+                            <span id="videoDuration"></span>
+                            <span id="videoViews"></span>
+                        </div>
+                        <div class="download-options">
+                            <h4>Stáhnout jako:</h4>
+                            <div class="download-buttons">
+                                <button class="btn btn-download btn-mp4" data-format="mp4">
+                                    📹 MP4 Video
+                                </button>
+                                <button class="btn btn-download btn-m4a" data-format="m4a">
+                                    🎵 M4A Audio (doporučeno)
+                                </button>
+                                <button class="btn btn-download btn-mp3" data-format="mp3">
+                                    🎵 MP3 Audio
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="downloadProgressCard" class="download-progress-card" style="display: none;">
+                    <h3>📥 Probíhá stahování...</h3>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="progressBar">
+                            <div class="progress-fill" id="progressFill"></div>
+                        </div>
+                        <span class="progress-text" id="progressText">0%</span>
+                    </div>
+                    <p class="download-status" id="downloadStatus">Připravuje se...</p>
+                </div>
+
+                <div id="downloadCompleteCard" class="download-complete-card" style="display: none;">
+                    <h3>✅ Stahování dokončeno!</h3>
+                    <p id="downloadFilename"></p>
+                    <button id="downloadFileBtn" class="btn btn-success">
+                        💾 Stáhnout soubor
+                    </button>
+                </div>
+            </div>
+
+            <div class="downloads-history">
+                <h2>📚 Historie stažení</h2>
+                <div id="downloadsList" class="downloads-list">
+                    <p class="empty-state-text">Zatím nejsou žádné stažené soubory</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-content settings-modal-content" style="max-width: 600px;">
+            <h2>⚙️ Nastavení</h2>
+            <form id="settingsForm">
+                <div style="margin-bottom: 25px; padding: 15px; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 8px;">
+                    <strong style="color: #3b82f6;">ℹ️ Informace:</strong>
+                    <p style="margin: 8px 0 0 0; color: #aaa; font-size: 13px;">
+                        Nastavení se ukládají lokálně v prohlížeči.
+                    </p>
+                </div>
+                
+                <h3 style="color: #fff; margin-top: 20px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">📁 Automatické ukládání</h3>
+                
+                <label>
+                    <input type="checkbox" id="autoSaveEnabled" style="margin-right: 8px;">
+                    Automaticky ukládat soubory do zvolené složky
+                </label>
+                <small style="color: #aaa; font-size: 12px; display: block; margin-top: 5px; margin-bottom: 15px;">
+                    Pokud je zaškrtnuté, soubory se automaticky uloží do zvolené složky. Pokud ne, otevře se dialog pro výběr umístění při každém stažení.
+                </small>
+                
+                <label for="downloadFolder" id="downloadFolderLabel" style="display: none;">Výchozí složka pro stahování:</label>
+                <div id="folderSelectorContainer" style="display: none;">
+                    <input 
+                        type="text" 
+                        id="downloadFolder" 
+                        placeholder="Klikněte na tlačítko pro výběr složky..." 
+                        readonly
+                        style="margin-bottom: 10px;"
+                    >
+                    <button type="button" id="selectFolderBtn" class="btn btn-secondary" style="width: 100%;">
+                        📁 Vybrat složku
+                    </button>
+                    <small style="color: #aaa; font-size: 12px; display: block; margin-top: 5px; margin-bottom: 15px;">
+                        <strong>Poznámka:</strong> Funkce výběru složky funguje pouze v moderních prohlížečích (Chrome, Edge 86+).
+                        V ostatních prohlížečích se použije výchozí složka pro stahování.
+                    </small>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">💾 Uložit</button>
+                    <button type="button" class="btn btn-secondary" id="cancelSettingsBtn">Zrušit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+
