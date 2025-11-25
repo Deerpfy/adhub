@@ -380,15 +380,9 @@ async function handleDownload(url, format, quality, filename) {
 
         const response = await fetch(url, {
             method: 'GET',
-            credentials: 'include',  // Include cookies from YouTube session
             headers: {
                 'Accept': '*/*',
-                'Accept-Language': 'en-US,en;q=0.9',
-                'Origin': 'https://www.youtube.com',
                 'Referer': refererUrl,
-                'Sec-Fetch-Dest': 'empty',
-                'Sec-Fetch-Mode': 'cors',
-                'Sec-Fetch-Site': 'cross-site',
                 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
             }
         });
