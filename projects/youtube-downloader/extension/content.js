@@ -19,7 +19,7 @@
         window.dispatchEvent(new CustomEvent('adhub-extension-response', {
             detail: { 
                 extensionId: chrome.runtime.id,
-                version: '1.0.0',
+                version: '1.1.0',
                 active: true
             }
         }));

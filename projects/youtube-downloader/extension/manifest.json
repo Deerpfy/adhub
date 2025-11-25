@@ -1,19 +1,23 @@
 {
   "manifest_version": 3,
   "name": "AdHUB YouTube Downloader",
-  "version": "1.0.0",
-  "description": "Stahujte YouTube videa přímo z prohlížeče - MP4, M4A, MP3",
+  "version": "1.1.0",
+  "description": "Stahujte YouTube videa přímo z prohlížeče - MP4, WebM, M4A",
   "permissions": [
     "activeTab",
     "storage",
-    "downloads"
+    "downloads",
+    "scripting"
   ],
   "host_permissions": [
     "https://www.youtube.com/*",
     "https://youtube.com/*",
     "https://youtu.be/*",
     "https://*.googlevideo.com/*",
-    "https://*.ytimg.com/*"
+    "https://*.ytimg.com/*",
+    "http://localhost:*/*",
+    "http://127.0.0.1:*/*",
+    "<all_urls>"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -40,17 +44,17 @@
       "run_at": "document_end"
     },
     {
-      "matches": ["http://localhost:*/*", "http://127.0.0.1:*/*"],
+      "matches": ["http://localhost:*/*", "http://127.0.0.1:*/*", "https://*.github.io/*", "file:///*"],
       "js": ["page-bridge.js"],
-      "run_at": "document_start"
+      "run_at": "document_start",
+      "all_frames": true
     }
   ],
   "externally_connectable": {
     "matches": [
       "https://*.github.io/*",
       "http://localhost:*/*",
-      "http://127.0.0.1:*/*",
-      "file:///*"
+      "http://127.0.0.1:*/*"
     ]
   },
   "web_accessible_resources": [

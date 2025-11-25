@@ -9,19 +9,23 @@ const EXTENSION_FILES = {
     'manifest.json': `{
   "manifest_version": 3,
   "name": "AdHUB YouTube Downloader",
-  "version": "1.0.0",
-  "description": "Stahujte YouTube videa přímo z prohlížeče - MP4, M4A, MP3",
+  "version": "1.1.0",
+  "description": "Stahujte YouTube videa přímo z prohlížeče - MP4, WebM, M4A",
   "permissions": [
     "activeTab",
     "storage",
-    "downloads"
+    "downloads",
+    "scripting"
   ],
   "host_permissions": [
     "https://www.youtube.com/*",
     "https://youtube.com/*",
     "https://youtu.be/*",
     "https://*.googlevideo.com/*",
-    "https://*.ytimg.com/*"
+    "https://*.ytimg.com/*",
+    "http://localhost:*/*",
+    "http://127.0.0.1:*/*",
+    "<all_urls>"
   ],
   "action": {
     "default_popup": "popup.html",
@@ -46,11 +50,24 @@ const EXTENSION_FILES = {
       "matches": ["https://www.youtube.com/*", "https://youtube.com/*"],
       "js": ["content.js"],
       "run_at": "document_end"
+    },
+    {
+      "matches": ["http://localhost:*/*", "http://127.0.0.1:*/*", "https://*.github.io/*", "file:///*"],
+      "js": ["page-bridge.js"],
+      "run_at": "document_start",
+      "all_frames": true
     }
   ],
+  "externally_connectable": {
+    "matches": [
+      "https://*.github.io/*",
+      "http://localhost:*/*",
+      "http://127.0.0.1:*/*"
+    ]
+  },
   "web_accessible_resources": [
     {
-      "resources": ["icons/*"],
+      "resources": ["icons/*", "page-bridge.js"],
       "matches": ["<all_urls>"]
     }
   ]
@@ -237,11 +254,29 @@ function extractCodec(mimeType) {
 
 async function handleDownload(url, format, quality, filename) {
     try {
-        console.log('[AdHUB] Starting download:', { format, quality, filename });
+        let finalFilename = filename;
+        if (!finalFilename) {
+            let ext = format || 'mp4';
+            if (url) {
+                if (url.includes('mime=audio') || url.includes('audio/')) {
+                    ext = url.includes('webm') ? 'webm' : 'm4a';
+                } else if (url.includes('mime=video') || url.includes('video/')) {
+                    ext = url.includes('webm') ? 'webm' : 'mp4';
+                }
+            }
+            finalFilename = 'video_' + Date.now() + '.' + ext;
+        }
+        if (finalFilename && !finalFilename.match(/\\.(mp4|webm|m4a|mp3|mkv|avi|mov)$/i)) {
+            if (url && (url.includes('mime=audio') || url.includes('audio/'))) {
+                finalFilename += url.includes('webm') ? '.webm' : '.m4a';
+            } else {
+                finalFilename += url && url.includes('webm') ? '.webm' : '.mp4';
+            }
+        }
         
         const downloadId = await chrome.downloads.download({
             url: url,
-            filename: filename || \`video.\${format}\`,
+            filename: finalFilename,
             saveAs: true
         });
         
@@ -954,7 +989,9 @@ console.log('[AdHUB] YouTube Downloader Extension loaded');`,
     videoUrlInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') fetchBtn.click();
     });
-});`
+});\`,
+
+    'page-bridge.js': \`(function(){var EXTENSION_ID=chrome.runtime.id;localStorage.setItem('adhub_extension_active','true');localStorage.setItem('adhub_extension_timestamp',Date.now().toString());localStorage.setItem('adhub_extension_id',EXTENSION_ID);document.documentElement.setAttribute('data-adhub-extension','true');document.documentElement.setAttribute('data-adhub-extension-id',EXTENSION_ID);window.addEventListener('adhub-extension-check',function(){window.dispatchEvent(new CustomEvent('adhub-extension-response',{detail:{extensionId:EXTENSION_ID,version:'1.1.0',active:true}}))});var s=document.createElement('script');s.textContent='window.adhubExtensionAvailable=true;window.adhubExtensionId="'+EXTENSION_ID+'";window.dispatchEvent(new CustomEvent("adhub-extension-ready",{detail:{extensionId:window.adhubExtensionId,active:true}}))';(document.head||document.documentElement).appendChild(s);s.remove();window.addEventListener('message',async function(e){if(e.source!==window||!e.data||e.data.type!=='ADHUB_REQUEST')return;var r=e.data;try{var res=await chrome.runtime.sendMessage({action:r.action,...r.payload});window.postMessage({type:'ADHUB_RESPONSE',id:r.id,success:true,data:res},'*')}catch(err){window.postMessage({type:'ADHUB_RESPONSE',id:r.id,success:false,error:err.message},'*')}})})();\`
 };
 
 // Base64 encoded icons (simple colored squares as placeholders)
@@ -1011,12 +1048,27 @@ let toastContainer;
 
 document.addEventListener('DOMContentLoaded', () => {
     initializeDOMElements();
-    checkExtension();
     loadDownloadsHistory();
     setupEventListeners();
     
-    // Kontrola rozšíření každých 3 sekundy
-    setInterval(checkExtension, 3000);
+    // Poslouchejme na adhub-extension-ready event (vyslán page-bridge.js)
+    window.addEventListener('adhub-extension-ready', (event) => {
+        console.log('[AdHUB Page] Received adhub-extension-ready event:', event.detail);
+        if (event.detail && event.detail.extensionId) {
+            extensionConnected = true;
+            extensionId = event.detail.extensionId;
+            localStorage.setItem('adhub_extension_id', extensionId);
+            updateExtensionStatus(true);
+        }
+    });
+    
+    // Počkáme chvilku na načtení rozšíření a pak zkontrolujeme
+    setTimeout(checkExtension, 100);
+    setTimeout(checkExtension, 500);
+    setTimeout(checkExtension, 1500);
+    
+    // Kontrola rozšíření každých 5 sekund
+    setInterval(checkExtension, 5000);
 });
 
 function initializeDOMElements() {
@@ -1047,41 +1099,83 @@ function initializeDOMElements() {
 }
 
 // =========================================
-// Kontrola rozšíření
+// Kontrola rozšíření - vylepšená detekce
 // =========================================
 
 async function checkExtension() {
+    console.log('[AdHUB Page] Checking extension...');
+    
     try {
-        // Metoda 1: Chrome runtime messaging (pokud známe ID)
-        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
-            const storedId = localStorage.getItem('adhub_extension_id');
-            if (storedId) {
-                try {
-                    const response = await sendMessageToExtension(storedId, { action: 'ping' });
-                    if (response && response.success) {
-                        extensionConnected = true;
-                        extensionId = storedId;
-                        updateExtensionStatus(true);
-                        return;
-                    }
-                } catch (e) {
-                    // Extension not responding
-                }
+        // Metoda 1: Kontrola window objektu (nastaven page-bridge.js)
+        if (window.adhubExtensionAvailable && window.adhubExtensionId) {
+            console.log('[AdHUB Page] Detected via window object');
+            extensionConnected = true;
+            extensionId = window.adhubExtensionId;
+            localStorage.setItem('adhub_extension_id', extensionId);
+            updateExtensionStatus(true);
+            return;
+        }
+        
+        // Metoda 2: Kontrola data atributu na document (nastaven page-bridge.js)
+        const dataAttr = document.documentElement.getAttribute('data-adhub-extension');
+        const dataId = document.documentElement.getAttribute('data-adhub-extension-id');
+        if (dataAttr === 'true' && dataId) {
+            console.log('[AdHUB Page] Detected via data attribute');
+            extensionConnected = true;
+            extensionId = dataId;
+            localStorage.setItem('adhub_extension_id', extensionId);
+            updateExtensionStatus(true);
+            return;
+        }
+        
+        // Metoda 3: Kontrola localStorage (nastaven page-bridge.js)
+        const storedActive = localStorage.getItem('adhub_extension_active');
+        const storedId = localStorage.getItem('adhub_extension_id');
+        const storedTimestamp = localStorage.getItem('adhub_extension_timestamp');
+        
+        if (storedActive === 'true' && storedId && storedTimestamp) {
+            // Kontrola, zda timestamp není starší než 10 sekund
+            const age = Date.now() - parseInt(storedTimestamp);
+            if (age < 10000) {
+                console.log('[AdHUB Page] Detected via localStorage (fresh)');
+                extensionConnected = true;
+                extensionId = storedId;
+                updateExtensionStatus(true);
+                return;
             }
         }
         
-        // Metoda 2: Check via custom event
+        // Metoda 4: Chrome runtime messaging (pokud známe ID)
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage && storedId) {
+            try {
+                const response = await sendMessageToExtension(storedId, { action: 'ping' });
+                if (response && response.success) {
+                    console.log('[AdHUB Page] Detected via chrome.runtime.sendMessage');
+                    extensionConnected = true;
+                    extensionId = storedId;
+                    updateExtensionStatus(true);
+                    return;
+                }
+            } catch (e) {
+                console.log('[AdHUB Page] chrome.runtime.sendMessage failed:', e.message);
+            }
+        }
+        
+        // Metoda 5: Check via custom event
         const detected = await detectExtensionViaEvent();
         if (detected) {
+            console.log('[AdHUB Page] Detected via custom event');
             extensionConnected = true;
             updateExtensionStatus(true);
             return;
         }
         
+        console.log('[AdHUB Page] Extension not detected');
         extensionConnected = false;
         updateExtensionStatus(false);
         
     } catch (error) {
+        console.error('[AdHUB Page] Error checking extension:', error);
         extensionConnected = false;
         updateExtensionStatus(false);
     }
@@ -1089,17 +1183,25 @@ async function checkExtension() {
 
 function detectExtensionViaEvent() {
     return new Promise((resolve) => {
-        const timeout = setTimeout(() => resolve(false), 500);
+        const timeout = setTimeout(() => {
+            console.log('[AdHUB Page] Event detection timed out');
+            resolve(false);
+        }, 1000);
         
-        window.addEventListener('adhub-extension-response', function handler(event) {
+        const handler = function(event) {
             clearTimeout(timeout);
             window.removeEventListener('adhub-extension-response', handler);
+            window.removeEventListener('adhub-extension-ready', handler);
             if (event.detail && event.detail.extensionId) {
                 extensionId = event.detail.extensionId;
                 localStorage.setItem('adhub_extension_id', extensionId);
+                console.log('[AdHUB Page] Got extension ID from event:', extensionId);
             }
             resolve(true);
-        }, { once: true });
+        };
+        
+        window.addEventListener('adhub-extension-response', handler, { once: true });
+        window.addEventListener('adhub-extension-ready', handler, { once: true });
         
         window.dispatchEvent(new CustomEvent('adhub-extension-check'));
     });
@@ -1125,10 +1227,46 @@ function sendMessageToExtension(extId, message) {
     });
 }
 
+// Alternativní způsob komunikace přes window.postMessage
+function sendMessageViaBridge(action, payload) {
+    return new Promise((resolve, reject) => {
+        const id = 'req_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        const timeout = setTimeout(() => {
+            window.removeEventListener('message', handler);
+            reject(new Error('Request timed out'));
+        }, 30000);
+        
+        const handler = function(event) {
+            if (event.source !== window) return;
+            if (!event.data || event.data.type !== 'ADHUB_RESPONSE') return;
+            if (event.data.id !== id) return;
+            
+            clearTimeout(timeout);
+            window.removeEventListener('message', handler);
+            
+            if (event.data.success) {
+                resolve(event.data.data);
+            } else {
+                reject(new Error(event.data.error || 'Request failed'));
+            }
+        };
+        
+        window.addEventListener('message', handler);
+        
+        window.postMessage({
+            type: 'ADHUB_REQUEST',
+            id: id,
+            action: action,
+            payload: payload
+        }, '*');
+    });
+}
+
 function updateExtensionStatus(connected) {
     if (connected) {
         extensionStatus.className = 'extension-status extension-status-on';
-        extensionStatusText.textContent = 'Rozšíření aktivní';
+        extensionStatusText.textContent = 'Rozšíření aktivní ✓';
         if (installSection) installSection.style.display = 'none';
         if (downloadSection) downloadSection.style.display = 'block';
     } else {
@@ -1350,11 +1488,21 @@ async function handleVideoSubmit(e) {
     if (downloadCompleteCard) downloadCompleteCard.style.display = 'none';
     
     try {
-        const infoResponse = await sendMessageToExtension(extensionId, {
-            action: 'getVideoInfo',
-            videoId: videoId,
-            url: `https://www.youtube.com/watch?v=${videoId}`
-        });
+        // Zkusíme nejprve přes chrome.runtime, pak přes bridge
+        let infoResponse;
+        try {
+            infoResponse = await sendMessageToExtension(extensionId, {
+                action: 'getVideoInfo',
+                videoId: videoId,
+                url: `https://www.youtube.com/watch?v=${videoId}`
+            });
+        } catch (e) {
+            console.log('[AdHUB Page] chrome.runtime failed, trying bridge:', e.message);
+            infoResponse = await sendMessageViaBridge('getVideoInfo', {
+                videoId: videoId,
+                url: `https://www.youtube.com/watch?v=${videoId}`
+            });
+        }
         
         if (!infoResponse || !infoResponse.success) {
             throw new Error(infoResponse?.error || 'Nepodařilo se získat informace');
@@ -1363,11 +1511,21 @@ async function handleVideoSubmit(e) {
         currentVideoInfo = infoResponse;
         displayVideoInfo(infoResponse);
         
-        const linksResponse = await sendMessageToExtension(extensionId, {
-            action: 'getDownloadLinks',
-            videoId: videoId,
-            url: `https://www.youtube.com/watch?v=${videoId}`
-        });
+        // Získání download linků
+        let linksResponse;
+        try {
+            linksResponse = await sendMessageToExtension(extensionId, {
+                action: 'getDownloadLinks',
+                videoId: videoId,
+                url: `https://www.youtube.com/watch?v=${videoId}`
+            });
+        } catch (e) {
+            console.log('[AdHUB Page] chrome.runtime failed for links, trying bridge:', e.message);
+            linksResponse = await sendMessageViaBridge('getDownloadLinks', {
+                videoId: videoId,
+                url: `https://www.youtube.com/watch?v=${videoId}`
+            });
+        }
         
         if (!linksResponse || !linksResponse.success) {
             throw new Error(linksResponse?.error || 'Nepodařilo se získat download linky');
@@ -1494,11 +1652,20 @@ async function handleFormatDownload(button, url, filename) {
     button.textContent = '⏳ Stahuji...';
     
     try {
-        const response = await sendMessageToExtension(extensionId, {
-            action: 'downloadVideo',
-            url: url,
-            filename: filename
-        });
+        let response;
+        try {
+            response = await sendMessageToExtension(extensionId, {
+                action: 'downloadVideo',
+                url: url,
+                filename: filename
+            });
+        } catch (e) {
+            console.log('[AdHUB Page] chrome.runtime failed for download, trying bridge:', e.message);
+            response = await sendMessageViaBridge('downloadVideo', {
+                url: url,
+                filename: filename
+            });
+        }
         
         if (response && response.success) {
             button.textContent = '✅ Staženo';
