@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#8b5cf6">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>AdHUB - Centrální Hub</title>
+    <title>AdHUB - Central Hub</title>
     <link rel="stylesheet" href="styles.css">
     <script defer src="script.js"></script>
 </head>
@@ -14,55 +14,77 @@
     <div class="container">
         <header class="header">
             <div class="header-content">
-                <h1 class="logo">
-                    <span class="logo-icon">🎯</span>
-                    AdHUB
-                </h1>
-                <div class="search-container">
-                    <input 
-                        type="text" 
-                        id="searchInput" 
-                        class="search-input" 
-                        placeholder="Vyhledat nástroj, odkaz..."
-                        autocomplete="off"
-                    >
-                    <span class="search-icon">🔍</span>
+                <div class="header-left">
+                    <h1 class="logo">
+                        <span class="logo-icon">🎯</span>
+                        AdHUB
+                    </h1>
+                    <span class="version-badge" id="versionBadge">v1.0.0</span>
+                </div>
+                <div class="header-right">
+                    <div class="language-selector">
+                        <button class="lang-btn" data-lang="cs" title="Čeština">
+                            <span class="lang-flag">🇨🇿</span>
+                            <span class="lang-code">CZ</span>
+                        </button>
+                        <button class="lang-btn" data-lang="en" title="English">
+                            <span class="lang-flag">🇬🇧</span>
+                            <span class="lang-code">EN</span>
+                        </button>
+                    </div>
+                    <div class="search-container">
+                        <input 
+                            type="text" 
+                            id="searchInput" 
+                            class="search-input" 
+                            data-i18n-placeholder="search_placeholder"
+                            placeholder="Search tool, link..."
+                            autocomplete="off"
+                        >
+                        <span class="search-icon">🔍</span>
+                    </div>
                 </div>
             </div>
         </header>
 
         <div class="controls">
             <div class="filter-tabs">
-                <button class="filter-tab active" data-filter="all">Vše</button>
-                <button class="filter-tab" data-filter="tools">Nástroje</button>
-                <button class="filter-tab" data-filter="links">Odkazy</button>
+                <button class="filter-tab active" data-filter="all" data-i18n="filter_all">All</button>
+                <button class="filter-tab" data-filter="tools" data-i18n="filter_tools">Tools</button>
+                <button class="filter-tab" data-filter="links" data-i18n="filter_links">Links</button>
             </div>
             <div class="category-filters" id="categoryFilters"></div>
         </div>
 
         <div class="status-bar" id="statusBar">
-            <span class="status-text">Načítání...</span>
-            <button class="refresh-btn" id="refreshBtn" title="Obnovit">🔄</button>
+            <span class="status-text" data-i18n="loading">Loading...</span>
+            <button class="refresh-btn" id="refreshBtn" data-i18n-title="refresh_title" title="Refresh">🔄</button>
         </div>
 
         <main class="main-content">
             <div class="tools-grid" id="toolsGrid">
-                <!-- Nástroje budou načteny zde -->
+                <!-- Tools will be loaded here -->
             </div>
             <div class="empty-state" id="emptyState" style="display: none;">
                 <div class="empty-icon">🔍</div>
-                <p class="empty-text">Žádné výsledky</p>
-                <p class="empty-subtext">Zkuste změnit vyhledávání nebo filtry</p>
+                <p class="empty-text" data-i18n="no_results">No results</p>
+                <p class="empty-subtext" data-i18n="try_different">Try changing your search or filters</p>
             </div>
         </main>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <span class="footer-text" data-i18n="footer_text">AdHUB - Central Hub for tools and utilities</span>
+                <span class="footer-version" id="footerVersion">Version 1.0.0</span>
+            </div>
+        </footer>
     </div>
 
-    <!-- Konfigurace nástrojů - lze upravit přímo zde nebo v script.js -->
+    <!-- Configuration - can be modified here or in script.js -->
     <script>
-        // Pokud potřebujete upravit konfiguraci, můžete ji přepsat zde:
+        // If you need to modify configuration, you can override it here:
         // window.CUSTOM_CONFIG = { tools: [...], links: [...] };
-        // Nebo upravte DEFAULT_CONFIG v script.js
+        // Or modify DEFAULT_CONFIG in script.js
     </script>
 </body>
 </html>
-

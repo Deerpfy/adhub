@@ -1,42 +1,44 @@
-# 🎯 AdHUB - Centrální Hub pro nástroje a utility
+# 🎯 AdHUB - Central Hub for Tools and Utilities
 
-AdHUB je centrální rozcestník pro různé nástroje, utility a projekty. Vše přístupné z jednoho místa s moderním a přehledným rozhraním.
+AdHUB is a central hub for various tools, utilities and projects. Everything accessible from one place with a modern and clear interface.
 
 ![AdHUB Preview](https://img.shields.io/badge/status-active-success) ![License](https://img.shields.io/badge/license-MIT-blue) ![Version](https://img.shields.io/badge/version-1.0.0-purple)
 
-## ✨ Funkce
+## ✨ Features
 
-- 🔍 **Vyhledávání** - Rychlé vyhledávání napříč všemi nástroji a odkazy
-- 🏷️ **Kategorie a tagy** - Filtrování podle kategorií a tagů
-- 📱 **Responzivní design** - Funguje na všech zařízeních
-- 🌙 **Moderní tmavé téma** - Šetrné k očím
-- ⚡ **Bez serveru** - Funguje jako statická stránka (GitHub Pages)
+- 🔍 **Search** - Quick search across all tools and links
+- 🏷️ **Categories and tags** - Filtering by categories and tags
+- 📱 **Responsive design** - Works on all devices
+- 🌙 **Modern dark theme** - Easy on the eyes
+- ⚡ **No server needed** - Works as a static page (GitHub Pages)
+- 🌐 **Multi-language support** - Czech and English with automatic language detection
+- 🔢 **Versioning** - Version display in header and footer
 
-## 📦 Projekty
+## 📦 Projects
 
 ### 🎥 YouTube Downloader
-Rozšíření pro Chrome/Edge/Brave umožňující stahování YouTube videí a audia přímo z prohlížeče.
+Browser extension for Chrome/Edge/Brave enabling download of YouTube videos and audio directly from your browser.
 
-**Funkce:**
-- Stahování videí v různých kvalitách (360p - 4K)
-- Stahování audia (M4A, WebM)
-- Tlačítko přímo na YouTube stránce
-- Bez potřeby externího serveru
+**Features:**
+- Download videos in various qualities (360p - 4K)
+- Download audio (M4A, WebM)
+- Button directly on YouTube page
+- No external server required
 
 ### 💬 Multistream Chat Panel
-Unified chat pro streamery - zobrazuje chat z Twitch, Kick a YouTube na jednom místě.
+Unified chat for streamers - displays chat from Twitch, Kick and YouTube in one place.
 
-**Funkce:**
-- Podpora více platforem
-- Overlay mód pro OBS
-- Customizovatelný vzhled
+**Features:**
+- Multi-platform support
+- Overlay mode for OBS
+- Customizable appearance
 
 ### 🍕 KomoPizza Demo
-Ukázková objednávková aplikace demonstrující moderní UI/UX principy.
+Sample ordering application demonstrating modern UI/UX principles.
 
 ---
 
-## 🗺️ Architektura
+## 🗺️ Architecture
 
 ```mermaid
 graph TB
@@ -44,46 +46,47 @@ graph TB
         A[index.html] --> B[script.js]
         A --> C[styles.css]
         B --> D[DEFAULT_CONFIG]
+        B --> E[TRANSLATIONS]
     end
 
-    subgraph "Projekty"
-        E[YouTube Downloader]
-        F[Chat Panel]
-        G[KomoPizza Demo]
+    subgraph "Projects"
+        F[YouTube Downloader]
+        G[Chat Panel]
+        H[KomoPizza Demo]
     end
 
-    D --> E
     D --> F
     D --> G
+    D --> H
 
     subgraph "YouTube Downloader"
-        E --> H[Extension Files]
-        H --> I[manifest.json]
-        H --> J[background.js]
-        H --> K[content.js]
-        H --> L[popup.html/js]
+        F --> I[Extension Files]
+        I --> J[manifest.json]
+        I --> K[background.js]
+        I --> L[content.js]
+        I --> M[popup.html/js]
     end
 
     style A fill:#8b5cf6,color:#fff
-    style E fill:#ec4899,color:#fff
-    style F fill:#0ea5e9,color:#fff
-    style G fill:#22c55e,color:#fff
+    style F fill:#ec4899,color:#fff
+    style G fill:#0ea5e9,color:#fff
+    style H fill:#22c55e,color:#fff
 ```
 
-### Struktura projektu
+### Project Structure
 
 ```
 adhub/
-├── index.html              # Hlavní stránka AdHUB
-├── script.js               # Logika a konfigurace nástrojů
-├── styles.css              # Styly (pokud existují)
-├── README.md               # Tento soubor
+├── index.html              # Main AdHUB page
+├── script.js               # Logic, configuration and translations
+├── styles.css              # Styles
+├── README.md               # This file
 ├── projects/
 │   ├── youtube-downloader/
-│   │   ├── index.html      # Stránka ke stažení rozšíření
-│   │   ├── script.js       # Generátor ZIP + logika
-│   │   ├── styles.css      # Styly
-│   │   └── extension/      # Soubory rozšíření
+│   │   ├── index.html      # Extension download page
+│   │   ├── script.js       # ZIP generator + logic
+│   │   ├── styles.css      # Styles
+│   │   └── extension/      # Extension files
 │   │       ├── manifest.json
 │   │       ├── background.js
 │   │       ├── content.js
@@ -94,7 +97,7 @@ adhub/
 │   │   ├── index.html
 │   │   ├── script.js
 │   │   ├── styles.css
-│   │   └── server/         # Server pro live chat API
+│   │   └── server/         # Server for live chat API
 │   └── komopizza/
 │       ├── index.html
 │       ├── script.js
@@ -106,137 +109,189 @@ adhub/
 
 ## 📋 TODO
 
-### 🔴 Vysoká priorita
-- [ ] Přidat možnost přepínání světlého/tmavého motivu
-- [ ] Implementovat offline caching (Service Worker)
-- [ ] Vylepšit mobilní navigaci
+### 🔴 High Priority
+- [ ] Add light/dark theme toggle
+- [ ] Implement offline caching (Service Worker)
+- [ ] Improve mobile navigation
 
-### 🟡 Střední priorita
-- [ ] Přidat statistiky stahování pro YouTube Downloader
-- [ ] Implementovat uživatelské nastavení (localStorage)
-- [ ] Přidat podporu pro více jazyků (i18n)
-- [ ] Vytvořit dokumentaci pro přidávání nových projektů
-- [ ] Implementovat klávesové zkratky
+### 🟡 Medium Priority
+- [ ] Add download statistics for YouTube Downloader
+- [ ] Implement user settings (localStorage)
+- [ ] Create documentation for adding new projects
+- [ ] Implement keyboard shortcuts
 
-### 🟢 Nízká priorita
-- [ ] Přidat animace při přechodu mezi stránkami
-- [ ] Vytvořit PWA verzi
-- [ ] Přidat možnost exportu/importu konfigurace
-- [ ] Implementovat drag & drop řazení nástrojů
+### 🟢 Low Priority
+- [ ] Add page transition animations
+- [ ] Create PWA version
+- [ ] Add configuration export/import option
+- [ ] Implement drag & drop tool ordering
 
-### ✅ Dokončeno
-- [x] Základní struktura AdHUB
-- [x] YouTube Downloader rozšíření
-- [x] Chat Panel pro streamery
-- [x] Responzivní design
-- [x] Vyhledávání a filtrování
-- [x] Aktualizace na statické stránky (bez nutnosti serveru)
+### ✅ Completed
+- [x] Basic AdHUB structure
+- [x] YouTube Downloader extension
+- [x] Chat Panel for streamers
+- [x] Responsive design
+- [x] Search and filtering
+- [x] Update to static pages (no server required)
+- [x] Multi-language support (Czech/English)
+- [x] Version display
 
 ---
 
-## 🔄 Flow diagram - YouTube Downloader
+## 🔄 Flow Diagram - YouTube Downloader
 
 ```mermaid
 sequenceDiagram
-    participant U as Uživatel
-    participant W as Web stránka
+    participant U as User
+    participant W as Web Page
     participant E as Extension
     participant Y as YouTube API
 
-    U->>W: Navštíví stránku downloaderu
-    W->>U: Zobrazí instrukce k instalaci
-    U->>W: Klikne "Stáhnout rozšíření"
-    W->>W: Generuje ZIP pomocí JSZip
-    W->>U: Stáhne ZIP soubor
-    U->>E: Nainstaluje rozšíření
+    U->>W: Visits downloader page
+    W->>U: Shows installation instructions
+    U->>W: Clicks "Download Extension"
+    W->>W: Generates ZIP using JSZip
+    W->>U: Downloads ZIP file
+    U->>E: Installs extension
     
-    Note over U,E: Po instalaci rozšíření
+    Note over U,E: After extension installation
 
-    U->>Y: Navštíví YouTube video
-    E->>Y: Injektuje tlačítko "Stáhnout"
-    U->>E: Klikne na tlačítko
-    E->>Y: Získá metadata videa
-    Y->>E: Vrátí dostupné formáty
-    E->>U: Zobrazí modal s formáty
-    U->>E: Vybere formát
-    E->>Y: Stáhne video
-    E->>U: Uloží soubor
+    U->>Y: Visits YouTube video
+    E->>Y: Injects "Download" button
+    U->>E: Clicks button
+    E->>Y: Gets video metadata
+    Y->>E: Returns available formats
+    E->>U: Shows modal with formats
+    U->>E: Selects format
+    E->>Y: Downloads video
+    E->>U: Saves file
 ```
 
 ---
 
-## 🛠️ Instalace a spuštění
+## 🛠️ Installation and Running
 
-### Varianta 1: GitHub Pages (doporučeno)
-1. Forkněte tento repozitář
-2. Aktivujte GitHub Pages v nastavení
-3. Přistupte na `https://vasusername.github.io/adhub`
+### Option 1: GitHub Pages (recommended)
+1. Fork this repository
+2. Enable GitHub Pages in settings
+3. Access at `https://yourusername.github.io/adhub`
 
-### Varianta 2: Lokální spuštění
+### Option 2: Local Running
 ```bash
-# Klonování repozitáře
+# Clone repository
 git clone https://github.com/Deerpfy/adhub.git
 cd adhub
 
-# Otevření v prohlížeči
-# Stačí otevřít index.html v prohlížeči
-# Nebo použít lokální server:
+# Open in browser
+# Just open index.html in browser
+# Or use a local server:
 npx serve .
-# nebo
+# or
 python -m http.server 8000
 ```
 
 ---
 
-## 🎨 Technologie
+## 🌐 Language Support
 
-- **Frontend:** Vanilla JavaScript, HTML5, CSS3
-- **Extension:** Chrome Manifest V3
-- **Build:** Žádný build proces - vše je vanilla JS
-- **Icons:** SVG + Canvas generované ikony
-- **ZIP:** JSZip library pro generování rozšíření
+AdHUB supports multiple languages with automatic detection:
+
+- **Czech (CZ)** - Full Czech translation
+- **English (EN)** - Full English translation
+
+The language is automatically detected from your browser settings, or you can manually switch using the language selector in the header. Your preference is saved to localStorage.
+
+### Adding New Languages
+
+To add a new language, edit `script.js` and add translations to the `TRANSLATIONS` object:
+
+```javascript
+const TRANSLATIONS = {
+    // ... existing languages
+    de: {
+        search_placeholder: 'Suche...',
+        filter_all: 'Alle',
+        // ... add all translation keys
+    }
+};
+```
 
 ---
 
-## 📝 Přidání nového projektu
+## 🔢 Versioning
 
-1. Vytvořte složku v `projects/nazev-projektu/`
-2. Přidejte `index.html` jako vstupní bod
-3. Upravte `script.js` a přidejte do `DEFAULT_CONFIG.tools`:
+AdHUB uses semantic versioning (MAJOR.MINOR.PATCH):
+
+- **MAJOR** - Incompatible API changes
+- **MINOR** - New functionality (backward compatible)
+- **PATCH** - Bug fixes
+
+Current version: **1.0.0**
+
+Version is displayed in:
+- Header badge (next to logo)
+- Footer
+
+To update version, modify `APP_VERSION` in `script.js`:
+
+```javascript
+const APP_VERSION = '1.0.0';
+```
+
+---
+
+## 🎨 Technologies
+
+- **Frontend:** Vanilla JavaScript, HTML5, CSS3
+- **Extension:** Chrome Manifest V3
+- **Build:** No build process - everything is vanilla JS
+- **Icons:** SVG + Canvas generated icons
+- **ZIP:** JSZip library for extension generation
+- **i18n:** Built-in translation system
+
+---
+
+## 📝 Adding a New Project
+
+1. Create folder in `projects/project-name/`
+2. Add `index.html` as entry point
+3. Edit `script.js` and add to `getLocalizedConfig()`:
 
 ```javascript
 {
-    "id": "muj-projekt",
-    "name": "Můj Projekt",
-    "description": "Popis projektu",
-    "category": "kategorie",
+    "id": "my-project",
+    "name": t('tool_myproject_name'),
+    "description": t('tool_myproject_desc'),
+    "category": "category",
     "icon": "🔧",
-    "url": "projects/muj-projekt/index.html",
+    "url": "projects/my-project/index.html",
     "type": "local",
     "enabled": true,
     "tags": ["tag1", "tag2"]
 }
 ```
 
----
-
-## 🤝 Přispívání
-
-1. Forkněte repozitář
-2. Vytvořte feature branch (`git checkout -b feature/nova-funkce`)
-3. Commitněte změny (`git commit -m 'Přidána nová funkce'`)
-4. Pushněte branch (`git push origin feature/nova-funkce`)
-5. Otevřete Pull Request
+4. Add translations to `TRANSLATIONS` object for both `cs` and `en`.
 
 ---
 
-## 📄 Licence
+## 🤝 Contributing
 
-Tento projekt je licencován pod MIT licencí - viz soubor [LICENSE](LICENSE) pro detaily.
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/new-feature`)
+3. Commit changes (`git commit -m 'Add new feature'`)
+4. Push branch (`git push origin feature/new-feature`)
+5. Open Pull Request
 
 ---
 
-## 👤 Autor
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 👤 Author
 
 **Deerpfy**
 
@@ -244,9 +299,9 @@ Tento projekt je licencován pod MIT licencí - viz soubor [LICENSE](LICENSE) pr
 
 ---
 
-## ⭐ Podpora
+## ⭐ Support
 
-Pokud se vám projekt líbí, dejte mu hvězdičku! ⭐
+If you like this project, give it a star! ⭐
 
 ```
    ___       __  ____  ______  ____
