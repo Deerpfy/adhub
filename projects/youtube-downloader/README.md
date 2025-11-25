@@ -1,200 +1,112 @@
-# 🎥 YouTube Downloader
+# 🎥 AdHUB YouTube Downloader
 
-Nástroj pro stahování YouTube videí ve formátu MP4 a MP3 se stejným designem jako Chat Panel.
+Stahujte YouTube videa přímo z prohlížeče **bez potřeby serveru**! Ideální pro hostování na GitHub Pages.
 
-## 📋 Požadavky
+## ✨ Funkce
 
-- **Node.js** (verze 16 nebo vyšší)
-- **yt-dlp** - nástroj pro stahování videí z YouTube
-- **ffmpeg** - pro konverzi do MP3 formátu (není potřeba pro MP4)
+- ✅ **Bez serveru** - Vše běží v prohlížeči
+- ✅ **GitHub Pages ready** - Jednoduché hostování jako statická stránka
+- ✅ **Více formátů** - MP4, M4A, WebM
+- ✅ **Různé kvality** - Od 144p až po 4K (podle dostupnosti)
+- ✅ **YouTube integrace** - Tlačítko přímo na YouTube stránce
+- ✅ **Open source** - Zdarma a volně dostupné
 
-## 🔧 Instalace yt-dlp
+## 🚀 Instalace
 
-**⚠️ DŮLEŽITÉ:** Bez yt-dlp server poběží, ale nebude moci stahovat videa!
+### 1. Nainstalujte rozšíření do prohlížeče
 
-### Rychlá kontrola
-Spusťte: `check-yt-dlp.bat` (zkontroluje, zda je yt-dlp nainstalovaný)
+Rozšíření je nezbytné pro obejití CORS omezení a přímé stahování videí.
 
-### Windows - Metoda 1: Stáhnout .exe (NEJLEPŠÍ)
-1. Stáhněte `yt-dlp.exe` z [GitHub releases](https://github.com/yt-dlp/yt-dlp/releases)
-2. Umístěte `yt-dlp.exe` do **`C:\Windows\System32`** (funguje všude)
-3. Nebo do složky projektu: `youtube-downloader/server/`
-4. Otestujte v CMD: `yt-dlp --version`
+#### Chrome / Edge:
 
-### Windows - Metoda 2: Pomocí pip
-```bash
-pip install yt-dlp
-```
+1. Stáhněte složku `extension` z tohoto repozitáře
+2. Otevřete `chrome://extensions` (nebo `edge://extensions`)
+3. Zapněte **Vývojářský režim** (Developer mode) v pravém horním rohu
+4. Klikněte na **Načíst rozbalené** (Load unpacked)
+5. Vyberte složku `extension`
+6. Rozšíření je nainstalované! 🎉
 
-### Windows - Metoda 3: Pomocí winget
-```bash
-winget install yt-dlp
-```
+### 2. Otevřete webovou stránku
 
-**Podrobné instrukce:** Viz `server/INSTALACE-YT-DLP.txt`
+Můžete použít:
+- **GitHub Pages**: Nahrajte projekt na GitHub a povolte Pages
+- **Lokálně**: Otevřete `index.html` v prohlížeči
+- **Libovolný hosting**: Nahrajte soubory na jakýkoliv statický hosting
 
-## 🔧 Instalace ffmpeg (pro MP3 konverzi)
+## 📖 Jak používat
 
-**⚠️ DŮLEŽITÉ:** ffmpeg je potřeba POUZE pro stahování MP3. Pro MP4 videa není potřeba!
+### Způsob 1: Přes webovou stránku
+1. Otevřete webovou stránku
+2. Zadejte URL YouTube videa nebo video ID
+3. Klikněte na "Získat informace"
+4. Vyberte formát a kvalitu
+5. Klikněte na "Stáhnout"
 
-### Windows - Metoda 1: Stáhnout binárky (NEJLEPŠÍ)
-1. Stáhněte z: https://www.gyan.dev/ffmpeg/builds/
-2. Rozbalte ZIP
-3. Zkopírujte `ffmpeg.exe` do `C:\Windows\System32`
-4. Otestujte v CMD: `ffmpeg -version`
-
-### Windows - Metoda 2: Pomocí winget
-```bash
-winget install ffmpeg
-```
-
-### Windows - Metoda 3: Pomocí Chocolatey
-```bash
-choco install ffmpeg
-```
-
-**Podrobné instrukce:** Viz `server/INSTALACE-FFMPEG.txt`
-
-### Linux/Mac
-```bash
-# Pomocí pip
-pip install yt-dlp
-
-# Nebo pomocí homebrew (Mac)
-brew install yt-dlp
-```
-
-## 🚀 Spuštění
-
-### 1. Instalace závislostí
-
-**⚠️ DŮLEŽITÉ:** Musíte nainstalovat závislosti před prvním spuštěním!
-
-**Jednoduchý způsob (doporučeno):**
-- Dvakrát klikněte na: `youtube-downloader/server/install.bat`
-
-**Nebo ručně:**
-```bash
-cd youtube-downloader/server
-npm install
-```
-
-**Poznámka:** Pokud `npm` příkaz nefunguje:
-- Zkuste použít `install.bat` (automaticky kontroluje Node.js a npm)
-- Otevřít nový terminál/CMD
-- Restartovat počítač (aby se načetla PATH proměnná)
-- Zkontrolovat instalaci Node.js: https://nodejs.org/
-
-### 2. Spuštění serveru
-
-```bash
-npm start
-```
-
-Server poběží na `http://localhost:3003`
-
-**Poznámka:** Helper server (pro ovládání z webu) běží na portu `3004` (port 3002 je používán Chat Panel helperem)
-
-### 3. Otevření webového rozhraní
-
-Otevřete soubor `index.html` v prohlížeči nebo použijte:
-
-```bash
-# Z root složky projektu
-python -m http.server 8080
-```
-
-Pak otevřete `http://localhost:8080/youtube-downloader/` v prohlížeči.
-
-## 📖 Použití
-
-1. **Zapněte server** pomocí tlačítka "Zapnout Server" v hlavičce
-2. **Zadejte YouTube URL** do formuláře
-3. **Klikněte na "Získat informace"** pro zobrazení informací o videu
-4. **Vyberte formát** stahování:
-   - **📹 MP4 Video** - stáhne video ve formátu MP4
-   - **🎵 MP3 Audio** - stáhne pouze audio ve formátu MP3
-5. **Po dokončení** můžete soubor stáhnout pomocí tlačítka "💾 Stáhnout soubor"
-
-## 🎨 Funkce
-
-- ✅ Stahování videí ve formátu **MP4**
-- ✅ Stahování audia ve formátu **MP3**
-- ✅ Zobrazení informací o videu (název, thumbnail, délka, počet zhlédnutí)
-- ✅ Progress tracking při stahování
-- ✅ Historie stažených souborů
-- ✅ Stejný design jako Chat Panel
-- ✅ Ovládání serveru přímo z webového rozhraní
-
-## 🔌 API Endpoints
-
-### Informace o videu
-```
-POST /api/video/info
-Body: { "url": "https://www.youtube.com/watch?v=..." }
-```
-
-### Stáhnout MP4
-```
-POST /api/download/mp4
-Body: { "url": "https://www.youtube.com/watch?v=...", "quality": "best" }
-```
-
-### Stáhnout MP3
-```
-POST /api/download/mp3
-Body: { "url": "https://www.youtube.com/watch?v=...", "quality": "192K" }
-```
-
-### Status
-```
-GET /api/status
-```
-
-### Health check
-```
-GET /health
-```
+### Způsob 2: Přímo na YouTube
+1. Jděte na libovolné YouTube video
+2. Pod videem se objeví tlačítko "Stáhnout" (po instalaci rozšíření)
+3. Klikněte na tlačítko a vyberte formát
+4. Video se stáhne do vašeho prohlížeče
 
 ## 📁 Struktura projektu
 
 ```
 youtube-downloader/
-├── server/
-│   ├── server.js          # Backend server
-│   ├── package.json       # Node.js závislosti
-│   └── downloads/         # Složka pro stažené soubory (vytvoří se automaticky)
-├── index.html             # Frontend HTML
-├── styles.css             # CSS styly
-├── script.js              # Frontend JavaScript
-└── README.md              # Tento soubor
+├── index.html          # Hlavní webová stránka
+├── script.js           # Logika aplikace
+├── styles.css          # Styly
+├── README.md           # Tato dokumentace
+├── extension/          # Browser rozšíření
+│   ├── manifest.json   # Manifest rozšíření
+│   ├── background.js   # Service worker
+│   ├── content.js      # Content script pro YouTube
+│   ├── popup.html      # Popup rozšíření
+│   ├── popup.js        # Logika popupu
+│   └── icons/          # Ikony rozšíření
+└── server/             # (Starší verze - není potřeba)
 ```
 
-## ⚠️ Poznámky
+## 🔧 Technické detaily
 
-- Stažené soubory se ukládají do složky `server/downloads/`
-- Historie stahování se ukládá v localStorage prohlížeče
-- Server musí běžet pro stahování videí
-- Pro Windows může být potřeba přidat `yt-dlp.exe` do PATH
+### Jak to funguje?
 
-## 🐛 Řešení problémů
+1. **Browser rozšíření** obchází CORS omezení a může přímo komunikovat s YouTube
+2. **Webová stránka** komunikuje s rozšířením přes `chrome.runtime.sendMessage`
+3. **Content script** přidává tlačítko stahování přímo na YouTube stránky
+4. **Stahování** probíhá přes Chrome Downloads API
 
-### "yt-dlp není nainstalován"
-- Ujistěte se, že máte nainstalovaný yt-dlp
-- Zkontrolujte, že je v systémové PATH
-- Na Windows můžete zkusit `yt-dlp.exe --version` v příkazové řádce
+### Podporované formáty
 
-### "Server neběží"
-- Spusťte server pomocí `npm start` v složce `server`
-- Zkontrolujte, že port 3003 není používán jiným programem
-- Použijte tlačítko "Zapnout Server" v webovém rozhraní (pokud je helper server spuštěn)
+| Typ | Formát | Poznámka |
+|-----|--------|----------|
+| Video + Audio | MP4, WebM | Kombinované streamy |
+| Pouze Video | MP4, WebM | Bez zvuku |
+| Pouze Audio | M4A, WebM | Různé bitrates |
 
-### "Chyba při stahování"
-- Zkontrolujte, že YouTube URL je platná
-- Některá videa mohou být chráněná autorskými právy
-- Ujistěte se, že máte aktivní internetové připojení
+### Omezení
 
-## 📝 Licence
+- Některá videa mohou být chráněná proti stahování
+- Šifrované streamy nemusí být dostupné
+- Kvalita závisí na dostupnosti na YouTube
 
-MIT
+## 🔒 Bezpečnost
 
+- Rozšíření nepřenáší žádná data na externí servery
+- Veškeré zpracování probíhá lokálně v prohlížeči
+- Zdrojový kód je open source a můžete ho zkontrolovat
+
+## 📜 Licence
+
+MIT License - Volně k použití a modifikaci.
+
+## 🤝 Přispívání
+
+Pull requesty jsou vítány! Pro větší změny prosím nejprve otevřete issue.
+
+## ⚠️ Právní upozornění
+
+Tento nástroj je určen pouze pro stahování videí, ke kterým máte právo. Respektujte autorská práva a podmínky použití YouTube.
+
+---
+
+Vytvořeno s ❤️ pro AdHUB
