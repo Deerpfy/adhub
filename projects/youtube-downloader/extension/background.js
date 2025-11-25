@@ -13,7 +13,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     
     switch (request.action) {
         case 'ping':
-            sendResponse({ success: true, message: 'AdHUB Extension is active', version: '1.0.0' });
+            sendResponse({ success: true, message: 'AdHUB Extension is active', version: '1.1.0' });
             break;
             
         case 'getVideoInfo':
@@ -32,7 +32,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             sendResponse({ 
                 success: true, 
                 isActive: extensionState.isActive,
-                version: '1.0.0'
+                version: '1.1.0'
             });
             break;
             
@@ -66,7 +66,7 @@ chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => 
     
     switch (request.action) {
         case 'ping':
-            sendResponse({ success: true, message: 'AdHUB Extension is active', version: '1.0.0' });
+            sendResponse({ success: true, message: 'AdHUB Extension is active', version: '1.1.0' });
             break;
             
         case 'getVideoInfo':
@@ -283,12 +283,43 @@ async function decipherUrl(signatureCipher) {
 // Stahování souboru
 async function handleDownload(url, format, quality, filename) {
     try {
-        console.log('[AdHUB] Starting download:', { format, quality, filename });
+        console.log('[AdHUB] Starting download:', { format, quality, filename, url: url?.substring(0, 100) });
+        
+        // Určení správné přípony souboru
+        let finalFilename = filename;
+        if (!finalFilename) {
+            // Pokud není filename, zkusíme ho odvodit z URL nebo formátu
+            let ext = format || 'mp4';
+            if (url) {
+                if (url.includes('mime=audio') || url.includes('audio/')) {
+                    ext = url.includes('webm') ? 'webm' : 'm4a';
+                } else if (url.includes('mime=video') || url.includes('video/')) {
+                    ext = url.includes('webm') ? 'webm' : 'mp4';
+                }
+            }
+            finalFilename = `video_${Date.now()}.${ext}`;
+        }
+        
+        // Zkontrolujeme, že filename má správnou příponu
+        if (finalFilename && !finalFilename.match(/\.(mp4|webm|m4a|mp3|mkv|avi|mov)$/i)) {
+            // Přidáme příponu podle URL
+            if (url) {
+                if (url.includes('mime=audio') || url.includes('audio/')) {
+                    finalFilename += url.includes('webm') ? '.webm' : '.m4a';
+                } else {
+                    finalFilename += url.includes('webm') ? '.webm' : '.mp4';
+                }
+            } else {
+                finalFilename += '.mp4';
+            }
+        }
+        
+        console.log('[AdHUB] Final filename:', finalFilename);
         
         // Použijeme Chrome Downloads API
         const downloadId = await chrome.downloads.download({
             url: url,
-            filename: filename || `video.${format}`,
+            filename: finalFilename,
             saveAs: true
         });
         
