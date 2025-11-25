@@ -23,14 +23,25 @@
                 </div>
                 <div class="header-right">
                     <div class="language-selector">
-                        <button class="lang-btn" data-lang="cs" title="Čeština">
-                            <span class="lang-flag">🇨🇿</span>
-                            <span class="lang-code">CZ</span>
-                        </button>
-                        <button class="lang-btn" data-lang="en" title="English">
-                            <span class="lang-flag">🇬🇧</span>
-                            <span class="lang-code">EN</span>
-                        </button>
+                        <div class="language-dropdown">
+                            <button class="language-current" id="currentLangBtn" title="Změnit jazyk / Change language">
+                                <span class="lang-flag" id="currentLangFlag">🇨🇿</span>
+                                <span class="lang-name" id="currentLangName">Čeština</span>
+                                <span class="lang-arrow">▼</span>
+                            </button>
+                            <div class="language-dropdown-content" id="langDropdown">
+                                <div class="lang-search-container">
+                                    <input type="text" class="lang-search" id="langSearchInput" placeholder="Hledat jazyk..." autocomplete="off">
+                                </div>
+                                <div class="lang-list" id="langList">
+                                    <!-- Languages will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="translation-indicator" id="translationIndicator" style="display: none;">
+                            <span class="translation-spinner">⏳</span>
+                            <span class="translation-text">Překládám...</span>
+                        </div>
                     </div>
                     <div class="search-container">
                         <input 
