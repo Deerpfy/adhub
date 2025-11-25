@@ -577,6 +577,8 @@ function renderTools() {
 // Create tool card
 function createToolCard(tool) {
     const isLocalFile = tool.type === 'local' || !tool.url.startsWith('http');
+    const isYouTubeDownloader = tool.id === 'youtube-downloader';
+
     return `
         <div class="tool-card" data-id="${tool.id}" data-type="tool">
             <div class="tool-header">
@@ -584,7 +586,10 @@ function createToolCard(tool) {
                     <span class="tool-icon">${tool.icon || '🔧'}</span>
                     <span class="tool-name">${escapeHtml(tool.name)}</span>
                 </div>
-                ${isLocalFile ? `<span class="tool-badge">${t('local_badge')}</span>` : ''}
+                <div class="tool-badges">
+                    ${isLocalFile ? `<span class="tool-badge local-badge">${t('local_badge')}</span>` : ''}
+                    ${isYouTubeDownloader ? `<span class="tool-badge extension-status" id="ext-status-${tool.id}">⏳ Kontroluji...</span>` : ''}
+                </div>
             </div>
             <p class="tool-description">${escapeHtml(tool.description || t('no_description'))}</p>
             <div class="tool-meta">
@@ -796,7 +801,44 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Load data on startup
     useDefaultConfig();
+
+    // Check YouTube extension status after render
+    setTimeout(checkYouTubeExtensionStatus, 500);
+    setTimeout(checkYouTubeExtensionStatus, 1500);
+
+    // Listen for extension ready events
+    window.addEventListener('adhub-extension-ready', () => {
+        console.log('[AdHUB] Extension ready event received');
+        checkYouTubeExtensionStatus();
+    });
 });
+
+// Check YouTube Downloader extension status
+function checkYouTubeExtensionStatus() {
+    const statusBadge = document.getElementById('ext-status-youtube-downloader');
+    if (!statusBadge) return;
+
+    try {
+        // Check multiple methods
+        const hasExtension =
+            localStorage.getItem('adhub_extension_active') === 'true' ||
+            document.documentElement.getAttribute('data-adhub-extension') === 'true' ||
+            window.adhubExtensionAvailable === true;
+
+        if (hasExtension) {
+            statusBadge.innerHTML = '✅ Aktivní';
+            statusBadge.classList.add('status-active');
+            statusBadge.classList.remove('status-inactive');
+        } else {
+            statusBadge.innerHTML = '❌ Neaktivní';
+            statusBadge.classList.add('status-inactive');
+            statusBadge.classList.remove('status-active');
+        }
+    } catch (error) {
+        console.error('[AdHUB] Error checking extension status:', error);
+        statusBadge.innerHTML = '❓ Neznámý';
+    }
+}
 
 // Export functions for global use
 window.openTool = openTool;

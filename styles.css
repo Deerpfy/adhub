@@ -673,6 +673,12 @@ body::before {
     border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
+.tool-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
 .tool-badge {
     padding: 4px 10px;
     border-radius: 8px;
@@ -685,6 +691,20 @@ body::before {
     background: rgba(139, 92, 246, 0.15);
     color: var(--primary-light);
     border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+.tool-badge.status-active {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.3);
+    text-transform: none;
+}
+
+.tool-badge.status-inactive {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
+    text-transform: none;
 }
 
 .tool-description {
