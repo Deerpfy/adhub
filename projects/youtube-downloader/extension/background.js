@@ -317,15 +317,47 @@ async function handleDownload(url, format, quality, filename) {
         console.log('[AdHUB] Final filename:', finalFilename);
         console.log('[AdHUB] Download URL:', url?.substring(0, 200));
 
-        // Použijeme Chrome Downloads API
+        // Fetch video as blob first (YouTube URLs require proper headers and session)
+        console.log('[AdHUB] Fetching video as blob...');
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Origin': 'https://www.youtube.com',
+                'Referer': 'https://www.youtube.com/',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+
+        const blob = await response.blob();
+        console.log('[AdHUB] ✅ Blob created - Size:', Math.round(blob.size / 1024 / 1024 * 100) / 100, 'MB, Type:', blob.type);
+
+        // Create object URL from blob
+        const blobUrl = URL.createObjectURL(blob);
+        console.log('[AdHUB] Object URL created:', blobUrl.substring(0, 50));
+
+        // Download the blob URL
         const downloadId = await chrome.downloads.download({
-            url: url,
+            url: blobUrl,
             filename: finalFilename,
             saveAs: false,  // Automatické stahování bez dialogu
             conflictAction: 'uniquify'  // Pokud soubor existuje, přidá (1), (2) atd.
         });
 
         console.log('[AdHUB] ✅ Download started with ID:', downloadId);
+
+        // Clean up blob URL after download completes
+        chrome.downloads.onChanged.addListener(function cleanup(delta) {
+            if (delta.id === downloadId && delta.state?.current === 'complete') {
+                console.log('[AdHUB] Download complete, cleaning up blob URL');
+                URL.revokeObjectURL(blobUrl);
+                chrome.downloads.onChanged.removeListener(cleanup);
+            }
+        });
+
         return { success: true, downloadId: downloadId };
         
     } catch (error) {
