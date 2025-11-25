@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import fs from 'fs-extra';
 import path from 'path';
+import archiver from 'archiver';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -20,6 +21,66 @@ app.use(express.static(join(__dirname, '../')));
 // Složka pro stahované soubory
 const DOWNLOADS_DIR = join(__dirname, '../downloads');
 fs.ensureDirSync(DOWNLOADS_DIR);
+
+// Složka rozšíření
+const EXTENSION_DIR = join(__dirname, '../extension');
+
+// =========================================
+// API pro stažení rozšíření jako ZIP
+// =========================================
+
+app.get('/api/extension/download', async (req, res) => {
+    try {
+        // Kontrola, zda složka extension existuje
+        if (!fs.existsSync(EXTENSION_DIR)) {
+            return res.status(404).json({ error: 'Extension folder not found' });
+        }
+
+        // Nastavení hlaviček pro stažení
+        res.setHeader('Content-Type', 'application/zip');
+        res.setHeader('Content-Disposition', 'attachment; filename="adhub-youtube-extension.zip"');
+
+        // Vytvoření ZIP archivu
+        const archive = archiver('zip', {
+            zlib: { level: 9 } // Maximální komprese
+        });
+
+        // Pipe do response
+        archive.pipe(res);
+
+        // Přidání souborů ze složky extension
+        archive.directory(EXTENSION_DIR, 'adhub-youtube-extension');
+
+        // Dokončení
+        await archive.finalize();
+
+        console.log('[Extension] ZIP created and sent successfully');
+
+    } catch (error) {
+        console.error('[Extension] Error creating ZIP:', error);
+        res.status(500).json({ error: 'Failed to create extension ZIP' });
+    }
+});
+
+// API pro info o rozšíření
+app.get('/api/extension/info', (req, res) => {
+    try {
+        const manifestPath = join(EXTENSION_DIR, 'manifest.json');
+        if (!fs.existsSync(manifestPath)) {
+            return res.status(404).json({ error: 'Extension manifest not found' });
+        }
+
+        const manifest = fs.readJsonSync(manifestPath);
+        res.json({
+            name: manifest.name,
+            version: manifest.version,
+            description: manifest.description,
+            available: true
+        });
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to read extension info' });
+    }
+});
 
 // Najde yt-dlp příkaz (zkusí yt-dlp.exe, pak yt-dlp, pak python -m yt_dlp)
 function getYtDlpCommand() {
