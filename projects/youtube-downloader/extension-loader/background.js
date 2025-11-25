@@ -1,9 +1,9 @@
-// AdHUB YouTube Downloader - Auto-Update Loader v1.1.0
+// AdHUB YouTube Downloader - Auto-Update Loader v1.1.2
 // Automaticky načítá aktuální kód z GitHubu a obsahuje plnou funkcionalitu
 
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/Deerpfy/adhub/main/projects/youtube-downloader/extension';
 const CHECK_UPDATE_INTERVAL = 60 * 60 * 1000; // 1 hodina
-const VERSION = '1.1.1';
+const VERSION = '1.1.2';
 
 console.log(`[AdHUB Loader v${VERSION}] Service worker started`);
 
