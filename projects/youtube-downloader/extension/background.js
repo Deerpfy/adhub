@@ -154,6 +154,10 @@ async function handleGetVideoInfo(videoId, url) {
 // Získání download linků
 async function handleGetDownloadLinks(videoId, url) {
     try {
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('[AdHUB Formats] 🔍 FETCHING DOWNLOAD LINKS');
+        console.log('[AdHUB Formats] Video ID:', videoId);
+
         // Získáme stránku YouTube
         const pageResponse = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
             headers: {
@@ -161,35 +165,47 @@ async function handleGetDownloadLinks(videoId, url) {
             }
         });
         const pageText = await pageResponse.text();
-        
+
+        console.log('[AdHUB Formats] Page fetched, size:', pageText.length, 'chars');
+
         // Parsování ytInitialPlayerResponse
         const playerResponseMatch = pageText.match(/ytInitialPlayerResponse\s*=\s*({.+?});/);
         if (!playerResponseMatch) {
             throw new Error('Nepodařilo se najít video data');
         }
-        
+
         const playerResponse = JSON.parse(playerResponseMatch[1]);
-        
+        console.log('[AdHUB Formats] Player response parsed successfully');
+
         // Kontrola, zda video je přehratelné
         const playabilityStatus = playerResponse.playabilityStatus;
+        console.log('[AdHUB Formats] Playability status:', playabilityStatus?.status);
         if (playabilityStatus?.status !== 'OK') {
             throw new Error(playabilityStatus?.reason || 'Video není dostupné');
         }
-        
+
         // Získání formátů
         const streamingData = playerResponse.streamingData;
         if (!streamingData) {
             throw new Error('Nejsou dostupné žádné streamy');
         }
-        
+
+        console.log('[AdHUB Formats] Streaming data found:', {
+            hasAdaptiveFormats: !!streamingData.adaptiveFormats,
+            adaptiveFormatsCount: streamingData.adaptiveFormats?.length || 0,
+            hasFormats: !!streamingData.formats,
+            formatsCount: streamingData.formats?.length || 0
+        });
+
         const formats = [];
-        
+
         // Adaptivní formáty (oddělené audio/video)
         if (streamingData.adaptiveFormats) {
+            console.log('[AdHUB Formats] Processing adaptive formats...');
             for (const format of streamingData.adaptiveFormats) {
                 const downloadUrl = format.url || await decipherUrl(format.signatureCipher);
                 if (downloadUrl) {
-                    formats.push({
+                    const formatInfo = {
                         itag: format.itag,
                         url: downloadUrl,
                         mimeType: format.mimeType,
@@ -200,17 +216,20 @@ async function handleGetDownloadLinks(videoId, url) {
                         height: format.height,
                         type: format.mimeType?.includes('audio') ? 'audio' : 'video',
                         codec: extractCodec(format.mimeType)
-                    });
+                    };
+                    formats.push(formatInfo);
+                    console.log(`[AdHUB Formats]   ✓ ${formatInfo.type} - ${formatInfo.quality} (${formatInfo.codec}) - ${Math.round(formatInfo.contentLength / 1024 / 1024)} MB`);
                 }
             }
         }
-        
+
         // Kombinované formáty (video + audio)
         if (streamingData.formats) {
+            console.log('[AdHUB Formats] Processing combined formats...');
             for (const format of streamingData.formats) {
                 const downloadUrl = format.url || await decipherUrl(format.signatureCipher);
                 if (downloadUrl) {
-                    formats.push({
+                    const formatInfo = {
                         itag: format.itag,
                         url: downloadUrl,
                         mimeType: format.mimeType,
@@ -223,22 +242,34 @@ async function handleGetDownloadLinks(videoId, url) {
                         hasAudio: true,
                         hasVideo: true,
                         codec: extractCodec(format.mimeType)
-                    });
+                    };
+                    formats.push(formatInfo);
+                    console.log(`[AdHUB Formats]   ✓ combined - ${formatInfo.quality} (${formatInfo.codec}) - ${Math.round(formatInfo.contentLength / 1024 / 1024)} MB`);
                 }
             }
         }
-        
+
         // Seřazení formátů podle kvality
         formats.sort((a, b) => {
             if (a.type === 'combined' && b.type !== 'combined') return -1;
             if (a.type !== 'combined' && b.type === 'combined') return 1;
             return (b.height || 0) - (a.height || 0);
         });
-        
+
+        console.log('[AdHUB Formats] 📊 Total formats found:', formats.length);
+        console.log('[AdHUB Formats] Breakdown:', {
+            combined: formats.filter(f => f.type === 'combined').length,
+            video: formats.filter(f => f.type === 'video').length,
+            audio: formats.filter(f => f.type === 'audio').length
+        });
+
         // Získání názvu videa
         const title = playerResponse.videoDetails?.title || 'video';
         const safeTitle = title.replace(/[<>:"/\\|?*]/g, '_').substring(0, 100);
-        
+
+        console.log('[AdHUB Formats] Video title:', title);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
         return {
             success: true,
             videoId: videoId,
@@ -283,8 +314,16 @@ async function decipherUrl(signatureCipher) {
 // Stahování souboru
 async function handleDownload(url, format, quality, filename) {
     try {
-        console.log('[AdHUB] Starting download:', { format, quality, filename, url: url?.substring(0, 100) });
-        
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('[AdHUB Download] 🎬 STARTING DOWNLOAD');
+        console.log('[AdHUB Download] Parameters:', {
+            format,
+            quality,
+            filename,
+            urlLength: url?.length,
+            urlStart: url?.substring(0, 150)
+        });
+
         // Určení správné přípony souboru
         let finalFilename = filename;
         if (!finalFilename) {
@@ -299,9 +338,10 @@ async function handleDownload(url, format, quality, filename) {
             }
             finalFilename = `video_${Date.now()}.${ext}`;
         }
-        
+
         // Zkontrolujeme, že filename má správnou příponu
         if (finalFilename && !finalFilename.match(/\.(mp4|webm|m4a|mp3|mkv|avi|mov)$/i)) {
+            console.log('[AdHUB Download] ⚠️ Filename missing extension, adding one');
             // Přidáme příponu podle URL
             if (url) {
                 if (url.includes('mime=audio') || url.includes('audio/')) {
@@ -313,33 +353,89 @@ async function handleDownload(url, format, quality, filename) {
                 finalFilename += '.mp4';
             }
         }
-        
-        console.log('[AdHUB] Final filename:', finalFilename);
-        console.log('[AdHUB] Download URL:', url?.substring(0, 200));
+
+        console.log('[AdHUB Download] 📝 Final filename:', finalFilename);
+
+        // Analyze URL to understand what we're downloading
+        const urlObj = new URL(url);
+        const mimeType = urlObj.searchParams.get('mime');
+        console.log('[AdHUB Download] 📊 URL Analysis:', {
+            host: urlObj.host,
+            mimeType: mimeType,
+            hasRatebypass: urlObj.searchParams.has('ratebypass'),
+            hasExpire: urlObj.searchParams.has('expire')
+        });
 
         // Fetch video as blob first (YouTube URLs require proper headers and session)
-        console.log('[AdHUB] Fetching video as blob...');
+        console.log('[AdHUB Download] 🌐 Fetching video as blob...');
+        const fetchStartTime = Date.now();
+
+        // Extract video ID from URL to create proper referer
+        const videoIdMatch = url.match(/[?&]id=([^&]+)/);
+        const refererUrl = videoIdMatch
+            ? `https://www.youtube.com/watch?v=${videoIdMatch[1]}`
+            : 'https://www.youtube.com/';
+
+        console.log('[AdHUB Download] Using Referer:', refererUrl);
+
         const response = await fetch(url, {
             method: 'GET',
+            credentials: 'include',  // Include cookies from YouTube session
             headers: {
+                'Accept': '*/*',
+                'Accept-Language': 'en-US,en;q=0.9',
                 'Origin': 'https://www.youtube.com',
-                'Referer': 'https://www.youtube.com/',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                'Referer': refererUrl,
+                'Sec-Fetch-Dest': 'empty',
+                'Sec-Fetch-Mode': 'cors',
+                'Sec-Fetch-Site': 'cross-site',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
             }
         });
 
+        const fetchTime = Date.now() - fetchStartTime;
+        console.log('[AdHUB Download] 📡 Fetch response:', {
+            status: response.status,
+            statusText: response.statusText,
+            ok: response.ok,
+            contentType: response.headers.get('content-type'),
+            contentLength: response.headers.get('content-length'),
+            fetchTimeMs: fetchTime
+        });
+
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error('[AdHUB Download] ❌ Fetch failed, response text:', errorText.substring(0, 500));
             throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
+        const blobStartTime = Date.now();
         const blob = await response.blob();
-        console.log('[AdHUB] ✅ Blob created - Size:', Math.round(blob.size / 1024 / 1024 * 100) / 100, 'MB, Type:', blob.type);
+        const blobTime = Date.now() - blobStartTime;
+
+        const blobSizeMB = Math.round(blob.size / 1024 / 1024 * 100) / 100;
+        console.log('[AdHUB Download] ✅ Blob created:', {
+            size: `${blobSizeMB} MB`,
+            type: blob.type,
+            blobTimeMs: blobTime
+        });
+
+        // Verify blob is not empty and has correct type
+        if (blob.size === 0) {
+            console.error('[AdHUB Download] ❌ Blob is empty!');
+            throw new Error('Downloaded blob is empty');
+        }
+
+        if (blob.type.includes('text') || blob.type.includes('html')) {
+            console.error('[AdHUB Download] ⚠️ WARNING: Blob type suggests error page:', blob.type);
+        }
 
         // Create object URL from blob
         const blobUrl = URL.createObjectURL(blob);
-        console.log('[AdHUB] Object URL created:', blobUrl.substring(0, 50));
+        console.log('[AdHUB Download] 🔗 Object URL created:', blobUrl);
 
         // Download the blob URL
+        console.log('[AdHUB Download] 💾 Calling chrome.downloads.download...');
         const downloadId = await chrome.downloads.download({
             url: blobUrl,
             filename: finalFilename,
@@ -347,12 +443,17 @@ async function handleDownload(url, format, quality, filename) {
             conflictAction: 'uniquify'  // Pokud soubor existuje, přidá (1), (2) atd.
         });
 
-        console.log('[AdHUB] ✅ Download started with ID:', downloadId);
+        console.log('[AdHUB Download] ✅ Download started with ID:', downloadId);
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
         // Clean up blob URL after download completes
         chrome.downloads.onChanged.addListener(function cleanup(delta) {
             if (delta.id === downloadId && delta.state?.current === 'complete') {
-                console.log('[AdHUB] Download complete, cleaning up blob URL');
+                console.log('[AdHUB Download] ✅ Download complete, cleaning up blob URL');
+                URL.revokeObjectURL(blobUrl);
+                chrome.downloads.onChanged.removeListener(cleanup);
+            } else if (delta.id === downloadId && delta.state?.current === 'interrupted') {
+                console.error('[AdHUB Download] ❌ Download interrupted:', delta.error?.current);
                 URL.revokeObjectURL(blobUrl);
                 chrome.downloads.onChanged.removeListener(cleanup);
             }
