@@ -4,6 +4,24 @@
     box-sizing: border-box;
 }
 
+:root {
+    --adhub-primary: #8b5cf6;
+    --adhub-primary-dark: #7c3aed;
+    --adhub-secondary: #ec4899;
+    --adhub-secondary-dark: #db2777;
+    --adhub-accent: #0ea5e9;
+    --adhub-bg: #050509;
+    --adhub-bg-alt: #0d0d16;
+    --adhub-card: rgba(14, 14, 28, 0.94);
+    --adhub-card-strong: rgba(18, 18, 35, 0.94);
+    --adhub-card-border: rgba(139, 92, 246, 0.3);
+    --adhub-card-border-soft: rgba(139, 92, 246, 0.15);
+    --adhub-text: #f7f7ff;
+    --adhub-muted: #a5a7c7;
+    --adhub-success: #22c55e;
+    --adhub-danger: #ef4444;
+}
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
@@ -748,6 +766,234 @@ header h1 {
 
 .close:hover {
     color: #fff;
+}
+
+/* === AdHUB rebrand overrides ============================================= */
+body {
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background:
+        radial-gradient(circle at 20% 20%, rgba(236, 72, 153, 0.12), transparent 45%),
+        radial-gradient(circle at 80% 5%, rgba(139, 92, 246, 0.2), transparent 50%),
+        linear-gradient(135deg, var(--adhub-bg), var(--adhub-bg-alt) 55%, #050509 100%);
+    padding: 32px;
+    color: var(--adhub-text);
+}
+
+.container {
+    background: var(--adhub-card);
+    border-radius: 24px;
+    border: 1px solid var(--adhub-card-border);
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.65), 0 0 35px rgba(139, 92, 246, 0.18);
+    position: relative;
+    overflow: hidden;
+}
+
+.container::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.1), transparent 85%);
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.container > * {
+    position: relative;
+    z-index: 1;
+}
+
+header {
+    background: linear-gradient(120deg, rgba(10, 10, 24, 0.9), rgba(18, 10, 32, 0.92));
+    border-bottom: 1px solid var(--adhub-card-border-soft);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.45);
+}
+
+header h1 {
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    background: linear-gradient(125deg, var(--adhub-primary), var(--adhub-secondary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 10px 30px rgba(139, 92, 246, 0.35);
+}
+
+.controls {
+    gap: 14px;
+}
+
+.server-controls {
+    border-right: 1px solid rgba(255, 255, 255, 0.08);
+    padding-right: 18px;
+}
+
+.btn {
+    text-transform: none;
+    letter-spacing: 0.2px;
+    border-radius: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.01));
+    color: var(--adhub-text);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+}
+
+.btn::before {
+    background: rgba(255, 255, 255, 0.18);
+}
+
+.btn-primary,
+.btn-server-toggle.btn-server-start {
+    background: linear-gradient(130deg, var(--adhub-primary), var(--adhub-secondary));
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow: 0 18px 35px rgba(139, 92, 246, 0.35);
+}
+
+.btn-primary:hover,
+.btn-server-toggle.btn-server-start:hover {
+    background: linear-gradient(130deg, var(--adhub-secondary), var(--adhub-primary-dark));
+    transform: translateY(-2px);
+}
+
+.btn-secondary,
+.btn-server-restart {
+    background: linear-gradient(130deg, var(--adhub-accent), #2563eb);
+    border-color: rgba(14, 165, 233, 0.4);
+    box-shadow: 0 18px 35px rgba(14, 165, 233, 0.3);
+}
+
+.btn-secondary:hover,
+.btn-server-restart:hover {
+    background: linear-gradient(130deg, #38bdf8, var(--adhub-accent));
+    transform: translateY(-2px);
+}
+
+.btn-success {
+    background: linear-gradient(130deg, var(--adhub-success), #16a34a);
+    border-color: rgba(34, 197, 94, 0.4);
+}
+
+.btn-success:hover {
+    background: linear-gradient(130deg, #16a34a, #15803d);
+}
+
+.btn-server-toggle.btn-server-stop {
+    background: linear-gradient(130deg, var(--adhub-danger), #dc2626);
+    border-color: rgba(239, 68, 68, 0.5);
+    box-shadow: 0 18px 35px rgba(239, 68, 68, 0.3);
+}
+
+.btn-server-toggle.btn-server-stop:hover {
+    background: linear-gradient(130deg, #dc2626, #991b1b);
+}
+
+.input-card,
+.video-info-card,
+.download-progress-card,
+.download-complete-card,
+.downloads-history {
+    background: var(--adhub-card-strong);
+    border: 1px solid var(--adhub-card-border-soft);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.input-card h2,
+.downloads-history h2,
+.download-progress-card h3,
+.download-complete-card h3 {
+    color: var(--adhub-text);
+}
+
+.input-group label,
+.download-status,
+.download-item-info .file-size,
+.empty-state-text,
+.video-meta,
+.settings-modal-content label,
+.modal-content label {
+    color: var(--adhub-muted);
+}
+
+.input-group input,
+.modal-content input,
+.modal-content select {
+    border: 1px solid var(--adhub-card-border-soft);
+    background: rgba(6, 6, 12, 0.8);
+    color: var(--adhub-text);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.input-group input:focus,
+.modal-content input:focus,
+.modal-content select:focus {
+    border-color: var(--adhub-primary);
+    box-shadow: 0 0 18px rgba(139, 92, 246, 0.35);
+}
+
+.download-buttons .btn {
+    border: none;
+    box-shadow: 0 18px 35px rgba(0, 0, 0, 0.25);
+}
+
+.btn-mp4 {
+    background: linear-gradient(130deg, var(--adhub-secondary), var(--adhub-secondary-dark));
+}
+
+.btn-m4a {
+    background: linear-gradient(130deg, var(--adhub-primary), var(--adhub-primary-dark));
+}
+
+.btn-mp3 {
+    background: linear-gradient(130deg, var(--adhub-accent), #14b8a6);
+}
+
+.progress-bar {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--adhub-card-border-soft);
+}
+
+.progress-fill {
+    background: linear-gradient(90deg, var(--adhub-primary), var(--adhub-secondary));
+    box-shadow: 0 0 18px rgba(139, 92, 246, 0.45);
+}
+
+.download-complete-card {
+    border-color: rgba(34, 197, 94, 0.45);
+    background: linear-gradient(135deg, rgba(14, 14, 28, 0.98), rgba(18, 18, 35, 0.98));
+}
+
+.download-complete-card h3 {
+    color: var(--adhub-success);
+}
+
+.downloads-history {
+    border: 1px solid var(--adhub-card-border);
+}
+
+.download-item {
+    background: rgba(10, 10, 18, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.download-item:hover {
+    border-color: rgba(139, 92, 246, 0.4);
+    background: rgba(15, 15, 25, 0.95);
+}
+
+.downloads-list::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.4);
+}
+
+.modal {
+    background: rgba(6, 6, 12, 0.85);
+    backdrop-filter: blur(16px);
+}
+
+.modal-content {
+    background: linear-gradient(145deg, rgba(12, 12, 24, 0.96), rgba(20, 14, 32, 0.96));
+    border: 1px solid var(--adhub-card-border);
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.65);
 }
 
 /* Responsive */
