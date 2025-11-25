@@ -3,7 +3,7 @@
 
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com/Deerpfy/adhub/main/projects/youtube-downloader/extension';
 const CHECK_UPDATE_INTERVAL = 60 * 60 * 1000; // 1 hodina
-const VERSION = '1.1.0';
+const VERSION = '1.1.1';
 
 console.log(`[AdHUB Loader v${VERSION}] Service worker started`);
 

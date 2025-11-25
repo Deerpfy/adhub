@@ -13,7 +13,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     
     switch (request.action) {
         case 'ping':
-            sendResponse({ success: true, message: 'AdHUB Extension is active', version: '1.1.0' });
+            sendResponse({ success: true, message: 'AdHUB Extension is active', version: '1.1.1' });
             break;
             
         case 'getVideoInfo':
@@ -32,7 +32,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             sendResponse({ 
                 success: true, 
                 isActive: extensionState.isActive,
-                version: '1.1.0'
+                version: '1.1.1'
             });
             break;
             
@@ -66,7 +66,7 @@ chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => 
     
     switch (request.action) {
         case 'ping':
-            sendResponse({ success: true, message: 'AdHUB Extension is active', version: '1.1.0' });
+            sendResponse({ success: true, message: 'AdHUB Extension is active', version: '1.1.1' });
             break;
             
         case 'getVideoInfo':
