@@ -5,9 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AdHUB YouTube Downloader - Rozšíření pro prohlížeč</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- JSZip pro generování ZIP souboru - lokální kopie -->
-    <script src="jszip.min.js"></script>
-    <script src="jszip-check.js"></script>
+    <!-- JSZip pro generování ZIP souboru - s fallbacky -->
+    <script>
+    // Load JSZip with fallback
+    (function() {
+        console.log('[AdHUB Init] Loading JSZip...');
+
+        // Try multiple sources in order
+        const sources = [
+            'jszip.min.js',  // Local file
+            'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
+            'https://unpkg.com/jszip@3.10.1/dist/jszip.min.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'
+        ];
+
+        let currentIndex = 0;
+
+        function tryLoadJSZip() {
+            if (currentIndex >= sources.length) {
+                console.error('[AdHUB Init] ❌ Failed to load JSZip from all sources');
+                alert('Nepodařilo se načíst JSZip knihovnu. Zkuste obnovit stránku.');
+                return;
+            }
+
+            const src = sources[currentIndex];
+            console.log('[AdHUB Init] Trying source ' + (currentIndex + 1) + '/' + sources.length + ':', src);
+
+            const script = document.createElement('script');
+            script.src = src;
+            script.onerror = function() {
+                console.warn('[AdHUB Init] ⚠️ Failed to load from:', src);
+                currentIndex++;
+                tryLoadJSZip();
+            };
+            script.onload = function() {
+                console.log('[AdHUB Init] ✅ JSZip loaded successfully from:', src);
+                console.log('[AdHUB Init] JSZip version:', typeof JSZip !== 'undefined' ? JSZip.version : 'unknown');
+            };
+            document.head.appendChild(script);
+        }
+
+        tryLoadJSZip();
+    })();
+    </script>
     <script defer src="script.js"></script>
 </head>
 <body>
@@ -55,7 +95,7 @@
                 <div class="install-card">
                     <h3>🐙 Alternativa: GitHub</h3>
                     <p>Můžete také stáhnout rozšíření přímo z GitHubu.</p>
-                    <a href="https://github.com" target="_blank" class="btn btn-secondary" id="githubLink">
+                    <a href="https://github.com/Deerpfy/adhub/tree/main/projects/youtube-downloader/extension" target="_blank" class="btn btn-secondary" id="githubLink">
                         📂 Otevřít na GitHubu
                     </a>
                 </div>
