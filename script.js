@@ -11,26 +11,22 @@ const DEFAULT_CONFIG = {
         {
             "id": "youtube-downloader",
             "name": "AdHUB YouTube Downloader",
-            "description": "Rychlé stahování videí a audia (MP4/M4A/MP3) přímo z AdHUB rozhraní.",
+            "description": "Stáhněte si rozšíření pro Chrome/Edge/Brave a stahujte YouTube videa přímo z prohlížeče.",
             "category": "video",
             "icon": "🎥",
-            "url": "http://localhost:3003",
-            "helperPort": 3004,
-            "serverPort": 3003,
-            "helperPath": "projects/youtube-downloader/server/server-helper.js",
+            "url": "projects/youtube-downloader/index.html",
+            "type": "local",
             "enabled": true,
-            "tags": ["yt-dlp", "download", "audio", "video", "adhub"]
+            "tags": ["extension", "download", "audio", "video", "youtube", "chrome"]
         },
         {
             "id": "chat-panel",
             "name": "AdHUB Multistream Chat Panel",
-            "description": "Unified chat pro Twitch, Kick a YouTube s helper serverem a overlay módy.",
+            "description": "Unified chat pro Twitch, Kick a YouTube s overlay módy. Vyžaduje spuštění lokálního serveru.",
             "category": "streaming",
             "icon": "💬",
-            "url": "http://localhost:3001",
-            "helperPort": 3002,
-            "serverPort": 3001,
-            "helperPath": "projects/chat-panel/server/server-helper.js",
+            "url": "projects/chat-panel/index.html",
+            "type": "local",
             "enabled": true,
             "tags": ["twitch", "kick", "youtube", "chat", "overlay"]
         },
@@ -170,11 +166,10 @@ function renderTools() {
     emptyState.style.display = 'none';
     
     grid.innerHTML = filtered.map(item => {
-        if (item.helperPort !== undefined || item.serverPort !== undefined) {
-            // Je to nástroj (server)
+        // Rozlišení: tools mají id a jsou v tools poli, links mají type: "external"
+        if (allTools.includes(item)) {
             return createToolCard(item);
         } else {
-            // Je to odkaz
             return createLinkCard(item);
         }
     }).join('');
@@ -182,14 +177,15 @@ function renderTools() {
 
 // Vytvoření karty nástroje
 function createToolCard(tool) {
+    const isLocalFile = tool.type === 'local' || !tool.url.startsWith('http');
     return `
-        <div class="tool-card server" data-id="${tool.id}" data-type="tool">
+        <div class="tool-card" data-id="${tool.id}" data-type="tool">
             <div class="tool-header">
                 <div class="tool-title">
                     <span class="tool-icon">${tool.icon || '🔧'}</span>
                     <span class="tool-name">${escapeHtml(tool.name)}</span>
                 </div>
-                <span class="tool-status stopped">Zastaveno</span>
+                ${isLocalFile ? '<span class="tool-badge">📦 Lokální</span>' : ''}
             </div>
             <p class="tool-description">${escapeHtml(tool.description || 'Bez popisu')}</p>
             <div class="tool-meta">
@@ -243,7 +239,12 @@ function createLinkCard(link) {
 
 // Otevření nástroje
 function openTool(url) {
-    window.open(url, '_blank');
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+        window.open(url, '_blank');
+    } else {
+        // Lokální soubor - otevřít v aktuálním okně nebo novém tabu
+        window.location.href = url;
+    }
 }
 
 // Otevření odkazu
