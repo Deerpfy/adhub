@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AdHUB YouTube Downloader (Auto-Update)",
-  "version": "1.1.0",
+  "version": "1.1.2",
   "description": "Stahujte YouTube videa - automaticky aktualizováno z GitHubu",
   "permissions": [
     "activeTab",
