@@ -1014,6 +1014,17 @@ header h1 {
     border: 1px solid var(--adhub-card-border);
 }
 
+.history-notice {
+    background: rgba(139, 92, 246, 0.1);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: var(--adhub-text);
+    text-align: center;
+}
+
 .downloads-list {
     max-height: 300px;
     overflow-y: auto;
@@ -1058,6 +1069,12 @@ header h1 {
 .download-item-info .file-date {
     color: var(--adhub-muted);
     font-size: 11px;
+}
+
+.download-item-info .time-remaining {
+    color: rgba(139, 92, 246, 0.8);
+    font-size: 10px;
+    font-weight: 600;
 }
 
 .empty-state-text {

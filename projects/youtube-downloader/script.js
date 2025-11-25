@@ -258,6 +258,8 @@ function extractCodec(mimeType) {
 
 async function handleDownload(url, format, quality, filename) {
     try {
+        console.log('[AdHUB] Starting download:', { format, quality, filename, url: url?.substring(0, 100) });
+
         let finalFilename = filename;
         if (!finalFilename) {
             let ext = format || 'mp4';
@@ -277,15 +279,53 @@ async function handleDownload(url, format, quality, filename) {
                 finalFilename += url && url.includes('webm') ? '.webm' : '.mp4';
             }
         }
-        
-        const downloadId = await chrome.downloads.download({
-            url: url,
-            filename: finalFilename,
-            saveAs: true
+
+        console.log('[AdHUB] Final filename:', finalFilename);
+        console.log('[AdHUB] Download URL:', url?.substring(0, 200));
+
+        // Fetch video as blob first (YouTube URLs require proper headers and session)
+        console.log('[AdHUB] Fetching video as blob...');
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Origin': 'https://www.youtube.com',
+                'Referer': 'https://www.youtube.com/',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
         });
-        
+
+        if (!response.ok) {
+            throw new Error(\`HTTP \${response.status}: \${response.statusText}\`);
+        }
+
+        const blob = await response.blob();
+        console.log('[AdHUB] ✅ Blob created - Size:', Math.round(blob.size / 1024 / 1024 * 100) / 100, 'MB, Type:', blob.type);
+
+        // Create object URL from blob
+        const blobUrl = URL.createObjectURL(blob);
+        console.log('[AdHUB] Object URL created:', blobUrl.substring(0, 50));
+
+        // Download the blob URL
+        const downloadId = await chrome.downloads.download({
+            url: blobUrl,
+            filename: finalFilename,
+            saveAs: false,
+            conflictAction: 'uniquify'
+        });
+
+        console.log('[AdHUB] ✅ Download started with ID:', downloadId);
+
+        // Clean up blob URL after download completes
+        chrome.downloads.onChanged.addListener(function cleanup(delta) {
+            if (delta.id === downloadId && delta.state?.current === 'complete') {
+                console.log('[AdHUB] Download complete, cleaning up blob URL');
+                URL.revokeObjectURL(blobUrl);
+                chrome.downloads.onChanged.removeListener(cleanup);
+            }
+        });
+
         return { success: true, downloadId: downloadId };
-        
+
     } catch (error) {
         console.error('[AdHUB] Download error:', error);
         return { success: false, error: error.message };
@@ -1721,12 +1761,17 @@ async function handleFormatDownload(button, url, filename) {
         if (response && response.success) {
             button.textContent = '✅ Staženo';
             button.style.background = 'linear-gradient(135deg, #22c55e, #16a34a)';
-            
-            addToDownloadsHistory({ filename: filename, date: new Date().toISOString() });
-            
+
+            // Store videoId in history for click-to-reload functionality
+            addToDownloadsHistory({
+                filename: filename,
+                date: new Date().toISOString(),
+                videoId: currentVideoInfo?.videoId || currentFormats?.videoId || null
+            });
+
             if (downloadFilename) downloadFilename.textContent = filename;
             if (downloadCompleteCard) downloadCompleteCard.style.display = 'block';
-            
+
             showToast(`Stahování zahájeno: ${filename}`, 'success');
         } else {
             throw new Error(response?.error || 'Stahování selhalo');
@@ -1758,34 +1803,82 @@ function formatFileSize(bytes) {
 
 function loadDownloadsHistory() {
     if (!downloadsList) return;
-    
-    const history = JSON.parse(localStorage.getItem('adhub_downloads_history') || '[]');
-    
+
+    let history = JSON.parse(localStorage.getItem('adhub_downloads_history') || '[]');
+
+    // Auto-delete items older than 48 hours
+    const now = Date.now();
+    const maxAge = 48 * 60 * 60 * 1000; // 48 hours in milliseconds
+    const originalLength = history.length;
+
+    history = history.filter(item => {
+        const itemAge = now - new Date(item.date).getTime();
+        return itemAge < maxAge;
+    });
+
+    // Update localStorage if items were deleted
+    if (history.length !== originalLength) {
+        localStorage.setItem('adhub_downloads_history', JSON.stringify(history));
+        console.log('[AdHUB] Cleaned up', originalLength - history.length, 'old history items (>48h)');
+    }
+
     if (history.length === 0) {
         downloadsList.innerHTML = '<p class="empty-state-text">Zatím žádné stažené soubory</p>';
         return;
     }
-    
+
     downloadsList.innerHTML = '';
     history.slice(0, 10).forEach(item => {
         const div = document.createElement('div');
         div.className = 'download-item';
-        
+        div.style.cursor = 'pointer';
+        div.title = 'Klikněte pro opětovné načtení videa';
+
         const date = new Date(item.date);
         const dateStr = date.toLocaleDateString('cs-CZ') + ' ' + date.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
-        
+
+        // Calculate time remaining until auto-delete
+        const itemAge = now - date.getTime();
+        const timeRemaining = maxAge - itemAge;
+        const hoursRemaining = Math.floor(timeRemaining / (60 * 60 * 1000));
+
         let icon = '📄';
         const ext = item.filename.toLowerCase().split('.').pop();
         if (ext === 'mp4' || ext === 'webm') icon = '📹';
         else if (ext === 'mp3' || ext === 'm4a') icon = '🎵';
-        
+
         div.innerHTML = `
             <div class="download-item-info">
                 <div class="filename">${icon} ${item.filename}</div>
-                <div class="file-date">${dateStr}</div>
+                <div class="file-date">${dateStr} <span class="time-remaining">(${hoursRemaining}h zbývá)</span></div>
             </div>
         `;
-        
+
+        // Add click handler to reload the video
+        if (item.videoId) {
+            div.addEventListener('click', () => {
+                console.log('[AdHUB] Reloading video from history:', item.videoId);
+                if (videoUrlInput) {
+                    videoUrlInput.value = item.videoId;
+                    // Scroll to top
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                    // Trigger form submission
+                    if (videoForm) {
+                        videoForm.dispatchEvent(new Event('submit'));
+                    }
+                    showToast(`Načítám video: ${item.filename}`, 'info');
+                }
+            });
+
+            // Add hover effect
+            div.addEventListener('mouseenter', () => {
+                div.style.background = 'rgba(139, 92, 246, 0.15)';
+            });
+            div.addEventListener('mouseleave', () => {
+                div.style.background = '';
+            });
+        }
+
         downloadsList.appendChild(div);
     });
 }
