@@ -91,6 +91,25 @@ const cancelEditBtn = document.getElementById('cancelEditBtn');
 const closeBtn = document.querySelector('.close');
 const closeEditBtn = document.querySelector('.close-edit');
 
+const scheduleRenderFrame = typeof window !== 'undefined' && window.requestAnimationFrame
+    ? window.requestAnimationFrame.bind(window)
+    : (cb) => setTimeout(cb, 16);
+let renderQueued = false;
+function requestRender(options = {}) {
+    const { immediate = false } = options;
+    if (immediate) {
+        renderQueued = false;
+        renderChats();
+        return;
+    }
+    if (renderQueued) return;
+    renderQueued = true;
+    scheduleRenderFrame(() => {
+        renderQueued = false;
+        renderChats();
+    });
+}
+
 // Load saved chats from localStorage
 function loadSavedChats() {
     const saved = localStorage.getItem('chatPanels');
@@ -102,7 +121,7 @@ function loadSavedChats() {
                 chat.paused = false;
             }
         });
-        renderChats();
+        requestRender({ immediate: true });
     }
     
     // Always use divided mode (removed unified mode toggle)
@@ -273,8 +292,9 @@ function addChat(url, name, platform) {
         }, 500);
     }
     
-    // Render chats immediately
-    renderChats();
+    // Render chats on next animation frame to avoid blocking updates
+    requestRender();
+    ensureWebSocketConnection(true);
     
     console.log(`[UI] Chat added with name: ${chatName}`);
 }
@@ -299,7 +319,8 @@ function removeChat(id) {
         console.log(`[UI] Chat ${id} removed from chatViews`);
         // Save and render
         saveChats();
-        renderChats();
+        requestRender();
+        closeIdleWebSocketConnection();
     } else {
         console.warn(`[UI] Chat ${id} not found in chatViews`);
     }
@@ -319,7 +340,34 @@ function clearAllChats() {
         chatViews = [];
         // Save and render
         saveChats();
-        renderChats();
+        requestRender({ immediate: true });
+        closeIdleWebSocketConnection();
+    }
+}
+
+function hasConnectableChats() {
+    return chatViews.some(chat => !chat.permanentError);
+}
+
+function ensureWebSocketConnection(force = false) {
+    if (!hasConnectableChats()) {
+        return null;
+    }
+    if (!force && !isServerRunning) {
+        return null;
+    }
+    if (wsServer && (wsServer.readyState === WebSocket.OPEN || wsServer.readyState === WebSocket.CONNECTING)) {
+        return wsServer;
+    }
+    return connectWebSocketServer();
+}
+
+function closeIdleWebSocketConnection() {
+    if (!hasConnectableChats() && wsServer) {
+        console.log('[WS] Closing idle WebSocket connection - no chat panels remain');
+        wsServer.close(1000, 'No chats active');
+        wsServer = null;
+        wsReady = false;
     }
 }
 
@@ -396,8 +444,8 @@ function connectWebSocketServer() {
                 // Attempt to reconnect after 3 seconds
                 reconnectTimeout = setTimeout(() => {
                     console.log('[WS] Attempting to reconnect...');
-                    if (!wsServer || !wsServer.readyState || wsServer.readyState !== WebSocket.OPEN) {
-                        connectWebSocketServer();
+                    if ((!wsServer || !wsServer.readyState || wsServer.readyState !== WebSocket.OPEN) && hasConnectableChats()) {
+                        ensureWebSocketConnection(true);
                     }
                 }, 3000);
             }
@@ -2254,7 +2302,8 @@ function updateChat(chatId, url, name, platform) {
     saveChats();
     
     // Re-render chats
-    renderChats();
+    requestRender();
+    ensureWebSocketConnection(true);
     
     console.log(`[UI] Chat ${chatId} updated successfully`);
 }
@@ -2657,7 +2706,7 @@ async function checkServerStatus() {
                         
                         if (isServerRunning && !wsReady) {
                             console.log('[UI] Server is back online, reconnecting WebSocket...');
-                            connectWebSocketServer();
+                            ensureWebSocketConnection();
                         }
                         return;
                     }
@@ -2685,7 +2734,7 @@ async function checkServerStatus() {
             
             if (isServerRunning && !wsReady) {
                 console.log('[UI] Server is back online, reconnecting WebSocket...');
-                connectWebSocketServer();
+                ensureWebSocketConnection();
             }
         } else {
             isServerRunning = false;
@@ -3375,17 +3424,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // Don't connect immediately if server is not running
     setTimeout(() => {
         checkServerStatus().then(() => {
-            if (isServerRunning) {
-                connectWebSocketServer();
-            }
+            ensureWebSocketConnection();
         });
     }, 500);
 });
-
-// Always connect to backend server on load
-// Small delay to ensure DOM is ready
-setTimeout(() => {
-    console.log('[UI] Initializing WebSocket connection...');
-    connectWebSocketServer();
-}, 100);
 
