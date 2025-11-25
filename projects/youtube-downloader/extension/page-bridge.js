@@ -46,63 +46,44 @@
         }));
     });
     
-    // Injektujeme skript do stránky pro komunikaci (okamžitě)
-    function injectBridgeScript() {
-        const script = document.createElement('script');
-        script.textContent = `
-            // AdHUB Extension Bridge - Injected
-            (function() {
-                window.adhubExtensionAvailable = true;
-                window.adhubExtensionId = "${EXTENSION_ID}";
-                window.adhubExtensionVersion = "${EXTENSION_VERSION}";
-                
-                console.log('[AdHUB] Extension bridge injected, ID:', window.adhubExtensionId);
-                
-                // Dispatch event pro okamžitou detekci
-                window.dispatchEvent(new CustomEvent('adhub-extension-ready', {
-                    detail: { 
-                        extensionId: window.adhubExtensionId,
-                        version: window.adhubExtensionVersion,
-                        active: true
-                    }
-                }));
-                
-                // Periodicky opakujeme pro případ pozdního načtení stránky
-                setTimeout(function() {
-                    window.dispatchEvent(new CustomEvent('adhub-extension-ready', {
-                        detail: { 
-                            extensionId: window.adhubExtensionId,
-                            version: window.adhubExtensionVersion,
-                            active: true
-                        }
-                    }));
-                }, 500);
-                
-                setTimeout(function() {
-                    window.dispatchEvent(new CustomEvent('adhub-extension-ready', {
-                        detail: { 
-                            extensionId: window.adhubExtensionId,
-                            version: window.adhubExtensionVersion,
-                            active: true
-                        }
-                    }));
-                }, 1500);
-            })();
-        `;
-        (document.head || document.documentElement).appendChild(script);
-        script.remove();
+    // Dispatch events přímo bez inline script injection (CSP-safe)
+    function dispatchExtensionReady() {
+        console.log('[AdHUB] Dispatching extension-ready event');
+
+        // Dispatch custom event - CSP safe
+        window.dispatchEvent(new CustomEvent('adhub-extension-ready', {
+            detail: {
+                extensionId: EXTENSION_ID,
+                version: EXTENSION_VERSION,
+                active: true
+            }
+        }));
     }
-    
-    // Injektujeme hned
-    injectBridgeScript();
-    
-    // A znovu po DOM ready
+
+    // Dispatch hned
+    dispatchExtensionReady();
+
+    // A znovu po DOM ready a s opakováním
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', () => {
             signalExtensionActive();
-            injectBridgeScript();
+            dispatchExtensionReady();
         });
+    } else {
+        // DOM už je ready, dispatchni hned
+        dispatchExtensionReady();
     }
+
+    // Periodické opakování pro pozdní načtení
+    setTimeout(() => {
+        signalExtensionActive();
+        dispatchExtensionReady();
+    }, 500);
+
+    setTimeout(() => {
+        signalExtensionActive();
+        dispatchExtensionReady();
+    }, 1500);
     
     // Forward zprávy z stránky do rozšíření
     window.addEventListener('message', async (event) => {
