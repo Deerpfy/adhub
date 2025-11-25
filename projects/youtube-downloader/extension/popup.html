@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdHUB YouTube Downloader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            width: 360px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+            color: #e0e0e0;
+        }
+        
+        .container {
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        h1 {
+            font-size: 18px;
+            font-weight: 700;
+            background: linear-gradient(125deg, #8b5cf6, #ec4899);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+        }
+        
+        .status-dot.inactive {
+            background: #ef4444;
+            box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+        }
+        
+        .input-section {
+            margin-bottom: 20px;
+        }
+        
+        .input-section label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #aaa;
+        }
+        
+        .input-group {
+            display: flex;
+            gap: 8px;
+        }
+        
+        input[type="text"] {
+            flex: 1;
+            padding: 10px 14px;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            font-size: 13px;
+        }
+        
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #8b5cf6;
+            box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+        }
+        
+        input[type="text"]::placeholder {
+            color: #666;
+        }
+        
+        .btn {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 13px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6, #ec4899);
+            color: white;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+        
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.5);
+        }
+        
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .video-info {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            display: none;
+        }
+        
+        .video-info.visible {
+            display: block;
+        }
+        
+        .video-info img {
+            width: 100%;
+            border-radius: 6px;
+            margin-bottom: 10px;
+        }
+        
+        .video-info h3 {
+            font-size: 14px;
+            color: white;
+            margin-bottom: 5px;
+            line-height: 1.4;
+        }
+        
+        .video-info p {
+            font-size: 12px;
+            color: #888;
+        }
+        
+        .formats-section {
+            display: none;
+        }
+        
+        .formats-section.visible {
+            display: block;
+        }
+        
+        .format-btn {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: white;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .format-btn:hover {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: rgba(139, 92, 246, 0.4);
+        }
+        
+        .format-btn .quality {
+            font-weight: 600;
+        }
+        
+        .format-btn .size {
+            color: #888;
+            font-size: 11px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+            display: none;
+        }
+        
+        .loading.visible {
+            display: block;
+        }
+        
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            border-top-color: #8b5cf6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 10px;
+            color: #ef4444;
+            font-size: 12px;
+            margin-top: 10px;
+            display: none;
+        }
+        
+        .error.visible {
+            display: block;
+        }
+        
+        .help-text {
+            font-size: 11px;
+            color: #666;
+            margin-top: 15px;
+            text-align: center;
+        }
+        
+        .help-text a {
+            color: #8b5cf6;
+            text-decoration: none;
+        }
+        
+        .help-text a:hover {
+            text-decoration: underline;
+        }
+        
+        footer {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+        
+        footer p {
+            font-size: 11px;
+            color: #666;
+        }
+        
+        footer a {
+            color: #8b5cf6;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎥 AdHUB YouTube Downloader</h1>
+            <div class="status">
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">Rozšíření aktivní</span>
+            </div>
+        </header>
+        
+        <div class="input-section">
+            <label for="videoUrl">YouTube URL nebo Video ID:</label>
+            <div class="input-group">
+                <input type="text" id="videoUrl" placeholder="https://youtube.com/watch?v=...">
+                <button class="btn btn-primary" id="fetchBtn">Načíst</button>
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Načítání...</p>
+        </div>
+        
+        <div class="error" id="error"></div>
+        
+        <div class="video-info" id="videoInfo">
+            <img id="thumbnail" src="" alt="Thumbnail">
+            <h3 id="videoTitle"></h3>
+            <p id="videoAuthor"></p>
+        </div>
+        
+        <div class="formats-section" id="formatsSection">
+            <div id="formatsList"></div>
+        </div>
+        
+        <p class="help-text">
+            Tip: Jděte přímo na YouTube video a klikněte na tlačítko "Stáhnout" pod videem.
+        </p>
+        
+        <footer>
+            <p>AdHUB © 2024 | <a href="https://github.com" target="_blank">GitHub</a></p>
+        </footer>
+    </div>
+    
+    <script src="popup.js"></script>
+</body>
+</html>
