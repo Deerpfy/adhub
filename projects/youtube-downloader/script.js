@@ -335,12 +335,26 @@ async function handleDownload(url, format, quality, filename) {
         console.log('[AdHUB Download] 🌐 Fetching video as blob...');
         const fetchStartTime = Date.now();
 
+        // Extract video ID from URL to create proper referer
+        const videoIdMatch = url.match(/[?&]id=([^&]+)/);
+        const refererUrl = videoIdMatch
+            ? \`https://www.youtube.com/watch?v=\${videoIdMatch[1]}\`
+            : 'https://www.youtube.com/';
+
+        console.log('[AdHUB Download] Using Referer:', refererUrl);
+
         const response = await fetch(url, {
             method: 'GET',
+            credentials: 'include',  // Include cookies from YouTube session
             headers: {
+                'Accept': '*/*',
+                'Accept-Language': 'en-US,en;q=0.9',
                 'Origin': 'https://www.youtube.com',
-                'Referer': 'https://www.youtube.com/',
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                'Referer': refererUrl,
+                'Sec-Fetch-Dest': 'empty',
+                'Sec-Fetch-Mode': 'cors',
+                'Sec-Fetch-Site': 'cross-site',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
             }
         });
 
