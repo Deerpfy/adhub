@@ -6,12 +6,6 @@ echo.
 
 cd /d "%~dp0"
 
-REM Set YouTube API Key if not already set
-if not defined YOUTUBE_API_KEY (
-    set YOUTUBE_API_KEY=YOUR_YOUTUBE_API_KEY_HERE
-    echo YouTube API Key nastaven.
-)
-
 REM Set Kick Developer API credentials if not already set
 if not defined KICK_CLIENT_ID (
     set KICK_CLIENT_ID=YOUR_KICK_CLIENT_ID_HERE

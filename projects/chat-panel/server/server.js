@@ -99,17 +99,9 @@ const twitchClients = new Map();
 const kickConnections = new Map();
 const youtubeConnections = new Map();
 
-// YouTube API configuration
-// Priority: credentials file > environment variable > default
-const YOUTUBE_API_KEY = credentials.youtubeApiKey || process.env.YOUTUBE_API_KEY || 'YOUR_YOUTUBE_API_KEY_HERE';
+// YouTube API configuration (API key provided per WebSocket session from client)
 const YOUTUBE_API_BASE_URL = 'https://www.googleapis.com/youtube/v3';
-
-// Log API key status (without revealing the full key)
-if (YOUTUBE_API_KEY) {
-    console.log(`[YouTube] API Key configured: ${YOUTUBE_API_KEY.substring(0, 10)}...${YOUTUBE_API_KEY.substring(YOUTUBE_API_KEY.length - 4)}`);
-} else {
-    console.warn('[YouTube] WARNING: API Key not configured! YouTube chat will not work.');
-}
+console.log('[YouTube] API klíč se zadává lokálně na klientovi a server ho neukládá.');
 
 // Kick Developer API configuration for OAuth 2.0
 // Priority: credentials file > environment variable
@@ -429,15 +421,15 @@ function connectTwitchChannel(channel, connectionId) {
 }
 
 // YouTube Chat Connection
-async function connectYouTubeChannel(videoId, connectionId) {
+async function connectYouTubeChannel(videoId, connectionId, apiKey) {
     if (youtubeConnections.has(connectionId)) {
         console.log(`[YouTube ${videoId}] Connection already exists for panel ${connectionId}`);
         return youtubeConnections.get(connectionId);
     }
 
-    const currentYoutubeApiKey = getYoutubeApiKey();
-    if (!currentYoutubeApiKey) {
-        const errorMsg = 'YouTube API key not configured. Zadejte ho v nastavení (⚙️ Nastavení) nebo nastavte YOUTUBE_API_KEY environment variable.';
+    const sessionYoutubeApiKey = (apiKey || '').trim();
+    if (!sessionYoutubeApiKey) {
+        const errorMsg = 'YouTube API klíč nebyl poskytnut z klientské relace.';
         console.error(`[YouTube ${videoId}] ${errorMsg}`);
         broadcastMessage(connectionId, {
             type: 'status',
@@ -445,7 +437,7 @@ async function connectYouTubeChannel(videoId, connectionId) {
             channel: videoId,
             connectionId: connectionId,
             status: 'error',
-            message: 'YouTube API klíč není nakonfigurován. Viz README-YOUTUBE.md'
+            message: 'YouTube API klíč nebyl předán z klienta – zadejte ho v horní bublině a zkuste to znovu.'
         });
         return null;
     }
@@ -455,7 +447,7 @@ async function connectYouTubeChannel(videoId, connectionId) {
         
         // Step 1: Get video details to find live chat ID and channel name
         const videoResponse = await fetch(
-            `${YOUTUBE_API_BASE_URL}/videos?id=${videoId}&part=liveStreamingDetails,snippet&key=${getYoutubeApiKey()}`
+            `${YOUTUBE_API_BASE_URL}/videos?id=${videoId}&part=liveStreamingDetails,snippet&key=${sessionYoutubeApiKey}`
         );
         
         if (!videoResponse.ok) {
@@ -484,7 +476,7 @@ async function connectYouTubeChannel(videoId, connectionId) {
         if (!finalChannelTitle && channelId) {
             try {
                 const channelResponse = await fetch(
-                    `${YOUTUBE_API_BASE_URL}/channels?id=${channelId}&part=snippet&key=${getYoutubeApiKey()}`
+                    `${YOUTUBE_API_BASE_URL}/channels?id=${channelId}&part=snippet&key=${sessionYoutubeApiKey}`
                 );
                 if (channelResponse.ok) {
                     const channelData = await channelResponse.json();
@@ -504,7 +496,8 @@ async function connectYouTubeChannel(videoId, connectionId) {
             liveChatId: liveChatId,
             nextPageToken: null,
             polling: false,
-            interval: null
+            interval: null,
+            apiKey: sessionYoutubeApiKey
         };
         
         youtubeConnections.set(connectionId, connection);
@@ -544,13 +537,27 @@ async function pollYouTubeChat(connectionId, liveChatId, connection) {
     }
     
     connection.polling = true;
+    const apiKey = connection.apiKey;
+    if (!apiKey) {
+        console.error(`[YouTube] Missing API key for connection ${connectionId}`);
+        broadcastMessage(connectionId, {
+            type: 'status',
+            platform: 'youtube',
+            channel: liveChatId,
+            connectionId,
+            status: 'error',
+            message: 'YouTube API klíč se ztratil – zadejte ho znovu ve své relaci.'
+        });
+        connection.polling = false;
+        return;
+    }
     
     const poll = async () => {
         try {
             const params = new URLSearchParams({
                 liveChatId: liveChatId,
                 part: 'snippet,authorDetails',
-                key: getYoutubeApiKey(),
+                key: apiKey,
                 maxResults: '200'
             });
             
@@ -1682,7 +1689,7 @@ wss.on('connection', (ws, req) => {
                     } else if (platform === 'kick') {
                         await connectKickChannel(channel.toLowerCase(), panelConnectionId);
                     } else if (platform === 'youtube') {
-                        await connectYouTubeChannel(channel, panelConnectionId);
+                        await connectYouTubeChannel(channel, panelConnectionId, message.youtubeApiKey);
                     }
                     break;
                     
@@ -1806,7 +1813,8 @@ app.get('/status', (req, res) => {
         kick: kickConnections.size,
         youtube: youtubeConnections.size,
         websocket: Array.from(chatClients.keys()).length,
-        youtubeApiConfigured: !!getYoutubeApiKey()
+        youtubeApiConfigured: false,
+        youtubeApiMode: 'client_session_only'
     });
 });
 
@@ -1834,10 +1842,6 @@ function getKickClientId() {
 
 function getKickClientSecret() {
     return credentials.kickClientSecret || process.env.KICK_CLIENT_SECRET || null;
-}
-
-function getYoutubeApiKey() {
-    return credentials.youtubeApiKey || process.env.YOUTUBE_API_KEY || 'YOUR_YOUTUBE_API_KEY_HERE';
 }
 
 function getTwitchChannelName() {
@@ -1868,7 +1872,8 @@ app.get('/api/server/status', (req, res) => {
             youtube: youtubeConnections.size,
             websocket: Array.from(chatClients.keys()).length
         },
-        youtubeApiConfigured: !!getYoutubeApiKey(),
+        youtubeApiConfigured: false,
+        youtubeApiMode: 'client_session_only',
         kickOAuthConfigured: !!(getKickClientId() && getKickClientSecret()),
         kickOAuthTokensCount: kickAccessTokens.size
     });
@@ -2248,11 +2253,10 @@ app.get('/api/config/credentials', (req, res) => {
     res.json({
         kickClientId: credentials.kickClientId || process.env.KICK_CLIENT_ID || null,
         kickClientSecret: credentials.kickClientSecret ? '***' : (process.env.KICK_CLIENT_SECRET ? '***' : null), // Don't reveal secret
-        youtubeApiKey: credentials.youtubeApiKey || process.env.YOUTUBE_API_KEY || null,
         twitchChannelName: credentials.twitchChannelName || process.env.TWITCH_CHANNEL_NAME || null,
         configured: {
             kick: !!(getKickClientId() && getKickClientSecret()),
-            youtube: !!getYoutubeApiKey(),
+            youtube: 'client_session_only',
             twitch: !!(credentials.twitchChannelName || process.env.TWITCH_CHANNEL_NAME)
         }
     });
@@ -2261,12 +2265,11 @@ app.get('/api/config/credentials', (req, res) => {
 // Save credentials
 app.post('/api/config/credentials', (req, res) => {
     try {
-        const { kickClientId, kickClientSecret, youtubeApiKey, twitchChannelName } = req.body;
+        const { kickClientId, kickClientSecret, twitchChannelName } = req.body;
         
         const newCredentials = {};
         if (kickClientId !== undefined) newCredentials.kickClientId = kickClientId?.trim() || null;
         if (kickClientSecret !== undefined) newCredentials.kickClientSecret = kickClientSecret?.trim() || null;
-        if (youtubeApiKey !== undefined) newCredentials.youtubeApiKey = youtubeApiKey?.trim() || null;
         if (twitchChannelName !== undefined) newCredentials.twitchChannelName = twitchChannelName?.trim() || null;
         
         if (saveCredentialsToFile(newCredentials)) {

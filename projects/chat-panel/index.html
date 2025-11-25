@@ -21,12 +21,34 @@
                 </div>
                 <div class="chat-controls">
                 <button id="addChatBtn" class="btn btn-primary">Přidat Chat</button>
+                <button id="youtubeKeyBtn" class="btn btn-warning">🔑 YouTube API</button>
                 <button id="settingsBtn" class="btn btn-secondary">⚙️ Nastavení</button>
                 <button id="kickAuthBtn" class="btn btn-secondary">🔐 Kick OAuth</button>
                 <button id="clearAllBtn" class="btn btn-danger">Vymazat Vše</button>
                 </div>
             </div>
         </header>
+
+        <div id="youtubeKeyBubble" class="youtube-key-bubble" role="dialog" aria-live="polite">
+            <div class="bubble-header">
+                <span>🔑 YouTube API klíč</span>
+                <button type="button" id="closeYoutubeKeyBubble" class="bubble-close" aria-label="Zavřít">×</button>
+            </div>
+            <p id="youtubeKeyNote" data-default-message="API klíč se drží pouze v této bublině a v paměti vašeho prohlížeče. Nepřenáší se mezi zařízeními ani se neukládá na server.">
+                API klíč se drží pouze v této bublině a v paměti vašeho prohlížeče. Nepřenáší se mezi zařízeními ani se neukládá na server.
+            </p>
+            <div class="bubble-status-row">
+                <span>Stav klíče:</span>
+                <span id="youtubeKeyStatus" class="status-pill">Neaktivní – klíč zatím není zadán</span>
+            </div>
+            <label for="youtubeKeyInput">Klíč (formát AIza...)</label>
+            <input type="password" id="youtubeKeyInput" placeholder="Zadejte klíč" autocomplete="off" spellcheck="false">
+            <div class="bubble-actions">
+                <button type="button" class="btn btn-primary" id="applyYoutubeKeyBtn">Aktivovat v této bublině</button>
+                <button type="button" class="btn btn-secondary" id="clearYoutubeKeyBtn">Vymazat</button>
+            </div>
+            <small class="bubble-footnote">⚠️ Klíč se nikam neukládá ani nesdílí – zůstává pouze v tomto okně a po obnovení stránky ho budete muset zadat znovu.</small>
+        </div>
 
         <div id="chatModal" class="modal">
             <div class="modal-content">
@@ -115,7 +137,7 @@
                     <div style="margin-bottom: 25px; padding: 15px; background: rgba(59, 130, 246, 0.1); border-left: 4px solid #3b82f6; border-radius: 8px;">
                         <strong style="color: #3b82f6;">ℹ️ Informace:</strong>
                         <p style="margin: 8px 0 0 0; color: #aaa; font-size: 13px;">
-                            API klíče se ukládají na serveru. Po změně je nutný restart serveru, aby se změny projevily.
+                            Kick přihlašovací údaje (Client ID/Secret) se ukládají na serveru. YouTube API klíč se zadává pouze lokálně přes tlačítko „🔑 YouTube API“ a nikdy se nesdílí mimo vaše aktuální okno.
                         </p>
                     </div>
                     
@@ -130,13 +152,6 @@
                     <input type="password" id="kickClientSecret" placeholder="Zadejte Kick Client Secret">
                     <small style="color: #aaa; font-size: 12px; display: block; margin-top: 5px; margin-bottom: 15px;">
                         Citlivá informace - ukládá se na serveru
-                    </small>
-                    
-                    <h3 style="color: #fff; margin-top: 25px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">📺 YouTube</h3>
-                    <label for="youtubeApiKey">YouTube API Key:</label>
-                    <input type="text" id="youtubeApiKey" placeholder="Zadejte YouTube Data API v3 Key">
-                    <small style="color: #aaa; font-size: 12px; display: block; margin-top: 5px; margin-bottom: 15px;">
-                        Získáte v <a href="https://console.cloud.google.com/" target="_blank" style="color: #3b82f6;">Google Cloud Console</a> (formát: AIzaSy...)
                     </small>
                     
                     <h3 style="color: #fff; margin-top: 25px; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">🎯 Twitch</h3>

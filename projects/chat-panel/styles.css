@@ -231,6 +231,19 @@ header h1 {
     box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
+.btn-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.btn-warning:hover {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(245, 158, 11, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
 .btn-danger {
     background: linear-gradient(135deg, #f44336 0%, #da190b 100%);
     color: white;
@@ -971,6 +984,127 @@ header h1 {
     margin-top: 10px;
 }
 
+/* Floating YouTube key bubble */
+.youtube-key-bubble {
+    position: fixed;
+    top: 110px;
+    right: 30px;
+    width: min(360px, calc(100% - 32px));
+    background: rgba(17, 17, 28, 0.95);
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    border-radius: 16px;
+    padding: 18px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55);
+    backdrop-filter: blur(18px);
+    z-index: 1200;
+    display: none;
+    animation: bubbleSlide 0.25s ease;
+}
+
+.youtube-key-bubble.visible {
+    display: block;
+}
+
+@keyframes bubbleSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.bubble-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+    font-weight: 600;
+    color: #f7f7ff;
+}
+
+.bubble-close {
+    background: transparent;
+    border: none;
+    color: #aaa;
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+.bubble-close:hover {
+    color: #fff;
+}
+
+.youtube-key-bubble label {
+    display: block;
+    font-size: 0.85rem;
+    color: #d1d5db;
+    margin-top: 12px;
+    margin-bottom: 6px;
+}
+
+#youtubeKeyInput {
+    width: 100%;
+    padding: 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    background: rgba(9, 9, 18, 0.9);
+    color: #fff;
+}
+
+.bubble-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 14px;
+    flex-wrap: wrap;
+}
+
+.bubble-status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 10px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    color: #c4c6d9;
+}
+
+.status-pill {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #f97316;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+.status-pill.active {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+}
+
+.bubble-footnote {
+    display: block;
+    margin-top: 10px;
+    font-size: 0.72rem;
+    color: #cbd5f5;
+    opacity: 0.8;
+}
+
+.youtube-key-bubble p {
+    font-size: 0.82rem;
+    color: #cbd5f5;
+    line-height: 1.4;
+    margin-bottom: 10px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     header {
@@ -986,5 +1120,12 @@ header h1 {
         width: 95%;
         margin: 5% auto;
         padding: 20px;
+    }
+
+    .youtube-key-bubble {
+        top: auto;
+        bottom: 20px;
+        right: 16px;
+        left: 16px;
     }
 }
