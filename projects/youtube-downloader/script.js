@@ -1,6 +1,10 @@
 // AdHUB YouTube Downloader - Client-Side Application
 // Funguje na GitHub Pages bez serveru, stahování přes browser extension
 
+console.log('[AdHUB] 📜 Script loaded!');
+console.log('[AdHUB] Location:', window.location.href);
+console.log('[AdHUB] User Agent:', navigator.userAgent);
+
 // =========================================
 // EXTENSION FILES - zakódované soubory rozšíření
 // =========================================
@@ -1047,10 +1051,15 @@ let toastContainer;
 // =========================================
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('[AdHUB] 🌟 Page loaded - DOMContentLoaded fired');
+    console.log('[AdHUB] 🔍 Checking JSZip at page load...');
+    console.log('[AdHUB] JSZip available:', typeof JSZip !== 'undefined');
+    console.log('[AdHUB] JSZip version:', typeof JSZip !== 'undefined' && JSZip.version);
+
     initializeDOMElements();
     loadDownloadsHistory();
     setupEventListeners();
-    
+
     // Poslouchejme na adhub-extension-ready event (vyslán page-bridge.js)
     window.addEventListener('adhub-extension-ready', (event) => {
         console.log('[AdHUB Page] Received adhub-extension-ready event:', event.detail);
@@ -1061,14 +1070,16 @@ document.addEventListener('DOMContentLoaded', () => {
             updateExtensionStatus(true);
         }
     });
-    
+
     // Počkáme chvilku na načtení rozšíření a pak zkontrolujeme
     setTimeout(checkExtension, 100);
     setTimeout(checkExtension, 500);
     setTimeout(checkExtension, 1500);
-    
+
     // Kontrola rozšíření každých 5 sekund
     setInterval(checkExtension, 5000);
+
+    console.log('[AdHUB] 🎉 Initialization complete!');
 });
 
 function initializeDOMElements() {
@@ -1282,12 +1293,18 @@ function updateExtensionStatus(connected) {
 // =========================================
 
 function setupEventListeners() {
+    console.log('[AdHUB] 🎧 Setting up event listeners...');
+
     // Download extension button
     const downloadExtensionBtn = document.getElementById('downloadExtensionBtn');
+    console.log('[AdHUB] Download button found:', !!downloadExtensionBtn);
     if (downloadExtensionBtn) {
         downloadExtensionBtn.addEventListener('click', generateAndDownloadExtension);
+        console.log('[AdHUB] ✓ Download button listener attached');
+    } else {
+        console.warn('[AdHUB] ⚠️ Download button NOT found in DOM!');
     }
-    
+
     // Go to YouTube button
     const goToYoutubeBtn = document.getElementById('goToYoutubeBtn');
     if (goToYoutubeBtn) {
@@ -1295,11 +1312,13 @@ function setupEventListeners() {
             window.open('https://www.youtube.com', '_blank');
         });
     }
-    
+
     // Video form
     if (videoForm) {
         videoForm.addEventListener('submit', handleVideoSubmit);
     }
+
+    console.log('[AdHUB] ✓ Event listeners setup complete');
 }
 
 // =========================================
@@ -1307,37 +1326,57 @@ function setupEventListeners() {
 // =========================================
 
 async function generateAndDownloadExtension() {
+    console.log('[AdHUB] 🚀 Starting extension download generation...');
+
     const btn = document.getElementById('downloadExtensionBtn');
     const progress = document.getElementById('downloadProgress');
     const progressFill = document.getElementById('downloadProgressFill');
     const progressText = document.getElementById('downloadProgressText');
-    
+
+    console.log('[AdHUB] ✓ DOM elements found:', { btn: !!btn, progress: !!progress });
+
     btn.disabled = true;
     btn.textContent = '⏳ Generuji...';
     progress.style.display = 'block';
-    
+
     try {
         // Check if JSZip is loaded
+        console.log('[AdHUB] 🔍 Checking JSZip availability...');
+        console.log('[AdHUB] JSZip type:', typeof JSZip);
+        console.log('[AdHUB] JSZip object:', JSZip);
+
         if (typeof JSZip === 'undefined') {
+            console.error('[AdHUB] ❌ JSZip is NOT loaded!');
             throw new Error('JSZip není načten. Obnovte stránku.');
         }
-        
+
+        console.log('[AdHUB] ✓ JSZip is loaded successfully');
+
         const zip = new JSZip();
         const folder = zip.folder('adhub-youtube-extension');
-        
+        console.log('[AdHUB] ✓ ZIP folder created');
+
         progressText.textContent = 'Přidávám soubory...';
         progressFill.style.width = '20%';
-        
+
         // Add all extension files
+        console.log('[AdHUB] 📁 Adding extension files...');
+        console.log('[AdHUB] EXTENSION_FILES available:', typeof EXTENSION_FILES, Object.keys(EXTENSION_FILES).length, 'files');
+
         for (const [filename, content] of Object.entries(EXTENSION_FILES)) {
             folder.file(filename, content);
+            console.log('[AdHUB]   ✓ Added:', filename, '(' + content.length + ' bytes)');
         }
-        
+
+        console.log('[AdHUB] ✓ All extension files added');
         progressFill.style.width = '40%';
         progressText.textContent = 'Generuji ikony...';
-        
+
         // Generate icons from SVG
+        console.log('[AdHUB] 🎨 Generating icons...');
         const icons = await generateIcons();
+        console.log('[AdHUB] ✓ Icons generated:', Object.keys(icons));
+
         const iconsFolder = folder.folder('icons');
         
         iconsFolder.file('icon.svg', ICON_SVG);
@@ -1345,35 +1384,46 @@ async function generateAndDownloadExtension() {
         iconsFolder.file('icon32.png', icons.icon32, { base64: true });
         iconsFolder.file('icon48.png', icons.icon48, { base64: true });
         iconsFolder.file('icon128.png', icons.icon128, { base64: true });
-        
+        console.log('[AdHUB] ✓ All icons added to ZIP');
+
         progressFill.style.width = '70%';
         progressText.textContent = 'Komprimuji ZIP...';
-        
+
         // Generate ZIP
-        const blob = await zip.generateAsync({ 
+        console.log('[AdHUB] 📦 Starting ZIP compression...');
+        const blob = await zip.generateAsync({
             type: 'blob',
             compression: 'DEFLATE',
             compressionOptions: { level: 9 }
         }, (metadata) => {
             const percent = 70 + Math.round(metadata.percent * 0.3);
             progressFill.style.width = percent + '%';
+            console.log('[AdHUB] Compression progress:', Math.round(metadata.percent) + '%');
         });
-        
+
+        console.log('[AdHUB] ✓ ZIP generated! Size:', blob.size, 'bytes');
         progressFill.style.width = '100%';
         progressText.textContent = 'Stahuji...';
-        
+
         // Download
+        console.log('[AdHUB] 💾 Creating download link...');
         const url = URL.createObjectURL(blob);
+        console.log('[AdHUB] Blob URL:', url);
+
         const a = document.createElement('a');
         a.href = url;
         a.download = 'adhub-youtube-extension.zip';
         document.body.appendChild(a);
+
+        console.log('[AdHUB] 🖱️ Triggering download click...');
         a.click();
+
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        
+        console.log('[AdHUB] ✓ Download initiated successfully!');
+
         showToast('Rozšíření staženo! Rozbalte ZIP a nainstalujte podle návodu.', 'success');
-        
+
         btn.textContent = '✅ Staženo!';
         setTimeout(() => {
             btn.disabled = false;
@@ -1381,9 +1431,10 @@ async function generateAndDownloadExtension() {
             progress.style.display = 'none';
             progressFill.style.width = '0%';
         }, 3000);
-        
+
     } catch (error) {
-        console.error('Error generating extension:', error);
+        console.error('[AdHUB] ❌ ERROR generating extension:', error);
+        console.error('[AdHUB] Error stack:', error.stack);
         showToast('Chyba při generování: ' + error.message, 'error');
         btn.disabled = false;
         btn.textContent = '⬇️ Stáhnout rozšíření (.zip)';
