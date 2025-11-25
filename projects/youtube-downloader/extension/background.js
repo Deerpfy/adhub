@@ -315,14 +315,17 @@ async function handleDownload(url, format, quality, filename) {
         }
         
         console.log('[AdHUB] Final filename:', finalFilename);
-        
+        console.log('[AdHUB] Download URL:', url?.substring(0, 200));
+
         // Použijeme Chrome Downloads API
         const downloadId = await chrome.downloads.download({
             url: url,
             filename: finalFilename,
-            saveAs: true
+            saveAs: false,  // Automatické stahování bez dialogu
+            conflictAction: 'uniquify'  // Pokud soubor existuje, přidá (1), (2) atd.
         });
-        
+
+        console.log('[AdHUB] ✅ Download started with ID:', downloadId);
         return { success: true, downloadId: downloadId };
         
     } catch (error) {
