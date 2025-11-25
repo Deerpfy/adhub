@@ -7,30 +7,87 @@ let searchQuery = '';
 
 // Výchozí konfigurace - lze upravit přímo zde
 const DEFAULT_CONFIG = {
-  "tools": [
-    {
-      "id": "example-tool",
-      "name": "Příklad nástroje",
-      "description": "Popis nástroje",
-      "category": "tools",
-      "icon": "🔧",
-      "url": "http://localhost:3000",
-      "enabled": true,
-      "tags": ["example", "tool"]
-    }
-  ],
-  "links": [
-    {
-      "id": "example-link",
-      "name": "Příklad odkazu",
-      "description": "Popis odkazu",
-      "category": "links",
-      "icon": "🔗",
-      "url": "https://example.com",
-      "type": "external",
-      "tags": ["example", "link"]
-    }
-  ]
+    "tools": [
+        {
+            "id": "youtube-downloader",
+            "name": "AdHUB YouTube Downloader",
+            "description": "Rychlé stahování videí a audia (MP4/M4A/MP3) přímo z AdHUB rozhraní.",
+            "category": "video",
+            "icon": "🎥",
+            "url": "http://localhost:3003",
+            "helperPort": 3004,
+            "serverPort": 3003,
+            "helperPath": "projects/youtube-downloader/server/server-helper.js",
+            "enabled": true,
+            "tags": ["yt-dlp", "download", "audio", "video", "adhub"]
+        },
+        {
+            "id": "chat-panel",
+            "name": "AdHUB Multistream Chat Panel",
+            "description": "Unified chat pro Twitch, Kick a YouTube s helper serverem a overlay módy.",
+            "category": "streaming",
+            "icon": "💬",
+            "url": "http://localhost:3001",
+            "helperPort": 3002,
+            "serverPort": 3001,
+            "helperPath": "projects/chat-panel/server/server-helper.js",
+            "enabled": true,
+            "tags": ["twitch", "kick", "youtube", "chat", "overlay"]
+        },
+        {
+            "id": "komopizza-demo",
+            "name": "AdHUB KomoPizza Demo",
+            "description": "Ukázková objednávková aplikace pro rychlé prototypování UI konceptů.",
+            "category": "demos",
+            "icon": "🍕",
+            "url": "projects/komopizza/index.html",
+            "type": "local",
+            "enabled": true,
+            "tags": ["frontend", "demo", "proto", "ui"]
+        }
+    ],
+    "links": [
+        {
+            "id": "ninite-installer-pack",
+            "name": "Ninite – rychlá instalace Windows aplikací",
+            "description": "Vyber aplikace a nainstaluj je jedním kliknutím po čisté instalaci Windows.",
+            "category": "setup",
+            "icon": "⚙️",
+            "url": "https://ninite.com/",
+            "type": "external",
+            "tags": ["windows", "install", "automation"]
+        },
+        {
+            "id": "winget-catalog",
+            "name": "Winget.run katalog balíčků",
+            "description": "Webový katalog pro Microsoft WinGet – rychlé skripty a příkazy k instalaci.",
+            "category": "setup",
+            "icon": "🪟",
+            "url": "https://winget.run/",
+            "type": "external",
+            "tags": ["windows", "cli", "packages"]
+        },
+        {
+            "id": "obs-project",
+            "name": "OBS Studio Download",
+            "description": "Oficiální stránka s instalátory OBS Studio pro streamování a záznam.",
+            "category": "streaming",
+            "icon": "🎥",
+            "url": "https://obsproject.com/download",
+            "type": "external",
+            "tags": ["streaming", "recording", "tools"]
+        },
+        {
+            "id": "yt-dlp-releases",
+            "name": "yt-dlp Releases",
+            "description": "Poslední buildy yt-dlp potřebné pro náš downloader, včetně návodu k instalaci.",
+            "category": "video",
+            "icon": "⬇️",
+            "url": "https://github.com/yt-dlp/yt-dlp/releases/latest",
+            "type": "external",
+            "tags": ["yt-dlp", "download", "cli"]
+        }
+    ]
 };
 
 // Použití výchozí konfigurace
