@@ -11,92 +11,70 @@ Stahujte YouTube videa přímo z prohlížeče **bez potřeby serveru**! Ideáln
 - ✅ **YouTube integrace** - Tlačítko přímo na YouTube stránce
 - ✅ **Open source** - Zdarma a volně dostupné
 
-## 🚀 Instalace
+## 🚀 Jak používat
 
-### 1. Spusťte server
+### 1. Otevřete stránku
 
-```bash
-cd server
-npm install
-npm start
-```
+Jděte na: **[vaše-github-username.github.io/youtube-downloader]()**
 
-Server se spustí na `http://localhost:3003`
+### 2. Stáhněte rozšíření
 
-### 2. Nainstalujte rozšíření do prohlížeče
+Klikněte na tlačítko **"Stáhnout rozšíření (.zip)"** na stránce.
 
-Rozšíření je nezbytné pro obejití CORS omezení a přímé stahování videí.
+### 3. Nainstalujte rozšíření
 
-#### Automatická instalace (doporučeno):
+1. **Rozbalte** stažený ZIP soubor
+2. Otevřete **`chrome://extensions`** (nebo `edge://extensions`)
+3. Zapněte **"Vývojářský režim"** (Developer mode)
+4. Klikněte na **"Načíst rozbalené"** (Load unpacked)
+5. Vyberte rozbalenou složku `adhub-youtube-extension`
 
-1. Otevřete `http://localhost:3003` v prohlížeči
-2. Klikněte na tlačítko **"Stáhnout rozšíření (.zip)"**
-3. Rozbalte stažený ZIP soubor
-4. Otevřete `chrome://extensions` (nebo `edge://extensions`)
-5. Zapněte **Vývojářský režim** (Developer mode) v pravém horním rohu
-6. Klikněte na **Načíst rozbalené** (Load unpacked)
-7. Vyberte rozbalenou složku `adhub-youtube-extension`
-8. Obnovte stránku - rozšíření by mělo být detekováno! 🎉
+### 4. Stahujte videa! 🎉
 
-#### Manuální instalace:
+- **Na YouTube**: Pod každým videem se objeví tlačítko "Stáhnout"
+- **Přes popup**: Klikněte na ikonu rozšíření v prohlížeči
 
-1. Stáhněte složku `extension` z tohoto repozitáře
-2. Otevřete `chrome://extensions` (nebo `edge://extensions`)
-3. Zapněte **Vývojářský režim** (Developer mode) v pravém horním rohu
-4. Klikněte na **Načíst rozbalené** (Load unpacked)
-5. Vyberte složku `extension`
-6. Rozšíření je nainstalované! 🎉
+## 📖 Podrobný návod
 
-### 3. Otevřete webovou stránku
+### Způsob 1: Přímo na YouTube (doporučeno)
 
-Můžete použít:
-- **GitHub Pages**: Nahrajte projekt na GitHub a povolte Pages
-- **Lokálně**: Otevřete `index.html` v prohlížeči
-- **Libovolný hosting**: Nahrajte soubory na jakýkoliv statický hosting
-
-## 📖 Jak používat
-
-### Způsob 1: Přes webovou stránku
-1. Otevřete webovou stránku
-2. Zadejte URL YouTube videa nebo video ID
-3. Klikněte na "Získat informace"
-4. Vyberte formát a kvalitu
-5. Klikněte na "Stáhnout"
-
-### Způsob 2: Přímo na YouTube
 1. Jděte na libovolné YouTube video
-2. Pod videem se objeví tlačítko "Stáhnout" (po instalaci rozšíření)
-3. Klikněte na tlačítko a vyberte formát
-4. Video se stáhne do vašeho prohlížeče
+2. Pod videem se objeví tlačítko **"Stáhnout"** (fialové)
+3. Klikněte na tlačítko
+4. Vyberte formát a kvalitu
+5. Video se stáhne do prohlížeče
+
+### Způsob 2: Přes popup rozšíření
+
+1. Klikněte na ikonu rozšíření v prohlížeči
+2. Zadejte YouTube URL
+3. Klikněte na "Načíst"
+4. Vyberte formát
 
 ## 📁 Struktura projektu
 
 ```
 youtube-downloader/
-├── index.html          # Hlavní webová stránka (instalační průvodce + downloader)
-├── script.js           # Logika aplikace
+├── index.html          # Hlavní stránka (instalační průvodce)
+├── script.js           # Logika + embedded extension files
 ├── styles.css          # Styly
 ├── README.md           # Tato dokumentace
-├── extension/          # Browser rozšíření
-│   ├── manifest.json   # Manifest rozšíření
-│   ├── background.js   # Service worker
-│   ├── content.js      # Content script pro YouTube
-│   ├── page-bridge.js  # Bridge pro komunikaci s webovou stránkou
-│   ├── popup.html      # Popup rozšíření
-│   ├── popup.js        # Logika popupu
-│   └── icons/          # Ikony rozšíření
-└── server/             # Server pro stažení rozšíření
-    ├── server.js       # Express server
-    └── package.json    # Závislosti
+└── extension/          # Zdrojové soubory rozšíření (reference)
+    ├── manifest.json
+    ├── background.js
+    ├── content.js
+    ├── popup.html
+    ├── popup.js
+    └── icons/
 ```
 
 ## 🔧 Technické detaily
 
 ### Jak to funguje?
 
-1. **Browser rozšíření** obchází CORS omezení a může přímo komunikovat s YouTube
-2. **Webová stránka** komunikuje s rozšířením přes `chrome.runtime.sendMessage`
-3. **Content script** přidává tlačítko stahování přímo na YouTube stránky
+1. **Stránka** generuje ZIP soubor s rozšířením přímo v prohlížeči (pomocí JSZip)
+2. **Rozšíření** obchází CORS omezení a komunikuje s YouTube API
+3. **Content script** přidává tlačítko stahování přímo na YouTube
 4. **Stahování** probíhá přes Chrome Downloads API
 
 ### Podporované formáty
@@ -113,19 +91,23 @@ youtube-downloader/
 - Šifrované streamy nemusí být dostupné
 - Kvalita závisí na dostupnosti na YouTube
 
-## 🔒 Bezpečnost
+## 🌐 Hosting na GitHub Pages
 
-- Rozšíření nepřenáší žádná data na externí servery
-- Veškeré zpracování probíhá lokálně v prohlížeči
-- Zdrojový kód je open source a můžete ho zkontrolovat
+1. Forkněte tento repozitář
+2. Jděte do Settings > Pages
+3. Vyberte branch `main` a složku `/` (root)
+4. Uložte - stránka bude dostupná na `username.github.io/repo-name`
+
+## 🔒 Bezpečnost & Soukromí
+
+- ✅ **Žádné sledování** - Nesbíráme žádná data
+- ✅ **Lokální zpracování** - Vše běží ve vašem prohlížeči
+- ✅ **Bez serveru** - Žádná data se neodesílají
+- ✅ **Open source** - Můžete zkontrolovat kód
 
 ## 📜 Licence
 
 MIT License - Volně k použití a modifikaci.
-
-## 🤝 Přispívání
-
-Pull requesty jsou vítány! Pro větší změny prosím nejprve otevřete issue.
 
 ## ⚠️ Právní upozornění
 

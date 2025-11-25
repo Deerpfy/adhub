@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AdHUB YouTube Downloader - Instalace rozšíření</title>
+    <title>AdHUB YouTube Downloader - Rozšíření pro prohlížeč</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- JSZip pro generování ZIP souboru -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script defer src="script.js"></script>
 </head>
 <body>
@@ -24,31 +26,37 @@
             <div class="install-hero">
                 <div class="hero-icon">🧩</div>
                 <h2>Nainstalujte rozšíření pro stahování YouTube videí</h2>
-                <p class="hero-subtitle">Rozšíření umožňuje stahovat videa přímo z YouTube bez potřeby serveru. Funguje offline a bezpečně.</p>
+                <p class="hero-subtitle">Rozšíření umožňuje stahovat videa přímo z YouTube. Funguje offline, bezpečně a bez potřeby serveru.</p>
             </div>
 
             <div class="install-options">
-                <!-- Automatická instalace -->
+                <!-- Stažení rozšíření -->
                 <div class="install-card install-card-primary">
                     <div class="install-card-header">
-                        <span class="install-badge">Doporučeno</span>
-                        <h3>📦 Stáhnout rozšíření</h3>
+                        <span class="install-badge">Krok 1</span>
+                        <h3>📦 Stáhněte rozšíření</h3>
                     </div>
-                    <p>Stáhněte si rozšíření jako ZIP soubor a nainstalujte ho do prohlížeče.</p>
+                    <p>Stáhněte si rozšíření jako ZIP soubor a rozbalte ho.</p>
                     <div class="install-actions">
-                        <a href="/api/extension/download" class="btn btn-primary btn-large" id="downloadExtensionBtn">
+                        <button class="btn btn-primary btn-large" id="downloadExtensionBtn">
                             ⬇️ Stáhnout rozšíření (.zip)
-                        </a>
+                        </button>
+                    </div>
+                    <div class="download-progress" id="downloadProgress" style="display: none;">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="downloadProgressFill"></div>
+                        </div>
+                        <span id="downloadProgressText">Generuji ZIP...</span>
                     </div>
                 </div>
 
-                <!-- Manuální instalace -->
+                <!-- Alternativa - GitHub -->
                 <div class="install-card">
-                    <h3>🛠️ Manuální instalace (pro vývojáře)</h3>
-                    <p>Pokud máte přístup k souborům projektu, můžete rozšíření nainstalovat přímo.</p>
-                    <button class="btn btn-secondary" id="showManualInstallBtn">
-                        📖 Zobrazit návod
-                    </button>
+                    <h3>🐙 Alternativa: GitHub</h3>
+                    <p>Můžete také stáhnout rozšíření přímo z GitHubu.</p>
+                    <a href="https://github.com" target="_blank" class="btn btn-secondary" id="githubLink">
+                        📂 Otevřít na GitHubu
+                    </a>
                 </div>
             </div>
 
@@ -59,21 +67,13 @@
                     <div class="install-step">
                         <div class="step-number">1</div>
                         <div class="step-content">
-                            <h4>Stáhněte rozšíření</h4>
-                            <p>Klikněte na tlačítko <strong>"Stáhnout rozšíření"</strong> výše. Soubor se uloží do složky Stažené soubory.</p>
+                            <h4>Stáhněte a rozbalte</h4>
+                            <p>Klikněte na tlačítko <strong>"Stáhnout rozšíření"</strong> výše. Poté rozbalte stažený ZIP soubor.</p>
                         </div>
                     </div>
                     
                     <div class="install-step">
                         <div class="step-number">2</div>
-                        <div class="step-content">
-                            <h4>Rozbalte ZIP soubor</h4>
-                            <p>Klikněte pravým tlačítkem na stažený soubor a vyberte <strong>"Rozbalit vše"</strong> nebo <strong>"Extrahovat"</strong>.</p>
-                        </div>
-                    </div>
-                    
-                    <div class="install-step">
-                        <div class="step-number">3</div>
                         <div class="step-content">
                             <h4>Otevřete správu rozšíření</h4>
                             <p>V prohlížeči zadejte do adresního řádku:</p>
@@ -98,10 +98,10 @@
                     </div>
                     
                     <div class="install-step">
-                        <div class="step-number">4</div>
+                        <div class="step-number">3</div>
                         <div class="step-content">
                             <h4>Zapněte vývojářský režim</h4>
-                            <p>V pravém horním rohu stránky rozšíření přepněte přepínač <strong>"Vývojářský režim"</strong> (Developer mode).</p>
+                            <p>V pravém horním rohu stránky přepněte přepínač <strong>"Vývojářský režim"</strong> (Developer mode).</p>
                             <div class="step-image-placeholder">
                                 <span>🔧</span>
                                 <small>Developer mode: ON</small>
@@ -110,11 +110,10 @@
                     </div>
                     
                     <div class="install-step">
-                        <div class="step-number">5</div>
+                        <div class="step-number">4</div>
                         <div class="step-content">
                             <h4>Načtěte rozšíření</h4>
-                            <p>Klikněte na tlačítko <strong>"Načíst rozbalené"</strong> (Load unpacked) v levém horním rohu.</p>
-                            <p>Vyberte rozbalenou složku <code>adhub-youtube-extension</code>.</p>
+                            <p>Klikněte na <strong>"Načíst rozbalené"</strong> (Load unpacked) a vyberte rozbalenou složku.</p>
                         </div>
                     </div>
                     
@@ -122,8 +121,8 @@
                         <div class="step-number">✓</div>
                         <div class="step-content">
                             <h4>Hotovo! 🎉</h4>
-                            <p>Rozšíření je nainstalované! Tato stránka se automaticky aktualizuje.</p>
-                            <button id="refreshAfterInstallBtn" class="btn btn-success">🔄 Zkontrolovat instalaci</button>
+                            <p>Nyní můžete stahovat videa přímo z YouTube! Jděte na libovolné YouTube video a klikněte na tlačítko <strong>"Stáhnout"</strong> pod videem.</p>
+                            <button id="goToYoutubeBtn" class="btn btn-success">▶️ Jít na YouTube</button>
                         </div>
                     </div>
                 </div>
@@ -164,12 +163,12 @@
                         <span class="success-icon">✅</span>
                         <div>
                             <strong>Rozšíření je aktivní!</strong>
-                            <p>Můžete stahovat videa přímo zde nebo na YouTube pomocí tlačítka pod videem.</p>
+                            <p>Pro stahování videí jděte přímo na YouTube a klikněte na tlačítko "Stáhnout" pod videem.</p>
                         </div>
                     </div>
 
                     <div class="input-card">
-                        <h2>🔗 Zadejte URL YouTube videa</h2>
+                        <h2>🔗 Nebo zadejte URL YouTube videa</h2>
                         <form id="videoForm">
                             <div class="input-group">
                                 <label for="videoUrl">YouTube URL nebo Video ID:</label>
@@ -232,6 +231,9 @@
                     <div class="info-card">
                         <h2>💡 Tip</h2>
                         <p>Pro nejrychlejší stahování jděte přímo na YouTube video a klikněte na tlačítko <strong>"Stáhnout"</strong> pod přehrávačem!</p>
+                        <a href="https://www.youtube.com" target="_blank" class="btn btn-secondary" style="margin-top: 15px;">
+                            ▶️ Jít na YouTube
+                        </a>
                     </div>
 
                     <div class="downloads-history">
