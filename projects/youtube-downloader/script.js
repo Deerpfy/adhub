@@ -7,43 +7,31 @@ let extensionId = null;
 let currentVideoInfo = null;
 let currentFormats = null;
 
-// DOM Elements
-const extensionStatus = document.getElementById('extensionStatus');
-const extensionStatusText = document.getElementById('extensionStatusText');
-const extensionInfoPanel = document.getElementById('extensionInfoPanel');
-const installExtensionBtn = document.getElementById('installExtensionBtn');
-const showInstallGuideBtn = document.getElementById('showInstallGuideBtn');
-const settingsBtn = document.getElementById('settingsBtn');
-const settingsModal = document.getElementById('settingsModal');
-const settingsForm = document.getElementById('settingsForm');
-const cancelSettingsBtn = document.getElementById('cancelSettingsBtn');
-const installModal = document.getElementById('installModal');
-const closeInstallModal = document.getElementById('closeInstallModal');
-const refreshPageBtn = document.getElementById('refreshPageBtn');
-const videoForm = document.getElementById('videoForm');
-const videoUrlInput = document.getElementById('videoUrl');
-const fetchInfoBtn = document.getElementById('fetchInfoBtn');
-const videoInfoCard = document.getElementById('videoInfoCard');
-const videoTitle = document.getElementById('videoTitle');
-const videoThumbnail = document.getElementById('videoThumbnail');
-const videoUploader = document.getElementById('videoUploader');
-const videoDuration = document.getElementById('videoDuration');
-const videoViews = document.getElementById('videoViews');
-const formatsCard = document.getElementById('formatsCard');
-const combinedFormatsSection = document.getElementById('combinedFormatsSection');
-const videoFormatsSection = document.getElementById('videoFormatsSection');
-const audioFormatsSection = document.getElementById('audioFormatsSection');
-const combinedFormatsList = document.getElementById('combinedFormatsList');
-const videoFormatsList = document.getElementById('videoFormatsList');
-const audioFormatsList = document.getElementById('audioFormatsList');
-const downloadProgressCard = document.getElementById('downloadProgressCard');
-const progressFill = document.getElementById('progressFill');
-const progressText = document.getElementById('progressText');
-const downloadStatus = document.getElementById('downloadStatus');
-const downloadCompleteCard = document.getElementById('downloadCompleteCard');
-const downloadFilename = document.getElementById('downloadFilename');
-const downloadsList = document.getElementById('downloadsList');
-const extensionIdInput = document.getElementById('extensionId');
+// DOM Elements - budou inicializovány po DOMContentLoaded
+let extensionStatus;
+let extensionStatusText;
+let installSection;
+let downloadSection;
+let videoForm;
+let videoUrlInput;
+let fetchInfoBtn;
+let videoInfoCard;
+let videoTitle;
+let videoThumbnail;
+let videoUploader;
+let videoDuration;
+let videoViews;
+let formatsCard;
+let combinedFormatsSection;
+let videoFormatsSection;
+let audioFormatsSection;
+let combinedFormatsList;
+let videoFormatsList;
+let audioFormatsList;
+let downloadCompleteCard;
+let downloadFilename;
+let downloadsList;
+let toastContainer;
 
 // Settings
 let settings = {
@@ -52,19 +40,68 @@ let settings = {
 
 // Inicializace
 document.addEventListener('DOMContentLoaded', () => {
+    initializeDOMElements();
     loadSettings();
     checkExtension();
     loadDownloadsHistory();
     setupEventListeners();
     
-    // Kontrola rozšíření každých 5 sekund
-    setInterval(checkExtension, 5000);
+    // Kontrola rozšíření každých 3 sekundy
+    setInterval(checkExtension, 3000);
 });
+
+// Okamžitá detekce rozšíření, pokud je již načteno
+window.addEventListener('adhub-extension-ready', (event) => {
+    console.log('[AdHUB] Extension ready event received:', event.detail);
+    if (event.detail && event.detail.extensionId) {
+        extensionId = event.detail.extensionId;
+        extensionConnected = true;
+        localStorage.setItem('adhub_extension_id', extensionId);
+        updateExtensionStatus(true);
+    }
+});
+
+// Inicializace DOM elementů
+function initializeDOMElements() {
+    extensionStatus = document.getElementById('extensionStatus');
+    extensionStatusText = document.getElementById('extensionStatusText');
+    installSection = document.getElementById('installSection');
+    downloadSection = document.getElementById('downloadSection');
+    videoForm = document.getElementById('videoForm');
+    videoUrlInput = document.getElementById('videoUrl');
+    fetchInfoBtn = document.getElementById('fetchInfoBtn');
+    videoInfoCard = document.getElementById('videoInfoCard');
+    videoTitle = document.getElementById('videoTitle');
+    videoThumbnail = document.getElementById('videoThumbnail');
+    videoUploader = document.getElementById('videoUploader');
+    videoDuration = document.getElementById('videoDuration');
+    videoViews = document.getElementById('videoViews');
+    formatsCard = document.getElementById('formatsCard');
+    combinedFormatsSection = document.getElementById('combinedFormatsSection');
+    videoFormatsSection = document.getElementById('videoFormatsSection');
+    audioFormatsSection = document.getElementById('audioFormatsSection');
+    combinedFormatsList = document.getElementById('combinedFormatsList');
+    videoFormatsList = document.getElementById('videoFormatsList');
+    audioFormatsList = document.getElementById('audioFormatsList');
+    downloadCompleteCard = document.getElementById('downloadCompleteCard');
+    downloadFilename = document.getElementById('downloadFilename');
+    downloadsList = document.getElementById('downloadsList');
+    toastContainer = document.getElementById('toastContainer');
+}
 
 // Kontrola připojení rozšíření
 async function checkExtension() {
     try {
-        // Zkusíme najít rozšíření pomocí chrome.runtime.sendMessage
+        // Metoda 1: Zkontrolujeme globální proměnnou (injektovaná rozšířením)
+        if (window.adhubExtensionAvailable && window.adhubExtensionId) {
+            extensionId = window.adhubExtensionId;
+            extensionConnected = true;
+            updateExtensionStatus(true);
+            console.log('[AdHUB] Extension detected via global variable:', extensionId);
+            return;
+        }
+        
+        // Metoda 2: Zkusíme Chrome extension messaging
         if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
             // Zkusíme několik možných ID rozšíření
             const possibleIds = [
@@ -80,6 +117,7 @@ async function checkExtension() {
                         extensionConnected = true;
                         extensionId = id;
                         updateExtensionStatus(true);
+                        console.log('[AdHUB] Extension detected via messaging:', extensionId);
                         return;
                     }
                 } catch (e) {
@@ -88,11 +126,26 @@ async function checkExtension() {
             }
         }
         
-        // Pokud není Chrome API dostupné, zkusíme detekci přes custom event
+        // Metoda 3: Detekce přes custom event (pokud content script běží)
         const detected = await detectExtensionViaEvent();
         if (detected) {
             extensionConnected = true;
             updateExtensionStatus(true);
+            console.log('[AdHUB] Extension detected via event:', extensionId);
+            return;
+        }
+        
+        // Metoda 4: Zkontrolujeme localStorage flag (nastavuje ho content script)
+        const extensionActive = localStorage.getItem('adhub_extension_active');
+        const storedId = localStorage.getItem('adhub_extension_id');
+        const timestamp = parseInt(localStorage.getItem('adhub_extension_timestamp') || '0');
+        
+        // Kontrola, že timestamp není starší než 10 sekund (rozšíření musí být aktivní)
+        if (extensionActive === 'true' && storedId && (Date.now() - timestamp < 10000)) {
+            extensionId = storedId;
+            extensionConnected = true;
+            updateExtensionStatus(true);
+            console.log('[AdHUB] Extension detected via localStorage:', extensionId);
             return;
         }
         
@@ -149,71 +202,61 @@ function sendMessageToExtension(extId, message) {
     });
 }
 
-// Aktualizace statusu rozšíření
+// Aktualizace statusu rozšíření a přepnutí sekcí
 function updateExtensionStatus(connected) {
     if (connected) {
         extensionStatus.className = 'extension-status extension-status-on';
         extensionStatusText.textContent = 'Rozšíření aktivní';
-        extensionInfoPanel.style.display = 'none';
-        installExtensionBtn.style.display = 'none';
+        
+        // Zobrazíme download sekci, skryjeme instalační
+        if (installSection) installSection.style.display = 'none';
+        if (downloadSection) downloadSection.style.display = 'block';
+        
     } else {
         extensionStatus.className = 'extension-status extension-status-off';
-        extensionStatusText.textContent = 'Rozšíření není detekováno';
-        extensionInfoPanel.style.display = 'block';
-        installExtensionBtn.style.display = 'block';
+        extensionStatusText.textContent = 'Rozšíření není nainstalováno';
+        
+        // Zobrazíme instalační sekci, skryjeme download
+        if (installSection) installSection.style.display = 'block';
+        if (downloadSection) downloadSection.style.display = 'none';
     }
 }
 
 // Event listenery
 function setupEventListeners() {
     // Video form
-    videoForm.addEventListener('submit', handleVideoSubmit);
+    if (videoForm) {
+        videoForm.addEventListener('submit', handleVideoSubmit);
+    }
     
-    // Settings modal
-    settingsBtn.addEventListener('click', () => {
-        settingsModal.style.display = 'block';
-        if (extensionId) {
-            extensionIdInput.value = extensionId;
-        }
-    });
-    
-    cancelSettingsBtn.addEventListener('click', () => {
-        settingsModal.style.display = 'none';
-    });
-    
-    settingsForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        settings.extensionId = extensionIdInput.value.trim() || null;
-        saveSettings();
-        settingsModal.style.display = 'none';
-        checkExtension();
-    });
-    
-    // Install modal
-    installExtensionBtn.addEventListener('click', () => {
-        installModal.style.display = 'block';
-    });
-    
-    showInstallGuideBtn.addEventListener('click', () => {
-        installModal.style.display = 'block';
-    });
-    
-    closeInstallModal.addEventListener('click', () => {
-        installModal.style.display = 'none';
-    });
-    
-    refreshPageBtn.addEventListener('click', () => {
-        window.location.reload();
-    });
-    
-    // Close modals on outside click
-    [settingsModal, installModal].forEach(modal => {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                modal.style.display = 'none';
-            }
+    // Refresh button po instalaci
+    const refreshAfterInstallBtn = document.getElementById('refreshAfterInstallBtn');
+    if (refreshAfterInstallBtn) {
+        refreshAfterInstallBtn.addEventListener('click', () => {
+            checkExtension();
+            showToast('Kontroluji instalaci rozšíření...', 'info');
         });
-    });
+    }
+    
+    // Show manual install button
+    const showManualInstallBtn = document.getElementById('showManualInstallBtn');
+    if (showManualInstallBtn) {
+        showManualInstallBtn.addEventListener('click', () => {
+            // Scroll ke krokům instalace
+            document.querySelector('.install-steps-section')?.scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'start'
+            });
+        });
+    }
+    
+    // Download extension button - sledování kliknutí
+    const downloadExtensionBtn = document.getElementById('downloadExtensionBtn');
+    if (downloadExtensionBtn) {
+        downloadExtensionBtn.addEventListener('click', () => {
+            showToast('Stahování rozšíření...', 'info');
+        });
+    }
 }
 
 // Zpracování formuláře videa
@@ -222,18 +265,18 @@ async function handleVideoSubmit(e) {
     
     const url = videoUrlInput.value.trim();
     if (!url) {
-        showNotification('Prosím zadejte YouTube URL', 'error');
+        showToast('Prosím zadejte YouTube URL', 'error');
         return;
     }
     
     const videoId = extractVideoId(url);
     if (!videoId) {
-        showNotification('Neplatná YouTube URL', 'error');
+        showToast('Neplatná YouTube URL', 'error');
         return;
     }
     
     if (!extensionConnected) {
-        installModal.style.display = 'block';
+        showToast('Rozšíření není nainstalováno. Nainstalujte ho podle návodu výše.', 'error');
         return;
     }
     
@@ -241,9 +284,9 @@ async function handleVideoSubmit(e) {
     fetchInfoBtn.textContent = '⏳ Načítání...';
     
     // Skryjeme předchozí výsledky
-    videoInfoCard.style.display = 'none';
-    formatsCard.style.display = 'none';
-    downloadCompleteCard.style.display = 'none';
+    if (videoInfoCard) videoInfoCard.style.display = 'none';
+    if (formatsCard) formatsCard.style.display = 'none';
+    if (downloadCompleteCard) downloadCompleteCard.style.display = 'none';
     
     try {
         // Získáme info o videu
@@ -276,7 +319,7 @@ async function handleVideoSubmit(e) {
         
     } catch (error) {
         console.error('[AdHUB] Error:', error);
-        showNotification(`Chyba: ${error.message}`, 'error');
+        showToast(`Chyba: ${error.message}`, 'error');
     } finally {
         fetchInfoBtn.disabled = false;
         fetchInfoBtn.textContent = '📋 Získat informace';
@@ -303,48 +346,54 @@ function extractVideoId(url) {
 
 // Zobrazení informací o videu
 function displayVideoInfo(info) {
+    if (!videoTitle || !videoThumbnail) return;
+    
     videoTitle.textContent = info.title || 'Neznámý název';
     videoThumbnail.src = info.thumbnail || info.thumbnailMq || '';
     videoThumbnail.alt = info.title || 'Video thumbnail';
     
-    videoUploader.textContent = `📺 ${info.author || 'Neznámý'}`;
+    if (videoUploader) {
+        videoUploader.textContent = `📺 ${info.author || 'Neznámý'}`;
+    }
     
-    if (info.duration) {
+    if (videoDuration && info.duration) {
         const minutes = Math.floor(info.duration / 60);
         const seconds = Math.floor(info.duration % 60);
         videoDuration.textContent = `⏱️ ${minutes}:${seconds.toString().padStart(2, '0')}`;
-    } else {
+    } else if (videoDuration) {
         videoDuration.textContent = '';
     }
     
-    if (info.viewCount) {
+    if (videoViews && info.viewCount) {
         const views = info.viewCount.toLocaleString('cs-CZ');
         videoViews.textContent = `👁️ ${views} zhlédnutí`;
-    } else {
+    } else if (videoViews) {
         videoViews.textContent = '';
     }
     
-    videoInfoCard.style.display = 'block';
+    if (videoInfoCard) videoInfoCard.style.display = 'block';
 }
 
 // Zobrazení dostupných formátů
 function displayFormats(data) {
+    if (!combinedFormatsList || !videoFormatsList || !audioFormatsList) return;
+    
     // Reset
     combinedFormatsList.innerHTML = '';
     videoFormatsList.innerHTML = '';
     audioFormatsList.innerHTML = '';
-    combinedFormatsSection.style.display = 'none';
-    videoFormatsSection.style.display = 'none';
-    audioFormatsSection.style.display = 'none';
+    if (combinedFormatsSection) combinedFormatsSection.style.display = 'none';
+    if (videoFormatsSection) videoFormatsSection.style.display = 'none';
+    if (audioFormatsSection) audioFormatsSection.style.display = 'none';
     
     if (!data.formats || data.formats.length === 0) {
-        showNotification('Žádné formáty nejsou dostupné', 'error');
+        showToast('Žádné formáty nejsou dostupné', 'error');
         return;
     }
     
     // Kombinované formáty (video + audio)
     const combined = data.formats.filter(f => f.type === 'combined');
-    if (combined.length > 0) {
+    if (combined.length > 0 && combinedFormatsSection) {
         combinedFormatsSection.style.display = 'block';
         combined.forEach(format => {
             combinedFormatsList.appendChild(createFormatItem(format, data.safeTitle));
@@ -353,7 +402,7 @@ function displayFormats(data) {
     
     // Video only
     const videoOnly = data.formats.filter(f => f.type === 'video').slice(0, 5);
-    if (videoOnly.length > 0) {
+    if (videoOnly.length > 0 && videoFormatsSection) {
         videoFormatsSection.style.display = 'block';
         videoOnly.forEach(format => {
             videoFormatsList.appendChild(createFormatItem(format, data.safeTitle));
@@ -362,14 +411,14 @@ function displayFormats(data) {
     
     // Audio only
     const audioOnly = data.formats.filter(f => f.type === 'audio').slice(0, 4);
-    if (audioOnly.length > 0) {
+    if (audioOnly.length > 0 && audioFormatsSection) {
         audioFormatsSection.style.display = 'block';
         audioOnly.forEach(format => {
             audioFormatsList.appendChild(createFormatItem(format, data.safeTitle));
         });
     }
     
-    formatsCard.style.display = 'block';
+    if (formatsCard) formatsCard.style.display = 'block';
 }
 
 // Vytvoření položky formátu
@@ -432,8 +481,10 @@ async function handleFormatDownload(button, url, filename) {
             });
             
             // Zobrazíme dokončení
-            downloadFilename.textContent = filename;
-            downloadCompleteCard.style.display = 'block';
+            if (downloadFilename) downloadFilename.textContent = filename;
+            if (downloadCompleteCard) downloadCompleteCard.style.display = 'block';
+            
+            showToast(`Stahování zahájeno: ${filename}`, 'success');
             
         } else {
             throw new Error(response?.error || 'Stahování selhalo');
@@ -443,7 +494,7 @@ async function handleFormatDownload(button, url, filename) {
         console.error('[AdHUB] Download error:', error);
         button.textContent = '❌ Chyba';
         button.style.background = 'linear-gradient(135deg, #ef4444, #dc2626)';
-        showNotification(`Chyba při stahování: ${error.message}`, 'error');
+        showToast(`Chyba při stahování: ${error.message}`, 'error');
     }
     
     // Reset tlačítka po 3 sekundách
@@ -465,6 +516,8 @@ function formatFileSize(bytes) {
 
 // Historie stahování
 function loadDownloadsHistory() {
+    if (!downloadsList) return;
+    
     const history = JSON.parse(localStorage.getItem('adhub_downloads_history') || '[]');
     
     if (history.length === 0) {
@@ -518,12 +571,51 @@ function saveSettings() {
     localStorage.setItem('adhub_settings', JSON.stringify(settings));
 }
 
-// Notifikace
-function showNotification(message, type = 'info') {
-    // Jednoduchá notifikace pomocí alert (můžete nahradit vlastním UI)
-    if (type === 'error') {
-        alert('❌ ' + message);
-    } else {
-        alert('ℹ️ ' + message);
+// Toast notifikace
+function showToast(message, type = 'info') {
+    if (!toastContainer) {
+        // Fallback na alert
+        if (type === 'error') {
+            alert('❌ ' + message);
+        }
+        return;
     }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    
+    let icon = 'ℹ️';
+    if (type === 'success') icon = '✅';
+    else if (type === 'error') icon = '❌';
+    
+    toast.innerHTML = `
+        <span>${icon}</span>
+        <span>${message}</span>
+    `;
+    
+    toastContainer.appendChild(toast);
+    
+    // Automatické odstranění po 4 sekundách
+    setTimeout(() => {
+        toast.style.animation = 'slideIn 0.3s ease reverse';
+        setTimeout(() => {
+            toast.remove();
+        }, 300);
+    }, 4000);
 }
+
+// Globální funkce pro kopírování do schránky
+window.copyToClipboard = function(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showToast('Zkopírováno do schránky!', 'success');
+    }).catch(() => {
+        // Fallback
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+        showToast('Zkopírováno do schránky!', 'success');
+    });
+};

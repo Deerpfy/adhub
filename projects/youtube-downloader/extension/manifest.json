@@ -38,6 +38,11 @@
       "matches": ["https://www.youtube.com/*", "https://youtube.com/*"],
       "js": ["content.js"],
       "run_at": "document_end"
+    },
+    {
+      "matches": ["http://localhost:*/*", "http://127.0.0.1:*/*"],
+      "js": ["page-bridge.js"],
+      "run_at": "document_start"
     }
   ],
   "externally_connectable": {
@@ -50,7 +55,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["icons/*"],
+      "resources": ["icons/*", "page-bridge.js"],
       "matches": ["<all_urls>"]
     }
   ]

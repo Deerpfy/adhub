@@ -13,11 +13,32 @@ Stahujte YouTube videa přímo z prohlížeče **bez potřeby serveru**! Ideáln
 
 ## 🚀 Instalace
 
-### 1. Nainstalujte rozšíření do prohlížeče
+### 1. Spusťte server
+
+```bash
+cd server
+npm install
+npm start
+```
+
+Server se spustí na `http://localhost:3003`
+
+### 2. Nainstalujte rozšíření do prohlížeče
 
 Rozšíření je nezbytné pro obejití CORS omezení a přímé stahování videí.
 
-#### Chrome / Edge:
+#### Automatická instalace (doporučeno):
+
+1. Otevřete `http://localhost:3003` v prohlížeči
+2. Klikněte na tlačítko **"Stáhnout rozšíření (.zip)"**
+3. Rozbalte stažený ZIP soubor
+4. Otevřete `chrome://extensions` (nebo `edge://extensions`)
+5. Zapněte **Vývojářský režim** (Developer mode) v pravém horním rohu
+6. Klikněte na **Načíst rozbalené** (Load unpacked)
+7. Vyberte rozbalenou složku `adhub-youtube-extension`
+8. Obnovte stránku - rozšíření by mělo být detekováno! 🎉
+
+#### Manuální instalace:
 
 1. Stáhněte složku `extension` z tohoto repozitáře
 2. Otevřete `chrome://extensions` (nebo `edge://extensions`)
@@ -26,7 +47,7 @@ Rozšíření je nezbytné pro obejití CORS omezení a přímé stahování vid
 5. Vyberte složku `extension`
 6. Rozšíření je nainstalované! 🎉
 
-### 2. Otevřete webovou stránku
+### 3. Otevřete webovou stránku
 
 Můžete použít:
 - **GitHub Pages**: Nahrajte projekt na GitHub a povolte Pages
@@ -52,7 +73,7 @@ Můžete použít:
 
 ```
 youtube-downloader/
-├── index.html          # Hlavní webová stránka
+├── index.html          # Hlavní webová stránka (instalační průvodce + downloader)
 ├── script.js           # Logika aplikace
 ├── styles.css          # Styly
 ├── README.md           # Tato dokumentace
@@ -60,10 +81,13 @@ youtube-downloader/
 │   ├── manifest.json   # Manifest rozšíření
 │   ├── background.js   # Service worker
 │   ├── content.js      # Content script pro YouTube
+│   ├── page-bridge.js  # Bridge pro komunikaci s webovou stránkou
 │   ├── popup.html      # Popup rozšíření
 │   ├── popup.js        # Logika popupu
 │   └── icons/          # Ikony rozšíření
-└── server/             # (Starší verze - není potřeba)
+└── server/             # Server pro stažení rozšíření
+    ├── server.js       # Express server
+    └── package.json    # Závislosti
 ```
 
 ## 🔧 Technické detaily

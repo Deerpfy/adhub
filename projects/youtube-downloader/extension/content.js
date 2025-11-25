@@ -6,6 +6,25 @@
     
     console.log('[AdHUB] Content script loaded on YouTube');
     
+    // Signalizace, že rozšíření je aktivní (pro detekci z webové stránky)
+    try {
+        localStorage.setItem('adhub_extension_active', 'true');
+        localStorage.setItem('adhub_extension_timestamp', Date.now().toString());
+    } catch (e) {
+        // localStorage nemusí být dostupný
+    }
+    
+    // Odpověď na check event z webové stránky
+    window.addEventListener('adhub-extension-check', () => {
+        window.dispatchEvent(new CustomEvent('adhub-extension-response', {
+            detail: { 
+                extensionId: chrome.runtime.id,
+                version: '1.0.0',
+                active: true
+            }
+        }));
+    });
+    
     // Stav
     let currentVideoId = null;
     let downloadButton = null;
