@@ -2,6 +2,8 @@
 
 Stahujte YouTube videa přímo z prohlížeče **bez potřeby serveru**! Ideální pro hostování na GitHub Pages.
 
+**Aktuální verze: 1.1.1** | [Changelog](#-changelog)
+
 ## ✨ Funkce
 
 - ✅ **Bez serveru** - Vše běží v prohlížeči
@@ -104,6 +106,22 @@ youtube-downloader/
 - ✅ **Lokální zpracování** - Vše běží ve vašem prohlížeči
 - ✅ **Bez serveru** - Žádná data se neodesílají
 - ✅ **Open source** - Můžete zkontrolovat kód
+
+## 📝 Changelog
+
+### v1.1.1 (2025-11-25)
+- 🐛 **FIX**: Opraven HTTP 403 error při stahování videí
+- ⚡ Optimalizovány HTTP hlavičky pro lepší kompatibilitu s YouTube servery
+- 🔧 Odstraněny problematické CORS hlavičky
+
+### v1.1.0 (2025-11-24)
+- ✨ Plná funkcionalita stahování YouTube videí
+- 🎨 Vylepšené UI s podporou více formátů
+- 🚀 Auto-update funkcionalita
+
+### v1.0.0 (2025-11-22)
+- 🎉 První release
+- ✅ Základní funkcionalita stahování
 
 ## 📜 Licence
 
