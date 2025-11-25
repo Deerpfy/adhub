@@ -17,22 +17,12 @@
         console.log('[AdHUB Injector] ✅ Loaded content.js from storage:', scriptData.size, 'bytes');
         console.log('[AdHUB Injector] Last update:', new Date(scriptData.timestamp).toLocaleString());
 
-        // Vytvoř a spusť script pomocí Blob URL (aby se vyhnuli CSP omezením)
-        const blob = new Blob([scriptData.content], { type: 'text/javascript' });
-        const blobUrl = URL.createObjectURL(blob);
-
+        // Vytvoř a spusť inline script (obchází CSP omezení pro blob: URL)
         const scriptElement = document.createElement('script');
-        scriptElement.src = blobUrl;
-        scriptElement.onload = () => {
-            console.log('[AdHUB Injector] ✅ Content script injected successfully');
-            URL.revokeObjectURL(blobUrl); // Uvolni blob URL po načtení
-        };
-        scriptElement.onerror = (error) => {
-            console.error('[AdHUB Injector] ❌ Error loading script:', error);
-            URL.revokeObjectURL(blobUrl);
-        };
+        scriptElement.textContent = scriptData.content;
 
         (document.head || document.documentElement).appendChild(scriptElement);
+        console.log('[AdHUB Injector] ✅ Content script injected successfully');
 
     } catch (error) {
         console.error('[AdHUB Injector] ❌ Error injecting content script:', error);
