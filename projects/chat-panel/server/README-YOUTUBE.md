@@ -26,25 +26,13 @@ YouTube chat podpora vyžaduje **YouTube Data API v3** klíč pro přístup k li
 
 ### 2. Konfigurace API klíče
 
-#### Možnost A: Environment Variable (Doporučeno)
-```bash
-# Windows CMD
-set YOUTUBE_API_KEY=your_api_key_here
+YouTube klíč se **nikam neukládá** – zadává se pouze lokálně z prohlížeče:
 
-# Windows PowerShell
-$env:YOUTUBE_API_KEY="AIzaSyAfEy7D3VRsFNd-Ywlq-EFsOLHV4EdKhRU"
+1. Spusťte Chat Panel a v hlavičce klikněte na tlačítko **„🔑 YouTube API“**
+2. Do zobrazené bubliny vložte svůj API klíč (formát `AIza...`)
+3. Potvrďte tlačítkem **„Aktivovat v této bublině“**
 
-# Linux/Mac
-export YOUTUBE_API_KEY=your_api_key_here
-```
-
-#### Možnost B: .env soubor
-Vytvořte soubor `chat-panel/server/.env`:
-```
-YOUTUBE_API_KEY=your_api_key_here
-```
-
-**Poznámka:** .env soubor vyžaduje balíček `dotenv` (není zahrnut, musíte ho přidat)
+> 🫧 **Důležité:** Klíč zůstává jen ve vaší aktuální „bublině uživatele“. Po obnovení stránky nebo na jiném zařízení budete vyzváni k opětovnému zadání. Server ani jiná zařízení k němu nikdy nemají přístup.
 
 ### 3. Spuštění serveru
 
@@ -111,8 +99,9 @@ Aktuálně podporujeme pouze `textMessageEvent` a `superChatEvent`.
 ## 🐛 Řešení problémů
 
 ### "YouTube API klíč není nakonfigurován"
-- Zkontrolujte, že `YOUTUBE_API_KEY` je nastavený
-- Restartujte server po nastavení proměnné
+- Klikněte na tlačítko **„🔑 YouTube API“** v horní části aplikace
+- Vložte API klíč a potvrďte tlačítko **„Aktivovat v této bublině“**
+- Připojení se automaticky zkusí znovu pro všechny čekající YouTube chaty
 
 ### "Video not found"
 - Ujistěte se, že video ID je správné

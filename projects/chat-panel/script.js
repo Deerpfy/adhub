@@ -11,6 +11,10 @@ const WS_SERVER_URL = 'ws://localhost:3001'; // Backend server URL
 const API_SERVER_URL = 'http://localhost:3001'; // Backend server HTTP URL
 const HELPER_SERVER_URL = 'http://localhost:3002'; // Helper server URL for remote control
 
+// YouTube API key is stored only in-memory per browser session
+let sessionYoutubeApiKey = '';
+const youtubeKeyWaitlist = new Set();
+
 // Server control
 let serverStatusCheckInterval = null;
 let isServerRunning = false;
@@ -90,6 +94,14 @@ const cancelBtn = document.getElementById('cancelBtn');
 const cancelEditBtn = document.getElementById('cancelEditBtn');
 const closeBtn = document.querySelector('.close');
 const closeEditBtn = document.querySelector('.close-edit');
+const youtubeKeyBtn = document.getElementById('youtubeKeyBtn');
+const youtubeKeyBubble = document.getElementById('youtubeKeyBubble');
+const youtubeKeyInput = document.getElementById('youtubeKeyInput');
+const youtubeKeyNote = document.getElementById('youtubeKeyNote');
+const youtubeKeyStatus = document.getElementById('youtubeKeyStatus');
+const youtubeKeyApplyBtn = document.getElementById('applyYoutubeKeyBtn');
+const youtubeKeyClearBtn = document.getElementById('clearYoutubeKeyBtn');
+const closeYoutubeKeyBubbleBtn = document.getElementById('closeYoutubeKeyBubble');
 
 const scheduleRenderFrame = typeof window !== 'undefined' && window.requestAnimationFrame
     ? window.requestAnimationFrame.bind(window)
@@ -141,6 +153,72 @@ function saveChats() {
 // Generate unique ID for chat panel
 function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2);
+}
+
+const YOUTUBE_KEY_DEFAULT_NOTE = 'API klíč se drží jen v této bublině a v paměti vašeho prohlížeče. Po obnovení nebo na jiném zařízení jej budete muset zadat znovu.';
+
+function getSessionYoutubeKey() {
+    return sessionYoutubeApiKey.trim();
+}
+
+function updateYoutubeKeyStatus(customText) {
+    if (!youtubeKeyStatus) return;
+    if (sessionYoutubeApiKey) {
+        youtubeKeyStatus.textContent = customText || 'Aktivní v této relaci';
+        youtubeKeyStatus.classList.add('active');
+    } else {
+        youtubeKeyStatus.textContent = customText || 'Neaktivní – klíč zadáváte ručně pouze zde';
+        youtubeKeyStatus.classList.remove('active');
+    }
+}
+
+function setSessionYoutubeApiKey(keyValue) {
+    sessionYoutubeApiKey = (keyValue || '').trim();
+    if (sessionYoutubeApiKey) {
+        console.log('[YouTube] Session API key nastaven (uloženo pouze v paměti prohlížeče).');
+    } else {
+        console.log('[YouTube] Session API key byl vymazán.');
+    }
+    updateYoutubeKeyStatus();
+    
+    if (sessionYoutubeApiKey && youtubeKeyWaitlist.size > 0) {
+        const pending = Array.from(youtubeKeyWaitlist);
+        youtubeKeyWaitlist.clear();
+        pending.forEach(panelId => {
+            const chat = chatViews.find(c => c.id === panelId && c.platform === 'youtube');
+            if (!chat) return;
+            const channel = extractChannel(chat.originalUrl || chat.url, chat.platform);
+            if (channel) {
+                console.log(`[YouTube] Retrying connection for ${panelId} po zadání API klíče.`);
+                connectYouTubeChat(channel, panelId);
+            }
+        });
+    }
+}
+
+function openYoutubeKeyBubble(customMessage = null) {
+    if (!youtubeKeyBubble) return;
+    youtubeKeyBubble.classList.add('visible');
+    if (youtubeKeyNote) {
+        youtubeKeyNote.textContent = customMessage || youtubeKeyNote?.dataset?.defaultMessage || YOUTUBE_KEY_DEFAULT_NOTE;
+    }
+    if (youtubeKeyInput) {
+        youtubeKeyInput.value = sessionYoutubeApiKey;
+        youtubeKeyInput.focus();
+        youtubeKeyInput.select();
+    }
+    updateYoutubeKeyStatus();
+}
+
+function closeYoutubeKeyBubble() {
+    if (!youtubeKeyBubble) return;
+    youtubeKeyBubble.classList.remove('visible');
+}
+
+function requireYoutubeApiKey(panelId, contextualMessage) {
+    youtubeKeyWaitlist.add(panelId);
+    const message = contextualMessage || 'Zadejte YouTube API klíč kliknutím na tlačítko „🔑 YouTube API“. Klíč se nikam neposílá, zůstává jen v tomto okně.';
+    openYoutubeKeyBubble(message);
 }
 
 // Extract channel name from Twitch URL
@@ -336,6 +414,7 @@ function clearAllChats() {
         });
         // Clear all pending connections
         pendingConnections.clear();
+        youtubeKeyWaitlist.clear();
         // Clear chat views
         chatViews = [];
         // Save and render
@@ -586,6 +665,12 @@ function handleServerMessage(message) {
                 console.error(`[${platform}] Error for panel ${panelId}:`, message.message);
                 updateChatStatus(panelId, 'error', message.message);
                 pendingConnections.delete(panelId);
+                if (platform === 'youtube') {
+                    const msg = (message.message || '').toLowerCase();
+                    if (msg.includes('key') || msg.includes('klíč')) {
+                        requireYoutubeApiKey(panelId, message.message);
+                    }
+                }
             }
             break;
             
@@ -801,6 +886,17 @@ function connectYouTubeChat(videoId, panelId) {
         return;
     }
     
+    const apiKey = getSessionYoutubeKey();
+    if (!apiKey) {
+        const chatView = chatViews.find(c => c.id === panelId);
+        const friendlyName = chatView?.name || `YouTube (${videoId})`;
+        const warningMessage = `YouTube API klíč chybí – klikněte na „🔑 YouTube API“ a zadejte ho pro ${friendlyName}. Klíč zůstává pouze ve vašem prohlížeči.`;
+        pendingConnections.delete(panelId);
+        updateChatStatus(panelId, 'error', warningMessage);
+        requireYoutubeApiKey(panelId, warningMessage);
+        return;
+    }
+    
     pendingConnections.add(panelId);
     console.log(`[YouTube] Connecting to YouTube chat: ${videoId} (Panel: ${panelId})`);
     
@@ -809,8 +905,10 @@ function connectYouTubeChat(videoId, panelId) {
             type: 'connect',
             platform: 'youtube',
             channel: videoId,
-            connectionId: panelId
+            connectionId: panelId,
+            youtubeApiKey: apiKey
         };
+        youtubeKeyWaitlist.delete(panelId);
         
         console.log(`[YouTube] Sending connect message:`, connectMessage);
         wsServer.send(JSON.stringify(connectMessage));
@@ -827,6 +925,7 @@ function connectYouTubeChat(videoId, panelId) {
 function disconnectChat(panelId) {
     // Check if chat exists (might have been removed already)
     const chatView = chatViews.find(c => c.id === panelId);
+    youtubeKeyWaitlist.delete(panelId);
     
     if (!chatView) {
         // Chat might already be removed, just clean up locally
@@ -2315,6 +2414,39 @@ if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
 if (closeEditBtn) closeEditBtn.addEventListener('click', closeEditModal);
 if (cancelEditBtn) cancelEditBtn.addEventListener('click', closeEditModal);
 if (clearAllBtn) clearAllBtn.addEventListener('click', clearAllChats);
+if (youtubeKeyBtn) {
+    youtubeKeyBtn.addEventListener('click', () => {
+        if (youtubeKeyBubble && youtubeKeyBubble.classList.contains('visible')) {
+            closeYoutubeKeyBubble();
+        } else {
+            openYoutubeKeyBubble();
+        }
+    });
+}
+if (youtubeKeyApplyBtn) {
+    youtubeKeyApplyBtn.addEventListener('click', () => {
+        setSessionYoutubeApiKey(youtubeKeyInput?.value || '');
+        closeYoutubeKeyBubble();
+    });
+}
+if (youtubeKeyClearBtn) {
+    youtubeKeyClearBtn.addEventListener('click', () => {
+        setSessionYoutubeApiKey('');
+        if (youtubeKeyInput) youtubeKeyInput.value = '';
+        updateYoutubeKeyStatus('Neaktivní – klíč byl smazán');
+    });
+}
+if (closeYoutubeKeyBubbleBtn) {
+    closeYoutubeKeyBubbleBtn.addEventListener('click', closeYoutubeKeyBubble);
+}
+document.addEventListener('click', (event) => {
+    if (!youtubeKeyBubble || !youtubeKeyBtn) return;
+    const isClickInsideBubble = youtubeKeyBubble.contains(event.target);
+    const isButton = youtubeKeyBtn.contains(event.target);
+    if (!isClickInsideBubble && !isButton) {
+        closeYoutubeKeyBubble();
+    }
+});
 
 // Update form fields based on selected platform
 function updateFormForPlatform() {
@@ -2341,8 +2473,8 @@ function updateFormForPlatform() {
         case 'youtube':
             urlLabel.innerHTML = 'URL YouTube videa nebo livestreamu: <span style="color: #f44336;">*</span>';
             urlInput.placeholder = 'https://www.youtube.com/watch?v=VIDEO_ID nebo https://www.youtube.com/live/VIDEO_ID';
-            urlHint.textContent = 'Zadejte URL YouTube videa nebo livestreamu (např. https://www.youtube.com/watch?v=VIDEO_ID)';
-            urlHint.style.color = '#aaa';
+            urlHint.textContent = 'Zadejte URL videa/livestreamu. API klíč se zadává přes tlačítko „🔑 YouTube API“ v horní liště a zůstává jen v aktuálním okně.';
+            urlHint.style.color = '#a78bfa';
             if (kickOAuthWarning) kickOAuthWarning.style.display = 'none';
             break;
             
@@ -2509,8 +2641,8 @@ function updateEditFormForPlatform() {
         case 'youtube':
             urlLabel.innerHTML = 'URL YouTube videa nebo livestreamu: <span style="color: #f44336;">*</span>';
             urlInput.placeholder = 'https://www.youtube.com/watch?v=VIDEO_ID nebo https://www.youtube.com/live/VIDEO_ID';
-            urlHint.textContent = 'Zadejte URL YouTube videa nebo livestreamu (např. https://www.youtube.com/watch?v=VIDEO_ID)';
-            urlHint.style.color = '#aaa';
+            urlHint.textContent = 'Zadejte URL videa/livestreamu. API klíč zadáte kliknutím na „🔑 YouTube API“ – zůstává jen ve vaší relaci.';
+            urlHint.style.color = '#a78bfa';
             if (kickOAuthWarning) kickOAuthWarning.style.display = 'none';
             break;
             
@@ -3290,12 +3422,10 @@ async function loadCurrentCredentials() {
             
             const kickClientIdInput = document.getElementById('kickClientId');
             const kickClientSecretInput = document.getElementById('kickClientSecret');
-            const youtubeApiKeyInput = document.getElementById('youtubeApiKey');
             const twitchChannelNameInput = document.getElementById('twitchChannelName');
             
             if (kickClientIdInput) kickClientIdInput.value = data.kickClientId || '';
             if (kickClientSecretInput) kickClientSecretInput.value = data.kickClientSecret === '***' ? '' : (data.kickClientSecret || '');
-            if (youtubeApiKeyInput) youtubeApiKeyInput.value = data.youtubeApiKey || '';
             if (twitchChannelNameInput) twitchChannelNameInput.value = data.twitchChannelName || '';
         }
     } catch (error) {
@@ -3306,7 +3436,6 @@ async function loadCurrentCredentials() {
 async function saveCredentials() {
     const kickClientId = document.getElementById('kickClientId')?.value.trim() || '';
     const kickClientSecret = document.getElementById('kickClientSecret')?.value.trim() || '';
-    const youtubeApiKey = document.getElementById('youtubeApiKey')?.value.trim() || '';
     const twitchChannelName = document.getElementById('twitchChannelName')?.value.trim() || '';
     
     // Check if server is running first
@@ -3332,7 +3461,6 @@ async function saveCredentials() {
             body: JSON.stringify({
                 kickClientId: kickClientId || null,
                 kickClientSecret: kickClientSecret || null,
-                youtubeApiKey: youtubeApiKey || null,
                 twitchChannelName: twitchChannelName || null
             }),
             signal: AbortSignal.timeout(10000) // 10 second timeout
@@ -3383,6 +3511,7 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('[UI] DOM loaded, initializing...');
     loadSavedChats();
     initServerControls();
+    updateYoutubeKeyStatus();
     
     // Initialize Kick OAuth controls
     console.log('[UI] Initializing Kick OAuth...');
