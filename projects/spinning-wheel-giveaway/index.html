@@ -1,0 +1,1241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream Giveaway Wheel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-card-hover: #1a1a25;
+            --accent-cyan: #00f0ff;
+            --accent-magenta: #ff00aa;
+            --accent-purple: #8844ff;
+            --text-primary: #e8e8f0;
+            --text-muted: #6a6a80;
+            --border-color: #2a2a3a;
+            --success: #00ff88;
+            --warning: #ffaa00;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(ellipse at 20% 20%, rgba(0, 240, 255, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(255, 0, 170, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(136, 68, 255, 0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .app-container {
+            position: relative;
+            z-index: 1;
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0 40px;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-magenta));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 30px;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            padding: 12px 30px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .nav-tab:hover {
+            background: var(--bg-card-hover);
+            color: var(--text-primary);
+        }
+
+        .nav-tab.active {
+            color: var(--accent-cyan);
+            border-color: var(--accent-cyan);
+            background: rgba(0, 240, 255, 0.1);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 30px;
+            margin-bottom: 20px;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            color: var(--accent-cyan);
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(180deg, var(--accent-cyan), var(--accent-magenta));
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr auto;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .form-group input {
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            padding: 12px 16px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .btn {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 12px 24px;
+            border: none;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-purple));
+            color: var(--bg-dark);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 240, 255, 0.3);
+        }
+
+        .btn-danger {
+            background: transparent;
+            border: 1px solid var(--accent-magenta);
+            color: var(--accent-magenta);
+        }
+
+        .btn-danger:hover {
+            background: var(--accent-magenta);
+            color: var(--bg-dark);
+        }
+
+        .btn-success {
+            background: transparent;
+            border: 1px solid var(--success);
+            color: var(--success);
+        }
+
+        .btn-success:hover {
+            background: var(--success);
+            color: var(--bg-dark);
+        }
+
+        .btn-copy {
+            background: transparent;
+            border: 1px solid var(--warning);
+            color: var(--warning);
+            padding: 8px 16px;
+            font-size: 0.75rem;
+        }
+
+        .btn-copy:hover {
+            background: var(--warning);
+            color: var(--bg-dark);
+        }
+
+        .games-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .games-table th {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .games-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        .games-table tr:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .games-table .game-thumb {
+            width: 120px;
+            height: 45px;
+            object-fit: cover;
+            border: 1px solid var(--border-color);
+        }
+
+        .games-table .game-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .games-table .game-key {
+            font-family: monospace;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: var(--bg-dark);
+            padding: 4px 8px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-available {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--success);
+            border: 1px solid var(--success);
+        }
+
+        .status-picked {
+            background: rgba(255, 0, 170, 0.15);
+            color: var(--accent-magenta);
+            border: 1px solid var(--accent-magenta);
+        }
+
+        .actions-cell {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .subscribers-input {
+            width: 100%;
+            min-height: 200px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            padding: 20px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            resize: vertical;
+        }
+
+        .subscribers-input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+        }
+
+        .subscriber-count {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .subscriber-count span {
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
+        /* Wheel Section */
+        .wheel-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        .wheel-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 550px;
+        }
+
+        .wheel-wrapper {
+            position: relative;
+            width: 380px;
+            height: 380px;
+        }
+
+        .wheel-pointer {
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 18px solid transparent;
+            border-right: 18px solid transparent;
+            border-top: 35px solid var(--accent-magenta);
+            filter: drop-shadow(0 0 10px var(--accent-magenta));
+            z-index: 10;
+        }
+
+        #wheelCanvas {
+            border-radius: 50%;
+            box-shadow: 0 0 40px rgba(0, 240, 255, 0.3);
+        }
+
+        .spin-btn {
+            margin-top: 30px;
+            font-size: 1.2rem;
+            padding: 20px 60px;
+            background: linear-gradient(135deg, var(--accent-magenta), var(--accent-purple));
+        }
+
+        .spin-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .winner-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .winner-display {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .winner-display.hidden {
+            display: none;
+        }
+
+        .winner-label {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+        }
+
+        .winner-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-cyan), var(--success));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 30px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .prize-display {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .prize-image {
+            width: 100%;
+            height: 180px;
+            object-fit: cover;
+            border: 2px solid var(--accent-cyan);
+            margin-bottom: 20px;
+            box-shadow: 0 0 30px rgba(0, 240, 255, 0.3);
+        }
+
+        .prize-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+        }
+
+        .key-copy-section {
+            background: var(--bg-dark);
+            padding: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .key-copy-section p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        .key-hidden {
+            font-family: monospace;
+            font-size: 1.1rem;
+            color: var(--accent-magenta);
+            letter-spacing: 2px;
+            margin-bottom: 15px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: var(--text-primary);
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .history-item {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 20px;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+        }
+
+        .history-item img {
+            width: 100px;
+            height: 40px;
+            object-fit: cover;
+            border: 1px solid var(--border-color);
+        }
+
+        .history-winner {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .history-game {
+            color: var(--text-primary);
+        }
+
+        .history-date {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            padding: 16px 24px;
+            background: var(--bg-card);
+            border: 1px solid var(--success);
+            color: var(--success);
+            font-weight: 600;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .no-games-message {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        .loading-indicator {
+            color: var(--accent-cyan);
+            font-size: 0.85rem;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 1200px) {
+            .wheel-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .wheel-wrapper {
+                width: 300px;
+                height: 300px;
+            }
+
+            #wheelCanvas {
+                width: 300px;
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <h1>Stream Giveaway</h1>
+            <nav class="nav-tabs">
+                <button class="nav-tab active" data-tab="wheel">Spin Wheel</button>
+                <button class="nav-tab" data-tab="subscribers">Subscribers</button>
+                <button class="nav-tab" data-tab="games">Games Database</button>
+                <button class="nav-tab" data-tab="history">History</button>
+            </nav>
+        </header>
+
+        <!-- Wheel Tab -->
+        <div id="wheel" class="tab-content active">
+            <div class="wheel-container">
+                <div class="wheel-panel">
+                    <div class="wheel-wrapper">
+                        <div class="wheel-pointer"></div>
+                        <canvas id="wheelCanvas" width="380" height="380"></canvas>
+                    </div>
+                    <button class="btn btn-primary spin-btn" id="spinBtn" onclick="spinWheel()">Spin the Wheel</button>
+                </div>
+                <div class="wheel-panel winner-panel">
+                    <div class="empty-state" id="wheelEmptyState">
+                        <h3>Ready to spin!</h3>
+                        <p>Add subscribers and games, then spin the wheel to pick a winner</p>
+                    </div>
+                    <div class="winner-display hidden" id="winnerDisplay">
+                        <span class="winner-label">Winner</span>
+                        <div class="winner-name" id="winnerName"></div>
+                        <div class="prize-display">
+                            <img class="prize-image" id="prizeImage" src="" alt="Prize">
+                            <div class="prize-name" id="prizeName"></div>
+                            <div class="key-copy-section">
+                                <p>Steam Key (hidden from stream)</p>
+                                <div class="key-hidden" id="keyDisplay">***** - ***** - *****</div>
+                                <button class="btn btn-success" onclick="copyKey()">Copy Key to Clipboard</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subscribers Tab -->
+        <div id="subscribers" class="tab-content">
+            <div class="section-card">
+                <h2 class="section-title">Subscriber List</h2>
+                <p style="color: var(--text-muted); margin-bottom: 15px;">Enter subscriber nicknames, one per line</p>
+                <textarea class="subscribers-input" id="subscribersList" placeholder="Enter subscriber names here...
+Example:
+NightOwl_Gaming
+DragonSlayer99
+PixelPirate"></textarea>
+                <div class="subscriber-count">
+                    Total subscribers: <span id="subCount">0</span>
+                </div>
+                <button class="btn btn-primary" style="margin-top: 20px;" onclick="saveSubscribers()">Save Subscribers</button>
+            </div>
+        </div>
+
+        <!-- Games Tab -->
+        <div id="games" class="tab-content">
+            <div class="section-card">
+                <h2 class="section-title">Add New Game</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Steam URL</label>
+                        <input type="text" id="steamUrl" placeholder="https://store.steampowered.com/app/...">
+                        <div id="loadingIndicator" class="loading-indicator" style="display: none;">Loading game info...</div>
+                    </div>
+                    <div class="form-group">
+                        <label>Steam Key</label>
+                        <input type="text" id="steamKey" placeholder="XXXXX-XXXXX-XXXXX">
+                    </div>
+                    <button class="btn btn-primary" onclick="addGame()">Add Game</button>
+                </div>
+            </div>
+
+            <div class="section-card">
+                <h2 class="section-title">Games Library</h2>
+                <table class="games-table">
+                    <thead>
+                        <tr>
+                            <th>Image</th>
+                            <th>Game</th>
+                            <th>Key</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gamesTableBody">
+                        <tr><td colspan="5" class="no-games-message">No games added yet</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="history" class="tab-content">
+            <div class="section-card">
+                <h2 class="section-title">Giveaway History</h2>
+                <div class="history-list" id="historyList">
+                    <div class="empty-state">
+                        <h3>No history yet</h3>
+                        <p>Completed giveaways will appear here</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">Key copied to clipboard!</div>
+
+    <script>
+        // IndexedDB Setup
+        let db;
+        const DB_NAME = 'StreamGiveawayDB';
+        const DB_VERSION = 1;
+
+        const initDB = () => {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                
+                request.onerror = () => reject(request.error);
+                request.onsuccess = () => {
+                    db = request.result;
+                    resolve(db);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const database = event.target.result;
+                    
+                    if (!database.objectStoreNames.contains('games')) {
+                        const gamesStore = database.createObjectStore('games', { keyPath: 'id', autoIncrement: true });
+                        gamesStore.createIndex('status', 'status', { unique: false });
+                    }
+                    
+                    if (!database.objectStoreNames.contains('subscribers')) {
+                        database.createObjectStore('subscribers', { keyPath: 'id' });
+                    }
+                    
+                    if (!database.objectStoreNames.contains('history')) {
+                        database.createObjectStore('history', { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+            });
+        };
+
+        const extractSteamAppId = (url) => {
+            const match = url.match(/\/app\/(\d+)/);
+            return match ? match[1] : null;
+        };
+
+        const getSteamHeaderImage = (appId) => {
+            return `https://cdn.akamai.steamstatic.com/steam/apps/${appId}/header.jpg`;
+        };
+
+        const fetchGameNameFromSteam = async (url) => {
+            try {
+                const appId = extractSteamAppId(url);
+                if (!appId) {
+                    return null;
+                }
+
+                // Pokus o získání názvu z Steam Store API
+                const apiUrl = `https://store.steampowered.com/api/appdetails?appids=${appId}`;
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+
+                if (data[appId] && data[appId].success && data[appId].data) {
+                    return data[appId].data.name;
+                }
+
+                // Backup: parsování z URL
+                const urlParts = url.split('/');
+                const nameIndex = urlParts.indexOf('app') + 2;
+                if (nameIndex < urlParts.length) {
+                    const namePart = urlParts[nameIndex];
+                    return namePart.replace(/_/g, ' ').replace(/-/g, ' ');
+                }
+
+                return null;
+            } catch (error) {
+                console.error('Error fetching game name:', error);
+                
+                // Fallback: parsování z URL
+                try {
+                    const urlParts = url.split('/');
+                    const nameIndex = urlParts.indexOf('app') + 2;
+                    if (nameIndex < urlParts.length) {
+                        const namePart = urlParts[nameIndex];
+                        return namePart.replace(/_/g, ' ').replace(/-/g, ' ');
+                    }
+                } catch (e) {
+                    console.error('Error parsing URL:', e);
+                }
+                
+                return null;
+            }
+        };
+
+        let currentWinnerKey = '';
+        let currentRotation = 0;
+
+        // Wheel colors
+        const wheelColors = [
+            '#00f0ff', '#ff00aa', '#8844ff', '#00ff88', 
+            '#ffaa00', '#ff4444', '#44aaff', '#aa44ff',
+            '#ff8844', '#44ffaa', '#ff44aa', '#aaff44'
+        ];
+
+        // Draw wheel on canvas
+        const drawWheel = (subscribers) => {
+            const canvas = document.getElementById('wheelCanvas');
+            if (!canvas) return;
+            
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(centerX, centerY) - 5;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (!subscribers || subscribers.length === 0) {
+                // Draw empty wheel
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.fillStyle = '#1a1a25';
+                ctx.fill();
+                ctx.strokeStyle = '#00f0ff';
+                ctx.lineWidth = 4;
+                ctx.stroke();
+
+                ctx.fillStyle = '#6a6a80';
+                ctx.font = '18px Rajdhani, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('Add subscribers', centerX, centerY - 10);
+                ctx.fillText('to spin', centerX, centerY + 15);
+                return;
+            }
+
+            const segmentAngle = (2 * Math.PI) / subscribers.length;
+
+            subscribers.forEach((name, index) => {
+                const startAngle = index * segmentAngle + (currentRotation * Math.PI / 180);
+                const endAngle = startAngle + segmentAngle;
+
+                // Draw segment
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = wheelColors[index % wheelColors.length];
+                ctx.fill();
+                ctx.strokeStyle = '#0a0a0f';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Draw text
+                ctx.save();
+                ctx.translate(centerX, centerY);
+                ctx.rotate(startAngle + segmentAngle / 2);
+                ctx.textAlign = 'right';
+                ctx.fillStyle = '#000';
+                ctx.font = 'bold 12px Orbitron, sans-serif';
+                
+                const displayName = name.length > 12 ? name.substring(0, 10) + '..' : name;
+                ctx.fillText(displayName, radius - 15, 5);
+                ctx.restore();
+            });
+
+            // Draw center circle
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, 25, 0, 2 * Math.PI);
+            ctx.fillStyle = '#0a0a0f';
+            ctx.fill();
+            ctx.strokeStyle = '#00f0ff';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // Draw outer ring
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.strokeStyle = '#00f0ff';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+        };
+
+        // Add Game
+        const addGame = async () => {
+            const url = document.getElementById('steamUrl').value.trim();
+            const key = document.getElementById('steamKey').value.trim();
+
+            if (!url || !key) {
+                alert('Please fill in Steam URL and Steam Key');
+                return;
+            }
+
+            const appId = extractSteamAppId(url);
+            if (!appId) {
+                alert('Invalid Steam URL. Use format: https://store.steampowered.com/app/12345/');
+                return;
+            }
+
+            // Zobrazit loading indicator
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            loadingIndicator.style.display = 'block';
+
+            // Získat název hry
+            const gameName = await fetchGameNameFromSteam(url);
+            
+            loadingIndicator.style.display = 'none';
+
+            if (!gameName) {
+                alert('Could not retrieve game name from Steam URL. Please check the URL and try again.');
+                return;
+            }
+
+            const game = {
+                name: gameName,
+                steamUrl: url,
+                steamAppId: appId,
+                imageUrl: getSteamHeaderImage(appId),
+                key,
+                status: 'available',
+                dateAdded: new Date().toISOString()
+            };
+
+            const transaction = db.transaction(['games'], 'readwrite');
+            const store = transaction.objectStore('games');
+            store.add(game);
+
+            transaction.oncomplete = () => {
+                document.getElementById('steamUrl').value = '';
+                document.getElementById('steamKey').value = '';
+                loadGames();
+                showToast('Game added: ' + gameName);
+            };
+        };
+
+        // Load Games
+        const loadGames = async () => {
+            const transaction = db.transaction(['games'], 'readonly');
+            const store = transaction.objectStore('games');
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                const games = request.result;
+                const tbody = document.getElementById('gamesTableBody');
+                
+                if (games.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="no-games-message">No games added yet. Add your first game above!</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = games.map(game => `
+                    <tr>
+                        <td><img class="game-thumb" src="${game.imageUrl}" alt="${game.name}" onerror="this.style.background='#1a1a25'"></td>
+                        <td class="game-name">${game.name}</td>
+                        <td><span class="game-key">${game.key.substring(0, 5)}...</span></td>
+                        <td><span class="status-badge ${game.status === 'available' ? 'status-available' : 'status-picked'}">${game.status}</span></td>
+                        <td class="actions-cell">
+                            <button class="btn btn-copy" onclick="copyGameKey(${game.id})">Copy Key</button>
+                            ${game.status === 'picked' ? `<button class="btn btn-success" onclick="resetGame(${game.id})">Reset</button>` : ''}
+                            <button class="btn btn-danger" onclick="deleteGame(${game.id})">Delete</button>
+                        </td>
+                    </tr>
+                `).join('');
+            };
+        };
+
+        const copyGameKey = async (id) => {
+            const transaction = db.transaction(['games'], 'readonly');
+            const store = transaction.objectStore('games');
+            const request = store.get(id);
+
+            request.onsuccess = () => {
+                const game = request.result;
+                navigator.clipboard.writeText(game.key);
+                showToast('Key copied!');
+            };
+        };
+
+        const deleteGame = async (id) => {
+            if (!confirm('Delete this game?')) return;
+
+            const transaction = db.transaction(['games'], 'readwrite');
+            const store = transaction.objectStore('games');
+            store.delete(id);
+
+            transaction.oncomplete = () => loadGames();
+        };
+
+        const resetGame = async (id) => {
+            const transaction = db.transaction(['games'], 'readwrite');
+            const store = transaction.objectStore('games');
+            const request = store.get(id);
+
+            request.onsuccess = () => {
+                const game = request.result;
+                game.status = 'available';
+                store.put(game);
+            };
+
+            transaction.oncomplete = () => loadGames();
+        };
+
+        const saveSubscribers = () => {
+            const text = document.getElementById('subscribersList').value;
+            const subscribers = text.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+
+            const transaction = db.transaction(['subscribers'], 'readwrite');
+            const store = transaction.objectStore('subscribers');
+            store.put({ id: 'main', list: subscribers });
+
+            transaction.oncomplete = () => {
+                document.getElementById('subCount').textContent = subscribers.length;
+                showToast('Subscribers saved!');
+                drawWheel(subscribers);
+            };
+        };
+
+        const loadSubscribers = () => {
+            const transaction = db.transaction(['subscribers'], 'readonly');
+            const store = transaction.objectStore('subscribers');
+            const request = store.get('main');
+
+            request.onsuccess = () => {
+                if (request.result) {
+                    const subscribers = request.result.list;
+                    document.getElementById('subscribersList').value = subscribers.join('\n');
+                    document.getElementById('subCount').textContent = subscribers.length;
+                    drawWheel(subscribers);
+                } else {
+                    drawWheel([]);
+                }
+            };
+        };
+
+        const getSubscribers = () => {
+            return new Promise((resolve) => {
+                const transaction = db.transaction(['subscribers'], 'readonly');
+                const store = transaction.objectStore('subscribers');
+                const request = store.get('main');
+
+                request.onsuccess = () => {
+                    resolve(request.result ? request.result.list : []);
+                };
+            });
+        };
+
+        const getAvailableGames = () => {
+            return new Promise((resolve) => {
+                const transaction = db.transaction(['games'], 'readonly');
+                const store = transaction.objectStore('games');
+                const index = store.index('status');
+                const request = index.getAll('available');
+
+                request.onsuccess = () => {
+                    resolve(request.result);
+                };
+            });
+        };
+
+        // Spin animation
+        let isSpinning = false;
+
+        const spinWheel = async () => {
+            if (isSpinning) return;
+
+            const subscribers = await getSubscribers();
+            const availableGames = await getAvailableGames();
+
+            if (subscribers.length === 0) {
+                alert('Please add subscribers first!');
+                return;
+            }
+
+            if (availableGames.length === 0) {
+                alert('No available games! All games have been given away.');
+                return;
+            }
+
+            isSpinning = true;
+            const spinBtn = document.getElementById('spinBtn');
+            spinBtn.disabled = true;
+            spinBtn.textContent = 'Spinning...';
+
+            // Calculate winner
+            const winnerIndex = Math.floor(Math.random() * subscribers.length);
+            const winner = subscribers[winnerIndex];
+
+            // Calculate target rotation
+            const segmentAngle = 360 / subscribers.length;
+            const targetSegmentCenter = 270 - (winnerIndex * segmentAngle) - (segmentAngle / 2);
+            const spins = 5 + Math.random() * 3;
+            const targetRotation = currentRotation + (spins * 360) + (targetSegmentCenter - (currentRotation % 360));
+
+            // Animate
+            const startRotation = currentRotation;
+            const totalRotation = targetRotation - startRotation;
+            const duration = 5000;
+            const startTime = performance.now();
+
+            const animate = (currentTime) => {
+                const elapsed = currentTime - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                
+                // Easing function
+                const easeOut = 1 - Math.pow(1 - progress, 4);
+                
+                currentRotation = startRotation + (totalRotation * easeOut);
+                drawWheel(subscribers);
+
+                if (progress < 1) {
+                    requestAnimationFrame(animate);
+                } else {
+                    // Spin complete
+                    const randomGame = availableGames[Math.floor(Math.random() * availableGames.length)];
+                    showWinner(winner, randomGame);
+                    markGameAsPicked(randomGame.id);
+                    addToHistory(winner, randomGame);
+                    
+                    isSpinning = false;
+                    spinBtn.disabled = false;
+                    spinBtn.textContent = 'Spin the Wheel';
+                }
+            };
+
+            requestAnimationFrame(animate);
+        };
+
+        const showWinner = (winner, game) => {
+            document.getElementById('wheelEmptyState').style.display = 'none';
+            const display = document.getElementById('winnerDisplay');
+            display.classList.remove('hidden');
+
+            document.getElementById('winnerName').textContent = winner;
+            document.getElementById('prizeImage').src = game.imageUrl;
+            document.getElementById('prizeName').textContent = game.name;
+            currentWinnerKey = game.key;
+        };
+
+        const copyKey = () => {
+            if (currentWinnerKey) {
+                navigator.clipboard.writeText(currentWinnerKey);
+                showToast('Key copied to clipboard!');
+            }
+        };
+
+        const markGameAsPicked = (id) => {
+            const transaction = db.transaction(['games'], 'readwrite');
+            const store = transaction.objectStore('games');
+            const request = store.get(id);
+
+            request.onsuccess = () => {
+                const game = request.result;
+                game.status = 'picked';
+                store.put(game);
+            };
+
+            transaction.oncomplete = () => loadGames();
+        };
+
+        const addToHistory = (winner, game) => {
+            const historyEntry = {
+                winner,
+                gameName: game.name,
+                gameImage: game.imageUrl,
+                date: new Date().toISOString()
+            };
+
+            const transaction = db.transaction(['history'], 'readwrite');
+            const store = transaction.objectStore('history');
+            store.add(historyEntry);
+
+            transaction.oncomplete = () => loadHistory();
+        };
+
+        const loadHistory = () => {
+            const transaction = db.transaction(['history'], 'readonly');
+            const store = transaction.objectStore('history');
+            const request = store.getAll();
+
+            request.onsuccess = () => {
+                const history = request.result.reverse();
+                const container = document.getElementById('historyList');
+
+                if (history.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><h3>No history yet</h3><p>Completed giveaways will appear here</p></div>';
+                    return;
+                }
+
+                container.innerHTML = history.map(entry => `
+                    <div class="history-item">
+                        <img src="${entry.gameImage}" alt="${entry.gameName}">
+                        <div>
+                            <div class="history-winner">${entry.winner}</div>
+                            <div class="history-game">${entry.gameName}</div>
+                        </div>
+                        <div class="history-date">${new Date(entry.date).toLocaleString()}</div>
+                    </div>
+                `).join('');
+            };
+        };
+
+        const showToast = (message) => {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        };
+
+        // Tab Navigation
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+
+                if (tab.dataset.tab === 'wheel') {
+                    getSubscribers().then(subs => drawWheel(subs));
+                }
+            });
+        });
+
+        document.getElementById('subscribersList').addEventListener('input', (e) => {
+            const count = e.target.value.split('\n').filter(s => s.trim().length > 0).length;
+            document.getElementById('subCount').textContent = count;
+        });
+
+        // Initialize
+        initDB().then(() => {
+            loadGames();
+            loadSubscribers();
+            loadHistory();
+            drawWheel([]);
+        });
+    </script>
+</body>
+</html>
