@@ -1090,9 +1090,22 @@ PixelPirate"></textarea>
 
             // Calculate target rotation
             const segmentAngle = 360 / subscribers.length;
-            const targetSegmentCenter = 270 - (winnerIndex * segmentAngle) - (segmentAngle / 2);
+            // Pointer is at 270° (top center, pointing down)
+            // Account for clockwise drawing: segments go 0° → 90° → 180° → 270° → 360°
+            // Segment i spans from (i * segmentAngle) to ((i+1) * segmentAngle)
+            // Center of segment i is at (i * segmentAngle + segmentAngle/2)
+            const segmentCenterBeforeRotation = winnerIndex * segmentAngle + (segmentAngle / 2);
+
+            // Calculate how much to rotate to align this segment center with the pointer at 270°
+            // We need to rotate so that: segmentCenter + rotation ≡ 270° (mod 360)
+            const targetSegmentCenter = (270 - segmentCenterBeforeRotation + 360) % 360;
             const spins = 5 + Math.random() * 3;
-            const targetRotation = currentRotation + (spins * 360) + (targetSegmentCenter - (currentRotation % 360));
+
+            // Calculate target rotation ensuring we always move forward
+            const currentAngle = currentRotation % 360;
+            let angleToAdd = targetSegmentCenter - currentAngle;
+            if (angleToAdd < 0) angleToAdd += 360;
+            const targetRotation = currentRotation + (spins * 360) + angleToAdd;
 
             // Animate
             const startRotation = currentRotation;
