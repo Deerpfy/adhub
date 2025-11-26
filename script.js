@@ -72,6 +72,8 @@ const BASE_TRANSLATIONS = {
         tool_chat_desc: 'Unified chat pro Twitch, Kick a YouTube s overlay módy. Vyžaduje spuštění lokálního serveru.',
         tool_pizza_name: 'AdHUB KomoPizza Demo',
         tool_pizza_desc: 'Ukázková objednávková aplikace pro rychlé prototypování UI konceptů.',
+        tool_spinning_name: 'AdHUB Spinning Wheel Giveaway',
+        tool_spinning_desc: 'Interaktivní kolotoč pro losování výherců na streamech a giveaway akcích.',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
         link_ninite_desc: 'Vyber aplikace a nainstaluj je jedním kliknutím po čisté instalaci Windows.',
         link_winget_name: 'Winget.run katalog balíčků',
@@ -108,6 +110,8 @@ const BASE_TRANSLATIONS = {
         tool_chat_desc: 'Unified chat for Twitch, Kick and YouTube with overlay modes. Requires running a local server.',
         tool_pizza_name: 'AdHUB KomoPizza Demo',
         tool_pizza_desc: 'Sample ordering application for rapid UI concept prototyping.',
+        tool_spinning_name: 'AdHUB Spinning Wheel Giveaway',
+        tool_spinning_desc: 'Interactive spinning wheel for drawing winners on streams and giveaway events.',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
         link_ninite_desc: 'Select apps and install them with one click after a clean Windows installation.',
         link_winget_name: 'Winget.run Package Catalog',
@@ -431,6 +435,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["frontend", "demo", "proto", "ui"]
+            },
+            {
+                "id": "spinning-wheel-giveaway",
+                "name": t('tool_spinning_name'),
+                "description": t('tool_spinning_desc'),
+                "category": "streaming",
+                "icon": "🎡",
+                "url": "projects/spinning-wheel-giveaway/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["giveaway", "streaming", "wheel", "lottery", "winner"]
             }
         ],
         "links": [
