@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="app_title">🎰 Sázky na výpověď</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Dekorativní ruleta na pozadí -->
+    <div class="roulette-decoration"></div>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <h1 class="neon-title" data-i18n="app_title">🎰 Sázky na výpověď</h1>
+                <p class="subtitle" data-i18n="subtitle">Casino ruleta zaměstnaneckých sázek</p>
+            </div>
+            <div class="header-right">
+                <div class="language-switcher">
+                    <span data-i18n="language">Jazyk</span>:
+                    <button class="lang-btn active" data-lang="cs" title="Čeština">🇨🇿</button>
+                    <button class="lang-btn" data-lang="en" title="English">🇬🇧</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hlavní obsah -->
+    <main class="main-content">
+        <!-- Levý panel - Akce a Statistiky -->
+        <aside class="sidebar">
+            <div class="action-panel casino-card">
+                <button class="casino-btn primary" id="addBetBtn">
+                    <span data-i18n="add_bet">Přidat sázku</span>
+                </button>
+                <button class="casino-btn secondary" id="exportBtn">
+                    <span data-i18n="export">Exportovat data</span>
+                </button>
+                <label for="importFile" class="casino-btn secondary">
+                    <span data-i18n="import">Importovat data</span>
+                </label>
+                <input type="file" id="importFile" accept=".json" style="display: none;">
+            </div>
+
+            <!-- Statistiky -->
+            <div class="stats-panel casino-card">
+                <h2 data-i18n="statistics">Statistiky</h2>
+                <div class="stat-item">
+                    <span class="stat-label" data-i18n="total_bets">Celkem sázek</span>
+                    <span class="stat-value" id="statTotalBets">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label" data-i18n="active_count">Aktivních sázek</span>
+                    <span class="stat-value" id="statActiveBets">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label" data-i18n="total_points">Celkem bodů v hře</span>
+                    <span class="stat-value gold" id="statTotalPoints">0</span>
+                </div>
+            </div>
+
+            <!-- Žebříček -->
+            <div class="leaderboard-panel casino-card">
+                <h2 data-i18n="leaderboard">Žebříček</h2>
+                <div id="leaderboardList" class="leaderboard-list">
+                    <p class="empty-message" data-i18n="no_bets">Žádné sázky k zobrazení</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Hlavní panel - Sázky -->
+        <section class="bets-section">
+            <!-- Aktivní sázky -->
+            <div class="bets-container casino-card">
+                <h2 data-i18n="active_bets">Aktivní sázky</h2>
+                <div id="activeBetsList" class="bets-list">
+                    <p class="empty-message" data-i18n="no_active_bets">Zatím nejsou žádné aktivní sázky. Začněte tím, že přidáte novou sázku!</p>
+                </div>
+            </div>
+
+            <!-- Historie -->
+            <div class="history-container casino-card">
+                <h2 data-i18n="history">Historie</h2>
+                <div id="historyList" class="bets-list">
+                    <p class="empty-message" data-i18n="no_bets">Žádné sázky k zobrazení</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p data-i18n="footer_text">Vytvořeno pro zábavu • Odpovědně sázte!</p>
+    </footer>
+
+    <!-- Modal - Nová sázka -->
+    <div id="addBetModal" class="modal">
+        <div class="modal-content casino-card">
+            <div class="modal-header">
+                <h2 data-i18n="add_new_bet">Nová sázka</h2>
+                <button class="close-btn" id="closeAddBetModal">&times;</button>
+            </div>
+            <form id="addBetForm">
+                <div class="form-group">
+                    <label for="personName" data-i18n="person_name">Jméno osoby (na koho sází)</label>
+                    <input
+                        type="text"
+                        id="personName"
+                        name="personName"
+                        required
+                        data-i18n-placeholder="person_name_placeholder"
+                        placeholder="Např. Jan Novák">
+                </div>
+                <div class="form-group">
+                    <label for="bettorName" data-i18n="bettor_name">Jméno sázejícího</label>
+                    <input
+                        type="text"
+                        id="bettorName"
+                        name="bettorName"
+                        required
+                        data-i18n-placeholder="bettor_name_placeholder"
+                        placeholder="Vaše jméno">
+                </div>
+                <div class="form-group">
+                    <label for="amount" data-i18n="amount">Částka/Body</label>
+                    <input
+                        type="number"
+                        id="amount"
+                        name="amount"
+                        required
+                        min="1"
+                        data-i18n-placeholder="amount_placeholder"
+                        placeholder="100">
+                </div>
+                <div class="form-group">
+                    <label for="note" data-i18n="note">Poznámka</label>
+                    <textarea
+                        id="note"
+                        name="note"
+                        rows="3"
+                        data-i18n-placeholder="note_placeholder"
+                        placeholder="Volitelná poznámka..."></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="submit" class="casino-btn primary">
+                        <span data-i18n="submit">Potvrdit sázku</span>
+                    </button>
+                    <button type="button" class="casino-btn secondary" id="cancelAddBet">
+                        <span data-i18n="cancel">Zrušit</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal - Potvrzení výherce -->
+    <div id="winnerModal" class="modal">
+        <div class="modal-content casino-card">
+            <div class="modal-header">
+                <h2 data-i18n="confirm_winner">Potvrdit výherce</h2>
+                <button class="close-btn" id="closeWinnerModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p data-i18n="confirm_winner_message">Opravdu chcete označit tuto osobu jako výherce? Všechny sázky na tuto osobu budou označeny jako vyhrané.</p>
+                <div class="winner-info">
+                    <strong data-i18n="winner_person">Osoba, která dala výpověď</strong>: <span id="winnerPersonName"></span>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="casino-btn primary" id="confirmWinnerBtn">
+                    <span data-i18n="confirm">Potvrdit</span>
+                </button>
+                <button class="casino-btn secondary" id="cancelWinnerBtn">
+                    <span data-i18n="cancel">Zrušit</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Skripty -->
+    <script src="lang.js"></script>
+    <script src="db.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
