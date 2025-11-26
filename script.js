@@ -84,7 +84,10 @@ const BASE_TRANSLATIONS = {
         link_ytdlp_desc: 'Poslední buildy yt-dlp potřebné pro náš downloader, včetně návodu k instalaci.',
         translating: 'Překládám...',
         translation_error: 'Chyba překladu',
-        search_language: 'Hledat jazyk...'
+        search_language: 'Hledat jazyk...',
+        idea_button: 'Sdílet nápad',
+        idea_modal_title: 'Sdílejte svůj nápad',
+        idea_modal_description: 'Máte nápad na novou funkci nebo vylepšení? Připojte se k našemu Discord serveru a sdílejte své nápady v AI kanálu!'
     },
     en: {
         search_placeholder: 'Search tool, link...',
@@ -122,7 +125,10 @@ const BASE_TRANSLATIONS = {
         link_ytdlp_desc: 'Latest yt-dlp builds needed for our downloader, including installation guide.',
         translating: 'Translating...',
         translation_error: 'Translation error',
-        search_language: 'Search language...'
+        search_language: 'Search language...',
+        idea_button: 'Share idea',
+        idea_modal_title: 'Share your idea',
+        idea_modal_description: 'Have an idea for a new feature or improvement? Join our Discord server and share your ideas in the AI channel!'
     }
 };
 
@@ -853,6 +859,50 @@ function checkYouTubeExtensionStatus() {
         console.error('[AdHUB] Error checking extension status:', error);
         statusBadge.innerHTML = '❓ Neznámý';
     }
+}
+
+// Discord Idea Modal functionality
+function initIdeaModal() {
+    const ideaButton = document.getElementById('ideaButton');
+    const discordModal = document.getElementById('discordModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+
+    if (!ideaButton || !discordModal || !closeModalBtn) return;
+
+    // Open modal
+    ideaButton.addEventListener('click', () => {
+        discordModal.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
+    });
+
+    // Close modal
+    const closeModal = () => {
+        discordModal.classList.remove('active');
+        document.body.style.overflow = ''; // Restore scrolling
+    };
+
+    closeModalBtn.addEventListener('click', closeModal);
+
+    // Close modal when clicking outside
+    discordModal.addEventListener('click', (e) => {
+        if (e.target === discordModal) {
+            closeModal();
+        }
+    });
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && discordModal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+}
+
+// Initialize idea modal when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initIdeaModal);
+} else {
+    initIdeaModal();
 }
 
 // Export functions for global use
