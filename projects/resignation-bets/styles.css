@@ -1,77 +1,365 @@
-/* ===== CSS Proměnné - Casino barevné schéma ===== */
+/* ===== Modern Casino Theme - CSS Variables ===== */
 :root {
-    --casino-green: #0d5c2e;
-    --casino-gold: #d4af37;
-    --casino-red: #c41e3a;
-    --casino-black: #1a1a1a;
-    --casino-white: #ffffff;
-    --casino-dark-green: #083d1f;
-    --casino-light-gold: #f4e4b0;
-    --shadow-gold: 0 0 20px rgba(212, 175, 55, 0.5);
-    --shadow-red: 0 0 20px rgba(196, 30, 58, 0.5);
+    /* Primary Colors */
+    --casino-black: #0a0a0f;
+    --casino-dark: #12121a;
+    --casino-darker: #1a1a2e;
+    --casino-card-bg: #16213e;
+
+    /* Accent Colors */
+    --casino-gold: #ffd700;
+    --casino-gold-light: #ffe55c;
+    --casino-gold-dark: #b8860b;
+    --casino-red: #dc143c;
+    --casino-red-glow: #ff1744;
+    --casino-green: #00c853;
+    --casino-green-dark: #1b5e20;
+    --casino-purple: #7c4dff;
+
+    /* Text Colors */
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --text-muted: rgba(255, 255, 255, 0.5);
+
+    /* Effects */
+    --glow-gold: 0 0 20px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3), 0 0 60px rgba(255, 215, 0, 0.1);
+    --glow-red: 0 0 20px rgba(220, 20, 60, 0.5), 0 0 40px rgba(220, 20, 60, 0.3);
+    --glow-green: 0 0 20px rgba(0, 200, 83, 0.5), 0 0 40px rgba(0, 200, 83, 0.3);
+    --glow-purple: 0 0 20px rgba(124, 77, 255, 0.5), 0 0 40px rgba(124, 77, 255, 0.3);
+
+    /* Glass Effect */
+    --glass-bg: rgba(22, 33, 62, 0.8);
+    --glass-border: rgba(255, 215, 0, 0.3);
+    --glass-blur: blur(10px);
+
+    /* Transitions */
+    --transition-fast: 0.2s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+
+    /* Fonts */
+    --font-display: 'Playfair Display', serif;
+    --font-body: 'Poppins', sans-serif;
 }
 
-/* ===== Reset a základní styly ===== */
-* {
+/* ===== Reset & Base Styles ===== */
+*, *::before, *::after {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
 }
 
+html {
+    scroll-behavior: smooth;
+}
+
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--casino-dark-green);
-    color: var(--casino-white);
+    font-family: var(--font-body);
+    background: var(--casino-black);
+    color: var(--text-primary);
     min-height: 100vh;
-    position: relative;
     overflow-x: hidden;
+    position: relative;
 }
 
-/* ===== Dekorativní ruleta na pozadí ===== */
-.roulette-decoration {
+/* ===== Casino Background Container ===== */
+.casino-bg {
     position: fixed;
-    top: -150px;
-    right: -150px;
-    width: 400px;
-    height: 400px;
-    border: 30px solid var(--casino-gold);
-    border-radius: 50%;
-    opacity: 0.1;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     z-index: 0;
-    animation: spin 20s linear infinite;
-    box-shadow: 0 0 50px rgba(212, 175, 55, 0.3);
+    overflow: hidden;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse at top, rgba(26, 26, 46, 0.9) 0%, transparent 70%),
+        radial-gradient(ellipse at bottom, rgba(28, 40, 51, 0.8) 0%, transparent 70%),
+        linear-gradient(180deg, var(--casino-black) 0%, var(--casino-dark) 50%, var(--casino-darker) 100%);
 }
 
-.roulette-decoration::before {
+/* ===== Animated Roulette Wheel ===== */
+.roulette-container {
+    position: absolute;
+    top: -100px;
+    right: -100px;
+    width: 500px;
+    height: 500px;
+    opacity: 0.15;
+    animation: float 6s ease-in-out infinite;
+}
+
+.roulette-container.roulette-small {
+    top: auto;
+    bottom: -80px;
+    right: auto;
+    left: -80px;
+    width: 300px;
+    height: 300px;
+    opacity: 0.1;
+    animation: float 8s ease-in-out infinite reverse;
+}
+
+.roulette-wheel {
+    width: 100%;
+    height: 100%;
+    animation: spin 30s linear infinite;
+}
+
+.roulette-small .roulette-wheel {
+    animation: spin 40s linear infinite reverse;
+}
+
+.roulette-ball {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background: radial-gradient(circle at 30% 30%, #fff, #ccc);
+    border-radius: 50%;
+    top: 50%;
+    left: 50%;
+    transform-origin: -80px 0;
+    animation: ball-spin 4s linear infinite;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes ball-spin {
+    from { transform: rotate(0deg) translateX(80px); }
+    to { transform: rotate(-360deg) translateX(80px); }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(5deg); }
+}
+
+/* ===== Floating Cards Animation ===== */
+.floating-cards {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.floating-card {
+    position: absolute;
+    font-size: 3rem;
+    opacity: 0;
+    left: var(--x);
+    animation: fall 15s linear infinite;
+    animation-delay: var(--delay);
+    text-shadow: 0 0 20px currentColor;
+}
+
+.floating-card:nth-child(odd) {
+    color: var(--casino-red);
+}
+
+.floating-card:nth-child(even) {
+    color: var(--casino-gold);
+}
+
+@keyframes fall {
+    0% {
+        transform: translateY(-100px) rotate(0deg) scale(0.5);
+        opacity: 0;
+    }
+    10% {
+        opacity: 0.3;
+    }
+    90% {
+        opacity: 0.3;
+    }
+    100% {
+        transform: translateY(100vh) rotate(720deg) scale(1);
+        opacity: 0;
+    }
+}
+
+/* ===== Floating Chips Animation ===== */
+.floating-chips {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.chip {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    left: var(--x);
+    opacity: 0;
+    animation: chip-fall 12s linear infinite;
+    animation-delay: var(--delay);
+}
+
+.chip::before {
     content: '';
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 80%;
-    height: 80%;
-    border: 20px solid var(--casino-red);
+    width: 60%;
+    height: 60%;
     border-radius: 50%;
-    box-shadow: inset 0 0 30px rgba(196, 30, 58, 0.5);
+    border: 3px dashed rgba(255, 255, 255, 0.5);
 }
 
-@keyframes spin {
-    from {
-        transform: rotate(0deg);
+.chip-gold {
+    background: linear-gradient(135deg, var(--casino-gold), var(--casino-gold-dark));
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+}
+
+.chip-red {
+    background: linear-gradient(135deg, var(--casino-red), #8b0000);
+    box-shadow: 0 0 20px rgba(220, 20, 60, 0.5);
+}
+
+.chip-black {
+    background: linear-gradient(135deg, #333, #111);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    border: 2px solid var(--casino-gold);
+}
+
+@keyframes chip-fall {
+    0% {
+        transform: translateY(-50px) rotate(0deg);
+        opacity: 0;
     }
-    to {
-        transform: rotate(360deg);
+    10% {
+        opacity: 0.4;
+    }
+    90% {
+        opacity: 0.4;
+    }
+    100% {
+        transform: translateY(100vh) rotate(1080deg);
+        opacity: 0;
+    }
+}
+
+/* ===== Sparkle Particles ===== */
+.sparkles {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
+.sparkle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: var(--casino-gold);
+    border-radius: 50%;
+    left: var(--x);
+    top: var(--y);
+    animation: sparkle 3s ease-in-out infinite;
+    animation-delay: var(--delay);
+}
+
+@keyframes sparkle {
+    0%, 100% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1);
+        opacity: 1;
+        box-shadow: 0 0 10px var(--casino-gold), 0 0 20px var(--casino-gold);
+    }
+}
+
+/* ===== Light Beams ===== */
+.light-beams {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.beam {
+    position: absolute;
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(to bottom, transparent, var(--casino-gold), transparent);
+    opacity: 0.1;
+    animation: beam-move 8s ease-in-out infinite;
+}
+
+.beam-1 {
+    left: 20%;
+    animation-delay: 0s;
+}
+
+.beam-2 {
+    left: 50%;
+    animation-delay: 2s;
+}
+
+.beam-3 {
+    left: 80%;
+    animation-delay: 4s;
+}
+
+@keyframes beam-move {
+    0%, 100% {
+        transform: translateX(-50px) skewX(-15deg);
+        opacity: 0;
+    }
+    50% {
+        transform: translateX(50px) skewX(15deg);
+        opacity: 0.15;
     }
 }
 
 /* ===== Header ===== */
 .header {
-    background: linear-gradient(135deg, var(--casino-black) 0%, var(--casino-green) 100%);
-    padding: 2rem 1rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
     position: relative;
-    z-index: 10;
-    border-bottom: 3px solid var(--casino-gold);
+    z-index: 100;
+    padding: 1.5rem 2rem;
+    background: linear-gradient(180deg, rgba(10, 10, 15, 0.95) 0%, rgba(18, 18, 26, 0.9) 100%);
+    border-bottom: 2px solid var(--casino-gold);
+    box-shadow: 0 4px 30px rgba(255, 215, 0, 0.2);
+}
+
+.header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg,
+        transparent,
+        var(--casino-gold),
+        var(--casino-gold-light),
+        var(--casino-gold),
+        transparent);
+    animation: header-shine 3s linear infinite;
+}
+
+@keyframes header-shine {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+.header-glow {
+    position: absolute;
+    bottom: -20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 40px;
+    background: radial-gradient(ellipse, rgba(255, 215, 0, 0.3), transparent);
+    filter: blur(20px);
+    pointer-events: none;
 }
 
 .header-content {
@@ -84,46 +372,124 @@ body {
     gap: 1rem;
 }
 
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo-icon {
+    font-size: 3rem;
+    animation: logo-bounce 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
+}
+
+@keyframes logo-bounce {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    50% { transform: translateY(-5px) rotate(5deg); }
+}
+
+.logo-text {
+    display: flex;
+    flex-direction: column;
+}
+
 .neon-title {
+    font-family: var(--font-display);
     font-size: 2.5rem;
-    font-weight: bold;
+    font-weight: 900;
     color: var(--casino-gold);
     text-shadow:
         0 0 10px var(--casino-gold),
         0 0 20px var(--casino-gold),
-        0 0 30px var(--casino-gold),
-        0 0 40px var(--casino-red);
-    animation: neon-flicker 3s infinite alternate;
+        0 0 40px var(--casino-gold-dark),
+        0 0 80px var(--casino-gold-dark);
+    animation: neon-pulse 2s ease-in-out infinite;
+    letter-spacing: 2px;
 }
 
-@keyframes neon-flicker {
-    0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% {
+@keyframes neon-pulse {
+    0%, 100% {
         text-shadow:
             0 0 10px var(--casino-gold),
             0 0 20px var(--casino-gold),
-            0 0 30px var(--casino-gold),
-            0 0 40px var(--casino-red);
+            0 0 40px var(--casino-gold-dark),
+            0 0 80px var(--casino-gold-dark);
     }
-    20%, 24%, 55% {
-        text-shadow: none;
+    50% {
+        text-shadow:
+            0 0 5px var(--casino-gold),
+            0 0 10px var(--casino-gold),
+            0 0 20px var(--casino-gold-dark),
+            0 0 40px var(--casino-gold-dark);
     }
 }
 
-.subtitle {
-    color: var(--casino-light-gold);
-    font-size: 1rem;
-    margin-top: 0.5rem;
-}
-
-/* ===== Přepínač jazyků ===== */
-.language-switcher {
+.title-decoration {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    background: rgba(0, 0, 0, 0.3);
-    padding: 0.5rem 1rem;
-    border-radius: 25px;
-    border: 2px solid var(--casino-gold);
+    margin-top: 0.25rem;
+}
+
+.deco-line {
+    flex: 1;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--casino-gold), transparent);
+}
+
+.deco-diamond {
+    color: var(--casino-red);
+    font-size: 0.8rem;
+    animation: diamond-spin 4s linear infinite;
+}
+
+@keyframes diamond-spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: 1rem;
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.subtitle-icon {
+    animation: dice-roll 3s ease-in-out infinite;
+}
+
+@keyframes dice-roll {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(15deg); }
+    75% { transform: rotate(-15deg); }
+}
+
+/* ===== Language Switcher ===== */
+.language-switcher {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.lang-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.lang-buttons {
+    display: flex;
+    gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 0.5rem;
+    border-radius: 30px;
+    border: 2px solid var(--glass-border);
 }
 
 .lang-btn {
@@ -132,421 +498,658 @@ body {
     font-size: 1.5rem;
     cursor: pointer;
     padding: 0.25rem 0.5rem;
-    border-radius: 5px;
-    transition: all 0.3s ease;
-    opacity: 0.6;
+    border-radius: 8px;
+    transition: var(--transition-normal);
+    opacity: 0.5;
 }
 
 .lang-btn:hover {
-    opacity: 1;
+    opacity: 0.8;
     transform: scale(1.1);
 }
 
 .lang-btn.active {
     opacity: 1;
     border-color: var(--casino-gold);
-    box-shadow: var(--shadow-gold);
+    box-shadow: var(--glow-gold);
+    background: rgba(255, 215, 0, 0.1);
 }
 
-/* ===== Hlavní obsah ===== */
+/* ===== Main Content ===== */
 .main-content {
     max-width: 1400px;
     margin: 2rem auto;
     padding: 0 1rem;
     display: grid;
-    grid-template-columns: 300px 1fr;
+    grid-template-columns: 320px 1fr;
     gap: 2rem;
     position: relative;
     z-index: 1;
 }
 
-/* ===== Postranní panel ===== */
+/* ===== Sidebar ===== */
 .sidebar {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
 }
 
-/* ===== Casino karty ===== */
+/* ===== Glass Effect Cards ===== */
 .casino-card {
-    background: linear-gradient(135deg, var(--casino-black) 0%, #2a2a2a 100%);
-    border: 3px solid var(--casino-gold);
-    border-radius: 15px;
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: 20px;
     padding: 1.5rem;
-    box-shadow:
-        0 8px 16px rgba(0, 0, 0, 0.5),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1);
     position: relative;
     overflow: hidden;
+    transition: var(--transition-normal);
 }
 
 .casino-card::before {
     content: '';
     position: absolute;
     top: 0;
-    left: 0;
-    right: 0;
-    height: 3px;
-    background: linear-gradient(90deg,
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
         transparent,
-        var(--casino-gold),
-        transparent);
-    animation: shine 3s infinite;
+        rgba(255, 215, 0, 0.1),
+        transparent
+    );
+    transition: var(--transition-slow);
 }
 
-@keyframes shine {
-    0%, 100% { opacity: 0; }
-    50% { opacity: 1; }
+.casino-card:hover::before {
+    left: 100%;
 }
 
-.casino-card h2 {
-    color: var(--casino-gold);
+.casino-card:hover {
+    border-color: var(--casino-gold);
+    box-shadow: 0 10px 40px rgba(255, 215, 0, 0.15);
+}
+
+.glass-effect {
+    box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* ===== Panel Headers ===== */
+.panel-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.panel-icon {
     font-size: 1.5rem;
-    margin-bottom: 1rem;
-    text-align: center;
+}
+
+.panel-header h3 {
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    color: var(--casino-gold);
     text-transform: uppercase;
     letter-spacing: 2px;
 }
 
-/* ===== Casino tlačítka (jako žetony) ===== */
+/* ===== Casino Buttons ===== */
 .casino-btn {
-    background: linear-gradient(135deg, var(--casino-gold) 0%, #b8952e 100%);
-    color: var(--casino-black);
-    border: 3px solid var(--casino-light-gold);
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    font-weight: 600;
     text-transform: uppercase;
-    border-radius: 50px;
+    letter-spacing: 1px;
+    border: none;
+    border-radius: 12px;
     cursor: pointer;
     position: relative;
     overflow: hidden;
-    transition: all 0.3s ease;
-    box-shadow:
-        0 4px 8px rgba(0, 0, 0, 0.3),
-        inset 0 2px 4px rgba(255, 255, 255, 0.3);
-    text-align: center;
-    display: block;
-    width: 100%;
+    transition: var(--transition-normal);
+    text-decoration: none;
 }
 
-.casino-btn::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    border-radius: 50%;
-    background: rgba(255, 255, 255, 0.3);
-    transform: translate(-50%, -50%);
-    transition: width 0.6s, height 0.6s;
+.casino-btn.primary {
+    background: linear-gradient(135deg, var(--casino-gold) 0%, var(--casino-gold-dark) 100%);
+    color: var(--casino-black);
+    box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
 }
 
-.casino-btn:hover::before {
-    width: 300px;
-    height: 300px;
+.casino-btn.primary:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--glow-gold);
 }
 
-.casino-btn:hover {
-    transform: translateY(-2px);
-    box-shadow:
-        0 6px 12px rgba(0, 0, 0, 0.4),
-        var(--shadow-gold);
-}
-
-.casino-btn:active {
-    transform: translateY(0);
+.casino-btn.primary:active {
+    transform: translateY(-1px);
 }
 
 .casino-btn.secondary {
-    background: linear-gradient(135deg, var(--casino-red) 0%, #9a1730 100%);
-    color: var(--casino-white);
-    border-color: #ff4d6d;
+    background: linear-gradient(135deg, rgba(220, 20, 60, 0.8) 0%, rgba(139, 0, 0, 0.8) 100%);
+    color: var(--text-primary);
+    border: 1px solid var(--casino-red);
+    box-shadow: 0 4px 15px rgba(220, 20, 60, 0.2);
 }
 
 .casino-btn.secondary:hover {
-    box-shadow:
-        0 6px 12px rgba(0, 0, 0, 0.4),
-        var(--shadow-red);
+    transform: translateY(-3px);
+    box-shadow: var(--glow-red);
+    background: linear-gradient(135deg, var(--casino-red) 0%, #8b0000 100%);
 }
 
-.casino-btn span {
-    position: relative;
-    z-index: 1;
+.casino-btn .btn-icon {
+    font-size: 1.1rem;
 }
 
-/* ===== Panel akcí ===== */
+/* Pulse glow effect for primary action */
+.pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+    }
+    50% {
+        box-shadow: 0 4px 25px rgba(255, 215, 0, 0.5), 0 0 40px rgba(255, 215, 0, 0.3);
+    }
+}
+
+/* ===== Action Panel ===== */
 .action-panel {
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-/* ===== Statistiky ===== */
-.stats-panel {
-    background: linear-gradient(135deg, var(--casino-green) 0%, var(--casino-dark-green) 100%);
-}
-
+/* ===== Statistics Panel ===== */
 .stat-item {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: 0.75rem;
+    gap: 1rem;
+    padding: 1rem;
     background: rgba(0, 0, 0, 0.3);
-    border-radius: 8px;
-    margin-bottom: 0.5rem;
-    border-left: 3px solid var(--casino-gold);
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+    border-left: 4px solid var(--casino-gold);
+    transition: var(--transition-normal);
+}
+
+.stat-item:hover {
+    background: rgba(0, 0, 0, 0.5);
+    transform: translateX(5px);
+}
+
+.stat-item.highlight {
+    border-left-color: var(--casino-green);
+    background: rgba(0, 200, 83, 0.1);
+}
+
+.stat-icon {
+    font-size: 1.5rem;
+}
+
+.stat-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
 .stat-label {
-    color: var(--casino-light-gold);
-    font-size: 0.9rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .stat-value {
-    color: var(--casino-white);
-    font-size: 1.3rem;
-    font-weight: bold;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
 .stat-value.gold {
     color: var(--casino-gold);
-    text-shadow: var(--shadow-gold);
+    text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
 }
 
-/* ===== Žebříček ===== */
-.leaderboard-panel {
-    background: linear-gradient(135deg, var(--casino-black) 0%, var(--casino-green) 100%);
-}
-
+/* ===== Leaderboard ===== */
 .leaderboard-list {
-    max-height: 400px;
+    max-height: 350px;
     overflow-y: auto;
+    padding-right: 0.5rem;
 }
 
 .leaderboard-item {
-    background: rgba(13, 92, 46, 0.3);
-    padding: 0.75rem;
-    margin-bottom: 0.5rem;
-    border-radius: 8px;
-    border-left: 3px solid var(--casino-gold);
-    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    margin-bottom: 0.75rem;
+    border-left: 4px solid var(--casino-gold);
+    transition: var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.leaderboard-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(255, 215, 0, 0.1), transparent);
+    opacity: 0;
+    transition: var(--transition-normal);
 }
 
 .leaderboard-item:hover {
-    background: rgba(13, 92, 46, 0.5);
     transform: translateX(5px);
-    box-shadow: var(--shadow-gold);
+    border-left-color: var(--casino-gold-light);
+}
+
+.leaderboard-item:hover::before {
+    opacity: 1;
 }
 
 .leaderboard-item-name {
-    font-weight: bold;
+    font-weight: 700;
     color: var(--casino-gold);
     font-size: 1.1rem;
-    margin-bottom: 0.25rem;
+    position: relative;
+    z-index: 1;
 }
 
 .leaderboard-item-stats {
     display: flex;
     justify-content: space-between;
     font-size: 0.85rem;
-    color: var(--casino-light-gold);
+    color: var(--text-secondary);
+    position: relative;
+    z-index: 1;
 }
 
 .win-rate {
-    color: var(--casino-gold);
-    font-weight: bold;
+    color: var(--casino-green);
+    font-weight: 700;
 }
 
-/* ===== Sekce sázek ===== */
+/* ===== Bets Section ===== */
 .bets-section {
     display: flex;
     flex-direction: column;
     gap: 2rem;
 }
 
-.bets-container,
-.history-container {
-    background: linear-gradient(135deg, var(--casino-green) 0%, var(--casino-dark-green) 100%);
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--glass-border);
 }
 
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-icon {
+    font-size: 1.5rem;
+}
+
+.section-title h2 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--casino-gold);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.section-decoration {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.card-suit {
+    font-size: 1.25rem;
+    color: var(--text-muted);
+    transition: var(--transition-normal);
+}
+
+.card-suit.red {
+    color: var(--casino-red);
+}
+
+.bets-container:hover .card-suit,
+.history-container:hover .card-suit {
+    animation: card-dance 0.5s ease-in-out;
+}
+
+@keyframes card-dance {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-5px); }
+}
+
+/* ===== Bets List ===== */
 .bets-list {
     display: grid;
-    gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
     max-height: 600px;
     overflow-y: auto;
     padding: 0.5rem;
 }
 
-/* ===== Karta sázky (jako hrací karta) ===== */
+/* ===== Bet Card (Playing Card Style) ===== */
 .bet-card {
-    background: linear-gradient(135deg, var(--casino-white) 0%, #f0f0f0 100%);
-    color: var(--casino-black);
-    border: 3px solid var(--casino-gold);
-    border-radius: 12px;
+    background: linear-gradient(145deg, #1e2a4a 0%, #16213e 50%, #0f1628 100%);
+    border: 2px solid var(--casino-gold);
+    border-radius: 16px;
     padding: 1.5rem;
-    box-shadow:
-        0 4px 8px rgba(0, 0, 0, 0.3),
-        inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+    transition: var(--transition-normal);
+    transform-style: preserve-3d;
 }
 
 .bet-card::before {
-    content: '♠♥♦♣';
+    content: '';
     position: absolute;
-    top: 5px;
-    right: 5px;
-    font-size: 1.5rem;
-    opacity: 0.1;
-    color: var(--casino-black);
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(
+        from 0deg,
+        transparent,
+        rgba(255, 215, 0, 0.1),
+        transparent,
+        rgba(255, 215, 0, 0.1),
+        transparent
+    );
+    animation: card-rotate 10s linear infinite;
+    opacity: 0;
+    transition: var(--transition-normal);
+}
+
+.bet-card:hover::before {
+    opacity: 1;
+}
+
+@keyframes card-rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.bet-card::after {
+    content: '♠ ♥ ♦ ♣';
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    opacity: 0.3;
 }
 
 .bet-card:hover {
-    transform: translateY(-5px) scale(1.02);
+    transform: translateY(-10px) rotateX(5deg);
     box-shadow:
-        0 8px 16px rgba(0, 0, 0, 0.4),
-        var(--shadow-gold);
+        0 20px 40px rgba(0, 0, 0, 0.4),
+        0 0 30px rgba(255, 215, 0, 0.2);
+    border-color: var(--casino-gold-light);
 }
 
 .bet-card.won {
-    border-color: #28a745;
-    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border-color: var(--casino-green);
+    background: linear-gradient(145deg, rgba(0, 200, 83, 0.2) 0%, #16213e 50%, #0f1628 100%);
+}
+
+.bet-card.won::after {
+    content: '🏆';
+    color: var(--casino-green);
+    opacity: 0.5;
 }
 
 .bet-card.lost {
     border-color: var(--casino-red);
-    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    background: linear-gradient(145deg, rgba(220, 20, 60, 0.2) 0%, #16213e 50%, #0f1628 100%);
+    opacity: 0.8;
+}
+
+.bet-card.lost::after {
+    content: '✕';
+    color: var(--casino-red);
+    opacity: 0.5;
 }
 
 .bet-card-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 2px solid var(--casino-gold);
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--glass-border);
+    position: relative;
+    z-index: 1;
 }
 
 .bet-person {
-    font-size: 1.3rem;
-    font-weight: bold;
-    color: var(--casino-black);
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
 .bet-amount {
     font-size: 1.5rem;
-    font-weight: bold;
+    font-weight: 700;
     color: var(--casino-gold);
-    text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.bet-amount::before {
+    content: '💰';
+    font-size: 1rem;
 }
 
 .bet-card-body {
+    position: relative;
+    z-index: 1;
     margin-bottom: 1rem;
 }
 
 .bet-info {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.bet-info:last-of-type {
+    border-bottom: none;
 }
 
 .bet-info-label {
-    color: #666;
-    font-weight: 600;
+    color: var(--text-muted);
+    font-size: 0.85rem;
 }
 
 .bet-info-value {
-    color: var(--casino-black);
+    color: var(--text-primary);
+    font-weight: 500;
 }
 
 .bet-note {
-    background: rgba(0, 0, 0, 0.05);
-    padding: 0.5rem;
-    border-radius: 5px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.75rem;
+    border-radius: 8px;
     font-style: italic;
-    color: #555;
-    margin-top: 0.5rem;
+    color: var(--text-secondary);
+    margin-top: 0.75rem;
+    border-left: 3px solid var(--casino-purple);
 }
 
 .bet-status {
-    display: inline-block;
-    padding: 0.25rem 0.75rem;
-    border-radius: 15px;
-    font-size: 0.85rem;
-    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .bet-status.active {
-    background: var(--casino-gold);
+    background: linear-gradient(135deg, var(--casino-gold), var(--casino-gold-dark));
     color: var(--casino-black);
+    animation: status-pulse 2s ease-in-out infinite;
+}
+
+@keyframes status-pulse {
+    0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.3); }
+    50% { box-shadow: 0 0 20px rgba(255, 215, 0, 0.6); }
 }
 
 .bet-status.won {
-    background: #28a745;
+    background: linear-gradient(135deg, var(--casino-green), var(--casino-green-dark));
     color: white;
 }
 
 .bet-status.lost {
-    background: var(--casino-red);
+    background: linear-gradient(135deg, var(--casino-red), #8b0000);
     color: white;
 }
 
 .bet-card-actions {
     display: flex;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    position: relative;
+    z-index: 1;
 }
 
 .bet-action-btn {
     flex: 1;
-    padding: 0.5rem;
-    border: 2px solid var(--casino-gold);
-    background: var(--casino-gold);
-    color: var(--casino-black);
-    font-weight: bold;
-    border-radius: 5px;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.85rem;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: var(--transition-normal);
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
-.bet-action-btn:hover {
-    transform: scale(1.05);
-    box-shadow: var(--shadow-gold);
+.bet-action-btn:first-child {
+    background: linear-gradient(135deg, var(--casino-gold), var(--casino-gold-dark));
+    color: var(--casino-black);
+}
+
+.bet-action-btn:first-child:hover {
+    box-shadow: var(--glow-gold);
+    transform: translateY(-2px);
 }
 
 .bet-action-btn.danger {
-    background: var(--casino-red);
-    border-color: var(--casino-red);
+    background: linear-gradient(135deg, var(--casino-red), #8b0000);
     color: white;
 }
 
 .bet-action-btn.danger:hover {
-    box-shadow: var(--shadow-red);
+    box-shadow: var(--glow-red);
+    transform: translateY(-2px);
 }
 
-/* ===== Prázdná zpráva ===== */
+/* ===== Empty Message ===== */
 .empty-message {
+    grid-column: 1 / -1;
     text-align: center;
-    color: var(--casino-light-gold);
+    color: var(--text-muted);
     font-style: italic;
-    padding: 2rem;
+    padding: 3rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 12px;
+    border: 2px dashed var(--glass-border);
 }
 
 /* ===== Footer ===== */
 .footer {
-    text-align: center;
+    position: relative;
+    z-index: 10;
+    background: linear-gradient(180deg, var(--casino-dark) 0%, var(--casino-black) 100%);
     padding: 2rem;
-    background: var(--casino-black);
-    color: var(--casino-gold);
     margin-top: 3rem;
-    border-top: 3px solid var(--casino-gold);
+    border-top: 2px solid var(--casino-gold);
 }
 
-/* ===== Modální okna ===== */
+.footer-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.footer-decoration {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.footer-decoration span {
+    font-size: 1.25rem;
+    color: var(--casino-gold);
+    opacity: 0.5;
+    transition: var(--transition-normal);
+}
+
+.footer-decoration span:nth-child(2),
+.footer-decoration span:nth-child(3) {
+    color: var(--casino-red);
+}
+
+.footer:hover .footer-decoration span {
+    opacity: 1;
+    animation: footer-dance 0.5s ease-in-out;
+}
+
+@keyframes footer-dance {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-5px) rotate(10deg); }
+}
+
+.footer p {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+}
+
+/* ===== Modal ===== */
 .modal {
     display: none;
     position: fixed;
@@ -555,37 +1158,45 @@ body {
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(5px);
 }
 
 .modal.active {
     display: flex;
     justify-content: center;
     align-items: center;
-    animation: fadeIn 0.3s ease;
 }
 
-@keyframes fadeIn {
+.modal-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    animation: fade-in 0.3s ease;
+}
+
+@keyframes fade-in {
     from { opacity: 0; }
     to { opacity: 1; }
 }
 
 .modal-content {
+    position: relative;
+    z-index: 1;
     max-width: 500px;
     width: 90%;
     max-height: 90vh;
     overflow-y: auto;
-    animation: slideIn 0.3s ease;
+    animation: modal-slide-in 0.4s ease;
 }
 
-@keyframes slideIn {
+@keyframes modal-slide-in {
     from {
-        transform: translateY(-50px);
+        transform: translateY(-50px) scale(0.9);
         opacity: 0;
     }
     to {
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
         opacity: 1;
     }
 }
@@ -596,65 +1207,131 @@ body {
     align-items: center;
     margin-bottom: 1.5rem;
     padding-bottom: 1rem;
-    border-bottom: 2px solid var(--casino-gold);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.modal-title {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.modal-icon {
+    font-size: 1.75rem;
+}
+
+.modal-title h2 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: var(--casino-gold);
 }
 
 .close-btn {
-    background: transparent;
-    border: none;
-    color: var(--casino-gold);
-    font-size: 2rem;
+    width: 40px;
+    height: 40px;
+    background: rgba(220, 20, 60, 0.2);
+    border: 1px solid var(--casino-red);
+    border-radius: 50%;
+    color: var(--casino-red);
+    font-size: 1.5rem;
     cursor: pointer;
-    line-height: 1;
-    transition: all 0.3s ease;
+    transition: var(--transition-normal);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .close-btn:hover {
-    color: var(--casino-red);
+    background: var(--casino-red);
+    color: white;
     transform: rotate(90deg);
+    box-shadow: var(--glow-red);
 }
 
 .modal-body {
     margin-bottom: 1.5rem;
 }
 
+.modal-body p {
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
 .winner-info {
-    background: rgba(212, 175, 55, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: rgba(255, 215, 0, 0.1);
     padding: 1rem;
-    border-radius: 8px;
-    border-left: 3px solid var(--casino-gold);
+    border-radius: 12px;
+    border-left: 4px solid var(--casino-gold);
     margin-top: 1rem;
 }
 
-/* ===== Formulář ===== */
+.winner-icon {
+    font-size: 2rem;
+}
+
+.winner-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.winner-details strong {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+}
+
+.winner-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--casino-gold);
+}
+
+/* ===== Form Styles ===== */
 .form-group {
     margin-bottom: 1.5rem;
 }
 
 .form-group label {
-    display: block;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     margin-bottom: 0.5rem;
     color: var(--casino-gold);
-    font-weight: bold;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.label-icon {
+    font-size: 1rem;
 }
 
 .form-group input,
 .form-group textarea {
     width: 100%;
-    padding: 0.75rem;
-    border: 2px solid var(--casino-gold);
-    border-radius: 8px;
-    background: rgba(255, 255, 255, 0.9);
-    color: var(--casino-black);
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.5);
+    border: 2px solid var(--glass-border);
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-family: var(--font-body);
     font-size: 1rem;
-    transition: all 0.3s ease;
+    transition: var(--transition-normal);
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: var(--text-muted);
 }
 
 .form-group input:focus,
 .form-group textarea:focus {
     outline: none;
-    border-color: var(--casino-light-gold);
-    box-shadow: var(--shadow-gold);
+    border-color: var(--casino-gold);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+    background: rgba(0, 0, 0, 0.7);
 }
 
 .modal-actions {
@@ -662,34 +1339,30 @@ body {
     gap: 1rem;
 }
 
-/* ===== Scrollbar styling ===== */
-.bets-list::-webkit-scrollbar,
-.leaderboard-list::-webkit-scrollbar,
-.modal-content::-webkit-scrollbar {
+.modal-actions .casino-btn {
+    flex: 1;
+}
+
+/* ===== Scrollbar Styling ===== */
+::-webkit-scrollbar {
     width: 8px;
 }
 
-.bets-list::-webkit-scrollbar-track,
-.leaderboard-list::-webkit-scrollbar-track,
-.modal-content::-webkit-scrollbar-track {
-    background: var(--casino-dark-green);
+::-webkit-scrollbar-track {
+    background: var(--casino-dark);
     border-radius: 10px;
 }
 
-.bets-list::-webkit-scrollbar-thumb,
-.leaderboard-list::-webkit-scrollbar-thumb,
-.modal-content::-webkit-scrollbar-thumb {
-    background: var(--casino-gold);
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--casino-gold), var(--casino-gold-dark));
     border-radius: 10px;
 }
 
-.bets-list::-webkit-scrollbar-thumb:hover,
-.leaderboard-list::-webkit-scrollbar-thumb:hover,
-.modal-content::-webkit-scrollbar-thumb:hover {
-    background: var(--casino-light-gold);
+::-webkit-scrollbar-thumb:hover {
+    background: var(--casino-gold-light);
 }
 
-/* ===== Responzivní design ===== */
+/* ===== Responsive Design ===== */
 @media (max-width: 1024px) {
     .main-content {
         grid-template-columns: 1fr;
@@ -697,6 +1370,9 @@ body {
 
     .sidebar {
         order: 2;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
     }
 
     .bets-section {
@@ -705,8 +1381,8 @@ body {
 }
 
 @media (max-width: 768px) {
-    .neon-title {
-        font-size: 2rem;
+    .header {
+        padding: 1rem;
     }
 
     .header-content {
@@ -714,34 +1390,48 @@ body {
         text-align: center;
     }
 
+    .logo-container {
+        flex-direction: column;
+    }
+
+    .neon-title {
+        font-size: 1.75rem;
+    }
+
     .casino-card {
         padding: 1rem;
     }
 
-    .bet-card {
-        padding: 1rem;
+    .bets-list {
+        grid-template-columns: 1fr;
     }
 
     .bet-card-actions {
         flex-direction: column;
     }
 
-    .leaderboard-list {
-        max-height: 300px;
+    .modal-actions {
+        flex-direction: column;
     }
 
-    .bets-list {
-        max-height: 400px;
+    .roulette-container {
+        width: 300px;
+        height: 300px;
+    }
+
+    .roulette-container.roulette-small {
+        width: 200px;
+        height: 200px;
     }
 }
 
 @media (max-width: 480px) {
     .neon-title {
-        font-size: 1.5rem;
+        font-size: 1.4rem;
     }
 
     .subtitle {
-        font-size: 0.9rem;
+        font-size: 0.85rem;
     }
 
     .main-content {
@@ -749,7 +1439,43 @@ body {
     }
 
     .casino-btn {
-        padding: 0.6rem 1rem;
-        font-size: 0.9rem;
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem;
+    }
+
+    .bet-amount {
+        font-size: 1.25rem;
+    }
+
+    .floating-card {
+        font-size: 2rem;
+    }
+
+    .chip {
+        width: 30px;
+        height: 30px;
+    }
+}
+
+/* ===== Print Styles ===== */
+@media print {
+    .casino-bg,
+    .floating-cards,
+    .floating-chips,
+    .sparkles,
+    .light-beams,
+    .roulette-container {
+        display: none !important;
+    }
+
+    body {
+        background: white;
+        color: black;
+    }
+
+    .casino-card {
+        background: white;
+        border: 1px solid #ccc;
+        box-shadow: none;
     }
 }

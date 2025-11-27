@@ -5,65 +5,213 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title data-i18n="app_title">🎰 Sázky na výpověď</title>
     <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <!-- Dekorativní ruleta na pozadí -->
-    <div class="roulette-decoration"></div>
+    <!-- Casino Background Effects -->
+    <div class="casino-bg">
+        <!-- Animated Roulette Wheel -->
+        <div class="roulette-container">
+            <svg class="roulette-wheel" viewBox="0 0 400 400">
+                <defs>
+                    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:#ffd700"/>
+                        <stop offset="50%" style="stop-color:#b8860b"/>
+                        <stop offset="100%" style="stop-color:#ffd700"/>
+                    </linearGradient>
+                    <filter id="glow">
+                        <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                        <feMerge>
+                            <feMergeNode in="coloredBlur"/>
+                            <feMergeNode in="SourceGraphic"/>
+                        </feMerge>
+                    </filter>
+                </defs>
+                <!-- Outer ring -->
+                <circle cx="200" cy="200" r="190" fill="none" stroke="url(#goldGradient)" stroke-width="8" filter="url(#glow)"/>
+                <!-- Number segments -->
+                <g class="roulette-numbers">
+                    <path d="M200,10 L200,50" stroke="#c41e3a" stroke-width="3"/>
+                    <path d="M200,350 L200,390" stroke="#1a1a1a" stroke-width="3"/>
+                    <path d="M10,200 L50,200" stroke="#c41e3a" stroke-width="3"/>
+                    <path d="M350,200 L390,200" stroke="#1a1a1a" stroke-width="3"/>
+                </g>
+                <!-- Inner circles -->
+                <circle cx="200" cy="200" r="150" fill="none" stroke="#2d5a27" stroke-width="60"/>
+                <circle cx="200" cy="200" r="120" fill="none" stroke="url(#goldGradient)" stroke-width="3"/>
+                <circle cx="200" cy="200" r="80" fill="#1a1a1a"/>
+                <circle cx="200" cy="200" r="60" fill="#2d5a27" stroke="url(#goldGradient)" stroke-width="2"/>
+                <!-- Center decoration -->
+                <circle cx="200" cy="200" r="30" fill="url(#goldGradient)"/>
+                <text x="200" y="208" text-anchor="middle" fill="#1a1a1a" font-size="20" font-weight="bold">♠</text>
+                <!-- Red/Black segments indicator dots -->
+                <g class="segment-dots">
+                    <circle cx="200" cy="35" r="8" fill="#c41e3a"/>
+                    <circle cx="283" cy="60" r="8" fill="#1a1a1a"/>
+                    <circle cx="340" cy="117" r="8" fill="#c41e3a"/>
+                    <circle cx="365" cy="200" r="8" fill="#1a1a1a"/>
+                    <circle cx="340" cy="283" r="8" fill="#c41e3a"/>
+                    <circle cx="283" cy="340" r="8" fill="#1a1a1a"/>
+                    <circle cx="200" cy="365" r="8" fill="#c41e3a"/>
+                    <circle cx="117" cy="340" r="8" fill="#1a1a1a"/>
+                    <circle cx="60" cy="283" r="8" fill="#c41e3a"/>
+                    <circle cx="35" cy="200" r="8" fill="#1a1a1a"/>
+                    <circle cx="60" cy="117" r="8" fill="#c41e3a"/>
+                    <circle cx="117" cy="60" r="8" fill="#1a1a1a"/>
+                </g>
+            </svg>
+            <!-- Roulette Ball -->
+            <div class="roulette-ball"></div>
+        </div>
+
+        <!-- Second smaller roulette -->
+        <div class="roulette-container roulette-small">
+            <svg class="roulette-wheel" viewBox="0 0 400 400">
+                <circle cx="200" cy="200" r="190" fill="none" stroke="url(#goldGradient)" stroke-width="6" filter="url(#glow)"/>
+                <circle cx="200" cy="200" r="150" fill="none" stroke="#2d5a27" stroke-width="50"/>
+                <circle cx="200" cy="200" r="80" fill="#1a1a1a"/>
+                <circle cx="200" cy="200" r="40" fill="url(#goldGradient)"/>
+            </svg>
+        </div>
+
+        <!-- Floating Cards -->
+        <div class="floating-cards">
+            <div class="floating-card" style="--delay: 0s; --x: 10%;">♠</div>
+            <div class="floating-card" style="--delay: 2s; --x: 25%;">♥</div>
+            <div class="floating-card" style="--delay: 4s; --x: 40%;">♦</div>
+            <div class="floating-card" style="--delay: 6s; --x: 55%;">♣</div>
+            <div class="floating-card" style="--delay: 8s; --x: 70%;">♠</div>
+            <div class="floating-card" style="--delay: 10s; --x: 85%;">♥</div>
+            <div class="floating-card" style="--delay: 1s; --x: 15%;">♦</div>
+            <div class="floating-card" style="--delay: 3s; --x: 30%;">♣</div>
+            <div class="floating-card" style="--delay: 5s; --x: 60%;">♠</div>
+            <div class="floating-card" style="--delay: 7s; --x: 80%;">♥</div>
+        </div>
+
+        <!-- Floating Chips -->
+        <div class="floating-chips">
+            <div class="chip chip-gold" style="--delay: 0s; --x: 5%;"></div>
+            <div class="chip chip-red" style="--delay: 3s; --x: 20%;"></div>
+            <div class="chip chip-black" style="--delay: 6s; --x: 35%;"></div>
+            <div class="chip chip-gold" style="--delay: 9s; --x: 50%;"></div>
+            <div class="chip chip-red" style="--delay: 2s; --x: 65%;"></div>
+            <div class="chip chip-black" style="--delay: 5s; --x: 80%;"></div>
+            <div class="chip chip-gold" style="--delay: 8s; --x: 92%;"></div>
+        </div>
+
+        <!-- Sparkle particles -->
+        <div class="sparkles">
+            <div class="sparkle" style="--x: 10%; --y: 20%; --delay: 0s;"></div>
+            <div class="sparkle" style="--x: 25%; --y: 60%; --delay: 0.5s;"></div>
+            <div class="sparkle" style="--x: 40%; --y: 30%; --delay: 1s;"></div>
+            <div class="sparkle" style="--x: 55%; --y: 70%; --delay: 1.5s;"></div>
+            <div class="sparkle" style="--x: 70%; --y: 40%; --delay: 2s;"></div>
+            <div class="sparkle" style="--x: 85%; --y: 80%; --delay: 2.5s;"></div>
+            <div class="sparkle" style="--x: 15%; --y: 50%; --delay: 3s;"></div>
+            <div class="sparkle" style="--x: 90%; --y: 25%; --delay: 3.5s;"></div>
+        </div>
+
+        <!-- Light beams -->
+        <div class="light-beams">
+            <div class="beam beam-1"></div>
+            <div class="beam beam-2"></div>
+            <div class="beam beam-3"></div>
+        </div>
+    </div>
 
     <!-- Header -->
     <header class="header">
         <div class="header-content">
             <div class="header-left">
-                <h1 class="neon-title" data-i18n="app_title">🎰 Sázky na výpověď</h1>
-                <p class="subtitle" data-i18n="subtitle">Casino ruleta zaměstnaneckých sázek</p>
+                <div class="logo-container">
+                    <span class="logo-icon">🎰</span>
+                    <div class="logo-text">
+                        <h1 class="neon-title" data-i18n="app_title">Sázky na výpověď</h1>
+                        <div class="title-decoration">
+                            <span class="deco-line"></span>
+                            <span class="deco-diamond">♦</span>
+                            <span class="deco-line"></span>
+                        </div>
+                    </div>
+                </div>
+                <p class="subtitle" data-i18n="subtitle">
+                    <span class="subtitle-icon">🎲</span>
+                    Casino ruleta zaměstnaneckých sázek
+                    <span class="subtitle-icon">🎲</span>
+                </p>
             </div>
             <div class="header-right">
                 <div class="language-switcher">
-                    <span data-i18n="language">Jazyk</span>:
-                    <button class="lang-btn active" data-lang="cs" title="Čeština">🇨🇿</button>
-                    <button class="lang-btn" data-lang="en" title="English">🇬🇧</button>
+                    <span class="lang-label" data-i18n="language">Jazyk</span>
+                    <div class="lang-buttons">
+                        <button class="lang-btn active" data-lang="cs" title="Čeština">🇨🇿</button>
+                        <button class="lang-btn" data-lang="en" title="English">🇬🇧</button>
+                    </div>
                 </div>
             </div>
         </div>
+        <div class="header-glow"></div>
     </header>
 
     <!-- Hlavní obsah -->
     <main class="main-content">
         <!-- Levý panel - Akce a Statistiky -->
         <aside class="sidebar">
-            <div class="action-panel casino-card">
-                <button class="casino-btn primary" id="addBetBtn">
+            <div class="action-panel casino-card glass-effect">
+                <div class="panel-header">
+                    <span class="panel-icon">🎯</span>
+                    <h3 data-i18n="actions">Akce</h3>
+                </div>
+                <button class="casino-btn primary pulse-glow" id="addBetBtn">
+                    <span class="btn-icon">➕</span>
                     <span data-i18n="add_bet">Přidat sázku</span>
                 </button>
                 <button class="casino-btn secondary" id="exportBtn">
+                    <span class="btn-icon">📤</span>
                     <span data-i18n="export">Exportovat data</span>
                 </button>
                 <label for="importFile" class="casino-btn secondary">
+                    <span class="btn-icon">📥</span>
                     <span data-i18n="import">Importovat data</span>
                 </label>
                 <input type="file" id="importFile" accept=".json" style="display: none;">
             </div>
 
             <!-- Statistiky -->
-            <div class="stats-panel casino-card">
-                <h2 data-i18n="statistics">Statistiky</h2>
-                <div class="stat-item">
-                    <span class="stat-label" data-i18n="total_bets">Celkem sázek</span>
-                    <span class="stat-value" id="statTotalBets">0</span>
+            <div class="stats-panel casino-card glass-effect">
+                <div class="panel-header">
+                    <span class="panel-icon">📊</span>
+                    <h3 data-i18n="statistics">Statistiky</h3>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label" data-i18n="active_count">Aktivních sázek</span>
-                    <span class="stat-value" id="statActiveBets">0</span>
+                    <div class="stat-icon">🎰</div>
+                    <div class="stat-content">
+                        <span class="stat-label" data-i18n="total_bets">Celkem sázek</span>
+                        <span class="stat-value" id="statTotalBets">0</span>
+                    </div>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label" data-i18n="total_points">Celkem bodů v hře</span>
-                    <span class="stat-value gold" id="statTotalPoints">0</span>
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-content">
+                        <span class="stat-label" data-i18n="active_count">Aktivních sázek</span>
+                        <span class="stat-value" id="statActiveBets">0</span>
+                    </div>
+                </div>
+                <div class="stat-item highlight">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-content">
+                        <span class="stat-label" data-i18n="total_points">Celkem bodů v hře</span>
+                        <span class="stat-value gold" id="statTotalPoints">0</span>
+                    </div>
                 </div>
             </div>
 
             <!-- Žebříček -->
-            <div class="leaderboard-panel casino-card">
-                <h2 data-i18n="leaderboard">Žebříček</h2>
+            <div class="leaderboard-panel casino-card glass-effect">
+                <div class="panel-header">
+                    <span class="panel-icon">🏆</span>
+                    <h3 data-i18n="leaderboard">Žebříček</h3>
+                </div>
                 <div id="leaderboardList" class="leaderboard-list">
                     <p class="empty-message" data-i18n="no_bets">Žádné sázky k zobrazení</p>
                 </div>
@@ -73,16 +221,38 @@
         <!-- Hlavní panel - Sázky -->
         <section class="bets-section">
             <!-- Aktivní sázky -->
-            <div class="bets-container casino-card">
-                <h2 data-i18n="active_bets">Aktivní sázky</h2>
+            <div class="bets-container casino-card glass-effect">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span class="section-icon">🔥</span>
+                        <h2 data-i18n="active_bets">Aktivní sázky</h2>
+                    </div>
+                    <div class="section-decoration">
+                        <span class="card-suit">♠</span>
+                        <span class="card-suit red">♥</span>
+                        <span class="card-suit">♣</span>
+                        <span class="card-suit red">♦</span>
+                    </div>
+                </div>
                 <div id="activeBetsList" class="bets-list">
                     <p class="empty-message" data-i18n="no_active_bets">Zatím nejsou žádné aktivní sázky. Začněte tím, že přidáte novou sázku!</p>
                 </div>
             </div>
 
             <!-- Historie -->
-            <div class="history-container casino-card">
-                <h2 data-i18n="history">Historie</h2>
+            <div class="history-container casino-card glass-effect">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span class="section-icon">📜</span>
+                        <h2 data-i18n="history">Historie</h2>
+                    </div>
+                    <div class="section-decoration">
+                        <span class="card-suit">♠</span>
+                        <span class="card-suit red">♥</span>
+                        <span class="card-suit">♣</span>
+                        <span class="card-suit red">♦</span>
+                    </div>
+                </div>
                 <div id="historyList" class="bets-list">
                     <p class="empty-message" data-i18n="no_bets">Žádné sázky k zobrazení</p>
                 </div>
@@ -92,19 +262,36 @@
 
     <!-- Footer -->
     <footer class="footer">
-        <p data-i18n="footer_text">Vytvořeno pro zábavu • Odpovědně sázte!</p>
+        <div class="footer-content">
+            <div class="footer-decoration">
+                <span>♠</span><span>♥</span><span>♦</span><span>♣</span>
+            </div>
+            <p data-i18n="footer_text">Vytvořeno pro zábavu • Odpovědně sázte!</p>
+            <div class="footer-decoration">
+                <span>♣</span><span>♦</span><span>♥</span><span>♠</span>
+            </div>
+        </div>
     </footer>
 
     <!-- Modal - Nová sázka -->
     <div id="addBetModal" class="modal">
-        <div class="modal-content casino-card">
+        <div class="modal-overlay"></div>
+        <div class="modal-content casino-card glass-effect">
             <div class="modal-header">
-                <h2 data-i18n="add_new_bet">Nová sázka</h2>
-                <button class="close-btn" id="closeAddBetModal">&times;</button>
+                <div class="modal-title">
+                    <span class="modal-icon">🎲</span>
+                    <h2 data-i18n="add_new_bet">Nová sázka</h2>
+                </div>
+                <button class="close-btn" id="closeAddBetModal">
+                    <span>&times;</span>
+                </button>
             </div>
             <form id="addBetForm">
                 <div class="form-group">
-                    <label for="personName" data-i18n="person_name">Jméno osoby (na koho sází)</label>
+                    <label for="personName">
+                        <span class="label-icon">👤</span>
+                        <span data-i18n="person_name">Jméno osoby (na koho sází)</span>
+                    </label>
                     <input
                         type="text"
                         id="personName"
@@ -114,7 +301,10 @@
                         placeholder="Např. Jan Novák">
                 </div>
                 <div class="form-group">
-                    <label for="bettorName" data-i18n="bettor_name">Jméno sázejícího</label>
+                    <label for="bettorName">
+                        <span class="label-icon">🎰</span>
+                        <span data-i18n="bettor_name">Jméno sázejícího</span>
+                    </label>
                     <input
                         type="text"
                         id="bettorName"
@@ -124,7 +314,10 @@
                         placeholder="Vaše jméno">
                 </div>
                 <div class="form-group">
-                    <label for="amount" data-i18n="amount">Částka/Body</label>
+                    <label for="amount">
+                        <span class="label-icon">💰</span>
+                        <span data-i18n="amount">Částka/Body</span>
+                    </label>
                     <input
                         type="number"
                         id="amount"
@@ -135,7 +328,10 @@
                         placeholder="100">
                 </div>
                 <div class="form-group">
-                    <label for="note" data-i18n="note">Poznámka</label>
+                    <label for="note">
+                        <span class="label-icon">📝</span>
+                        <span data-i18n="note">Poznámka</span>
+                    </label>
                     <textarea
                         id="note"
                         name="note"
@@ -145,9 +341,11 @@
                 </div>
                 <div class="modal-actions">
                     <button type="submit" class="casino-btn primary">
+                        <span class="btn-icon">✓</span>
                         <span data-i18n="submit">Potvrdit sázku</span>
                     </button>
                     <button type="button" class="casino-btn secondary" id="cancelAddBet">
+                        <span class="btn-icon">✕</span>
                         <span data-i18n="cancel">Zrušit</span>
                     </button>
                 </div>
@@ -157,22 +355,34 @@
 
     <!-- Modal - Potvrzení výherce -->
     <div id="winnerModal" class="modal">
-        <div class="modal-content casino-card">
+        <div class="modal-overlay"></div>
+        <div class="modal-content casino-card glass-effect">
             <div class="modal-header">
-                <h2 data-i18n="confirm_winner">Potvrdit výherce</h2>
-                <button class="close-btn" id="closeWinnerModal">&times;</button>
+                <div class="modal-title">
+                    <span class="modal-icon">🏆</span>
+                    <h2 data-i18n="confirm_winner">Potvrdit výherce</h2>
+                </div>
+                <button class="close-btn" id="closeWinnerModal">
+                    <span>&times;</span>
+                </button>
             </div>
             <div class="modal-body">
                 <p data-i18n="confirm_winner_message">Opravdu chcete označit tuto osobu jako výherce? Všechny sázky na tuto osobu budou označeny jako vyhrané.</p>
                 <div class="winner-info">
-                    <strong data-i18n="winner_person">Osoba, která dala výpověď</strong>: <span id="winnerPersonName"></span>
+                    <span class="winner-icon">🎉</span>
+                    <div class="winner-details">
+                        <strong data-i18n="winner_person">Osoba, která dala výpověď</strong>
+                        <span id="winnerPersonName" class="winner-name"></span>
+                    </div>
                 </div>
             </div>
             <div class="modal-actions">
                 <button class="casino-btn primary" id="confirmWinnerBtn">
+                    <span class="btn-icon">✓</span>
                     <span data-i18n="confirm">Potvrdit</span>
                 </button>
                 <button class="casino-btn secondary" id="cancelWinnerBtn">
+                    <span class="btn-icon">✕</span>
                     <span data-i18n="cancel">Zrušit</span>
                 </button>
             </div>
