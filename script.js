@@ -76,6 +76,8 @@ const BASE_TRANSLATIONS = {
         tool_spinning_desc: 'Interaktivní kolotoč pro losování výherců na streamech a giveaway akcích.',
         tool_resignation_name: 'AdHUB Sázky na výpověď',
         tool_resignation_desc: 'Casino aplikace pro sázení na to, kdo dá dřív výpověď z práce. Zábavná ruleta s offline úložištěm.',
+        tool_ai_prompting_name: 'AdHUB AI Prompting',
+        tool_ai_prompting_desc: 'Profesionální formátovač promptů s 7 metodami (CoT, Few-Shot, ToT, atd.), 5 jazyky a lokálním úložištěm.',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
         link_ninite_desc: 'Vyber aplikace a nainstaluj je jedním kliknutím po čisté instalaci Windows.',
         link_winget_name: 'Winget.run katalog balíčků',
@@ -119,6 +121,8 @@ const BASE_TRANSLATIONS = {
         tool_spinning_desc: 'Interactive spinning wheel for drawing winners on streams and giveaway events.',
         tool_resignation_name: 'AdHUB Resignation Bets',
         tool_resignation_desc: 'Casino app for betting on who will resign from work first. Fun roulette with offline storage.',
+        tool_ai_prompting_name: 'AdHUB AI Prompting',
+        tool_ai_prompting_desc: 'Professional prompt formatter with 7 methods (CoT, Few-Shot, ToT, etc.), 5 languages and local storage.',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
         link_ninite_desc: 'Select apps and install them with one click after a clean Windows installation.',
         link_winget_name: 'Winget.run Package Catalog',
@@ -467,6 +471,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["casino", "betting", "fun", "office", "roulette", "game"]
+            },
+            {
+                "id": "ai-prompting",
+                "name": t('tool_ai_prompting_name'),
+                "description": t('tool_ai_prompting_desc'),
+                "category": "tools",
+                "icon": "🤖",
+                "url": "projects/ai-prompting/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["ai", "prompting", "claude", "chatgpt", "prompt", "formatter", "react"]
             }
         ],
         "links": [

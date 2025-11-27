@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Prompting - Prompt Formatter</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            min-height: 100vh;
+        }
+        #root {
+            min-height: 100vh;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .btn-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .btn-gradient:hover {
+            background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%);
+        }
+        textarea:focus, input:focus, select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+        }
+        .method-card {
+            transition: all 0.3s ease;
+        }
+        .method-card:hover {
+            transform: translateY(-2px);
+        }
+        .method-card.selected {
+            border-color: #667eea;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.5);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(102, 126, 234, 0.7);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+    </style>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f1ff',
+                            100: '#e0e2ff',
+                            200: '#c7caff',
+                            300: '#a4a9ff',
+                            400: '#8185ff',
+                            500: '#667eea',
+                            600: '#5a5dd4',
+                            700: '#4a4bb0',
+                            800: '#3d3f8f',
+                            900: '#363874',
+                        },
+                        dark: {
+                            50: '#f7f7f8',
+                            100: '#ececf1',
+                            200: '#d9d9e3',
+                            300: '#c5c5d2',
+                            400: '#acacbe',
+                            500: '#8e8ea0',
+                            600: '#6e6e80',
+                            700: '#565869',
+                            800: '#343541',
+                            900: '#202123',
+                            950: '#0f0f23',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="dark">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useCallback, useMemo } = React;
+
+        // ==================== TRANSLATIONS ====================
+        const translations = {
+            en: {
+                title: "AI Prompting",
+                subtitle: "Professional Prompt Formatter",
+                language: "Language",
+                targetAI: "Target AI",
+                template: "Template",
+                method: "Prompting Method",
+                yourPrompt: "Your Prompt",
+                promptPlaceholder: "Enter your prompt here...",
+                formattedPrompt: "Formatted Prompt",
+                copy: "Copy",
+                copied: "Copied!",
+                clear: "Clear",
+                save: "Save",
+                savedPrompts: "Saved Prompts",
+                noSavedPrompts: "No saved prompts yet",
+                export: "Export",
+                import: "Import",
+                delete: "Delete",
+                load: "Load",
+                promptName: "Prompt Name",
+                enterName: "Enter prompt name...",
+                cancel: "Cancel",
+                savePrompt: "Save Prompt",
+                deleteAll: "Delete All",
+                confirmDelete: "Are you sure you want to delete all saved prompts?",
+                importSuccess: "Prompts imported successfully!",
+                importError: "Error importing prompts. Please check the file format.",
+                general: "General",
+                coding: "Coding",
+                creative: "Creative",
+                analysis: "Analysis",
+                explanation: "Explanation",
+                claude: "Claude",
+                chatgpt: "ChatGPT",
+                any: "Any AI",
+                methodChainOfThought: "Chain-of-Thought",
+                methodChainOfThoughtDesc: "Step-by-step reasoning for complex problems",
+                methodFewShot: "Few-Shot",
+                methodFewShotDesc: "Learn from examples provided in the prompt",
+                methodTreeOfThoughts: "Tree of Thoughts",
+                methodTreeOfThoughtsDesc: "Explore multiple reasoning paths",
+                methodSelfConsistency: "Self-Consistency",
+                methodSelfConsistencyDesc: "Generate multiple solutions and find consensus",
+                methodReAct: "ReAct",
+                methodReActDesc: "Reasoning + Acting for task completion",
+                methodRISEN: "RISEN",
+                methodRISENDesc: "Role, Instructions, Steps, End goal, Narrowing",
+                methodEmotionPrompt: "EmotionPrompt",
+                methodEmotionPromptDesc: "Add emotional context to improve responses",
+                backToHub: "Back to Hub"
+            },
+            cs: {
+                title: "AI Prompting",
+                subtitle: "Profesionální formátovač promptů",
+                language: "Jazyk",
+                targetAI: "Cílové AI",
+                template: "Šablona",
+                method: "Metoda promptingu",
+                yourPrompt: "Váš prompt",
+                promptPlaceholder: "Zadejte svůj prompt zde...",
+                formattedPrompt: "Naformátovaný prompt",
+                copy: "Kopírovat",
+                copied: "Zkopírováno!",
+                clear: "Vymazat",
+                save: "Uložit",
+                savedPrompts: "Uložené prompty",
+                noSavedPrompts: "Zatím žádné uložené prompty",
+                export: "Exportovat",
+                import: "Importovat",
+                delete: "Smazat",
+                load: "Načíst",
+                promptName: "Název promptu",
+                enterName: "Zadejte název promptu...",
+                cancel: "Zrušit",
+                savePrompt: "Uložit prompt",
+                deleteAll: "Smazat vše",
+                confirmDelete: "Opravdu chcete smazat všechny uložené prompty?",
+                importSuccess: "Prompty úspěšně importovány!",
+                importError: "Chyba při importu promptů. Zkontrolujte formát souboru.",
+                general: "Obecné",
+                coding: "Programování",
+                creative: "Kreativní",
+                analysis: "Analýza",
+                explanation: "Vysvětlení",
+                claude: "Claude",
+                chatgpt: "ChatGPT",
+                any: "Jakékoliv AI",
+                methodChainOfThought: "Chain-of-Thought",
+                methodChainOfThoughtDesc: "Krokové uvažování pro složité problémy",
+                methodFewShot: "Few-Shot",
+                methodFewShotDesc: "Učení z příkladů v promptu",
+                methodTreeOfThoughts: "Tree of Thoughts",
+                methodTreeOfThoughtsDesc: "Prozkoumání více cest uvažování",
+                methodSelfConsistency: "Self-Consistency",
+                methodSelfConsistencyDesc: "Generování více řešení a hledání konsenzu",
+                methodReAct: "ReAct",
+                methodReActDesc: "Uvažování + Akce pro dokončení úkolu",
+                methodRISEN: "RISEN",
+                methodRISENDesc: "Role, Instrukce, Kroky, Cíl, Zúžení",
+                methodEmotionPrompt: "EmotionPrompt",
+                methodEmotionPromptDesc: "Přidání emočního kontextu pro lepší odpovědi",
+                backToHub: "Zpět do Hubu"
+            },
+            de: {
+                title: "AI Prompting",
+                subtitle: "Professioneller Prompt-Formatierer",
+                language: "Sprache",
+                targetAI: "Ziel-KI",
+                template: "Vorlage",
+                method: "Prompting-Methode",
+                yourPrompt: "Ihr Prompt",
+                promptPlaceholder: "Geben Sie hier Ihren Prompt ein...",
+                formattedPrompt: "Formatierter Prompt",
+                copy: "Kopieren",
+                copied: "Kopiert!",
+                clear: "Löschen",
+                save: "Speichern",
+                savedPrompts: "Gespeicherte Prompts",
+                noSavedPrompts: "Noch keine gespeicherten Prompts",
+                export: "Exportieren",
+                import: "Importieren",
+                delete: "Löschen",
+                load: "Laden",
+                promptName: "Prompt-Name",
+                enterName: "Prompt-Namen eingeben...",
+                cancel: "Abbrechen",
+                savePrompt: "Prompt speichern",
+                deleteAll: "Alle löschen",
+                confirmDelete: "Möchten Sie wirklich alle gespeicherten Prompts löschen?",
+                importSuccess: "Prompts erfolgreich importiert!",
+                importError: "Fehler beim Importieren. Bitte überprüfen Sie das Dateiformat.",
+                general: "Allgemein",
+                coding: "Programmierung",
+                creative: "Kreativ",
+                analysis: "Analyse",
+                explanation: "Erklärung",
+                claude: "Claude",
+                chatgpt: "ChatGPT",
+                any: "Jede KI",
+                methodChainOfThought: "Chain-of-Thought",
+                methodChainOfThoughtDesc: "Schrittweises Denken für komplexe Probleme",
+                methodFewShot: "Few-Shot",
+                methodFewShotDesc: "Lernen aus Beispielen im Prompt",
+                methodTreeOfThoughts: "Tree of Thoughts",
+                methodTreeOfThoughtsDesc: "Mehrere Denkpfade erkunden",
+                methodSelfConsistency: "Self-Consistency",
+                methodSelfConsistencyDesc: "Mehrere Lösungen generieren und Konsens finden",
+                methodReAct: "ReAct",
+                methodReActDesc: "Denken + Handeln zur Aufgabenerfüllung",
+                methodRISEN: "RISEN",
+                methodRISENDesc: "Rolle, Anweisungen, Schritte, Ziel, Eingrenzung",
+                methodEmotionPrompt: "EmotionPrompt",
+                methodEmotionPromptDesc: "Emotionaler Kontext für bessere Antworten",
+                backToHub: "Zurück zum Hub"
+            },
+            es: {
+                title: "AI Prompting",
+                subtitle: "Formateador Profesional de Prompts",
+                language: "Idioma",
+                targetAI: "IA Objetivo",
+                template: "Plantilla",
+                method: "Método de Prompting",
+                yourPrompt: "Tu Prompt",
+                promptPlaceholder: "Ingresa tu prompt aquí...",
+                formattedPrompt: "Prompt Formateado",
+                copy: "Copiar",
+                copied: "¡Copiado!",
+                clear: "Limpiar",
+                save: "Guardar",
+                savedPrompts: "Prompts Guardados",
+                noSavedPrompts: "Sin prompts guardados aún",
+                export: "Exportar",
+                import: "Importar",
+                delete: "Eliminar",
+                load: "Cargar",
+                promptName: "Nombre del Prompt",
+                enterName: "Ingresa el nombre del prompt...",
+                cancel: "Cancelar",
+                savePrompt: "Guardar Prompt",
+                deleteAll: "Eliminar Todo",
+                confirmDelete: "¿Estás seguro de que quieres eliminar todos los prompts guardados?",
+                importSuccess: "¡Prompts importados exitosamente!",
+                importError: "Error al importar prompts. Por favor verifica el formato del archivo.",
+                general: "General",
+                coding: "Programación",
+                creative: "Creativo",
+                analysis: "Análisis",
+                explanation: "Explicación",
+                claude: "Claude",
+                chatgpt: "ChatGPT",
+                any: "Cualquier IA",
+                methodChainOfThought: "Chain-of-Thought",
+                methodChainOfThoughtDesc: "Razonamiento paso a paso para problemas complejos",
+                methodFewShot: "Few-Shot",
+                methodFewShotDesc: "Aprender de ejemplos proporcionados en el prompt",
+                methodTreeOfThoughts: "Tree of Thoughts",
+                methodTreeOfThoughtsDesc: "Explorar múltiples caminos de razonamiento",
+                methodSelfConsistency: "Self-Consistency",
+                methodSelfConsistencyDesc: "Generar múltiples soluciones y encontrar consenso",
+                methodReAct: "ReAct",
+                methodReActDesc: "Razonamiento + Acción para completar tareas",
+                methodRISEN: "RISEN",
+                methodRISENDesc: "Rol, Instrucciones, Pasos, Meta, Restricción",
+                methodEmotionPrompt: "EmotionPrompt",
+                methodEmotionPromptDesc: "Añadir contexto emocional para mejores respuestas",
+                backToHub: "Volver al Hub"
+            },
+            fr: {
+                title: "AI Prompting",
+                subtitle: "Formateur de Prompts Professionnel",
+                language: "Langue",
+                targetAI: "IA Cible",
+                template: "Modèle",
+                method: "Méthode de Prompting",
+                yourPrompt: "Votre Prompt",
+                promptPlaceholder: "Entrez votre prompt ici...",
+                formattedPrompt: "Prompt Formaté",
+                copy: "Copier",
+                copied: "Copié!",
+                clear: "Effacer",
+                save: "Enregistrer",
+                savedPrompts: "Prompts Enregistrés",
+                noSavedPrompts: "Aucun prompt enregistré",
+                export: "Exporter",
+                import: "Importer",
+                delete: "Supprimer",
+                load: "Charger",
+                promptName: "Nom du Prompt",
+                enterName: "Entrez le nom du prompt...",
+                cancel: "Annuler",
+                savePrompt: "Enregistrer le Prompt",
+                deleteAll: "Tout Supprimer",
+                confirmDelete: "Êtes-vous sûr de vouloir supprimer tous les prompts enregistrés?",
+                importSuccess: "Prompts importés avec succès!",
+                importError: "Erreur lors de l'importation. Veuillez vérifier le format du fichier.",
+                general: "Général",
+                coding: "Programmation",
+                creative: "Créatif",
+                analysis: "Analyse",
+                explanation: "Explication",
+                claude: "Claude",
+                chatgpt: "ChatGPT",
+                any: "N'importe quelle IA",
+                methodChainOfThought: "Chain-of-Thought",
+                methodChainOfThoughtDesc: "Raisonnement étape par étape pour problèmes complexes",
+                methodFewShot: "Few-Shot",
+                methodFewShotDesc: "Apprendre des exemples fournis dans le prompt",
+                methodTreeOfThoughts: "Tree of Thoughts",
+                methodTreeOfThoughtsDesc: "Explorer plusieurs chemins de raisonnement",
+                methodSelfConsistency: "Self-Consistency",
+                methodSelfConsistencyDesc: "Générer plusieurs solutions et trouver un consensus",
+                methodReAct: "ReAct",
+                methodReActDesc: "Raisonnement + Action pour accomplir des tâches",
+                methodRISEN: "RISEN",
+                methodRISENDesc: "Rôle, Instructions, Étapes, Objectif, Restriction",
+                methodEmotionPrompt: "EmotionPrompt",
+                methodEmotionPromptDesc: "Ajouter un contexte émotionnel pour de meilleures réponses",
+                backToHub: "Retour au Hub"
+            }
+        };
+
+        // ==================== PROMPTING METHODS ====================
+        const promptingMethods = {
+            'chain-of-thought': {
+                name: 'methodChainOfThought',
+                desc: 'methodChainOfThoughtDesc',
+                icon: 'Link',
+                format: (prompt, ai, template, t) => {
+                    const intro = ai === 'claude'
+                        ? "I need you to think through this step by step."
+                        : ai === 'chatgpt'
+                        ? "Please think through this carefully, step by step."
+                        : "Think through this step by step.";
+
+                    return `${intro}
+
+**Task:** ${prompt}
+
+Please break down your reasoning into clear steps:
+1. First, analyze the problem
+2. Then, consider possible approaches
+3. Finally, provide your solution with explanation
+
+Show your thinking process for each step.`;
+                }
+            },
+            'few-shot': {
+                name: 'methodFewShot',
+                desc: 'methodFewShotDesc',
+                icon: 'ListOrdered',
+                format: (prompt, ai, template, t) => {
+                    const examples = {
+                        general: `Example 1:
+Input: "What is the capital of France?"
+Output: "The capital of France is Paris."
+
+Example 2:
+Input: "What is 2+2?"
+Output: "2+2 equals 4."`,
+                        coding: `Example 1:
+Input: "Write a function to add two numbers"
+Output: "function add(a, b) { return a + b; }"
+
+Example 2:
+Input: "Write a function to check if a number is even"
+Output: "function isEven(n) { return n % 2 === 0; }"`,
+                        creative: `Example 1:
+Input: "Write a haiku about rain"
+Output: "Gentle drops falling / Nature's symphony plays on / Peace in every drop"
+
+Example 2:
+Input: "Write a haiku about mountains"
+Output: "Peaks touch the sky high / Ancient guardians standing / Silence speaks volumes"`,
+                        analysis: `Example 1:
+Input: "Analyze the trend in this data: 10, 15, 20, 25"
+Output: "The data shows a consistent linear growth pattern with an increase of 5 units per interval."
+
+Example 2:
+Input: "Compare A vs B where A=100 and B=80"
+Output: "A is 25% higher than B, showing a significant advantage."`,
+                        explanation: `Example 1:
+Input: "Explain what an API is"
+Output: "An API (Application Programming Interface) is like a waiter in a restaurant - it takes your request, communicates with the kitchen (server), and brings back what you ordered (data)."
+
+Example 2:
+Input: "Explain recursion"
+Output: "Recursion is when a function calls itself. Think of it like Russian nesting dolls - each doll contains a smaller version of itself until you reach the smallest one."`
+                    };
+
+                    return `Learn from these examples, then answer the new question:
+
+${examples[template] || examples.general}
+
+Now, your turn:
+Input: "${prompt}"
+Output:`;
+                }
+            },
+            'tree-of-thoughts': {
+                name: 'methodTreeOfThoughts',
+                desc: 'methodTreeOfThoughtsDesc',
+                icon: 'GitBranch',
+                format: (prompt, ai, template, t) => {
+                    return `**Problem:** ${prompt}
+
+Please explore this problem using the Tree of Thoughts approach:
+
+**Branch 1 - First Approach:**
+- Initial thought:
+- Evaluation:
+- Score (1-10):
+
+**Branch 2 - Alternative Approach:**
+- Initial thought:
+- Evaluation:
+- Score (1-10):
+
+**Branch 3 - Creative Approach:**
+- Initial thought:
+- Evaluation:
+- Score (1-10):
+
+**Best Path Selection:**
+Based on the evaluations above, select and expand the most promising approach.
+
+**Final Solution:**
+Provide the complete solution following the best path.`;
+                }
+            },
+            'self-consistency': {
+                name: 'methodSelfConsistency',
+                desc: 'methodSelfConsistencyDesc',
+                icon: 'RefreshCw',
+                format: (prompt, ai, template, t) => {
+                    return `**Task:** ${prompt}
+
+Please provide 3 different solutions to this problem, then analyze which one is best:
+
+**Solution 1:**
+[Provide first approach]
+
+**Solution 2:**
+[Provide second approach]
+
+**Solution 3:**
+[Provide third approach]
+
+**Consistency Analysis:**
+- Compare the three solutions
+- Identify common elements
+- Note any contradictions
+
+**Final Answer:**
+Based on the consistency analysis, provide the most reliable solution with confidence level (low/medium/high).`;
+                }
+            },
+            'react': {
+                name: 'methodReAct',
+                desc: 'methodReActDesc',
+                icon: 'Zap',
+                format: (prompt, ai, template, t) => {
+                    return `**Task:** ${prompt}
+
+Use the ReAct (Reasoning + Acting) framework:
+
+**Thought 1:** [What do I need to understand first?]
+**Action 1:** [What should I do?]
+**Observation 1:** [What did I learn?]
+
+**Thought 2:** [Based on observation, what's next?]
+**Action 2:** [Next step to take]
+**Observation 2:** [Results of the action]
+
+**Thought 3:** [Am I close to the solution?]
+**Action 3:** [Final action if needed]
+**Observation 3:** [Final observation]
+
+**Final Answer:** [Complete solution based on the reasoning chain]`;
+                }
+            },
+            'risen': {
+                name: 'methodRISEN',
+                desc: 'methodRISENDesc',
+                icon: 'Target',
+                format: (prompt, ai, template, t) => {
+                    const roles = {
+                        general: "a helpful assistant",
+                        coding: "an expert software developer",
+                        creative: "a creative writer",
+                        analysis: "a data analyst",
+                        explanation: "a patient teacher"
+                    };
+
+                    return `**R - Role:** You are ${roles[template] || roles.general}.
+
+**I - Instructions:** ${prompt}
+
+**S - Steps to follow:**
+1. Understand the requirements completely
+2. Plan your approach
+3. Execute systematically
+4. Review and refine
+
+**E - End goal:** Provide a complete, accurate, and helpful response.
+
+**N - Narrowing (Constraints):**
+- Be concise but thorough
+- Focus on practical solutions
+- Provide examples where helpful
+- Avoid unnecessary complexity
+
+Please proceed with your response following this RISEN framework.`;
+                }
+            },
+            'emotion-prompt': {
+                name: 'methodEmotionPrompt',
+                desc: 'methodEmotionPromptDesc',
+                icon: 'Heart',
+                format: (prompt, ai, template, t) => {
+                    const emotional = ai === 'claude'
+                        ? "This is really important to me, and I appreciate your thoughtful help."
+                        : "This matters a lot to me. Please take your time and give this your best effort.";
+
+                    return `${emotional}
+
+${prompt}
+
+I would be grateful if you could:
+- Take extra care with your response
+- Consider multiple perspectives
+- Provide your most thoughtful analysis
+- Share any insights that could be particularly valuable
+
+Thank you for your dedication to helping me with this.`;
+                }
+            }
+        };
+
+        // ==================== ICONS COMPONENT ====================
+        const Icon = ({ name, size = 20, className = "" }) => {
+            const iconRef = React.useRef(null);
+
+            useEffect(() => {
+                if (iconRef.current && lucide[name]) {
+                    iconRef.current.innerHTML = '';
+                    const svg = lucide.createElement(lucide[name]);
+                    svg.setAttribute('width', size);
+                    svg.setAttribute('height', size);
+                    iconRef.current.appendChild(svg);
+                }
+            }, [name, size]);
+
+            return <span ref={iconRef} className={`inline-flex items-center justify-center ${className}`}></span>;
+        };
+
+        // ==================== MAIN APP ====================
+        const App = () => {
+            const [language, setLanguage] = useState(() =>
+                localStorage.getItem('ai-prompting-lang') || 'en'
+            );
+            const [targetAI, setTargetAI] = useState('any');
+            const [template, setTemplate] = useState('general');
+            const [method, setMethod] = useState('chain-of-thought');
+            const [prompt, setPrompt] = useState('');
+            const [copied, setCopied] = useState(false);
+            const [savedPrompts, setSavedPrompts] = useState(() => {
+                const saved = localStorage.getItem('ai-prompting-saved');
+                return saved ? JSON.parse(saved) : [];
+            });
+            const [showSaveModal, setShowSaveModal] = useState(false);
+            const [promptName, setPromptName] = useState('');
+            const [notification, setNotification] = useState(null);
+
+            const t = useCallback((key) => {
+                return translations[language]?.[key] || translations['en'][key] || key;
+            }, [language]);
+
+            // Save prompts to localStorage
+            useEffect(() => {
+                localStorage.setItem('ai-prompting-saved', JSON.stringify(savedPrompts));
+            }, [savedPrompts]);
+
+            // Save language preference
+            useEffect(() => {
+                localStorage.setItem('ai-prompting-lang', language);
+            }, [language]);
+
+            // Generate formatted prompt
+            const formattedPrompt = useMemo(() => {
+                if (!prompt.trim()) return '';
+                const methodConfig = promptingMethods[method];
+                if (!methodConfig) return prompt;
+                return methodConfig.format(prompt, targetAI, template, t);
+            }, [prompt, method, targetAI, template, t]);
+
+            // Copy to clipboard
+            const handleCopy = async () => {
+                try {
+                    await navigator.clipboard.writeText(formattedPrompt);
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                } catch (err) {
+                    console.error('Failed to copy:', err);
+                }
+            };
+
+            // Clear prompt
+            const handleClear = () => {
+                setPrompt('');
+            };
+
+            // Save prompt
+            const handleSave = () => {
+                if (!prompt.trim() || !promptName.trim()) return;
+
+                const newPrompt = {
+                    id: Date.now(),
+                    name: promptName,
+                    prompt: prompt,
+                    method: method,
+                    targetAI: targetAI,
+                    template: template,
+                    createdAt: new Date().toISOString()
+                };
+
+                setSavedPrompts(prev => [newPrompt, ...prev]);
+                setShowSaveModal(false);
+                setPromptName('');
+                showNotification(t('copied'));
+            };
+
+            // Load saved prompt
+            const handleLoad = (savedPrompt) => {
+                setPrompt(savedPrompt.prompt);
+                setMethod(savedPrompt.method);
+                setTargetAI(savedPrompt.targetAI);
+                setTemplate(savedPrompt.template);
+            };
+
+            // Delete saved prompt
+            const handleDelete = (id) => {
+                setSavedPrompts(prev => prev.filter(p => p.id !== id));
+            };
+
+            // Delete all prompts
+            const handleDeleteAll = () => {
+                if (window.confirm(t('confirmDelete'))) {
+                    setSavedPrompts([]);
+                }
+            };
+
+            // Export prompts
+            const handleExport = () => {
+                const dataStr = JSON.stringify(savedPrompts, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                const exportFileDefaultName = 'ai-prompts-export.json';
+
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+            };
+
+            // Import prompts
+            const handleImport = (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const imported = JSON.parse(e.target.result);
+                        if (Array.isArray(imported)) {
+                            setSavedPrompts(prev => [...imported, ...prev]);
+                            showNotification(t('importSuccess'));
+                        }
+                    } catch (err) {
+                        showNotification(t('importError'));
+                    }
+                };
+                reader.readAsText(file);
+                event.target.value = '';
+            };
+
+            // Show notification
+            const showNotification = (message) => {
+                setNotification(message);
+                setTimeout(() => setNotification(null), 3000);
+            };
+
+            const languages = [
+                { code: 'en', name: 'English', flag: '🇬🇧' },
+                { code: 'cs', name: 'Čeština', flag: '🇨🇿' },
+                { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+                { code: 'es', name: 'Español', flag: '🇪🇸' },
+                { code: 'fr', name: 'Français', flag: '🇫🇷' }
+            ];
+
+            const templates = ['general', 'coding', 'creative', 'analysis', 'explanation'];
+            const aiOptions = ['claude', 'chatgpt', 'any'];
+
+            return (
+                <div className="min-h-screen p-4 md:p-8">
+                    {/* Notification */}
+                    {notification && (
+                        <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg fade-in">
+                            {notification}
+                        </div>
+                    )}
+
+                    {/* Header */}
+                    <header className="max-w-7xl mx-auto mb-8">
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                                <a
+                                    href="../../index.html"
+                                    className="glass px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 transition-all flex items-center gap-2"
+                                >
+                                    <Icon name="ArrowLeft" size={18} />
+                                    <span className="hidden sm:inline">{t('backToHub')}</span>
+                                </a>
+                                <div>
+                                    <h1 className="text-3xl md:text-4xl font-bold gradient-text">{t('title')}</h1>
+                                    <p className="text-gray-400 mt-1">{t('subtitle')}</p>
+                                </div>
+                            </div>
+
+                            {/* Language Selector */}
+                            <div className="flex items-center gap-2">
+                                <Icon name="Globe" size={18} className="text-gray-400" />
+                                <select
+                                    value={language}
+                                    onChange={(e) => setLanguage(e.target.value)}
+                                    className="glass bg-transparent text-white px-4 py-2 rounded-lg cursor-pointer"
+                                >
+                                    {languages.map(lang => (
+                                        <option key={lang.code} value={lang.code} className="bg-dark-900">
+                                            {lang.flag} {lang.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* Main Content */}
+                    <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        {/* Left Panel - Settings */}
+                        <div className="lg:col-span-1 space-y-6">
+                            {/* Target AI */}
+                            <div className="glass rounded-xl p-6">
+                                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                    <Icon name="Bot" size={20} />
+                                    {t('targetAI')}
+                                </h3>
+                                <div className="grid grid-cols-3 gap-2">
+                                    {aiOptions.map(ai => (
+                                        <button
+                                            key={ai}
+                                            onClick={() => setTargetAI(ai)}
+                                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                                targetAI === ai
+                                                    ? 'btn-gradient text-white'
+                                                    : 'bg-white/5 text-gray-300 hover:bg-white/10'
+                                            }`}
+                                        >
+                                            {t(ai)}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Template */}
+                            <div className="glass rounded-xl p-6">
+                                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                    <Icon name="Layout" size={20} />
+                                    {t('template')}
+                                </h3>
+                                <div className="grid grid-cols-2 gap-2">
+                                    {templates.map(tmpl => (
+                                        <button
+                                            key={tmpl}
+                                            onClick={() => setTemplate(tmpl)}
+                                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                                                template === tmpl
+                                                    ? 'btn-gradient text-white'
+                                                    : 'bg-white/5 text-gray-300 hover:bg-white/10'
+                                            }`}
+                                        >
+                                            {t(tmpl)}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Method */}
+                            <div className="glass rounded-xl p-6">
+                                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                    <Icon name="Sparkles" size={20} />
+                                    {t('method')}
+                                </h3>
+                                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+                                    {Object.entries(promptingMethods).map(([key, config]) => (
+                                        <button
+                                            key={key}
+                                            onClick={() => setMethod(key)}
+                                            className={`method-card w-full p-3 rounded-lg text-left transition-all border ${
+                                                method === key
+                                                    ? 'selected border-primary-500'
+                                                    : 'border-white/10 hover:border-white/20'
+                                            }`}
+                                        >
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <Icon name={config.icon} size={16} className="text-primary-400" />
+                                                <span className="font-medium text-white">{t(config.name)}</span>
+                                            </div>
+                                            <p className="text-xs text-gray-400">{t(config.desc)}</p>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Center Panel - Prompt Editor */}
+                        <div className="lg:col-span-2 space-y-6">
+                            {/* Input */}
+                            <div className="glass rounded-xl p-6">
+                                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                                    <Icon name="Edit3" size={20} />
+                                    {t('yourPrompt')}
+                                </h3>
+                                <textarea
+                                    value={prompt}
+                                    onChange={(e) => setPrompt(e.target.value)}
+                                    placeholder={t('promptPlaceholder')}
+                                    className="w-full h-32 bg-white/5 border border-white/10 rounded-lg p-4 text-white placeholder-gray-500 resize-none"
+                                />
+                                <div className="flex gap-2 mt-4">
+                                    <button
+                                        onClick={handleClear}
+                                        className="px-4 py-2 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 transition-all flex items-center gap-2"
+                                    >
+                                        <Icon name="Trash2" size={16} />
+                                        {t('clear')}
+                                    </button>
+                                    <button
+                                        onClick={() => setShowSaveModal(true)}
+                                        disabled={!prompt.trim()}
+                                        className="px-4 py-2 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <Icon name="Save" size={16} />
+                                        {t('save')}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Output */}
+                            <div className="glass rounded-xl p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                                        <Icon name="FileText" size={20} />
+                                        {t('formattedPrompt')}
+                                    </h3>
+                                    <button
+                                        onClick={handleCopy}
+                                        disabled={!formattedPrompt}
+                                        className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${
+                                            copied
+                                                ? 'bg-green-500 text-white'
+                                                : 'btn-gradient text-white hover:opacity-90'
+                                        } disabled:opacity-50 disabled:cursor-not-allowed`}
+                                    >
+                                        <Icon name={copied ? "Check" : "Copy"} size={16} />
+                                        {copied ? t('copied') : t('copy')}
+                                    </button>
+                                </div>
+                                <div className="bg-white/5 border border-white/10 rounded-lg p-4 min-h-[200px] max-h-[400px] overflow-y-auto">
+                                    <pre className="text-gray-300 whitespace-pre-wrap font-mono text-sm">
+                                        {formattedPrompt || <span className="text-gray-500 italic">{t('promptPlaceholder')}</span>}
+                                    </pre>
+                                </div>
+                            </div>
+
+                            {/* Saved Prompts */}
+                            <div className="glass rounded-xl p-6">
+                                <div className="flex items-center justify-between mb-4">
+                                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+                                        <Icon name="Bookmark" size={20} />
+                                        {t('savedPrompts')}
+                                    </h3>
+                                    <div className="flex gap-2">
+                                        <label className="px-3 py-1.5 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 transition-all flex items-center gap-2 cursor-pointer text-sm">
+                                            <Icon name="Upload" size={14} />
+                                            {t('import')}
+                                            <input type="file" accept=".json" onChange={handleImport} className="hidden" />
+                                        </label>
+                                        <button
+                                            onClick={handleExport}
+                                            disabled={savedPrompts.length === 0}
+                                            className="px-3 py-1.5 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 transition-all flex items-center gap-2 disabled:opacity-50 text-sm"
+                                        >
+                                            <Icon name="Download" size={14} />
+                                            {t('export')}
+                                        </button>
+                                        {savedPrompts.length > 0 && (
+                                            <button
+                                                onClick={handleDeleteAll}
+                                                className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-all flex items-center gap-2 text-sm"
+                                            >
+                                                <Icon name="Trash2" size={14} />
+                                                {t('deleteAll')}
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {savedPrompts.length === 0 ? (
+                                    <div className="text-center py-8 text-gray-500">
+                                        <Icon name="Inbox" size={48} className="mx-auto mb-2 opacity-50" />
+                                        <p>{t('noSavedPrompts')}</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                                        {savedPrompts.map(saved => (
+                                            <div key={saved.id} className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between gap-4">
+                                                <div className="flex-1 min-w-0">
+                                                    <h4 className="font-medium text-white truncate">{saved.name}</h4>
+                                                    <p className="text-xs text-gray-400 truncate">{saved.prompt}</p>
+                                                </div>
+                                                <div className="flex gap-1 flex-shrink-0">
+                                                    <button
+                                                        onClick={() => handleLoad(saved)}
+                                                        className="p-2 rounded-lg bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 transition-all"
+                                                        title={t('load')}
+                                                    >
+                                                        <Icon name="Upload" size={14} />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(saved.id)}
+                                                        className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-all"
+                                                        title={t('delete')}
+                                                    >
+                                                        <Icon name="Trash2" size={14} />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </main>
+
+                    {/* Save Modal */}
+                    {showSaveModal && (
+                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                            <div className="glass rounded-xl p-6 w-full max-w-md fade-in">
+                                <h3 className="text-xl font-semibold text-white mb-4">{t('savePrompt')}</h3>
+                                <input
+                                    type="text"
+                                    value={promptName}
+                                    onChange={(e) => setPromptName(e.target.value)}
+                                    placeholder={t('enterName')}
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder-gray-500 mb-4"
+                                    autoFocus
+                                />
+                                <div className="flex gap-2 justify-end">
+                                    <button
+                                        onClick={() => setShowSaveModal(false)}
+                                        className="px-4 py-2 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 transition-all"
+                                    >
+                                        {t('cancel')}
+                                    </button>
+                                    <button
+                                        onClick={handleSave}
+                                        disabled={!promptName.trim()}
+                                        className="px-4 py-2 rounded-lg btn-gradient text-white disabled:opacity-50"
+                                    >
+                                        {t('save')}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Footer */}
+                    <footer className="max-w-7xl mx-auto mt-12 text-center text-gray-500 text-sm">
+                        <p>AI Prompting - Part of AdHUB</p>
+                    </footer>
+                </div>
+            );
+        };
+
+        // Render app
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
