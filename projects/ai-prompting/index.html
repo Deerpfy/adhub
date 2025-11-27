@@ -34,6 +34,7 @@
         .color-format { border-left: 3px solid #ec4899; padding-left: 8px; background: rgba(236, 72, 153, 0.1); }
         .color-examples { border-left: 3px solid #eab308; padding-left: 8px; background: rgba(234, 179, 8, 0.1); }
         .color-methods { border-left: 3px solid #ef4444; padding-left: 8px; background: rgba(239, 68, 68, 0.1); }
+        .color-template { border-left: 3px solid #14b8a6; padding-left: 8px; background: rgba(20, 184, 166, 0.1); }
         .dot-purple { background: #a855f7; }
         .dot-blue { background: #3b82f6; }
         .dot-green { background: #22c55e; }
@@ -93,11 +94,11 @@
                 subtitle: 'Research-backed prompting techniques from 2025 studies',
                 backToHub: 'Back to Hub',
                 templates: {
-                    general: { name: 'General Task', desc: 'Flexible format for any task' },
-                    coding: { name: 'Coding Help', desc: 'Debug, write, or explain code' },
-                    creative: { name: 'Creative Writing', desc: 'Stories, content, copywriting' },
-                    analysis: { name: 'Analysis', desc: 'Research, compare, evaluate' },
-                    explanation: { name: 'Explanation', desc: 'Teach or clarify concepts' },
+                    general: { name: 'General Task', desc: 'Flexible format for any task', context: '' },
+                    coding: { name: 'Coding Help', desc: 'Debug, write, or explain code', context: 'Focus on writing clean, efficient, and well-documented code. Include code comments where helpful.' },
+                    creative: { name: 'Creative Writing', desc: 'Stories, content, copywriting', context: 'Focus on creativity, engaging narrative, and vivid language. Be original and expressive.' },
+                    analysis: { name: 'Analysis', desc: 'Research, compare, evaluate', context: 'Provide thorough analysis with evidence-based reasoning. Consider multiple perspectives and cite sources where applicable.' },
+                    explanation: { name: 'Explanation', desc: 'Teach or clarify concepts', context: 'Explain clearly for the target audience. Use analogies and examples to make complex concepts accessible.' },
                 },
                 fields: {
                     role: { label: 'Role / Persona', placeholder: 'e.g., an expert technical writer' },
@@ -203,11 +204,11 @@
                 subtitle: 'Techniky promptování založené na výzkumu z roku 2025',
                 backToHub: 'Zpět do Hubu',
                 templates: {
-                    general: { name: 'Obecný úkol', desc: 'Flexibilní formát pro jakýkoli úkol' },
-                    coding: { name: 'Programování', desc: 'Ladění, psaní nebo vysvětlení kódu' },
-                    creative: { name: 'Kreativní psaní', desc: 'Příběhy, obsah, copywriting' },
-                    analysis: { name: 'Analýza', desc: 'Výzkum, porovnání, hodnocení' },
-                    explanation: { name: 'Vysvětlení', desc: 'Výuka nebo objasnění konceptů' },
+                    general: { name: 'Obecný úkol', desc: 'Flexibilní formát pro jakýkoli úkol', context: '' },
+                    coding: { name: 'Programování', desc: 'Ladění, psaní nebo vysvětlení kódu', context: 'Zaměř se na psaní čistého, efektivního a dobře zdokumentovaného kódu. Přidej komentáře kde je to užitečné.' },
+                    creative: { name: 'Kreativní psaní', desc: 'Příběhy, obsah, copywriting', context: 'Zaměř se na kreativitu, poutavý příběh a živý jazyk. Buď originální a expresivní.' },
+                    analysis: { name: 'Analýza', desc: 'Výzkum, porovnání, hodnocení', context: 'Poskytni důkladnou analýzu s argumentací založenou na důkazech. Zvaž více perspektiv a cituj zdroje kde je to relevantní.' },
+                    explanation: { name: 'Vysvětlení', desc: 'Výuka nebo objasnění konceptů', context: 'Vysvětli jasně pro cílové publikum. Použij analogie a příklady pro zpřístupnění složitých konceptů.' },
                 },
                 fields: {
                     role: { label: 'Role / Persona', placeholder: 'např. expertní technický autor' },
@@ -313,11 +314,11 @@
                 subtitle: 'Forschungsbasierte Prompting-Techniken aus 2025',
                 backToHub: 'Zurück zum Hub',
                 templates: {
-                    general: { name: 'Allgemeine Aufgabe', desc: 'Flexibles Format' },
-                    coding: { name: 'Programmierhilfe', desc: 'Debuggen, schreiben' },
-                    creative: { name: 'Kreatives Schreiben', desc: 'Geschichten, Inhalte' },
-                    analysis: { name: 'Analyse', desc: 'Recherche, vergleichen' },
-                    explanation: { name: 'Erklärung', desc: 'Lehren oder klären' },
+                    general: { name: 'Allgemeine Aufgabe', desc: 'Flexibles Format', context: '' },
+                    coding: { name: 'Programmierhilfe', desc: 'Debuggen, schreiben', context: 'Fokussiere dich auf sauberen, effizienten und gut dokumentierten Code. Füge Kommentare hinzu wo hilfreich.' },
+                    creative: { name: 'Kreatives Schreiben', desc: 'Geschichten, Inhalte', context: 'Fokussiere dich auf Kreativität, fesselnde Erzählung und lebendige Sprache. Sei originell und ausdrucksstark.' },
+                    analysis: { name: 'Analyse', desc: 'Recherche, vergleichen', context: 'Biete gründliche Analyse mit evidenzbasierter Argumentation. Berücksichtige mehrere Perspektiven und zitiere Quellen.' },
+                    explanation: { name: 'Erklärung', desc: 'Lehren oder klären', context: 'Erkläre klar für die Zielgruppe. Nutze Analogien und Beispiele um komplexe Konzepte zugänglich zu machen.' },
                 },
                 fields: {
                     role: { label: 'Rolle / Persona', placeholder: 'z.B. technischer Autor' },
@@ -398,11 +399,11 @@
                 subtitle: 'Técnicas de prompting basadas en investigación 2025',
                 backToHub: 'Volver al Hub',
                 templates: {
-                    general: { name: 'Tarea General', desc: 'Formato flexible' },
-                    coding: { name: 'Código', desc: 'Depurar, escribir' },
-                    creative: { name: 'Escritura Creativa', desc: 'Historias, contenido' },
-                    analysis: { name: 'Análisis', desc: 'Investigar, comparar' },
-                    explanation: { name: 'Explicación', desc: 'Enseñar conceptos' },
+                    general: { name: 'Tarea General', desc: 'Formato flexible', context: '' },
+                    coding: { name: 'Código', desc: 'Depurar, escribir', context: 'Enfócate en escribir código limpio, eficiente y bien documentado. Incluye comentarios donde sea útil.' },
+                    creative: { name: 'Escritura Creativa', desc: 'Historias, contenido', context: 'Enfócate en creatividad, narrativa atractiva y lenguaje vívido. Sé original y expresivo.' },
+                    analysis: { name: 'Análisis', desc: 'Investigar, comparar', context: 'Proporciona análisis exhaustivo con razonamiento basado en evidencia. Considera múltiples perspectivas y cita fuentes.' },
+                    explanation: { name: 'Explicación', desc: 'Enseñar conceptos', context: 'Explica claramente para la audiencia objetivo. Usa analogías y ejemplos para hacer accesibles conceptos complejos.' },
                 },
                 fields: {
                     role: { label: 'Rol / Persona', placeholder: 'ej. escritor técnico' },
@@ -483,11 +484,11 @@
                 subtitle: 'Techniques de prompting basées sur la recherche 2025',
                 backToHub: 'Retour au Hub',
                 templates: {
-                    general: { name: 'Tâche Générale', desc: 'Format flexible' },
-                    coding: { name: 'Code', desc: 'Déboguer, écrire' },
-                    creative: { name: 'Écriture Créative', desc: 'Histoires, contenu' },
-                    analysis: { name: 'Analyse', desc: 'Recherche, comparer' },
-                    explanation: { name: 'Explication', desc: 'Enseigner concepts' },
+                    general: { name: 'Tâche Générale', desc: 'Format flexible', context: '' },
+                    coding: { name: 'Code', desc: 'Déboguer, écrire', context: 'Concentre-toi sur un code propre, efficace et bien documenté. Inclus des commentaires où utile.' },
+                    creative: { name: 'Écriture Créative', desc: 'Histoires, contenu', context: 'Concentre-toi sur la créativité, un récit captivant et un langage vivant. Sois original et expressif.' },
+                    analysis: { name: 'Analyse', desc: 'Recherche, comparer', context: 'Fournis une analyse approfondie avec un raisonnement basé sur les preuves. Considère plusieurs perspectives et cite les sources.' },
+                    explanation: { name: 'Explication', desc: 'Enseigner concepts', context: 'Explique clairement pour le public cible. Utilise des analogies et exemples pour rendre les concepts complexes accessibles.' },
                 },
                 fields: {
                     role: { label: 'Rôle / Persona', placeholder: 'ex. rédacteur technique' },
@@ -753,8 +754,13 @@
                         sections.push({ type: 'format', text: target === 'claude' ? `<output_format>\n${fields.outputFormat}\n</output_format>` : `**${p.outputFormat}:**\n${fields.outputFormat}` });
                     }
                 }
+                // Add template-specific context/guidance
+                const templateContext = t.templates[template]?.context;
+                if (templateContext) {
+                    sections.push({ type: 'template', text: target === 'claude' ? `<approach>\n${templateContext}\n</approach>` : `**Approach:** ${templateContext}` });
+                }
                 return sections;
-            }, [fields, target, selectedMethods, t]);
+            }, [fields, target, selectedMethods, t, template]);
 
             // Plain text version for copying
             const formattedPrompt = useMemo(() => {
