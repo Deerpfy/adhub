@@ -26,6 +26,35 @@
         ::-webkit-scrollbar-thumb:hover { background: rgba(251,191,36,0.6); }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
         .animate-pulse { animation: pulse 2s infinite; }
+        /* Checklist color classes */
+        .color-role { border-left: 3px solid #a855f7; padding-left: 8px; background: rgba(168, 85, 247, 0.1); }
+        .color-context { border-left: 3px solid #3b82f6; padding-left: 8px; background: rgba(59, 130, 246, 0.1); }
+        .color-task { border-left: 3px solid #22c55e; padding-left: 8px; background: rgba(34, 197, 94, 0.1); }
+        .color-constraints { border-left: 3px solid #f97316; padding-left: 8px; background: rgba(249, 115, 22, 0.1); }
+        .color-format { border-left: 3px solid #ec4899; padding-left: 8px; background: rgba(236, 72, 153, 0.1); }
+        .color-examples { border-left: 3px solid #eab308; padding-left: 8px; background: rgba(234, 179, 8, 0.1); }
+        .color-methods { border-left: 3px solid #ef4444; padding-left: 8px; background: rgba(239, 68, 68, 0.1); }
+        .dot-purple { background: #a855f7; }
+        .dot-blue { background: #3b82f6; }
+        .dot-green { background: #22c55e; }
+        .dot-orange { background: #f97316; }
+        .dot-pink { background: #ec4899; }
+        .dot-yellow { background: #eab308; }
+        .dot-red { background: #ef4444; }
+        .text-check-purple { color: #a855f7; }
+        .text-check-blue { color: #3b82f6; }
+        .text-check-green { color: #22c55e; }
+        .text-check-orange { color: #f97316; }
+        .text-check-pink { color: #ec4899; }
+        .text-check-yellow { color: #eab308; }
+        .text-check-red { color: #ef4444; }
+        .bg-check-purple { background: rgba(168, 85, 247, 0.15); border-color: rgba(168, 85, 247, 0.3); }
+        .bg-check-blue { background: rgba(59, 130, 246, 0.15); border-color: rgba(59, 130, 246, 0.3); }
+        .bg-check-green { background: rgba(34, 197, 94, 0.15); border-color: rgba(34, 197, 94, 0.3); }
+        .bg-check-orange { background: rgba(249, 115, 22, 0.15); border-color: rgba(249, 115, 22, 0.3); }
+        .bg-check-pink { background: rgba(236, 72, 153, 0.15); border-color: rgba(236, 72, 153, 0.3); }
+        .bg-check-yellow { background: rgba(234, 179, 8, 0.15); border-color: rgba(234, 179, 8, 0.3); }
+        .bg-check-red { background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); }
     </style>
     <script>
         tailwind.config = {
@@ -151,6 +180,22 @@
                     examplesIntro: 'Here are examples of the expected input-output format:', examplesFollow: 'Follow these patterns for your response.',
                     fewshotIntro: 'Learn from these examples:', fewshotFollow: 'Apply the same pattern to the current task.',
                     outputFormat: 'Expected Output Format', expectations: 'Expected Outcome',
+                },
+                checklist: {
+                    title: 'The X-Step Prompt Checklist',
+                    subtitle: 'Essential elements for crafting effective AI prompts',
+                    showColors: 'Show colors in output',
+                    steps: [
+                        { key: 'role', name: 'Role / Persona', desc: 'Define WHO the AI should be', example: '"You are an expert data scientist..."', color: 'purple', icon: 'User' },
+                        { key: 'context', name: 'Context', desc: 'Provide background information', example: '"We are building a fintech app for..."', color: 'blue', icon: 'Info' },
+                        { key: 'task', name: 'Task', desc: 'Clearly state WHAT you want done', example: '"Write a function that validates..."', color: 'green', icon: 'Target' },
+                        { key: 'constraints', name: 'Constraints', desc: 'Set limits and requirements', example: '"Keep it under 100 lines, use TypeScript..."', color: 'orange', icon: 'Lock' },
+                        { key: 'format', name: 'Output Format', desc: 'Specify HOW you want the response', example: '"Return as JSON with fields: name, value..."', color: 'pink', icon: 'FileText' },
+                        { key: 'examples', name: 'Examples', desc: 'Show input→output patterns', example: '"Input: 5 → Output: 120 (factorial)"', color: 'yellow', icon: 'Lightbulb' },
+                        { key: 'methods', name: 'Methods (optional)', desc: 'Add reasoning techniques (CoT, etc.)', example: '"Think step-by-step before answering..."', color: 'red', icon: 'Brain' },
+                    ],
+                    tip: 'Not all steps are required. Minimum: Task. Recommended: Role + Task + Context + Format.',
+                    legend: 'Color Legend',
                 }
             },
             cs: {
@@ -245,6 +290,22 @@
                     examplesIntro: 'Zde jsou příklady očekávaného formátu:', examplesFollow: 'Řiď se těmito vzory.',
                     fewshotIntro: 'Uč se z těchto příkladů:', fewshotFollow: 'Aplikuj stejný vzor na aktuální úkol.',
                     outputFormat: 'Očekávaný formát výstupu', expectations: 'Očekávaný výsledek',
+                },
+                checklist: {
+                    title: 'X-Krokový Prompt Checklist',
+                    subtitle: 'Základní prvky pro tvorbu efektivních AI promptů',
+                    showColors: 'Zobrazit barvy ve výstupu',
+                    steps: [
+                        { key: 'role', name: 'Role / Persona', desc: 'Definuj, KDO má AI být', example: '"Jsi expertní datový vědec..."', color: 'purple', icon: 'User' },
+                        { key: 'context', name: 'Kontext', desc: 'Poskytni informace o pozadí', example: '"Budujeme fintech aplikaci pro..."', color: 'blue', icon: 'Info' },
+                        { key: 'task', name: 'Úkol', desc: 'Jasně uveď, CO chceš udělat', example: '"Napiš funkci, která validuje..."', color: 'green', icon: 'Target' },
+                        { key: 'constraints', name: 'Omezení', desc: 'Nastav limity a požadavky', example: '"Max 100 řádků, použij TypeScript..."', color: 'orange', icon: 'Lock' },
+                        { key: 'format', name: 'Formát výstupu', desc: 'Specifikuj JAK chceš odpověď', example: '"Vrať jako JSON s poli: name, value..."', color: 'pink', icon: 'FileText' },
+                        { key: 'examples', name: 'Příklady', desc: 'Ukaž vzory vstup→výstup', example: '"Vstup: 5 → Výstup: 120 (faktoriál)"', color: 'yellow', icon: 'Lightbulb' },
+                        { key: 'methods', name: 'Metody (volitelné)', desc: 'Přidej techniky uvažování (CoT, atd.)', example: '"Přemýšlej krok za krokem..."', color: 'red', icon: 'Brain' },
+                    ],
+                    tip: 'Ne všechny kroky jsou povinné. Minimum: Úkol. Doporučeno: Role + Úkol + Kontext + Formát.',
+                    legend: 'Legenda barev',
                 }
             },
             de: {
@@ -314,6 +375,22 @@
                     examplesIntro: 'Beispiele:', examplesFollow: 'Folge diesen Mustern.',
                     fewshotIntro: 'Lerne aus Beispielen:', fewshotFollow: 'Wende das Muster an.',
                     outputFormat: 'Ausgabeformat', expectations: 'Erwartetes Ergebnis',
+                },
+                checklist: {
+                    title: 'X-Schritte Prompt Checkliste',
+                    subtitle: 'Wesentliche Elemente für effektive AI-Prompts',
+                    showColors: 'Farben in Ausgabe zeigen',
+                    steps: [
+                        { key: 'role', name: 'Rolle / Persona', desc: 'Definiere WER die AI sein soll', example: '"Du bist ein Experte Datenwissenschaftler..."', color: 'purple', icon: 'User' },
+                        { key: 'context', name: 'Kontext', desc: 'Gib Hintergrundinformationen', example: '"Wir bauen eine Fintech-App für..."', color: 'blue', icon: 'Info' },
+                        { key: 'task', name: 'Aufgabe', desc: 'Sage klar WAS du willst', example: '"Schreibe eine Funktion die validiert..."', color: 'green', icon: 'Target' },
+                        { key: 'constraints', name: 'Einschränkungen', desc: 'Setze Grenzen und Anforderungen', example: '"Max 100 Zeilen, TypeScript..."', color: 'orange', icon: 'Lock' },
+                        { key: 'format', name: 'Ausgabeformat', desc: 'Spezifiziere WIE du die Antwort willst', example: '"Als JSON mit Feldern: name, value..."', color: 'pink', icon: 'FileText' },
+                        { key: 'examples', name: 'Beispiele', desc: 'Zeige Eingabe→Ausgabe Muster', example: '"Eingabe: 5 → Ausgabe: 120"', color: 'yellow', icon: 'Lightbulb' },
+                        { key: 'methods', name: 'Methoden (optional)', desc: 'Füge Denktechniken hinzu (CoT)', example: '"Denke Schritt für Schritt..."', color: 'red', icon: 'Brain' },
+                    ],
+                    tip: 'Nicht alle Schritte sind erforderlich. Minimum: Aufgabe. Empfohlen: Rolle + Aufgabe + Kontext + Format.',
+                    legend: 'Farblegende',
                 }
             },
             es: {
@@ -383,6 +460,22 @@
                     examplesIntro: 'Ejemplos:', examplesFollow: 'Sigue estos patrones.',
                     fewshotIntro: 'Aprende de ejemplos:', fewshotFollow: 'Aplica el patrón.',
                     outputFormat: 'Formato de Salida', expectations: 'Resultado Esperado',
+                },
+                checklist: {
+                    title: 'Checklist de X Pasos para Prompts',
+                    subtitle: 'Elementos esenciales para crear prompts efectivos',
+                    showColors: 'Mostrar colores en salida',
+                    steps: [
+                        { key: 'role', name: 'Rol / Persona', desc: 'Define QUIÉN debe ser la IA', example: '"Eres un experto científico de datos..."', color: 'purple', icon: 'User' },
+                        { key: 'context', name: 'Contexto', desc: 'Proporciona información de fondo', example: '"Estamos construyendo una app fintech..."', color: 'blue', icon: 'Info' },
+                        { key: 'task', name: 'Tarea', desc: 'Indica claramente QUÉ quieres', example: '"Escribe una función que valide..."', color: 'green', icon: 'Target' },
+                        { key: 'constraints', name: 'Restricciones', desc: 'Establece límites y requisitos', example: '"Máximo 100 líneas, usa TypeScript..."', color: 'orange', icon: 'Lock' },
+                        { key: 'format', name: 'Formato de Salida', desc: 'Especifica CÓMO quieres la respuesta', example: '"Devuelve como JSON con campos: name..."', color: 'pink', icon: 'FileText' },
+                        { key: 'examples', name: 'Ejemplos', desc: 'Muestra patrones entrada→salida', example: '"Entrada: 5 → Salida: 120"', color: 'yellow', icon: 'Lightbulb' },
+                        { key: 'methods', name: 'Métodos (opcional)', desc: 'Añade técnicas de razonamiento (CoT)', example: '"Piensa paso a paso..."', color: 'red', icon: 'Brain' },
+                    ],
+                    tip: 'No todos los pasos son obligatorios. Mínimo: Tarea. Recomendado: Rol + Tarea + Contexto + Formato.',
+                    legend: 'Leyenda de colores',
                 }
             },
             fr: {
@@ -452,6 +545,22 @@
                     examplesIntro: 'Exemples:', examplesFollow: 'Suis ces modèles.',
                     fewshotIntro: 'Apprends des exemples:', fewshotFollow: 'Applique le modèle.',
                     outputFormat: 'Format de Sortie', expectations: 'Résultat Attendu',
+                },
+                checklist: {
+                    title: 'Checklist X Étapes pour Prompts',
+                    subtitle: 'Éléments essentiels pour des prompts IA efficaces',
+                    showColors: 'Afficher couleurs dans sortie',
+                    steps: [
+                        { key: 'role', name: 'Rôle / Persona', desc: 'Définis QUI doit être l\'IA', example: '"Tu es un expert data scientist..."', color: 'purple', icon: 'User' },
+                        { key: 'context', name: 'Contexte', desc: 'Fournis des informations de fond', example: '"Nous construisons une app fintech..."', color: 'blue', icon: 'Info' },
+                        { key: 'task', name: 'Tâche', desc: 'Indique clairement CE que tu veux', example: '"Écris une fonction qui valide..."', color: 'green', icon: 'Target' },
+                        { key: 'constraints', name: 'Contraintes', desc: 'Définis limites et exigences', example: '"Maximum 100 lignes, TypeScript..."', color: 'orange', icon: 'Lock' },
+                        { key: 'format', name: 'Format de Sortie', desc: 'Spécifie COMMENT tu veux la réponse', example: '"Retourne en JSON avec champs: name..."', color: 'pink', icon: 'FileText' },
+                        { key: 'examples', name: 'Exemples', desc: 'Montre des patterns entrée→sortie', example: '"Entrée: 5 → Sortie: 120"', color: 'yellow', icon: 'Lightbulb' },
+                        { key: 'methods', name: 'Méthodes (optionnel)', desc: 'Ajoute des techniques de raisonnement', example: '"Réfléchis étape par étape..."', color: 'red', icon: 'Brain' },
+                    ],
+                    tip: 'Tous les steps ne sont pas obligatoires. Minimum: Tâche. Recommandé: Rôle + Tâche + Contexte + Format.',
+                    legend: 'Légende des couleurs',
                 }
             },
         };
@@ -563,6 +672,7 @@
             const [showImportModal, setShowImportModal] = useState(false);
             const [shareData, setShareData] = useState(null);
             const [importCode, setImportCode] = useState('');
+            const [showColors, setShowColors] = useState(true);
 
             const [fields, setFields] = useState({
                 role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '',
@@ -594,65 +704,62 @@
             const selectedTemplate = t.templates[template];
             const TemplateIcon = templateIcons[template];
 
-            // Generate formatted prompt
-            const formattedPrompt = useMemo(() => {
-                const parts = [];
+            // Generate formatted prompt with color sections
+            const promptSections = useMemo(() => {
+                const sections = [];
                 const p = t.promptParts;
 
                 if (fields.role) {
-                    parts.push(target === 'claude' ? `${p.youAre} ${fields.role}.` : target === 'gpt' ? `${p.actAs} ${fields.role}.` : `${p.role}: ${fields.role}`);
-                    parts.push('');
+                    sections.push({ type: 'role', text: target === 'claude' ? `${p.youAre} ${fields.role}.` : target === 'gpt' ? `${p.actAs} ${fields.role}.` : `${p.role}: ${fields.role}` });
                 }
-                if (selectedMethods.includes('emotion')) { parts.push(p.emotion); parts.push(''); }
+                if (selectedMethods.includes('emotion')) {
+                    sections.push({ type: 'methods', text: p.emotion });
+                }
                 if (fields.context) {
-                    parts.push(target === 'claude' ? `<context>\n${fields.context}\n</context>` : `**${p.context}:**\n${fields.context}`);
-                    parts.push('');
+                    sections.push({ type: 'context', text: target === 'claude' ? `<context>\n${fields.context}\n</context>` : `**${p.context}:**\n${fields.context}` });
                 }
                 if (fields.task) {
-                    parts.push(target === 'claude' ? `<task>\n${fields.task}\n</task>` : target === 'gpt' ? `**${p.task}:**\n${fields.task}` : `${p.task}: ${fields.task}`);
-                    parts.push('');
+                    sections.push({ type: 'task', text: target === 'claude' ? `<task>\n${fields.task}\n</task>` : target === 'gpt' ? `**${p.task}:**\n${fields.task}` : `${p.task}: ${fields.task}` });
                 }
                 if (selectedMethods.includes('cot')) {
-                    parts.push(target === 'claude' ? `<instructions>\n${p.cotInstructions}\n</instructions>` : `**Instructions:** ${p.cotSimple}`);
-                    parts.push('');
+                    sections.push({ type: 'methods', text: target === 'claude' ? `<instructions>\n${p.cotInstructions}\n</instructions>` : `**Instructions:** ${p.cotSimple}` });
                 }
                 if (selectedMethods.includes('tot')) {
-                    parts.push(target === 'claude' ? `<reasoning_approach>\n${p.totExperts}\n</reasoning_approach>` : `**Multi-path:** ${p.totSimple}`);
-                    parts.push('');
+                    sections.push({ type: 'methods', text: target === 'claude' ? `<reasoning_approach>\n${p.totExperts}\n</reasoning_approach>` : `**Multi-path:** ${p.totSimple}` });
                 }
                 if (selectedMethods.includes('selfconsistency')) {
-                    parts.push(target === 'claude' ? `<verification>\n${p.scVerify}\n</verification>` : `**Self-verification:** ${p.scSimple}`);
-                    parts.push('');
+                    sections.push({ type: 'methods', text: target === 'claude' ? `<verification>\n${p.scVerify}\n</verification>` : `**Self-verification:** ${p.scSimple}` });
                 }
                 if (selectedMethods.includes('react')) {
-                    parts.push(target === 'claude' ? `<approach>\n${p.reactCycle}\n</approach>` : `**ReAct:** ${p.reactSimple}`);
-                    parts.push('');
+                    sections.push({ type: 'methods', text: target === 'claude' ? `<approach>\n${p.reactCycle}\n</approach>` : `**ReAct:** ${p.reactSimple}` });
                 }
                 if (selectedMethods.includes('risen') && fields.constraints) {
                     const steps = fields.constraints.split('\n').map((s, i) => `${i + 1}. ${s}`).join('\n');
-                    parts.push(target === 'claude' ? `<steps>\n${p.stepsFollow}:\n${steps}\n</steps>` : `**${p.stepsFollow}:**\n${steps}`);
-                    parts.push('');
+                    sections.push({ type: 'constraints', text: target === 'claude' ? `<steps>\n${p.stepsFollow}:\n${steps}\n</steps>` : `**${p.stepsFollow}:**\n${steps}` });
                 } else if (fields.constraints) {
-                    parts.push(target === 'claude' ? `<constraints>\n${fields.constraints}\n</constraints>` : `**${p.constraints}:**\n${fields.constraints}`);
-                    parts.push('');
+                    sections.push({ type: 'constraints', text: target === 'claude' ? `<constraints>\n${fields.constraints}\n</constraints>` : `**${p.constraints}:**\n${fields.constraints}` });
                 }
                 if (fields.examples) {
                     if (selectedMethods.includes('fewshot')) {
-                        parts.push(target === 'claude' ? `<examples>\n${p.examplesIntro}\n\n${fields.examples}\n\n${p.examplesFollow}\n</examples>` : `**Few-shot:**\n${p.fewshotIntro}\n\n${fields.examples}\n\n${p.fewshotFollow}`);
+                        sections.push({ type: 'examples', text: target === 'claude' ? `<examples>\n${p.examplesIntro}\n\n${fields.examples}\n\n${p.examplesFollow}\n</examples>` : `**Few-shot:**\n${p.fewshotIntro}\n\n${fields.examples}\n\n${p.fewshotFollow}` });
                     } else {
-                        parts.push(target === 'claude' ? `<examples>\n${fields.examples}\n</examples>` : `**Examples:**\n${fields.examples}`);
+                        sections.push({ type: 'examples', text: target === 'claude' ? `<examples>\n${fields.examples}\n</examples>` : `**Examples:**\n${fields.examples}` });
                     }
-                    parts.push('');
                 }
                 if (fields.outputFormat) {
                     if (selectedMethods.includes('risen')) {
-                        parts.push(target === 'claude' ? `<expectations>\n${fields.outputFormat}\n</expectations>` : `**${p.expectations}:**\n${fields.outputFormat}`);
+                        sections.push({ type: 'format', text: target === 'claude' ? `<expectations>\n${fields.outputFormat}\n</expectations>` : `**${p.expectations}:**\n${fields.outputFormat}` });
                     } else {
-                        parts.push(target === 'claude' ? `<output_format>\n${fields.outputFormat}\n</output_format>` : `**${p.outputFormat}:**\n${fields.outputFormat}`);
+                        sections.push({ type: 'format', text: target === 'claude' ? `<output_format>\n${fields.outputFormat}\n</output_format>` : `**${p.outputFormat}:**\n${fields.outputFormat}` });
                     }
                 }
-                return parts.join('\n').trim();
+                return sections;
             }, [fields, target, selectedMethods, t]);
+
+            // Plain text version for copying
+            const formattedPrompt = useMemo(() => {
+                return promptSections.map(s => s.text).join('\n\n').trim();
+            }, [promptSections]);
 
             const copyToClipboard = async () => {
                 await navigator.clipboard.writeText(formattedPrompt);
@@ -1148,7 +1255,14 @@
                             {/* Preview Panel */}
                             <div className="lg:col-span-2 flex flex-col">
                                 <div className="flex items-center justify-between mb-3">
-                                    <h2 className="text-sm font-medium text-slate-300">{t.preview}</h2>
+                                    <div className="flex items-center gap-3">
+                                        <h2 className="text-sm font-medium text-slate-300">{t.preview}</h2>
+                                        <label className="flex items-center gap-2 cursor-pointer">
+                                            <input type="checkbox" checked={showColors} onChange={e => setShowColors(e.target.checked)}
+                                                className="w-4 h-4 rounded border-slate-600 bg-slate-700 text-amber-500 focus:ring-amber-500/30" />
+                                            <span className="text-xs text-slate-400">{t.checklist?.showColors}</span>
+                                        </label>
+                                    </div>
                                     <button onClick={copyToClipboard} disabled={!formattedPrompt}
                                         className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${formattedPrompt ? 'bg-amber-500 text-slate-900 hover:bg-amber-400' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}>
                                         <Icon name={copied ? "Check" : "Copy"} size={16} />
@@ -1156,8 +1270,14 @@
                                     </button>
                                 </div>
                                 <div className="flex-1 bg-slate-800/50 border border-slate-700 rounded-lg p-4 overflow-auto min-h-[400px]">
-                                    {formattedPrompt ? (
-                                        <pre className="text-slate-200 text-sm whitespace-pre-wrap font-mono leading-relaxed">{formattedPrompt}</pre>
+                                    {promptSections.length > 0 ? (
+                                        <div className="space-y-3">
+                                            {promptSections.map((section, idx) => (
+                                                <div key={idx} className={`rounded ${showColors ? `color-${section.type}` : ''}`}>
+                                                    <pre className="text-slate-200 text-sm whitespace-pre-wrap font-mono leading-relaxed">{section.text}</pre>
+                                                </div>
+                                            ))}
+                                        </div>
                                     ) : (
                                         <div className="h-full flex items-center justify-center text-slate-500 text-sm text-center px-4">{t.placeholder}</div>
                                     )}
@@ -1170,6 +1290,54 @@
                                 )}
                             </div>
                         </div>
+
+                        {/* X-Step Prompt Checklist */}
+                        {t.checklist && (
+                            <div className="mt-8 p-6 bg-slate-800/40 border border-slate-700/50 rounded-xl">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <Icon name="CheckSquare" size={24} className="text-amber-400" />
+                                    <div>
+                                        <h3 className="text-lg font-bold text-white">{t.checklist.title}</h3>
+                                        <p className="text-sm text-slate-400">{t.checklist.subtitle}</p>
+                                    </div>
+                                </div>
+
+                                {/* Checklist Steps */}
+                                <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-4">
+                                    {t.checklist.steps.map((step, idx) => (
+                                        <div key={step.key} className={`p-3 rounded-lg border bg-check-${step.color}`}>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <div className={`w-6 h-6 rounded-full dot-${step.color} flex items-center justify-center text-white text-xs font-bold`}>
+                                                    {idx + 1}
+                                                </div>
+                                                <span className={`font-medium text-sm text-check-${step.color}`}>{step.name}</span>
+                                            </div>
+                                            <p className="text-xs text-slate-300 mb-2">{step.desc}</p>
+                                            <div className="text-xs text-slate-500 italic bg-slate-900/30 p-2 rounded">
+                                                {step.example}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Legend */}
+                                <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-slate-700/50">
+                                    <span className="text-xs text-slate-400 font-medium">{t.checklist.legend}:</span>
+                                    {t.checklist.steps.map(step => (
+                                        <div key={step.key} className="flex items-center gap-1.5">
+                                            <div className={`w-3 h-3 rounded-full dot-${step.color}`}></div>
+                                            <span className="text-xs text-slate-400">{step.name}</span>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Tip */}
+                                <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2">
+                                    <Icon name="Lightbulb" size={16} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                                    <p className="text-xs text-amber-200">{t.checklist.tip}</p>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Footer */}
                         <div className="mt-6 p-4 bg-slate-800/30 border border-slate-700/50 rounded-lg">
