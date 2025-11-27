@@ -113,6 +113,29 @@
                     examples: { label: 'Examples (optional)', placeholder: 'e.g., Input: ... → Output: ...' },
                     fewshot: { label: 'Few-Shot Examples (Input → Output)', placeholder: 'Input: ... → Output: ...' },
                 },
+                // Enhanced examples section translations
+                examplesSection: {
+                    title: 'Examples with File Format',
+                    fileType: 'Data Format',
+                    fileTypes: {
+                        none: { name: 'Plain Text', desc: 'Simple text examples' },
+                        excel: { name: 'Excel/Spreadsheet', desc: 'Rows & columns structure' },
+                        csv: { name: 'CSV', desc: 'Comma-separated values' },
+                        json: { name: 'JSON', desc: 'Key-value pairs' },
+                        table: { name: 'Table', desc: 'Structured table format' },
+                    },
+                    params: {
+                        columnSeparator: 'Column separator',
+                        rowDescription: 'Row structure',
+                        headers: 'Column headers',
+                        headersPlaceholder: 'e.g., Name | Age | City',
+                    },
+                    addRow: 'Add row (+)',
+                    removeRow: 'Remove',
+                    rowPlaceholder: 'Example row data...',
+                    rowSeparatorHint: 'Use (+) button to add separated example rows',
+                    structurePreview: 'Structure preview',
+                },
                 methods: {
                     title: 'Research-Backed Methods',
                     active: 'method(s) active',
@@ -247,6 +270,29 @@
                     expectations: { label: 'Očekávání / Cíl', placeholder: 'např. Jasná, použitelná dokumentace' },
                     examples: { label: 'Příklady (volitelné)', placeholder: 'např. Vstup: ... → Výstup: ...' },
                     fewshot: { label: 'Few-Shot příklady (Vstup → Výstup)', placeholder: 'Vstup: ... → Výstup: ...' },
+                },
+                // Enhanced examples section translations (Czech)
+                examplesSection: {
+                    title: 'Příklady s formátem souboru',
+                    fileType: 'Formát dat',
+                    fileTypes: {
+                        none: { name: 'Prostý text', desc: 'Jednoduché textové příklady' },
+                        excel: { name: 'Excel/Tabulka', desc: 'Struktura řádků a sloupců' },
+                        csv: { name: 'CSV', desc: 'Hodnoty oddělené čárkou' },
+                        json: { name: 'JSON', desc: 'Páry klíč-hodnota' },
+                        table: { name: 'Tabulka', desc: 'Strukturovaný tabulkový formát' },
+                    },
+                    params: {
+                        columnSeparator: 'Oddělovač sloupců',
+                        rowDescription: 'Struktura řádku',
+                        headers: 'Záhlaví sloupců',
+                        headersPlaceholder: 'např. Jméno | Věk | Město',
+                    },
+                    addRow: 'Přidat řádek (+)',
+                    removeRow: 'Odebrat',
+                    rowPlaceholder: 'Data příkladu řádku...',
+                    rowSeparatorHint: 'Použij tlačítko (+) pro přidání oddělených řádků příkladů',
+                    structurePreview: 'Náhled struktury',
                 },
                 methods: {
                     title: 'Výzkumem podložené metody',
@@ -407,7 +453,11 @@
                     a: ['claude', 'gpt', 'general'].indexOf(promptData.target),
                     m: promptData.selectedMethods.map(m => ALL_METHODS.indexOf(m)).filter(i => i >= 0),
                     l: langs.indexOf(promptData.lang),
-                    f: promptData.fields
+                    f: promptData.fields,
+                    // Enhanced examples data
+                    eft: ['none', 'excel', 'csv', 'json', 'table'].indexOf(promptData.exampleFileType || 'none'),
+                    eh: promptData.exampleHeaders || '',
+                    er: promptData.exampleRows || [{ id: 1, content: '' }]
                 };
                 const json = JSON.stringify(minimal);
                 return LZString.compressToEncodedURIComponent(json);
@@ -426,6 +476,7 @@
                 const minimal = JSON.parse(json);
                 const templates = ['general', 'coding', 'creative', 'analysis', 'explanation'];
                 const targets = ['claude', 'gpt', 'general'];
+                const fileTypes = ['none', 'excel', 'csv', 'json', 'table'];
                 // Get all language codes from AVAILABLE_LANGUAGES
                 const langs = AVAILABLE_LANGUAGES.map(l => l.code);
 
@@ -434,7 +485,11 @@
                     target: targets[minimal.a] || 'claude',
                     selectedMethods: (minimal.m || []).map(i => ALL_METHODS[i]).filter(Boolean),
                     lang: langs[minimal.l] || 'en',
-                    fields: minimal.f || { role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '' }
+                    fields: minimal.f || { role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '' },
+                    // Enhanced examples data
+                    exampleFileType: fileTypes[minimal.eft] || 'none',
+                    exampleHeaders: minimal.eh || '',
+                    exampleRows: minimal.er || [{ id: 1, content: '' }]
                 };
             } catch (e) {
                 return null;
@@ -500,6 +555,11 @@
                 role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '',
             });
 
+            // Enhanced examples state - supports structured data formats and multiple rows
+            const [exampleFileType, setExampleFileType] = useState('none'); // none, excel, csv, json, table
+            const [exampleHeaders, setExampleHeaders] = useState(''); // Column headers for structured formats
+            const [exampleRows, setExampleRows] = useState([{ id: 1, content: '' }]); // Dynamic rows with (+) separator
+
             // Get translations for current language (direct lookup, no API)
             const t = getTranslations(lang);
             const selectedLang = AVAILABLE_LANGUAGES.find(l => l.code === lang);
@@ -536,6 +596,117 @@
             const toggleMethod = (methodId) => setSelectedMethods(prev =>
                 prev.includes(methodId) ? prev.filter(m => m !== methodId) : [...prev, methodId]
             );
+
+            // Helper functions for dynamic example rows
+            const addExampleRow = () => {
+                setExampleRows(prev => [...prev, { id: Date.now(), content: '' }]);
+            };
+            const removeExampleRow = (id) => {
+                if (exampleRows.length > 1) {
+                    setExampleRows(prev => prev.filter(row => row.id !== id));
+                }
+            };
+            const updateExampleRow = (id, content) => {
+                setExampleRows(prev => prev.map(row => row.id === id ? { ...row, content } : row));
+            };
+
+            // Generate formatted examples based on file type and rows
+            // Uses prompt engineering best practices (2025): clear structure, semantic separators
+            const generateFormattedExamples = useMemo(() => {
+                const hasContent = exampleRows.some(r => r.content.trim());
+                if (!hasContent && !fields.examples) return '';
+
+                // If using plain text (none), just use the original examples field
+                if (exampleFileType === 'none') {
+                    // If we have structured rows, join them with clear separators
+                    if (exampleRows.some(r => r.content.trim())) {
+                        return exampleRows
+                            .filter(r => r.content.trim())
+                            .map((r, i) => `[Example ${i + 1}]\n${r.content}`)
+                            .join('\n\n---\n\n'); // Clear visual separator that AI understands
+                    }
+                    return fields.examples;
+                }
+
+                // Build structured format based on file type
+                const rows = exampleRows.filter(r => r.content.trim());
+                const headers = exampleHeaders.trim();
+
+                let formattedOutput = '';
+
+                switch (exampleFileType) {
+                    case 'excel':
+                    case 'table':
+                        // Use ASCII table format for better AI comprehension
+                        if (headers) {
+                            const cols = headers.split('|').map(h => h.trim());
+                            const colWidth = Math.max(15, ...cols.map(c => c.length + 2));
+                            const separator = '+' + cols.map(() => '-'.repeat(colWidth)).join('+') + '+';
+
+                            formattedOutput = `Data structure: Table with ${cols.length} columns\n`;
+                            formattedOutput += `Columns: ${cols.join(' | ')}\n\n`;
+                            formattedOutput += separator + '\n';
+                            formattedOutput += '|' + cols.map(c => ` ${c.padEnd(colWidth - 1)}`).join('|') + '|\n';
+                            formattedOutput += separator + '\n';
+
+                            rows.forEach((row, idx) => {
+                                const values = row.content.split('|').map(v => v.trim());
+                                formattedOutput += '|' + values.map((v, i) => ` ${(v || '').padEnd(colWidth - 1)}`).join('|') + '|\n';
+                                if (idx < rows.length - 1) {
+                                    formattedOutput += separator + '\n'; // Row separator
+                                }
+                            });
+                            formattedOutput += separator;
+                        } else {
+                            formattedOutput = 'Data rows:\n';
+                            rows.forEach((row, idx) => {
+                                formattedOutput += `Row ${idx + 1}: ${row.content}\n`;
+                                if (idx < rows.length - 1) {
+                                    formattedOutput += '---\n'; // Visual row separator
+                                }
+                            });
+                        }
+                        break;
+
+                    case 'csv':
+                        formattedOutput = 'CSV format data:\n';
+                        if (headers) {
+                            formattedOutput += `Headers: ${headers.replace(/\|/g, ',')}\n`;
+                        }
+                        formattedOutput += 'Data:\n';
+                        rows.forEach((row, idx) => {
+                            formattedOutput += `${row.content.replace(/\|/g, ',')}\n`;
+                            if (idx < rows.length - 1) {
+                                formattedOutput += ''; // No extra separator for CSV
+                            }
+                        });
+                        break;
+
+                    case 'json':
+                        formattedOutput = 'JSON structured data:\n```json\n[\n';
+                        const jsonHeaders = headers ? headers.split('|').map(h => h.trim()) : [];
+                        rows.forEach((row, idx) => {
+                            const values = row.content.split('|').map(v => v.trim());
+                            if (jsonHeaders.length > 0) {
+                                const obj = {};
+                                jsonHeaders.forEach((h, i) => {
+                                    obj[h] = values[i] || '';
+                                });
+                                formattedOutput += '  ' + JSON.stringify(obj);
+                            } else {
+                                formattedOutput += `  "${row.content}"`;
+                            }
+                            formattedOutput += idx < rows.length - 1 ? ',\n' : '\n';
+                        });
+                        formattedOutput += ']\n```';
+                        break;
+
+                    default:
+                        formattedOutput = rows.map(r => r.content).join('\n---\n');
+                }
+
+                return formattedOutput;
+            }, [exampleFileType, exampleHeaders, exampleRows, fields.examples]);
 
             const selectedTemplate = t.templates[template];
             const TemplateIcon = templateIcons[template];
@@ -599,11 +770,13 @@
                 } else if (fields.constraints) {
                     sections.push({ type: 'constraints', text: target === 'claude' ? `<constraints>\n${fields.constraints}\n</constraints>` : `**${p.constraints}:**\n${fields.constraints}` });
                 }
-                if (fields.examples) {
+                // Use structured examples if available, otherwise fall back to plain examples field
+                const examplesContent = generateFormattedExamples || fields.examples;
+                if (examplesContent) {
                     if (selectedMethods.includes('fewshot')) {
-                        sections.push({ type: 'examples', text: target === 'claude' ? `<examples>\n${p.examplesIntro}\n\n${fields.examples}\n\n${p.examplesFollow}\n</examples>` : `**Few-shot:**\n${p.fewshotIntro}\n\n${fields.examples}\n\n${p.fewshotFollow}` });
+                        sections.push({ type: 'examples', text: target === 'claude' ? `<examples>\n${p.examplesIntro}\n\n${examplesContent}\n\n${p.examplesFollow}\n</examples>` : `**Few-shot:**\n${p.fewshotIntro}\n\n${examplesContent}\n\n${p.fewshotFollow}` });
                     } else {
-                        sections.push({ type: 'examples', text: target === 'claude' ? `<examples>\n${fields.examples}\n</examples>` : `**Examples:**\n${fields.examples}` });
+                        sections.push({ type: 'examples', text: target === 'claude' ? `<examples>\n${examplesContent}\n</examples>` : `**Examples:**\n${examplesContent}` });
                     }
                 }
                 if (fields.outputFormat) {
@@ -619,7 +792,7 @@
                     sections.push({ type: 'template', text: target === 'claude' ? `<approach>\n${templateContext}\n</approach>` : `**Approach:** ${templateContext}` });
                 }
                 return sections;
-            }, [fields, target, selectedMethods, t, template]);
+            }, [fields, target, selectedMethods, t, template, generateFormattedExamples]);
 
             // Plain text version for copying
             const formattedPrompt = useMemo(() => {
@@ -639,6 +812,8 @@
                     id: editingId || Date.now().toString(),
                     name: promptName,
                     template, target, fields, selectedMethods, lang,
+                    // Include enhanced examples data
+                    exampleFileType, exampleHeaders, exampleRows,
                     createdAt: editingId ? savedPrompts.find(p => p.id === editingId)?.createdAt : new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
                 };
@@ -662,6 +837,10 @@
                 setFields(prompt.fields || { role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '' });
                 setSelectedMethods(prompt.selectedMethods || []);
                 if (prompt.lang) setLang(prompt.lang);
+                // Load enhanced examples data
+                setExampleFileType(prompt.exampleFileType || 'none');
+                setExampleHeaders(prompt.exampleHeaders || '');
+                setExampleRows(prompt.exampleRows || [{ id: 1, content: '' }]);
                 setShowDatabase(false);
             };
 
@@ -721,11 +900,19 @@
                 setFields({ role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '' });
                 setSelectedMethods([]);
                 setEditingId(null);
+                // Reset enhanced examples state
+                setExampleFileType('none');
+                setExampleHeaders('');
+                setExampleRows([{ id: 1, content: '' }]);
             };
 
             // Share code functions
             const openShareModal = () => {
-                const promptData = { template, target, selectedMethods, lang, fields };
+                const promptData = {
+                    template, target, selectedMethods, lang, fields,
+                    // Include enhanced examples data
+                    exampleFileType, exampleHeaders, exampleRows
+                };
                 const code = generateShareCode(promptData);
                 if (code) {
                     setShareData({
@@ -749,6 +936,10 @@
                     setSelectedMethods(decoded.selectedMethods);
                     setLang(decoded.lang);
                     setFields(decoded.fields);
+                    // Load enhanced examples data
+                    setExampleFileType(decoded.exampleFileType || 'none');
+                    setExampleHeaders(decoded.exampleHeaders || '');
+                    setExampleRows(decoded.exampleRows || [{ id: 1, content: '' }]);
                     setShowImportModal(false);
                     setImportCode('');
                     showNotification(t.share.importSuccess);
@@ -768,6 +959,10 @@
                         setSelectedMethods(decoded.selectedMethods);
                         setLang(decoded.lang);
                         setFields(decoded.fields);
+                        // Load enhanced examples data
+                        setExampleFileType(decoded.exampleFileType || 'none');
+                        setExampleHeaders(decoded.exampleHeaders || '');
+                        setExampleRows(decoded.exampleRows || [{ id: 1, content: '' }]);
                         showNotification(t.share.importSuccess);
                         // Clean URL
                         window.history.replaceState({}, '', window.location.pathname);
@@ -1066,7 +1261,6 @@
                                         { key: 'context', field: t.fields.context },
                                         { key: 'constraints', field: selectedMethods.includes('risen') ? t.fields.steps : t.fields.constraints },
                                         { key: 'outputFormat', field: selectedMethods.includes('risen') ? t.fields.expectations : t.fields.outputFormat },
-                                        { key: 'examples', field: selectedMethods.includes('fewshot') ? t.fields.fewshot : t.fields.examples },
                                     ].map(({ key, field, required }) => (
                                         <div key={key}>
                                             <label className="block text-sm font-medium text-slate-300 mb-1.5">
@@ -1081,6 +1275,120 @@
                                             )}
                                         </div>
                                     ))}
+
+                                    {/* Enhanced Examples Section with File Format Support */}
+                                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
+                                                <Icon name="Lightbulb" size={16} className="text-yellow-400" />
+                                                {selectedMethods.includes('fewshot') ? t.fields.fewshot.label : t.fields.examples.label}
+                                            </label>
+                                            {/* File type dropdown */}
+                                            <select
+                                                value={exampleFileType}
+                                                onChange={e => setExampleFileType(e.target.value)}
+                                                className="px-2 py-1 bg-slate-700 border border-slate-600 rounded text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                            >
+                                                {t.examplesSection && Object.entries(t.examplesSection.fileTypes).map(([key, val]) => (
+                                                    <option key={key} value={key}>{val.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Headers input for structured formats */}
+                                        {exampleFileType !== 'none' && (
+                                            <div className="mb-3">
+                                                <label className="block text-xs text-slate-400 mb-1">
+                                                    {t.examplesSection?.params.headers || 'Column headers'}
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={exampleHeaders}
+                                                    onChange={e => setExampleHeaders(e.target.value)}
+                                                    placeholder={t.examplesSection?.params.headersPlaceholder || 'e.g., Name | Age | City'}
+                                                    className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                                />
+                                                <p className="text-xs text-slate-500 mt-1">
+                                                    {exampleFileType === 'excel' || exampleFileType === 'table'
+                                                        ? (lang === 'cs' ? 'Odděl sloupce znakem |' : 'Separate columns with |')
+                                                        : exampleFileType === 'csv'
+                                                        ? (lang === 'cs' ? 'Odděl sloupce čárkou nebo znakem |' : 'Separate with commas or |')
+                                                        : (lang === 'cs' ? 'Zadej klíče pro JSON objekty' : 'Enter keys for JSON objects')}
+                                                </p>
+                                            </div>
+                                        )}
+
+                                        {/* Dynamic example rows with (+) button */}
+                                        <div className="space-y-2">
+                                            {exampleRows.map((row, idx) => (
+                                                <div key={row.id} className="flex gap-2 items-start">
+                                                    <span className="text-xs text-slate-500 pt-2 w-6">{idx + 1}.</span>
+                                                    <textarea
+                                                        value={row.content}
+                                                        onChange={e => updateExampleRow(row.id, e.target.value)}
+                                                        placeholder={exampleFileType !== 'none'
+                                                            ? (lang === 'cs' ? 'Data řádku (odděl hodnoty znakem |)...' : 'Row data (separate values with |)...')
+                                                            : (t.examplesSection?.rowPlaceholder || 'Example row data...')}
+                                                        rows={2}
+                                                        className="flex-1 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
+                                                    />
+                                                    {exampleRows.length > 1 && (
+                                                        <button
+                                                            onClick={() => removeExampleRow(row.id)}
+                                                            className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded"
+                                                            title={t.examplesSection?.removeRow || 'Remove'}
+                                                        >
+                                                            <Icon name="X" size={14} />
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Add row button (+) */}
+                                        <button
+                                            onClick={addExampleRow}
+                                            className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/20 border border-amber-500/30 rounded text-amber-400 hover:bg-amber-500/30 text-xs font-medium transition-colors"
+                                        >
+                                            <Icon name="Plus" size={14} />
+                                            {t.examplesSection?.addRow || 'Add row (+)'}
+                                        </button>
+
+                                        {/* Hint about row separators */}
+                                        <p className="mt-2 text-xs text-slate-500 flex items-center gap-1">
+                                            <Icon name="Info" size={12} />
+                                            {t.examplesSection?.rowSeparatorHint || 'Use (+) button to add separated example rows'}
+                                        </p>
+
+                                        {/* Fallback: Original examples textarea for plain text mode */}
+                                        {exampleFileType === 'none' && exampleRows.every(r => !r.content.trim()) && (
+                                            <div className="mt-3 pt-3 border-t border-slate-700">
+                                                <label className="block text-xs text-slate-400 mb-1">
+                                                    {lang === 'cs' ? 'Nebo zadej příklady volným textem:' : 'Or enter examples as free text:'}
+                                                </label>
+                                                <textarea
+                                                    value={fields.examples}
+                                                    onChange={e => updateField('examples', e.target.value)}
+                                                    placeholder={selectedMethods.includes('fewshot') ? t.fields.fewshot.placeholder : t.fields.examples.placeholder}
+                                                    rows={2}
+                                                    className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
+                                                />
+                                            </div>
+                                        )}
+
+                                        {/* Structure preview for non-plain formats */}
+                                        {exampleFileType !== 'none' && exampleRows.some(r => r.content.trim()) && (
+                                            <div className="mt-3 pt-3 border-t border-slate-700">
+                                                <label className="block text-xs text-slate-400 mb-1 flex items-center gap-1">
+                                                    <Icon name="Eye" size={12} />
+                                                    {t.examplesSection?.structurePreview || 'Structure preview'}
+                                                </label>
+                                                <pre className="p-2 bg-slate-900 rounded text-xs text-green-400 overflow-x-auto whitespace-pre-wrap max-h-32 overflow-y-auto">
+                                                    {generateFormattedExamples}
+                                                </pre>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 {/* Action Buttons */}
