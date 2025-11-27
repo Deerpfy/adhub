@@ -303,72 +303,87 @@
             current[parts[parts.length - 1]] = value;
         };
 
-        // Batch translate using MyMemory API (max 500 chars per request)
-        const translateBatch = async (texts, fromLang, toLang) => {
-            if (texts.length === 0) return [];
+        // Delay helper
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-            const SEPARATOR = ' ||| ';
-            const MAX_CHARS = 450; // Safe limit for URL encoding
-            const results = new Array(texts.length).fill('');
-
-            let currentBatch = [];
-            let currentLength = 0;
-            let batchStartIdx = 0;
-
-            const processBatch = async (batch, startIdx) => {
-                if (batch.length === 0) return;
-
-                const combined = batch.join(SEPARATOR);
+        // Translate single text with retry logic for rate limiting
+        const translateSingleBatch = async (text, fromLang, toLang, retries = 3) => {
+            for (let attempt = 0; attempt < retries; attempt++) {
                 try {
                     const response = await fetch(
-                        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(combined)}&langpair=${fromLang}|${toLang}`
+                        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${fromLang}|${toLang}`
                     );
+
+                    if (response.status === 429) {
+                        // Rate limited - wait and retry
+                        const waitTime = (attempt + 1) * 1000; // 1s, 2s, 3s
+                        console.warn(`Rate limited, waiting ${waitTime}ms...`);
+                        await delay(waitTime);
+                        continue;
+                    }
 
                     if (response.ok) {
                         const data = await response.json();
                         if (data.responseStatus === 200 && data.responseData?.translatedText) {
-                            const translated = data.responseData.translatedText.split(SEPARATOR);
-                            for (let i = 0; i < batch.length; i++) {
-                                results[startIdx + i] = translated[i]?.trim() || batch[i];
-                            }
-                            return;
+                            return data.responseData.translatedText;
                         }
                     }
+                    return text; // Fallback to original
                 } catch (e) {
-                    console.warn('Batch translation failed:', e);
+                    console.warn('Translation attempt failed:', e);
+                    if (attempt < retries - 1) {
+                        await delay((attempt + 1) * 500);
+                    }
                 }
-                // Fallback: keep original
-                for (let i = 0; i < batch.length; i++) {
-                    results[startIdx + i] = batch[i];
-                }
-            };
+            }
+            return text; // Fallback after all retries
+        };
 
-            // Process in batches
+        // Batch translate using MyMemory API - sequential with delays to avoid rate limiting
+        const translateBatch = async (texts, fromLang, toLang) => {
+            if (texts.length === 0) return [];
+
+            const SEPARATOR = ' ||| ';
+            const MAX_CHARS = 400; // Safe limit for URL encoding
+            const results = [];
+
+            // Group texts into batches
             const batches = [];
-            for (let i = 0; i < texts.length; i++) {
-                const text = texts[i];
+            let currentBatch = [];
+            let currentLength = 0;
+
+            for (const text of texts) {
                 const newLength = currentLength + text.length + SEPARATOR.length;
 
                 if (newLength > MAX_CHARS && currentBatch.length > 0) {
-                    batches.push({ batch: [...currentBatch], startIdx: batchStartIdx });
+                    batches.push([...currentBatch]);
                     currentBatch = [text];
                     currentLength = text.length;
-                    batchStartIdx = i;
                 } else {
                     currentBatch.push(text);
                     currentLength = newLength;
                 }
             }
             if (currentBatch.length > 0) {
-                batches.push({ batch: currentBatch, startIdx: batchStartIdx });
+                batches.push(currentBatch);
             }
 
-            // Run batches in parallel (max 5 concurrent)
-            const CONCURRENT = 5;
-            for (let i = 0; i < batches.length; i += CONCURRENT) {
-                await Promise.all(
-                    batches.slice(i, i + CONCURRENT).map(b => processBatch(b.batch, b.startIdx))
-                );
+            // Process batches SEQUENTIALLY with delay to avoid rate limiting
+            for (let i = 0; i < batches.length; i++) {
+                const batch = batches[i];
+                const combined = batch.join(SEPARATOR);
+
+                const translated = await translateSingleBatch(combined, fromLang, toLang);
+                const parts = translated.split(SEPARATOR);
+
+                for (let j = 0; j < batch.length; j++) {
+                    results.push(parts[j]?.trim() || batch[j]);
+                }
+
+                // Small delay between batches to avoid rate limiting (except last batch)
+                if (i < batches.length - 1) {
+                    await delay(300); // 300ms delay between batches
+                }
             }
 
             return results;
