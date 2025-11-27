@@ -79,62 +79,21 @@
         const { useState, useEffect, useMemo, useRef, useCallback } = React;
 
         // ==================== AVAILABLE LANGUAGES ====================
-        // Extended language list with automatic translation support via MyMemory API
+        // Manual translations only - no API calls
         const AVAILABLE_LANGUAGES = [
             { code: 'en', name: 'English', native: 'English', flag: '🇬🇧' },
-            { code: 'cs', name: 'Czech', native: 'Čeština', flag: '🇨🇿' },
-            { code: 'de', name: 'German', native: 'Deutsch', flag: '🇩🇪' },
-            { code: 'fr', name: 'French', native: 'Français', flag: '🇫🇷' },
-            { code: 'es', name: 'Spanish', native: 'Español', flag: '🇪🇸' },
-            { code: 'it', name: 'Italian', native: 'Italiano', flag: '🇮🇹' },
-            { code: 'pt', name: 'Portuguese', native: 'Português', flag: '🇵🇹' },
-            { code: 'pl', name: 'Polish', native: 'Polski', flag: '🇵🇱' },
-            { code: 'sk', name: 'Slovak', native: 'Slovenčina', flag: '🇸🇰' },
-            { code: 'nl', name: 'Dutch', native: 'Nederlands', flag: '🇳🇱' },
-            { code: 'ru', name: 'Russian', native: 'Русский', flag: '🇷🇺' },
-            { code: 'uk', name: 'Ukrainian', native: 'Українська', flag: '🇺🇦' },
-            { code: 'ja', name: 'Japanese', native: '日本語', flag: '🇯🇵' },
-            { code: 'zh', name: 'Chinese', native: '中文', flag: '🇨🇳' },
-            { code: 'ko', name: 'Korean', native: '한국어', flag: '🇰🇷' },
-            { code: 'ar', name: 'Arabic', native: 'العربية', flag: '🇸🇦' },
-            { code: 'hi', name: 'Hindi', native: 'हिन्दी', flag: '🇮🇳' },
-            { code: 'tr', name: 'Turkish', native: 'Türkçe', flag: '🇹🇷' },
-            { code: 'sv', name: 'Swedish', native: 'Svenska', flag: '🇸🇪' },
-            { code: 'da', name: 'Danish', native: 'Dansk', flag: '🇩🇰' },
-            { code: 'fi', name: 'Finnish', native: 'Suomi', flag: '🇫🇮' },
-            { code: 'no', name: 'Norwegian', native: 'Norsk', flag: '🇳🇴' },
-            { code: 'el', name: 'Greek', native: 'Ελληνικά', flag: '🇬🇷' },
-            { code: 'hu', name: 'Hungarian', native: 'Magyar', flag: '🇭🇺' },
-            { code: 'ro', name: 'Romanian', native: 'Română', flag: '🇷🇴' },
-            { code: 'bg', name: 'Bulgarian', native: 'Български', flag: '🇧🇬' },
-            { code: 'hr', name: 'Croatian', native: 'Hrvatski', flag: '🇭🇷' },
-            { code: 'sl', name: 'Slovenian', native: 'Slovenščina', flag: '🇸🇮' },
-            { code: 'sr', name: 'Serbian', native: 'Српски', flag: '🇷🇸' },
-            { code: 'he', name: 'Hebrew', native: 'עברית', flag: '🇮🇱' },
-            { code: 'th', name: 'Thai', native: 'ไทย', flag: '🇹🇭' },
-            { code: 'vi', name: 'Vietnamese', native: 'Tiếng Việt', flag: '🇻🇳' },
-            { code: 'id', name: 'Indonesian', native: 'Bahasa Indonesia', flag: '🇮🇩' },
-            { code: 'ms', name: 'Malay', native: 'Bahasa Melayu', flag: '🇲🇾' },
-            { code: 'lt', name: 'Lithuanian', native: 'Lietuvių', flag: '🇱🇹' },
-            { code: 'lv', name: 'Latvian', native: 'Latviešu', flag: '🇱🇻' },
-            { code: 'et', name: 'Estonian', native: 'Eesti', flag: '🇪🇪' },
-            { code: 'ca', name: 'Catalan', native: 'Català', flag: '🏴󠁥󠁳󠁣󠁴󠁿' },
-            { code: 'af', name: 'Afrikaans', native: 'Afrikaans', flag: '🇿🇦' },
-            { code: 'sw', name: 'Swahili', native: 'Kiswahili', flag: '🇰🇪' }
+            { code: 'cs', name: 'Czech', native: 'Čeština', flag: '🇨🇿' }
         ];
 
         // Legacy alias for backward compatibility
         const languages = AVAILABLE_LANGUAGES;
 
-        // ==================== BASE TRANSLATIONS (English only - others auto-translated) ====================
-        // Only English is stored locally. All other languages use MyMemory Translation API.
+        // ==================== BASE TRANSLATIONS (Manual - EN + CS) ====================
         const BASE_TRANSLATIONS = {
             en: {
                 title: 'AI Prompt Formatter',
                 subtitle: 'Research-backed prompting techniques from 2025 studies',
                 backToHub: 'Back to Hub',
-                translating: 'Translating...',
-                translationError: 'Translation error',
                 searchLanguage: 'Search language...',
                 templates: {
                     general: { name: 'General Task', desc: 'Flexible format for any task', context: '' },
@@ -265,191 +224,149 @@
                     tip: 'Not all steps are required. Minimum: Task. Recommended: Role + Task + Context + Format.',
                     legend: 'Color Legend',
                 }
+            },
+            cs: {
+                title: 'AI Prompt Formátovač',
+                subtitle: 'Techniky promptingu podložené výzkumem ze studií 2025',
+                backToHub: 'Zpět na Hub',
+                searchLanguage: 'Hledat jazyk...',
+                templates: {
+                    general: { name: 'Obecný úkol', desc: 'Flexibilní formát pro jakýkoli úkol', context: '' },
+                    coding: { name: 'Pomoc s kódem', desc: 'Ladění, psaní nebo vysvětlení kódu', context: 'Zaměř se na psaní čistého, efektivního a dobře zdokumentovaného kódu. Přidej komentáře tam, kde to pomůže.' },
+                    creative: { name: 'Kreativní psaní', desc: 'Příběhy, obsah, copywriting', context: 'Zaměř se na kreativitu, poutavý příběh a živý jazyk. Buď originální a expresivní.' },
+                    analysis: { name: 'Analýza', desc: 'Výzkum, porovnání, hodnocení', context: 'Poskytni důkladnou analýzu s argumentací založenou na důkazech. Zvaž více perspektiv a uveď zdroje, kde je to vhodné.' },
+                    explanation: { name: 'Vysvětlení', desc: 'Výuka nebo objasnění konceptů', context: 'Vysvětli jasně pro cílové publikum. Použij analogie a příklady, aby byly složité koncepty srozumitelné.' },
+                },
+                fields: {
+                    role: { label: 'Role / Persona', placeholder: 'např. expert na technické psaní' },
+                    task: { label: 'Úkol', placeholder: 'např. Napiš dokumentaci pro REST API endpoint' },
+                    context: { label: 'Kontext / Pozadí', placeholder: 'např. Toto je pro fintech startup' },
+                    constraints: { label: 'Omezení / Požadavky', placeholder: 'např. Buď stručný, použij příklady' },
+                    steps: { label: 'Kroky k následování', placeholder: 'Zadej každý krok na nový řádek...' },
+                    outputFormat: { label: 'Formát výstupu', placeholder: 'např. Markdown s nadpisy a bloky kódu' },
+                    expectations: { label: 'Očekávání / Cíl', placeholder: 'např. Jasná, použitelná dokumentace' },
+                    examples: { label: 'Příklady (volitelné)', placeholder: 'např. Vstup: ... → Výstup: ...' },
+                    fewshot: { label: 'Few-Shot příklady (Vstup → Výstup)', placeholder: 'Vstup: ... → Výstup: ...' },
+                },
+                methods: {
+                    title: 'Výzkumem podložené metody',
+                    active: 'aktivní metod(y)',
+                    cot: { name: 'Chain-of-Thought', citation: 'Google Brain 2022', tip: 'Nejlepší pro matematiku, logiku, vícekrokové problémy. +39pp na GSM8K.' },
+                    zeroshot: { name: 'Zero-Shot CoT', citation: 'U.Tokyo + Google 2022', tip: '"Pojďme přemýšlet krok za krokem" - bez příkladů. +61pp na MultiArith.' },
+                    fewshot: { name: 'Few-Shot Learning', citation: 'OpenAI 2020', tip: 'Učení z 1-10 příkladů. Může zlepšit přesnost 0%→90%.' },
+                    tot: { name: 'Tree of Thoughts', citation: 'Princeton + DeepMind 2023', tip: 'Prozkoumej více cest s návratem. 4%→74% na Game of 24.' },
+                    selfconsistency: { name: 'Self-Consistency', citation: 'Google Research 2022', tip: 'Více cest uvažování, většinové hlasování. +17.9% na GSM8K.' },
+                    react: { name: 'ReAct', citation: 'Princeton + Google 2022', tip: 'Cyklus Myšlenka-Akce-Pozorování pro použití nástrojů. +34% na ALFWorld.' },
+                    risen: { name: 'RISEN Framework', citation: 'Kyle Balmer', tip: 'Struktura Role-Instrukce-Kroky-Cíl-Zúžení.' },
+                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft + CAS 2023', tip: 'Emoční stimuly zvyšují výkon. +8% instrukce, +115% BIG-Bench.' },
+                    plansolve: { name: 'Plan-and-Solve', citation: 'SUTD 2023', tip: 'Zero-shot plánování před řešením. +5% oproti Zero-Shot-CoT.' },
+                    selfask: { name: 'Self-Ask', citation: 'UW + Meta AI 2022', tip: 'Ptej se na doplňující otázky až do vyřešení. Skvělé pro multi-hop QA.' },
+                    pal: { name: 'PAL (Program-Aided)', citation: 'CMU 2022', tip: 'Generuj kód pro výpočty. +40% na GSM-Hard.' },
+                    selfrefine: { name: 'Self-Refine', citation: 'CMU + AI2 + Google 2023', tip: 'Smyčka Generuj→Zpětná vazba→Vylepši. ~20% průměrné zlepšení.' },
+                    stepback: { name: 'Step-Back Prompting', citation: 'Google DeepMind 2023', tip: 'Nejprve abstrahuj na vysokoúrovňové principy. +27% na TimeQA.' },
+                    analogical: { name: 'Analogical Prompting', citation: 'DeepMind + Stanford 2023', tip: 'Generuj vlastní relevantní příklady. +5% oproti 0-shot CoT.' },
+                    rar: { name: 'Rephrase & Respond', citation: 'UCLA 2023', tip: 'Přeformuluj otázku před odpovědí. Snižuje nejednoznačnost.' },
+                },
+                database: {
+                    title: 'Uložené prompty',
+                    save: 'Uložit',
+                    load: 'Načíst',
+                    delete: 'Smazat',
+                    duplicate: 'Duplikovat',
+                    edit: 'Upravit',
+                    export: 'Export JSON',
+                    import: 'Import JSON',
+                    noPrompts: 'Zatím žádné uložené prompty',
+                    promptName: 'Název promptu',
+                    saveAs: 'Uložit prompt jako...',
+                    confirmDelete: 'Smazat tento prompt?',
+                    imported: 'Prompty úspěšně importovány!',
+                    exportedCount: 'promptů exportováno',
+                    savedCount: 'promptů uloženo',
+                },
+                share: {
+                    title: 'Sdílet prompt',
+                    subtitle: 'Sdílej nastavení promptu pomocí kódu',
+                    codeLabel: 'Sdílecí kód',
+                    wordsLabel: 'Slovní fráze (alternativa)',
+                    urlLabel: 'Přímý odkaz',
+                    copyCode: 'Kopírovat kód',
+                    copyWords: 'Kopírovat slova',
+                    copyUrl: 'Kopírovat odkaz',
+                    importTitle: 'Import z kódu',
+                    importPlaceholder: 'Vlož sdílecí kód zde...',
+                    importBtn: 'Načíst prompt',
+                    importSuccess: 'Prompt úspěšně načten!',
+                    importError: 'Neplatný sdílecí kód',
+                    generating: 'Generuji...',
+                    tip: 'Tip: Kód obsahuje všechna tvá nastavení. Sdílej ho přes zprávu nebo email!',
+                },
+                preview: 'Formátovaný prompt',
+                copy: 'Kopírovat',
+                copied: 'Zkopírováno!',
+                placeholder: 'Vyplň pole pro zobrazení formátovaného promptu',
+                chars: 'znaků',
+                optimizedFor: 'Optimalizováno pro',
+                required: '*',
+                newPrompt: 'Nový',
+                footer: 'Metody založeny na: The Prompt Report (UMD, OpenAI, Stanford, 2025) • Wharton GenAI Labs • Google DeepMind • Princeton NLP',
+                promptParts: {
+                    youAre: 'Jsi', actAs: 'Chovej se jako', role: 'Role',
+                    emotion: 'Tento úkol je pro mě velmi důležitý. Tvá důkladná a pečlivá odpověď mi velmi pomůže v práci.',
+                    context: 'Pozadí/Kontext', task: 'Úkol',
+                    cotInstructions: 'Promysli si to krok za krokem:\n1. Nejprve pečlivě analyzuj problém\n2. Rozlož ho na logické kroky\n3. Ukaž své uvažování pro každý krok\n4. Pak poskytni svou finální odpověď',
+                    cotSimple: "Pojďme si to promyslet krok za krokem. Ukaž své uvažování v každé fázi před dosažením závěru.",
+                    zeroshotTrigger: "Pojďme přemýšlet krok za krokem.",
+                    zeroshotSimple: "Pojďme k tomu přistoupit krok za krokem, pečlivě promyslet každou část před dosažením závěru.",
+                    totExperts: "Představ si 3 různé experty přistupující k tomuto problému:\n- Expert 1: Používá metodický, systematický přístup\n- Expert 2: Hledá kreativní, nekonvenční řešení\n- Expert 3: Zaměřuje se na praktická, efektivní řešení\n\nKaždý expert sdílí jeden krok svého myšlení, pak hodnotí. Pokud se nějaký přístup zdá špatný, opusť ho a prozkoumej alternativy. Pokračuj až do nalezení nejlepšího řešení.",
+                    totSimple: "Zvaž 3 různé přístupy k tomuto problému. Pro každý udělej jeden krok, zhodnoť jestli je slibný, a pokračuj nejlepšími cestami zatímco opouštíš slepé uličky.",
+                    scVerify: 'Vygeneruj 3 nezávislá řešení pomocí různých přístupů uvažování. Pak je porovnej a vyber odpověď, která se objevuje nejčastěji napříč přístupy, a vysvětli proč.',
+                    scSimple: 'Vyřeš tento problém 3 různými způsoby, pak porovnej své odpovědi a vysvětli, která je nejpravděpodobněji správná a proč.',
+                    reactCycle: 'Následuj tento cyklus Myšlenka-Akce-Pozorování:\n1. Myšlenka: Rozmysli si, co musíš udělat dál\n2. Akce: Popiš, jakou akci provést\n3. Pozorování: Zaznamenej, co jsi se z akce naučil\nOpakuj až do kompletního řešení.',
+                    reactSimple: 'Pro každý krok uveď svou Myšlenku (uvažování), Akci (co udělat) a Pozorování (co ses naučil). Opakuj tento cyklus až do vyřešení.',
+                    plansolveInstructions: "Nejprve pochopme problém, extrahujme relevantní proměnné a jejich odpovídající číselné hodnoty, a sestavme plán. Pak proveďme plán, vypočítejme mezivýsledky (dávej pozor na správné numerické výpočty a zdravý rozum), řešme problém krok za krokem, a ukažme odpověď.",
+                    plansolveSimple: "Nejprve pochop a naplánuj. Pak proveď krok za krokem, ukazuj výpočty a uvažování v každé fázi.",
+                    selfaskInstructions: "Pro zodpovězení této otázky se ptej na doplňující otázky a odpovídej na ně:\n1. Jsou potřeba doplňující otázky? Pokud ano:\n2. Doplňující otázka: [tvá otázka]\n3. Mezivýsledná odpověď: [odpověď]\n4. Opakuj, dokud nemůžeš poskytnout finální odpověď.",
+                    selfaskSimple: "Rozlož to kladením doplňujících otázek sobě. Odpověz na každou před přechodem na další, pak poskytni finální odpověď.",
+                    palInstructions: "Vyřeš to napsáním Python kódu:\n1. Definuj proměnné problému\n2. Napiš výpočty krok za krokem jako kód\n3. Použij komentáře k vysvětlení svého uvažování\n4. Vypiš finální odpověď",
+                    palSimple: "Napiš Python kód k vyřešení tohoto problému. Použij proměnné, výpočty a komentáře k ukázání svého uvažování.",
+                    selfrefineInstructions: "Následuj tento iterativní proces zlepšování:\n1. GENERUJ: Vytvoř svou počáteční odpověď\n2. ZPĚTNÁ VAZBA: Zkritizuj svou odpověď - co by se dalo zlepšit?\n3. VYLEPŠI: Vytvoř vylepšenou verzi na základě zpětné vazby\nOpakuj cyklus zpětná vazba-vylepšení až do spokojenosti.",
+                    selfrefineSimple: "Vygeneruj odpověď, pak ji zkritizuj a vylepši. Opakuj až budeš spokojený s kvalitou.",
+                    stepbackInstructions: "Před řešením ustup a zvaž:\n1. Jaké jsou základní principy nebo koncepty relevantní pro tento problém?\n2. Jaký vysokoúrovňový přístup nebo framework zde platí?\n3. Nyní aplikuj tyto principy k vyřešení konkrétního problému.",
+                    stepbackSimple: "Nejprve identifikuj klíčové principy a koncepty, pak je aplikuj k vyřešení tohoto konkrétního problému.",
+                    analogicalInstructions: "Před řešením si vzpomeň na podobné problémy:\n1. Promysli 2-3 relevantní problémy, které umíš vyřešit\n2. Stručně popiš každý a jeho přístup k řešení\n3. Aplikuj nejrelevantnější přístup na současný problém",
+                    analogicalSimple: "Vzpomeň si na podobné problémy, které jsi řešil dříve, pak aplikuj stejný přístup zde.",
+                    rarInstructions: "Přeformuluj a rozšiř otázku pro zajištění jasnosti, pak odpověz na přeformulovanou verzi.",
+                    rarSimple: "Nejprve přeformuluj tuto otázku jasněji, pak odpověz na přeformulovanou verzi.",
+                    stepsFollow: 'Následuj tyto kroky', constraints: 'Požadavky/Omezení',
+                    examplesIntro: 'Zde jsou příklady očekávaného formátu vstup-výstup:', examplesFollow: 'Následuj tyto vzory pro svou odpověď.',
+                    fewshotIntro: 'Uč se z těchto příkladů:', fewshotFollow: 'Aplikuj stejný vzor na současný úkol.',
+                    outputFormat: 'Očekávaný formát výstupu', expectations: 'Očekávaný výsledek',
+                },
+                checklist: {
+                    title: 'X-krokový kontrolní seznam promptu',
+                    subtitle: 'Základní prvky pro tvorbu efektivních AI promptů',
+                    showColors: 'Zobrazit barvy ve výstupu',
+                    steps: [
+                        { key: 'role', name: 'Role / Persona', desc: 'Definuj KÝM má být AI', example: '"Jsi expert na datovou vědu..."', color: 'purple', icon: 'User' },
+                        { key: 'context', name: 'Kontext', desc: 'Poskytni informace o pozadí', example: '"Vytváříme fintech aplikaci pro..."', color: 'blue', icon: 'Info' },
+                        { key: 'task', name: 'Úkol', desc: 'Jasně uveď CO chceš udělat', example: '"Napiš funkci, která validuje..."', color: 'green', icon: 'Target' },
+                        { key: 'constraints', name: 'Omezení', desc: 'Nastav limity a požadavky', example: '"Drž to pod 100 řádků, použij TypeScript..."', color: 'orange', icon: 'Lock' },
+                        { key: 'format', name: 'Formát výstupu', desc: 'Specifikuj JAK chceš odpověď', example: '"Vrať jako JSON s poli: name, value..."', color: 'pink', icon: 'FileText' },
+                        { key: 'examples', name: 'Příklady', desc: 'Ukaž vzory vstup→výstup', example: '"Vstup: 5 → Výstup: 120 (faktoriál)"', color: 'yellow', icon: 'Lightbulb' },
+                        { key: 'methods', name: 'Metody (volitelné)', desc: 'Přidej techniky uvažování (CoT, atd.)', example: '"Přemýšlej krok za krokem před odpovědí..."', color: 'red', icon: 'Brain' },
+                    ],
+                    tip: 'Ne všechny kroky jsou povinné. Minimum: Úkol. Doporučeno: Role + Úkol + Kontext + Formát.',
+                    legend: 'Legenda barev',
+                }
             }
         };
 
-        // ==================== TRANSLATION API & CACHE ====================
-        // Dynamic translations storage (cached translations for non-English languages)
-        let dynamicTranslations = { en: BASE_TRANSLATIONS.en };
-
-        // Collect all strings from object into flat array with paths
-        const collectStrings = (obj, path = '') => {
-            const strings = [];
-            if (typeof obj === 'string') {
-                strings.push({ path, value: obj });
-            } else if (Array.isArray(obj)) {
-                obj.forEach((item, idx) => {
-                    strings.push(...collectStrings(item, `${path}[${idx}]`));
-                });
-            } else if (typeof obj === 'object' && obj !== null) {
-                for (const key of Object.keys(obj)) {
-                    strings.push(...collectStrings(obj[key], path ? `${path}.${key}` : key));
-                }
-            }
-            return strings;
-        };
-
-        // Set value at path in object
-        const setAtPath = (obj, path, value) => {
-            const parts = path.replace(/\[(\d+)\]/g, '.$1').split('.');
-            let current = obj;
-            for (let i = 0; i < parts.length - 1; i++) {
-                const part = parts[i];
-                if (!(part in current)) {
-                    current[part] = isNaN(parts[i + 1]) ? {} : [];
-                }
-                current = current[part];
-            }
-            current[parts[parts.length - 1]] = value;
-        };
-
-        // Delay helper
-        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-        // Translate single text with retry logic for rate limiting
-        const translateSingleBatch = async (text, fromLang, toLang, retries = 3) => {
-            for (let attempt = 0; attempt < retries; attempt++) {
-                try {
-                    const response = await fetch(
-                        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${fromLang}|${toLang}`
-                    );
-
-                    if (response.status === 429) {
-                        // Rate limited - wait and retry
-                        const waitTime = (attempt + 1) * 1000; // 1s, 2s, 3s
-                        console.warn(`Rate limited, waiting ${waitTime}ms...`);
-                        await delay(waitTime);
-                        continue;
-                    }
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        if (data.responseStatus === 200 && data.responseData?.translatedText) {
-                            return data.responseData.translatedText;
-                        }
-                    }
-                    return text; // Fallback to original
-                } catch (e) {
-                    console.warn('Translation attempt failed:', e);
-                    if (attempt < retries - 1) {
-                        await delay((attempt + 1) * 500);
-                    }
-                }
-            }
-            return text; // Fallback after all retries
-        };
-
-        // Batch translate using MyMemory API - sequential with delays to avoid rate limiting
-        const translateBatch = async (texts, fromLang, toLang) => {
-            if (texts.length === 0) return [];
-
-            const SEPARATOR = ' ||| ';
-            const MAX_CHARS = 400; // Safe limit for URL encoding
-            const results = [];
-
-            // Group texts into batches
-            const batches = [];
-            let currentBatch = [];
-            let currentLength = 0;
-
-            for (const text of texts) {
-                const newLength = currentLength + text.length + SEPARATOR.length;
-
-                if (newLength > MAX_CHARS && currentBatch.length > 0) {
-                    batches.push([...currentBatch]);
-                    currentBatch = [text];
-                    currentLength = text.length;
-                } else {
-                    currentBatch.push(text);
-                    currentLength = newLength;
-                }
-            }
-            if (currentBatch.length > 0) {
-                batches.push(currentBatch);
-            }
-
-            // Process batches SEQUENTIALLY with delay to avoid rate limiting
-            for (let i = 0; i < batches.length; i++) {
-                const batch = batches[i];
-                const combined = batch.join(SEPARATOR);
-
-                const translated = await translateSingleBatch(combined, fromLang, toLang);
-                const parts = translated.split(SEPARATOR);
-
-                for (let j = 0; j < batch.length; j++) {
-                    results.push(parts[j]?.trim() || batch[j]);
-                }
-
-                // Small delay between batches to avoid rate limiting (except last batch)
-                if (i < batches.length - 1) {
-                    await delay(300); // 300ms delay between batches
-                }
-            }
-
-            return results;
-        };
-
-        // Translate all base translations to target language (FAST batch method)
-        const translateAllTexts = async (targetLang) => {
-            // English uses base translations directly
-            if (targetLang === 'en') {
-                dynamicTranslations['en'] = BASE_TRANSLATIONS.en;
-                return BASE_TRANSLATIONS.en;
-            }
-
-            // Check if we already have cached translations for this language
-            const cachedTranslations = localStorage.getItem(`ai_prompt_translations_v2_${targetLang}`);
-            if (cachedTranslations) {
-                try {
-                    const parsed = JSON.parse(cachedTranslations);
-                    dynamicTranslations[targetLang] = parsed;
-                    return parsed;
-                } catch (e) {
-                    localStorage.removeItem(`ai_prompt_translations_v2_${targetLang}`);
-                }
-            }
-
-            // Collect all strings to translate
-            const strings = collectStrings(BASE_TRANSLATIONS.en);
-            const textsToTranslate = strings.map(s => s.value);
-
-            // Batch translate all at once
-            const translatedTexts = await translateBatch(textsToTranslate, 'en', targetLang);
-
-            // Rebuild object with translated strings
-            const result = JSON.parse(JSON.stringify(BASE_TRANSLATIONS.en)); // Deep clone
-            strings.forEach((s, idx) => {
-                setAtPath(result, s.path, translatedTexts[idx]);
-            });
-
-            dynamicTranslations[targetLang] = result;
-
-            // Cache the translations in localStorage
-            try {
-                localStorage.setItem(`ai_prompt_translations_v2_${targetLang}`, JSON.stringify(result));
-            } catch (e) {
-                console.warn('Failed to cache translations:', e);
-            }
-
-            return result;
-        };
-
-        // Get current translations (returns English as fallback)
+        // ==================== TRANSLATION HELPER ====================
+        // Simple translation getter - uses manual translations only (no API)
         const getTranslations = (lang) => {
-            return dynamicTranslations[lang] || BASE_TRANSLATIONS.en;
+            return BASE_TRANSLATIONS[lang] || BASE_TRANSLATIONS.en;
         };
-
-        // Legacy alias for backward compatibility
-        const translations = new Proxy({}, {
-            get: (target, prop) => {
-                return dynamicTranslations[prop] || BASE_TRANSLATIONS.en;
-            }
-        });
-
-        // NOTE: Legacy translations (cs, de, es, fr) removed - now using automatic translation via MyMemory API
-
-        // All non-English translations are now handled via MyMemory Translation API
-        // See translateAllTexts() function above
 
         // ==================== ICON COMPONENT ====================
         const Icon = ({ name, size = 20, className = "" }) => {
@@ -578,51 +495,23 @@
             const [shareData, setShareData] = useState(null);
             const [importCode, setImportCode] = useState('');
             const [showColors, setShowColors] = useState(true);
-            // Translation state
-            const [isTranslating, setIsTranslating] = useState(false);
-            const [currentTranslations, setCurrentTranslations] = useState(BASE_TRANSLATIONS.en);
-            const [langSearchQuery, setLangSearchQuery] = useState('');
 
             const [fields, setFields] = useState({
                 role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '',
             });
 
-            // Get translations for current language
-            const t = currentTranslations;
+            // Get translations for current language (direct lookup, no API)
+            const t = getTranslations(lang);
             const selectedLang = AVAILABLE_LANGUAGES.find(l => l.code === lang);
 
-            // Filter languages based on search query
-            const filteredLanguages = useMemo(() => {
-                if (!langSearchQuery.trim()) return AVAILABLE_LANGUAGES;
-                const query = langSearchQuery.toLowerCase();
-                return AVAILABLE_LANGUAGES.filter(l =>
-                    l.name.toLowerCase().includes(query) ||
-                    l.native.toLowerCase().includes(query) ||
-                    l.code.toLowerCase().includes(query)
-                );
-            }, [langSearchQuery]);
-
-            // Language change handler with automatic translation
-            const setLang = useCallback(async (newLang) => {
-                if (isTranslating) return;
-
-                setIsTranslating(true);
+            // Language change handler (simple, synchronous)
+            const setLang = useCallback((newLang) => {
                 setShowLangDropdown(false);
+                setLangState(newLang);
+                localStorage.setItem('ai-prompt-lang', newLang);
+            }, []);
 
-                try {
-                    const translated = await translateAllTexts(newLang);
-                    setCurrentTranslations(translated);
-                    setLangState(newLang);
-                    localStorage.setItem('ai-prompt-lang', newLang);
-                } catch (error) {
-                    console.error('Translation failed:', error);
-                    showNotification(BASE_TRANSLATIONS.en.translationError || 'Translation error');
-                } finally {
-                    setIsTranslating(false);
-                }
-            }, [isTranslating]);
-
-            // Initialize translations on mount
+            // Initialize language on mount
             useEffect(() => {
                 const initLang = localStorage.getItem('ai-prompt-lang') || 'en';
                 setLang(initLang);
@@ -1099,19 +988,11 @@
                                     <span className="text-sm">{savedPrompts.length}</span>
                                 </button>
 
-                                {/* Language Selector with Translation Indicator */}
-                                <div className="relative flex items-center gap-2">
-                                    {/* Translation Indicator */}
-                                    {isTranslating && (
-                                        <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/20 border border-amber-500/50 rounded-lg">
-                                            <span className="animate-pulse">⏳</span>
-                                            <span className="text-xs text-amber-300">{BASE_TRANSLATIONS.en.translating}</span>
-                                        </div>
-                                    )}
+                                {/* Language Selector */}
+                                <div className="relative">
                                     <button
-                                        onClick={() => !isTranslating && setShowLangDropdown(!showLangDropdown)}
-                                        disabled={isTranslating}
-                                        className={`flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 ${isTranslating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                        onClick={() => setShowLangDropdown(!showLangDropdown)}
+                                        className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700"
                                     >
                                         <Icon name="Globe" size={16} className="text-slate-400" />
                                         <span className="text-lg">{selectedLang?.flag}</span>
@@ -1119,35 +1000,20 @@
                                         <Icon name="ChevronDown" size={14} className={`transition-transform ${showLangDropdown ? 'rotate-180' : ''}`} />
                                     </button>
                                     {showLangDropdown && (
-                                        <div className="absolute top-full right-0 mt-1 w-56 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-30 max-h-80 overflow-hidden flex flex-col">
-                                            {/* Search Input */}
-                                            <div className="p-2 border-b border-slate-700">
-                                                <input
-                                                    type="text"
-                                                    value={langSearchQuery}
-                                                    onChange={(e) => setLangSearchQuery(e.target.value)}
-                                                    placeholder={BASE_TRANSLATIONS.en.searchLanguage}
-                                                    className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-500"
-                                                    autoFocus
-                                                />
-                                            </div>
-                                            {/* Language List */}
-                                            <div className="overflow-y-auto flex-1">
-                                                {filteredLanguages.map(l => (
-                                                    <button
-                                                        key={l.code}
-                                                        onClick={() => setLang(l.code)}
-                                                        className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-700 text-left ${lang === l.code ? 'bg-slate-700 border-l-2 border-amber-500' : ''}`}
-                                                    >
-                                                        <span className="text-lg">{l.flag}</span>
-                                                        <div className="flex-1 min-w-0">
-                                                            <div className="text-sm text-white truncate">{l.native}</div>
-                                                            <div className="text-xs text-slate-400 truncate">{l.name}</div>
-                                                        </div>
-                                                        <span className="text-xs text-slate-500 uppercase">{l.code}</span>
-                                                    </button>
-                                                ))}
-                                            </div>
+                                        <div className="absolute top-full right-0 mt-1 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-30 overflow-hidden">
+                                            {AVAILABLE_LANGUAGES.map(l => (
+                                                <button
+                                                    key={l.code}
+                                                    onClick={() => setLang(l.code)}
+                                                    className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-700 text-left ${lang === l.code ? 'bg-slate-700 border-l-2 border-amber-500' : ''}`}
+                                                >
+                                                    <span className="text-lg">{l.flag}</span>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="text-sm text-white truncate">{l.native}</div>
+                                                        <div className="text-xs text-slate-400 truncate">{l.name}</div>
+                                                    </div>
+                                                </button>
+                                            ))}
                                         </div>
                                     )}
                                 </div>
