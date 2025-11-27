@@ -1,4 +1,4 @@
-// Blitzfit - UI Components
+// MindHub - UI Components
 // All components follow the spec with proper keyboard interactions and ARIA roles
 
 const { useState, useEffect, useRef } = React;

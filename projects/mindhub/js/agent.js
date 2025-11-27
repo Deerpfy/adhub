@@ -1,4 +1,4 @@
-// Blitzfit - Agent Integration & Suggestions
+// MindHub - Agent Integration & Suggestions
 
 const AgentService = {
     // Simulate agent triage suggestions

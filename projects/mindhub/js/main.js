@@ -1,4 +1,4 @@
-// Blitzfit - Entry Point
+// MindHub - Entry Point
 // Initialize React app
 
 const root = ReactDOM.createRoot(document.getElementById('root'));

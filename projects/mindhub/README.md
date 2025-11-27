@@ -1,4 +1,4 @@
-# Blitzfit - Personal Coordination Platform
+# MindHub - Personal Coordination Platform
 
 ## 🚀 Quick Start
 
@@ -68,7 +68,7 @@ The application runs **100% locally** without any server:
 ## 📁 Project Structure
 
 ```
-blitzfit/
+mindhub/
 ├── index.html          # Main HTML file (double-click this!)
 ├── css/
 │   └── styles.css     # Visual system and design tokens
@@ -94,16 +94,16 @@ The application follows the spec's visual system:
 ## 💾 Data Storage
 
 All data is stored in browser localStorage:
-- `blitzfit_tasks` - Tasks
-- `blitzfit_projects` - Projects
-- `blitzfit_tags` - Tags
-- `blitzfit_subtasks` - Subtasks
-- `blitzfit_task_tags` - Task-Tag relationships
-- `blitzfit_attachments` - Attachments
-- `blitzfit_agent_actions` - Agent actions
-- `blitzfit_user` - Current user
-- `blitzfit_theme` - Theme preference
-- `blitzfit_settings` - User settings
+- `mindhub_tasks` - Tasks
+- `mindhub_projects` - Projects
+- `mindhub_tags` - Tags
+- `mindhub_subtasks` - Subtasks
+- `mindhub_task_tags` - Task-Tag relationships
+- `mindhub_attachments` - Attachments
+- `mindhub_agent_actions` - Agent actions
+- `mindhub_user` - Current user
+- `mindhub_theme` - Theme preference
+- `mindhub_settings` - User settings
 
 ## ⌨️ Keyboard Shortcuts
 
@@ -152,4 +152,4 @@ MIT
 
 ---
 
-**Created according to the Blitzfit Technical Specification**
+**Created according to the MindHub Technical Specification**

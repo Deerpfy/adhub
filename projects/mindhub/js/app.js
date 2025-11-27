@@ -1,4 +1,4 @@
-// Blitzfit - Main Application & Layout
+// MindHub - Main Application & Layout
 // Section 4: Persistent chrome and routing
 
 const { useState, useEffect } = React;
@@ -78,7 +78,7 @@ function Layout({ currentPage, setCurrentPage }) {
                         backgroundClip: 'text',
                         margin: 0,
                     }}>
-                        ⚡ Blitzfit
+                        ⚡ MindHub
                     </h1>
                 </div>
                 <nav style={{

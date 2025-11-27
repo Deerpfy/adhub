@@ -1,4 +1,4 @@
-# Blitzfit - Dependency Check & Verification
+# MindHub - Dependency Check & Verification
 
 ## ✅ File Loading Order (index.html)
 
