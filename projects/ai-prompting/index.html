@@ -269,105 +269,154 @@
         };
 
         // ==================== TRANSLATION API & CACHE ====================
-        // Translation cache stored in localStorage
-        let translationCache = JSON.parse(localStorage.getItem('ai_prompt_translation_cache') || '{}');
-
         // Dynamic translations storage (cached translations for non-English languages)
         let dynamicTranslations = { en: BASE_TRANSLATIONS.en };
 
-        // Translate single text using MyMemory API
-        const translateText = async (text, fromLang, toLang) => {
-            if (!text || text.trim() === '') return text;
-            if (fromLang === toLang) return text;
-
-            // Check cache first
-            const cacheKey = `${fromLang}_${toLang}_${text}`;
-            if (translationCache[cacheKey]) {
-                return translationCache[cacheKey];
-            }
-
-            try {
-                const response = await fetch(
-                    `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${fromLang}|${toLang}`
-                );
-
-                if (!response.ok) throw new Error('Translation API error');
-
-                const data = await response.json();
-
-                if (data.responseStatus === 200 && data.responseData?.translatedText) {
-                    const translated = data.responseData.translatedText;
-                    // Cache the translation
-                    translationCache[cacheKey] = translated;
-                    // Save cache to localStorage (limit size to prevent overflow)
-                    const cacheKeys = Object.keys(translationCache);
-                    if (cacheKeys.length > 1000) {
-                        // Remove oldest 200 entries
-                        const keysToRemove = cacheKeys.slice(0, 200);
-                        keysToRemove.forEach(k => delete translationCache[k]);
-                    }
-                    localStorage.setItem('ai_prompt_translation_cache', JSON.stringify(translationCache));
-                    return translated;
-                }
-
-                return text;
-            } catch (error) {
-                console.warn('Translation failed:', error);
-                return text;
-            }
-        };
-
-        // Recursively translate all strings in an object
-        const translateObject = async (obj, fromLang, toLang) => {
+        // Collect all strings from object into flat array with paths
+        const collectStrings = (obj, path = '') => {
+            const strings = [];
             if (typeof obj === 'string') {
-                return await translateText(obj, fromLang, toLang);
-            }
-            if (Array.isArray(obj)) {
-                return await Promise.all(obj.map(item => translateObject(item, fromLang, toLang)));
-            }
-            if (typeof obj === 'object' && obj !== null) {
-                const result = {};
+                strings.push({ path, value: obj });
+            } else if (Array.isArray(obj)) {
+                obj.forEach((item, idx) => {
+                    strings.push(...collectStrings(item, `${path}[${idx}]`));
+                });
+            } else if (typeof obj === 'object' && obj !== null) {
                 for (const key of Object.keys(obj)) {
-                    result[key] = await translateObject(obj[key], fromLang, toLang);
+                    strings.push(...collectStrings(obj[key], path ? `${path}.${key}` : key));
                 }
-                return result;
             }
-            return obj;
+            return strings;
         };
 
-        // Translate all base translations to target language
-        const translateAllTexts = async (targetLang, onProgress = null) => {
+        // Set value at path in object
+        const setAtPath = (obj, path, value) => {
+            const parts = path.replace(/\[(\d+)\]/g, '.$1').split('.');
+            let current = obj;
+            for (let i = 0; i < parts.length - 1; i++) {
+                const part = parts[i];
+                if (!(part in current)) {
+                    current[part] = isNaN(parts[i + 1]) ? {} : [];
+                }
+                current = current[part];
+            }
+            current[parts[parts.length - 1]] = value;
+        };
+
+        // Batch translate using MyMemory API (max 500 chars per request)
+        const translateBatch = async (texts, fromLang, toLang) => {
+            if (texts.length === 0) return [];
+
+            const SEPARATOR = ' ||| ';
+            const MAX_CHARS = 450; // Safe limit for URL encoding
+            const results = new Array(texts.length).fill('');
+
+            let currentBatch = [];
+            let currentLength = 0;
+            let batchStartIdx = 0;
+
+            const processBatch = async (batch, startIdx) => {
+                if (batch.length === 0) return;
+
+                const combined = batch.join(SEPARATOR);
+                try {
+                    const response = await fetch(
+                        `https://api.mymemory.translated.net/get?q=${encodeURIComponent(combined)}&langpair=${fromLang}|${toLang}`
+                    );
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        if (data.responseStatus === 200 && data.responseData?.translatedText) {
+                            const translated = data.responseData.translatedText.split(SEPARATOR);
+                            for (let i = 0; i < batch.length; i++) {
+                                results[startIdx + i] = translated[i]?.trim() || batch[i];
+                            }
+                            return;
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Batch translation failed:', e);
+                }
+                // Fallback: keep original
+                for (let i = 0; i < batch.length; i++) {
+                    results[startIdx + i] = batch[i];
+                }
+            };
+
+            // Process in batches
+            const batches = [];
+            for (let i = 0; i < texts.length; i++) {
+                const text = texts[i];
+                const newLength = currentLength + text.length + SEPARATOR.length;
+
+                if (newLength > MAX_CHARS && currentBatch.length > 0) {
+                    batches.push({ batch: [...currentBatch], startIdx: batchStartIdx });
+                    currentBatch = [text];
+                    currentLength = text.length;
+                    batchStartIdx = i;
+                } else {
+                    currentBatch.push(text);
+                    currentLength = newLength;
+                }
+            }
+            if (currentBatch.length > 0) {
+                batches.push({ batch: currentBatch, startIdx: batchStartIdx });
+            }
+
+            // Run batches in parallel (max 5 concurrent)
+            const CONCURRENT = 5;
+            for (let i = 0; i < batches.length; i += CONCURRENT) {
+                await Promise.all(
+                    batches.slice(i, i + CONCURRENT).map(b => processBatch(b.batch, b.startIdx))
+                );
+            }
+
+            return results;
+        };
+
+        // Translate all base translations to target language (FAST batch method)
+        const translateAllTexts = async (targetLang) => {
             // English uses base translations directly
             if (targetLang === 'en') {
-                dynamicTranslations[targetLang] = BASE_TRANSLATIONS.en;
+                dynamicTranslations['en'] = BASE_TRANSLATIONS.en;
                 return BASE_TRANSLATIONS.en;
             }
 
             // Check if we already have cached translations for this language
-            const cachedTranslations = localStorage.getItem(`ai_prompt_translations_${targetLang}`);
+            const cachedTranslations = localStorage.getItem(`ai_prompt_translations_v2_${targetLang}`);
             if (cachedTranslations) {
-                const parsed = JSON.parse(cachedTranslations);
-                dynamicTranslations[targetLang] = parsed;
-                return parsed;
+                try {
+                    const parsed = JSON.parse(cachedTranslations);
+                    dynamicTranslations[targetLang] = parsed;
+                    return parsed;
+                } catch (e) {
+                    localStorage.removeItem(`ai_prompt_translations_v2_${targetLang}`);
+                }
             }
 
-            // Translate from English (as base)
-            const sourceTexts = BASE_TRANSLATIONS.en;
+            // Collect all strings to translate
+            const strings = collectStrings(BASE_TRANSLATIONS.en);
+            const textsToTranslate = strings.map(s => s.value);
 
+            // Batch translate all at once
+            const translatedTexts = await translateBatch(textsToTranslate, 'en', targetLang);
+
+            // Rebuild object with translated strings
+            const result = JSON.parse(JSON.stringify(BASE_TRANSLATIONS.en)); // Deep clone
+            strings.forEach((s, idx) => {
+                setAtPath(result, s.path, translatedTexts[idx]);
+            });
+
+            dynamicTranslations[targetLang] = result;
+
+            // Cache the translations in localStorage
             try {
-                const translatedTexts = await translateObject(sourceTexts, 'en', targetLang);
-
-                dynamicTranslations[targetLang] = translatedTexts;
-
-                // Cache the translations in localStorage
-                localStorage.setItem(`ai_prompt_translations_${targetLang}`, JSON.stringify(translatedTexts));
-
-                return translatedTexts;
-            } catch (error) {
-                console.error('Failed to translate:', error);
-                // Fallback to English
-                return BASE_TRANSLATIONS.en;
+                localStorage.setItem(`ai_prompt_translations_v2_${targetLang}`, JSON.stringify(result));
+            } catch (e) {
+                console.warn('Failed to cache translations:', e);
             }
+
+            return result;
         };
 
         // Get current translations (returns English as fallback)
