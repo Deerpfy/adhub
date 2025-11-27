@@ -78,21 +78,64 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef, useCallback } = React;
 
-        // ==================== LANGUAGES ====================
-        const languages = [
-            { code: 'en', name: 'English', flag: '🇬🇧' },
-            { code: 'cs', name: 'Čeština', flag: '🇨🇿' },
-            { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-            { code: 'es', name: 'Español', flag: '🇪🇸' },
-            { code: 'fr', name: 'Français', flag: '🇫🇷' },
+        // ==================== AVAILABLE LANGUAGES ====================
+        // Extended language list with automatic translation support via MyMemory API
+        const AVAILABLE_LANGUAGES = [
+            { code: 'en', name: 'English', native: 'English', flag: '🇬🇧' },
+            { code: 'cs', name: 'Czech', native: 'Čeština', flag: '🇨🇿' },
+            { code: 'de', name: 'German', native: 'Deutsch', flag: '🇩🇪' },
+            { code: 'fr', name: 'French', native: 'Français', flag: '🇫🇷' },
+            { code: 'es', name: 'Spanish', native: 'Español', flag: '🇪🇸' },
+            { code: 'it', name: 'Italian', native: 'Italiano', flag: '🇮🇹' },
+            { code: 'pt', name: 'Portuguese', native: 'Português', flag: '🇵🇹' },
+            { code: 'pl', name: 'Polish', native: 'Polski', flag: '🇵🇱' },
+            { code: 'sk', name: 'Slovak', native: 'Slovenčina', flag: '🇸🇰' },
+            { code: 'nl', name: 'Dutch', native: 'Nederlands', flag: '🇳🇱' },
+            { code: 'ru', name: 'Russian', native: 'Русский', flag: '🇷🇺' },
+            { code: 'uk', name: 'Ukrainian', native: 'Українська', flag: '🇺🇦' },
+            { code: 'ja', name: 'Japanese', native: '日本語', flag: '🇯🇵' },
+            { code: 'zh', name: 'Chinese', native: '中文', flag: '🇨🇳' },
+            { code: 'ko', name: 'Korean', native: '한국어', flag: '🇰🇷' },
+            { code: 'ar', name: 'Arabic', native: 'العربية', flag: '🇸🇦' },
+            { code: 'hi', name: 'Hindi', native: 'हिन्दी', flag: '🇮🇳' },
+            { code: 'tr', name: 'Turkish', native: 'Türkçe', flag: '🇹🇷' },
+            { code: 'sv', name: 'Swedish', native: 'Svenska', flag: '🇸🇪' },
+            { code: 'da', name: 'Danish', native: 'Dansk', flag: '🇩🇰' },
+            { code: 'fi', name: 'Finnish', native: 'Suomi', flag: '🇫🇮' },
+            { code: 'no', name: 'Norwegian', native: 'Norsk', flag: '🇳🇴' },
+            { code: 'el', name: 'Greek', native: 'Ελληνικά', flag: '🇬🇷' },
+            { code: 'hu', name: 'Hungarian', native: 'Magyar', flag: '🇭🇺' },
+            { code: 'ro', name: 'Romanian', native: 'Română', flag: '🇷🇴' },
+            { code: 'bg', name: 'Bulgarian', native: 'Български', flag: '🇧🇬' },
+            { code: 'hr', name: 'Croatian', native: 'Hrvatski', flag: '🇭🇷' },
+            { code: 'sl', name: 'Slovenian', native: 'Slovenščina', flag: '🇸🇮' },
+            { code: 'sr', name: 'Serbian', native: 'Српски', flag: '🇷🇸' },
+            { code: 'he', name: 'Hebrew', native: 'עברית', flag: '🇮🇱' },
+            { code: 'th', name: 'Thai', native: 'ไทย', flag: '🇹🇭' },
+            { code: 'vi', name: 'Vietnamese', native: 'Tiếng Việt', flag: '🇻🇳' },
+            { code: 'id', name: 'Indonesian', native: 'Bahasa Indonesia', flag: '🇮🇩' },
+            { code: 'ms', name: 'Malay', native: 'Bahasa Melayu', flag: '🇲🇾' },
+            { code: 'lt', name: 'Lithuanian', native: 'Lietuvių', flag: '🇱🇹' },
+            { code: 'lv', name: 'Latvian', native: 'Latviešu', flag: '🇱🇻' },
+            { code: 'et', name: 'Estonian', native: 'Eesti', flag: '🇪🇪' },
+            { code: 'ca', name: 'Catalan', native: 'Català', flag: '🏴󠁥󠁳󠁣󠁴󠁿' },
+            { code: 'af', name: 'Afrikaans', native: 'Afrikaans', flag: '🇿🇦' },
+            { code: 'sw', name: 'Swahili', native: 'Kiswahili', flag: '🇰🇪' }
         ];
 
-        // ==================== TRANSLATIONS ====================
-        const translations = {
+        // Legacy alias for backward compatibility
+        const languages = AVAILABLE_LANGUAGES;
+
+        // ==================== BASE TRANSLATIONS (English only - others auto-translated) ====================
+        // Only English is stored locally. All other languages use MyMemory Translation API.
+        const BASE_TRANSLATIONS = {
             en: {
                 title: 'AI Prompt Formatter',
                 subtitle: 'Research-backed prompting techniques from 2025 studies',
                 backToHub: 'Back to Hub',
+                translating: 'Translating...',
+                translationError: 'Translation error',
+                searchLanguage: 'Search language...',
                 templates: {
                     general: { name: 'General Task', desc: 'Flexible format for any task', context: '' },
                     coding: { name: 'Coding Help', desc: 'Debug, write, or explain code', context: 'Focus on writing clean, efficient, and well-documented code. Include code comments where helpful.' },
@@ -222,469 +265,127 @@
                     tip: 'Not all steps are required. Minimum: Task. Recommended: Role + Task + Context + Format.',
                     legend: 'Color Legend',
                 }
-            },
-            cs: {
-                title: 'AI Formátovač Promptů',
-                subtitle: 'Techniky promptování založené na výzkumu z roku 2025',
-                backToHub: 'Zpět do Hubu',
-                templates: {
-                    general: { name: 'Obecný úkol', desc: 'Flexibilní formát pro jakýkoli úkol', context: '' },
-                    coding: { name: 'Programování', desc: 'Ladění, psaní nebo vysvětlení kódu', context: 'Zaměř se na psaní čistého, efektivního a dobře zdokumentovaného kódu. Přidej komentáře kde je to užitečné.' },
-                    creative: { name: 'Kreativní psaní', desc: 'Příběhy, obsah, copywriting', context: 'Zaměř se na kreativitu, poutavý příběh a živý jazyk. Buď originální a expresivní.' },
-                    analysis: { name: 'Analýza', desc: 'Výzkum, porovnání, hodnocení', context: 'Poskytni důkladnou analýzu s argumentací založenou na důkazech. Zvaž více perspektiv a cituj zdroje kde je to relevantní.' },
-                    explanation: { name: 'Vysvětlení', desc: 'Výuka nebo objasnění konceptů', context: 'Vysvětli jasně pro cílové publikum. Použij analogie a příklady pro zpřístupnění složitých konceptů.' },
-                },
-                fields: {
-                    role: { label: 'Role / Persona', placeholder: 'např. expertní technický autor' },
-                    task: { label: 'Úkol', placeholder: 'např. Napište dokumentaci pro REST API endpoint' },
-                    context: { label: 'Kontext / Pozadí', placeholder: 'např. Toto je pro fintech startup' },
-                    constraints: { label: 'Omezení / Požadavky', placeholder: 'např. Buďte struční, používejte příklady' },
-                    steps: { label: 'Kroky k následování', placeholder: 'Zadejte každý krok na nový řádek...' },
-                    outputFormat: { label: 'Formát výstupu', placeholder: 'např. Markdown s nadpisy a bloky kódu' },
-                    expectations: { label: 'Očekávání / Cíl', placeholder: 'např. Jasná, použitelná dokumentace' },
-                    examples: { label: 'Příklady (volitelné)', placeholder: 'např. Vstup: ... → Výstup: ...' },
-                    fewshot: { label: 'Few-Shot příklady (Vstup → Výstup)', placeholder: 'Vstup: ... → Výstup: ...' },
-                },
-                methods: {
-                    title: 'Metody založené na výzkumu',
-                    active: 'aktivní metod(y)',
-                    cot: { name: 'Chain-of-Thought', citation: 'Google Brain 2022', tip: 'Nejlepší pro matematiku a logiku. +39pp na GSM8K.' },
-                    zeroshot: { name: 'Zero-Shot CoT', citation: 'U.Tokyo + Google 2022', tip: '"Pojďme krok za krokem" - bez příkladů. +61pp na MultiArith.' },
-                    fewshot: { name: 'Few-Shot učení', citation: 'OpenAI 2020', tip: 'Učení z 1-10 příkladů. Zlepšení 0%→90%.' },
-                    tot: { name: 'Tree of Thoughts', citation: 'Princeton + DeepMind 2023', tip: 'Prozkoumá více cest s backtrackingem. 4%→74% na Game of 24.' },
-                    selfconsistency: { name: 'Self-Consistency', citation: 'Google Research 2022', tip: 'Více reasoning cest, většinové hlasování. +17.9% na GSM8K.' },
-                    react: { name: 'ReAct', citation: 'Princeton + Google 2022', tip: 'Cyklus Myšlenka-Akce-Pozorování pro nástroje. +34% na ALFWorld.' },
-                    risen: { name: 'RISEN Framework', citation: 'Kyle Balmer', tip: 'Struktura Role-Instrukce-Kroky-Cíl-Omezení.' },
-                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft + CAS 2023', tip: 'Emoční stimuly zlepšují výkon. +8% instrukce, +115% BIG-Bench.' },
-                    plansolve: { name: 'Plan-and-Solve', citation: 'SUTD 2023', tip: 'Zero-shot plánování před řešením. +5% oproti Zero-Shot-CoT.' },
-                    selfask: { name: 'Self-Ask', citation: 'UW + Meta AI 2022', tip: 'Pokládá si follow-up otázky. Skvělé pro multi-hop QA.' },
-                    pal: { name: 'PAL (Program-Aided)', citation: 'CMU 2022', tip: 'Generuje kód pro výpočty. +40% na GSM-Hard.' },
-                    selfrefine: { name: 'Self-Refine', citation: 'CMU + AI2 + Google 2023', tip: 'Smyčka Generuj→Zpětná vazba→Vylepši. ~20% průměrné zlepšení.' },
-                    stepback: { name: 'Step-Back Prompting', citation: 'Google DeepMind 2023', tip: 'Nejdříve abstrakce na principy. +27% na TimeQA.' },
-                    analogical: { name: 'Analogical Prompting', citation: 'DeepMind + Stanford 2023', tip: 'Generuje vlastní relevantní příklady. +5% oproti 0-shot CoT.' },
-                    rar: { name: 'Rephrase & Respond', citation: 'UCLA 2023', tip: 'Přeformuluje otázku před odpovědí. Snižuje nejednoznačnost.' },
-                },
-                database: {
-                    title: 'Uložené prompty',
-                    save: 'Uložit',
-                    load: 'Načíst',
-                    delete: 'Smazat',
-                    duplicate: 'Duplikovat',
-                    edit: 'Upravit',
-                    export: 'Export JSON',
-                    import: 'Import JSON',
-                    noPrompts: 'Zatím žádné uložené prompty',
-                    promptName: 'Název promptu',
-                    saveAs: 'Uložit prompt jako...',
-                    confirmDelete: 'Smazat tento prompt?',
-                    imported: 'Prompty úspěšně importovány!',
-                    exportedCount: 'promptů exportováno',
-                    savedCount: 'promptů uloženo',
-                },
-                share: {
-                    title: 'Sdílet Prompt',
-                    subtitle: 'Sdílejte nastavení promptu pomocí kódu',
-                    codeLabel: 'Sdílecí kód',
-                    wordsLabel: 'Slovní fráze (alternativa)',
-                    urlLabel: 'Přímý odkaz',
-                    copyCode: 'Kopírovat kód',
-                    copyWords: 'Kopírovat slova',
-                    copyUrl: 'Kopírovat odkaz',
-                    importTitle: 'Načíst z kódu',
-                    importPlaceholder: 'Vložte sdílecí kód...',
-                    importBtn: 'Načíst prompt',
-                    importSuccess: 'Prompt úspěšně načten!',
-                    importError: 'Neplatný sdílecí kód',
-                    generating: 'Generuji...',
-                    tip: 'Tip: Kód obsahuje všechna vaše nastavení. Sdílejte ho přes zprávu nebo email!',
-                },
-                preview: 'Formátovaný prompt',
-                copy: 'Kopírovat',
-                copied: 'Zkopírováno!',
-                placeholder: 'Vyplňte pole pro zobrazení formátovaného promptu',
-                chars: 'znaků',
-                optimizedFor: 'Optimalizováno pro',
-                required: '*',
-                newPrompt: 'Nový',
-                footer: 'Metody založené na: The Prompt Report (UMD, OpenAI, Stanford, 2025) • Wharton GenAI Labs • Google DeepMind • Princeton NLP',
-                promptParts: {
-                    youAre: 'Jsi', actAs: 'Jednej jako', role: 'Role',
-                    emotion: 'Tento úkol je pro mě velmi důležitý. Tvá důkladná a pečlivá odpověď mi velmi pomůže.',
-                    context: 'Pozadí/Kontext', task: 'Úkol',
-                    cotInstructions: 'Přemýšlej nad tím krok za krokem:\n1. Nejprve pečlivě analyzuj problém\n2. Rozděl ho na logické kroky\n3. Ukaž své uvažování pro každý krok\n4. Poté poskytni svou konečnou odpověď',
-                    cotSimple: 'Pojďme to promyslet krok za krokem. Ukaž své uvažování v každé fázi před dosažením závěru.',
-                    zeroshotTrigger: 'Pojďme přemýšlet krok za krokem.',
-                    zeroshotSimple: 'Pojďme to řešit krok za krokem, pečlivě promýšlejíc každou část před závěrem.',
-                    totExperts: 'Představ si 3 různé experty, kteří přistupují k tomuto problému:\n- Expert 1: Používá metodický, systematický přístup\n- Expert 2: Hledá kreativní, nekonvenční řešení\n- Expert 3: Zaměřuje se na praktická, efektivní řešení\n\nKaždý expert sdílí jeden krok svého myšlení a poté vyhodnocuje.',
-                    totSimple: 'Zvaž 3 různé přístupy k tomuto problému. Pro každý udělej jeden krok, vyhodnoť, zda je slibný.',
-                    scVerify: 'Vygeneruj 3 nezávislá řešení pomocí různých přístupů. Poté je porovnej a vyber odpověď, která se objevuje nejkonzistentněji.',
-                    scSimple: 'Vyřeš tento problém 3 různými způsoby, poté porovnej své odpovědi.',
-                    reactCycle: 'Následuj tento cyklus Myšlenka-Akce-Pozorování:\n1. Myšlenka: Uvažuj o tom, co je třeba udělat\n2. Akce: Popiš, jakou akci provést\n3. Pozorování: Zaznamenej, co jsi se naučil',
-                    reactSimple: 'Pro každý krok uveď svou Myšlenku, Akci a Pozorování.',
-                    plansolveInstructions: 'Nejprve pochopme problém, extrahujme relevantní proměnné a jejich hodnoty, a sestavme plán. Poté plán proveďme, vypočítejme mezivýsledky (dbej na správné výpočty a zdravý rozum), řešme problém krok za krokem a ukažme odpověď.',
-                    plansolveSimple: 'Nejprve pochop a naplánuj. Pak prováděj krok za krokem, ukazuj výpočty a uvažování.',
-                    selfaskInstructions: 'Pro zodpovězení této otázky si polož follow-up otázky a odpověz na ně:\n1. Jsou potřeba follow-up otázky? Pokud ano:\n2. Follow-up: [tvá otázka]\n3. Mezivýsledek: [odpověď]\n4. Opakuj, dokud nemůžeš poskytnout finální odpověď.',
-                    selfaskSimple: 'Rozděl to na follow-up otázky. Odpověz na každou před přechodem na další, pak poskytni finální odpověď.',
-                    palInstructions: 'Vyřeš toto napsáním Python kódu:\n1. Definuj proměnné problému\n2. Napiš výpočty krok za krokem jako kód\n3. Použij komentáře k vysvětlení uvažování\n4. Vypiš finální odpověď',
-                    palSimple: 'Napiš Python kód k vyřešení tohoto problému. Použij proměnné, výpočty a komentáře.',
-                    selfrefineInstructions: 'Následuj tento iterativní proces vylepšování:\n1. GENERUJ: Vytvoř počáteční odpověď\n2. ZPĚTNÁ VAZBA: Zkritizuj svou odpověď - co by se dalo zlepšit?\n3. VYLEPŠI: Vytvoř vylepšenou verzi na základě zpětné vazby\nOpakuj cyklus zpětná vazba-vylepšení, dokud nejsi spokojen.',
-                    selfrefineSimple: 'Vygeneruj odpověď, pak ji zkritizuj a vylepši. Opakuj, dokud nejsi spokojen s kvalitou.',
-                    stepbackInstructions: 'Před řešením ustup a zvaž:\n1. Jaké jsou základní principy nebo koncepty relevantní k tomuto problému?\n2. Jaký vysokoúrovňový přístup nebo framework zde platí?\n3. Nyní aplikuj tyto principy k vyřešení konkrétního problému.',
-                    stepbackSimple: 'Nejprve identifikuj klíčové principy a koncepty, pak je aplikuj k vyřešení tohoto konkrétního problému.',
-                    analogicalInstructions: 'Před řešením si vzpomeň na podobné problémy:\n1. Vzpomeň si na 2-3 relevantní problémy, které umíš řešit\n2. Stručně popiš každý a jeho řešení\n3. Aplikuj nejrelevantnější přístup na aktuální problém',
-                    analogicalSimple: 'Vzpomeň si na podobné problémy, které jsi řešil, pak použij stejný přístup zde.',
-                    rarInstructions: 'Přeformuluj a rozšiř otázku pro zajištění jasnosti, pak odpověz na přeformulovanou verzi.',
-                    rarSimple: 'Nejprve přeformuluj tuto otázku jasněji, pak odpověz na přeformulovanou verzi.',
-                    stepsFollow: 'Následuj tyto kroky', constraints: 'Požadavky/Omezení',
-                    examplesIntro: 'Zde jsou příklady očekávaného formátu:', examplesFollow: 'Řiď se těmito vzory.',
-                    fewshotIntro: 'Uč se z těchto příkladů:', fewshotFollow: 'Aplikuj stejný vzor na aktuální úkol.',
-                    outputFormat: 'Očekávaný formát výstupu', expectations: 'Očekávaný výsledek',
-                },
-                checklist: {
-                    title: 'X-Krokový Prompt Checklist',
-                    subtitle: 'Základní prvky pro tvorbu efektivních AI promptů',
-                    showColors: 'Zobrazit barvy ve výstupu',
-                    steps: [
-                        { key: 'role', name: 'Role / Persona', desc: 'Definuj, KDO má AI být', example: '"Jsi expertní datový vědec..."', color: 'purple', icon: 'User' },
-                        { key: 'context', name: 'Kontext', desc: 'Poskytni informace o pozadí', example: '"Budujeme fintech aplikaci pro..."', color: 'blue', icon: 'Info' },
-                        { key: 'task', name: 'Úkol', desc: 'Jasně uveď, CO chceš udělat', example: '"Napiš funkci, která validuje..."', color: 'green', icon: 'Target' },
-                        { key: 'constraints', name: 'Omezení', desc: 'Nastav limity a požadavky', example: '"Max 100 řádků, použij TypeScript..."', color: 'orange', icon: 'Lock' },
-                        { key: 'format', name: 'Formát výstupu', desc: 'Specifikuj JAK chceš odpověď', example: '"Vrať jako JSON s poli: name, value..."', color: 'pink', icon: 'FileText' },
-                        { key: 'examples', name: 'Příklady', desc: 'Ukaž vzory vstup→výstup', example: '"Vstup: 5 → Výstup: 120 (faktoriál)"', color: 'yellow', icon: 'Lightbulb' },
-                        { key: 'methods', name: 'Metody (volitelné)', desc: 'Přidej techniky uvažování (CoT, atd.)', example: '"Přemýšlej krok za krokem..."', color: 'red', icon: 'Brain' },
-                    ],
-                    tip: 'Ne všechny kroky jsou povinné. Minimum: Úkol. Doporučeno: Role + Úkol + Kontext + Formát.',
-                    legend: 'Legenda barev',
-                }
-            },
-            de: {
-                title: 'AI Prompt-Formatierer',
-                subtitle: 'Forschungsbasierte Prompting-Techniken aus 2025',
-                backToHub: 'Zurück zum Hub',
-                templates: {
-                    general: { name: 'Allgemeine Aufgabe', desc: 'Flexibles Format', context: '' },
-                    coding: { name: 'Programmierhilfe', desc: 'Debuggen, schreiben', context: 'Fokussiere dich auf sauberen, effizienten und gut dokumentierten Code. Füge Kommentare hinzu wo hilfreich.' },
-                    creative: { name: 'Kreatives Schreiben', desc: 'Geschichten, Inhalte', context: 'Fokussiere dich auf Kreativität, fesselnde Erzählung und lebendige Sprache. Sei originell und ausdrucksstark.' },
-                    analysis: { name: 'Analyse', desc: 'Recherche, vergleichen', context: 'Biete gründliche Analyse mit evidenzbasierter Argumentation. Berücksichtige mehrere Perspektiven und zitiere Quellen.' },
-                    explanation: { name: 'Erklärung', desc: 'Lehren oder klären', context: 'Erkläre klar für die Zielgruppe. Nutze Analogien und Beispiele um komplexe Konzepte zugänglich zu machen.' },
-                },
-                fields: {
-                    role: { label: 'Rolle / Persona', placeholder: 'z.B. technischer Autor' },
-                    task: { label: 'Aufgabe', placeholder: 'z.B. Dokumentation schreiben' },
-                    context: { label: 'Kontext', placeholder: 'z.B. Für ein Startup' },
-                    constraints: { label: 'Anforderungen', placeholder: 'z.B. Kurz halten' },
-                    steps: { label: 'Schritte', placeholder: 'Jeden Schritt eingeben...' },
-                    outputFormat: { label: 'Ausgabeformat', placeholder: 'z.B. Markdown' },
-                    expectations: { label: 'Erwartungen', placeholder: 'z.B. Klare Dokumentation' },
-                    examples: { label: 'Beispiele', placeholder: 'z.B. Eingabe → Ausgabe' },
-                    fewshot: { label: 'Few-Shot Beispiele', placeholder: 'Eingabe → Ausgabe' },
-                },
-                methods: {
-                    title: 'Forschungsbasierte Methoden', active: 'Methode(n) aktiv',
-                    cot: { name: 'Chain-of-Thought', citation: 'Google Brain 2022', tip: 'Für Mathematik und Logik. +39pp auf GSM8K.' },
-                    zeroshot: { name: 'Zero-Shot CoT', citation: 'U.Tokyo + Google 2022', tip: '"Schritt für Schritt" - keine Beispiele nötig. +61pp auf MultiArith.' },
-                    fewshot: { name: 'Few-Shot', citation: 'OpenAI 2020', tip: 'Lernen aus 1-10 Beispielen. 0%→90% Verbesserung.' },
-                    tot: { name: 'Tree of Thoughts', citation: 'Princeton + DeepMind 2023', tip: 'Mehrere Pfade mit Backtracking. 4%→74% auf Game of 24.' },
-                    selfconsistency: { name: 'Self-Consistency', citation: 'Google Research 2022', tip: 'Mehrere Reasoning-Pfade, Mehrheitsentscheidung. +17.9% auf GSM8K.' },
-                    react: { name: 'ReAct', citation: 'Princeton + Google 2022', tip: 'Gedanke-Aktion-Beobachtung Zyklus. +34% auf ALFWorld.' },
-                    risen: { name: 'RISEN', citation: 'Kyle Balmer', tip: 'Rolle-Anweisungen-Schritte-Ziel-Einschränkungen Struktur.' },
-                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft + CAS 2023', tip: 'Emotionale Stimuli verbessern Leistung. +8% Instruktion, +115% BIG-Bench.' },
-                    plansolve: { name: 'Plan-and-Solve', citation: 'SUTD 2023', tip: 'Zero-shot Planung vor Lösung. +5% über Zero-Shot-CoT.' },
-                    selfask: { name: 'Self-Ask', citation: 'UW + Meta AI 2022', tip: 'Stellt sich Follow-up Fragen. Ideal für Multi-hop QA.' },
-                    pal: { name: 'PAL (Programm-gestützt)', citation: 'CMU 2022', tip: 'Generiert Code für Berechnungen. +40% auf GSM-Hard.' },
-                    selfrefine: { name: 'Self-Refine', citation: 'CMU + AI2 + Google 2023', tip: 'Generieren→Feedback→Verfeinern Schleife. ~20% durchschnittliche Verbesserung.' },
-                    stepback: { name: 'Step-Back Prompting', citation: 'Google DeepMind 2023', tip: 'Erst zu Prinzipien abstrahieren. +27% auf TimeQA.' },
-                    analogical: { name: 'Analogical Prompting', citation: 'DeepMind + Stanford 2023', tip: 'Generiert eigene relevante Beispiele. +5% über 0-shot CoT.' },
-                    rar: { name: 'Rephrase & Respond', citation: 'UCLA 2023', tip: 'Frage vor Antwort umformulieren. Reduziert Mehrdeutigkeit.' },
-                },
-                database: {
-                    title: 'Gespeicherte Prompts', save: 'Speichern', load: 'Laden', delete: 'Löschen',
-                    duplicate: 'Duplizieren', edit: 'Bearbeiten', export: 'Export JSON', import: 'Import JSON',
-                    noPrompts: 'Keine gespeicherten Prompts', promptName: 'Prompt-Name',
-                    saveAs: 'Prompt speichern als...', confirmDelete: 'Diesen Prompt löschen?',
-                    imported: 'Prompts erfolgreich importiert!', exportedCount: 'Prompts exportiert', savedCount: 'Prompts gespeichert',
-                },
-                share: {
-                    title: 'Prompt teilen', subtitle: 'Teilen Sie Ihre Einstellungen per Code',
-                    codeLabel: 'Freigabecode', wordsLabel: 'Wortphrase (alternativ)', urlLabel: 'Direktlink',
-                    copyCode: 'Code kopieren', copyWords: 'Wörter kopieren', copyUrl: 'Link kopieren',
-                    importTitle: 'Aus Code laden', importPlaceholder: 'Freigabecode einfügen...',
-                    importBtn: 'Prompt laden', importSuccess: 'Prompt erfolgreich geladen!',
-                    importError: 'Ungültiger Code', generating: 'Generiere...',
-                    tip: 'Tipp: Der Code enthält alle Einstellungen. Per Nachricht oder E-Mail teilen!',
-                },
-                preview: 'Formatierter Prompt', copy: 'Kopieren', copied: 'Kopiert!',
-                placeholder: 'Felder ausfüllen', chars: 'Zeichen', optimizedFor: 'Optimiert für',
-                required: '*', newPrompt: 'Neu', footer: 'Methoden: The Prompt Report • Wharton • DeepMind • Princeton',
-                promptParts: {
-                    youAre: 'Du bist', actAs: 'Agiere als', role: 'Rolle',
-                    emotion: 'Diese Aufgabe ist sehr wichtig für mich. Deine gründliche und sorgfältige Antwort wird mir sehr helfen.',
-                    context: 'Kontext', task: 'Aufgabe',
-                    cotInstructions: 'Denke Schritt für Schritt:\n1. Analysiere das Problem\n2. Teile es auf\n3. Zeige deine Überlegungen\n4. Gib dann deine endgültige Antwort',
-                    cotSimple: 'Lass uns das Schritt für Schritt durchdenken.',
-                    zeroshotTrigger: 'Lass uns Schritt für Schritt denken.',
-                    zeroshotSimple: 'Lass uns das Schritt für Schritt angehen, jeden Teil sorgfältig durchdenken bevor wir eine Schlussfolgerung ziehen.',
-                    totExperts: 'Stelle dir 3 Experten vor mit verschiedenen Ansätzen:\n- Experte 1: Methodischer, systematischer Ansatz\n- Experte 2: Kreative, unkonventionelle Lösungen\n- Experte 3: Praktische, effiziente Lösungen\n\nJeder Experte teilt einen Schritt seines Denkens und bewertet dann.',
-                    totSimple: 'Betrachte 3 verschiedene Ansätze und verfolge die besten Pfade.',
-                    scVerify: 'Generiere 3 unabhängige Lösungen und vergleiche. Wähle die konsistenteste Antwort.',
-                    scSimple: 'Löse auf 3 Arten und erkläre die beste.',
-                    reactCycle: 'Folge diesem Gedanke-Aktion-Beobachtung Zyklus:\n1. Gedanke: Überlege was als nächstes zu tun ist\n2. Aktion: Beschreibe die durchzuführende Aktion\n3. Beobachtung: Notiere was du gelernt hast',
-                    reactSimple: 'Für jeden Schritt: Gedanke, Aktion, Beobachtung.',
-                    plansolveInstructions: 'Lass uns zuerst das Problem verstehen, relevante Variablen extrahieren und einen Plan erstellen. Dann führen wir den Plan aus, berechnen Zwischenergebnisse und zeigen die Antwort.',
-                    plansolveSimple: 'Zuerst verstehen und planen. Dann Schritt für Schritt ausführen.',
-                    selfaskInstructions: 'Stelle dir Follow-up Fragen und beantworte sie:\n1. Sind Follow-up Fragen nötig? Wenn ja:\n2. Follow-up: [deine Frage]\n3. Zwischenantwort: [Antwort]\n4. Wiederhole bis zur endgültigen Antwort.',
-                    selfaskSimple: 'Zerlege es in Follow-up Fragen. Beantworte jede einzeln, dann gib die endgültige Antwort.',
-                    palInstructions: 'Löse dies durch Python-Code:\n1. Definiere Problemvariablen\n2. Schreibe Berechnungen als Code\n3. Verwende Kommentare zur Erklärung\n4. Gib die endgültige Antwort aus',
-                    palSimple: 'Schreibe Python-Code zur Lösung. Verwende Variablen und Berechnungen.',
-                    selfrefineInstructions: 'Folge diesem iterativen Verbesserungsprozess:\n1. GENERIEREN: Erstelle eine erste Antwort\n2. FEEDBACK: Kritisiere deine Antwort\n3. VERFEINERN: Erstelle eine verbesserte Version\nWiederhole bis zufrieden.',
-                    selfrefineSimple: 'Generiere eine Antwort, kritisiere sie und verbessere sie.',
-                    stepbackInstructions: 'Bevor du löst, tritt zurück und überlege:\n1. Welche grundlegenden Prinzipien sind relevant?\n2. Welcher übergeordnete Ansatz gilt hier?\n3. Wende diese Prinzipien auf das konkrete Problem an.',
-                    stepbackSimple: 'Identifiziere erst die Schlüsselprinzipien, dann wende sie an.',
-                    analogicalInstructions: 'Erinnere dich an ähnliche Probleme:\n1. Denke an 2-3 relevante Probleme die du lösen kannst\n2. Beschreibe kurz jeden und seine Lösung\n3. Wende den relevantesten Ansatz hier an',
-                    analogicalSimple: 'Denke an ähnliche Probleme und wende denselben Ansatz an.',
-                    rarInstructions: 'Formuliere die Frage um und erweitere sie für Klarheit, dann antworte auf die umformulierte Version.',
-                    rarSimple: 'Formuliere diese Frage erst klarer um, dann beantworte sie.',
-                    stepsFollow: 'Folge diesen Schritten', constraints: 'Anforderungen',
-                    examplesIntro: 'Beispiele:', examplesFollow: 'Folge diesen Mustern.',
-                    fewshotIntro: 'Lerne aus Beispielen:', fewshotFollow: 'Wende das Muster an.',
-                    outputFormat: 'Ausgabeformat', expectations: 'Erwartetes Ergebnis',
-                },
-                checklist: {
-                    title: 'X-Schritte Prompt Checkliste',
-                    subtitle: 'Wesentliche Elemente für effektive AI-Prompts',
-                    showColors: 'Farben in Ausgabe zeigen',
-                    steps: [
-                        { key: 'role', name: 'Rolle / Persona', desc: 'Definiere WER die AI sein soll', example: '"Du bist ein Experte Datenwissenschaftler..."', color: 'purple', icon: 'User' },
-                        { key: 'context', name: 'Kontext', desc: 'Gib Hintergrundinformationen', example: '"Wir bauen eine Fintech-App für..."', color: 'blue', icon: 'Info' },
-                        { key: 'task', name: 'Aufgabe', desc: 'Sage klar WAS du willst', example: '"Schreibe eine Funktion die validiert..."', color: 'green', icon: 'Target' },
-                        { key: 'constraints', name: 'Einschränkungen', desc: 'Setze Grenzen und Anforderungen', example: '"Max 100 Zeilen, TypeScript..."', color: 'orange', icon: 'Lock' },
-                        { key: 'format', name: 'Ausgabeformat', desc: 'Spezifiziere WIE du die Antwort willst', example: '"Als JSON mit Feldern: name, value..."', color: 'pink', icon: 'FileText' },
-                        { key: 'examples', name: 'Beispiele', desc: 'Zeige Eingabe→Ausgabe Muster', example: '"Eingabe: 5 → Ausgabe: 120"', color: 'yellow', icon: 'Lightbulb' },
-                        { key: 'methods', name: 'Methoden (optional)', desc: 'Füge Denktechniken hinzu (CoT)', example: '"Denke Schritt für Schritt..."', color: 'red', icon: 'Brain' },
-                    ],
-                    tip: 'Nicht alle Schritte sind erforderlich. Minimum: Aufgabe. Empfohlen: Rolle + Aufgabe + Kontext + Format.',
-                    legend: 'Farblegende',
-                }
-            },
-            es: {
-                title: 'Formateador de Prompts',
-                subtitle: 'Técnicas de prompting basadas en investigación 2025',
-                backToHub: 'Volver al Hub',
-                templates: {
-                    general: { name: 'Tarea General', desc: 'Formato flexible', context: '' },
-                    coding: { name: 'Código', desc: 'Depurar, escribir', context: 'Enfócate en escribir código limpio, eficiente y bien documentado. Incluye comentarios donde sea útil.' },
-                    creative: { name: 'Escritura Creativa', desc: 'Historias, contenido', context: 'Enfócate en creatividad, narrativa atractiva y lenguaje vívido. Sé original y expresivo.' },
-                    analysis: { name: 'Análisis', desc: 'Investigar, comparar', context: 'Proporciona análisis exhaustivo con razonamiento basado en evidencia. Considera múltiples perspectivas y cita fuentes.' },
-                    explanation: { name: 'Explicación', desc: 'Enseñar conceptos', context: 'Explica claramente para la audiencia objetivo. Usa analogías y ejemplos para hacer accesibles conceptos complejos.' },
-                },
-                fields: {
-                    role: { label: 'Rol / Persona', placeholder: 'ej. escritor técnico' },
-                    task: { label: 'Tarea', placeholder: 'ej. Escribir documentación' },
-                    context: { label: 'Contexto', placeholder: 'ej. Para una startup' },
-                    constraints: { label: 'Requisitos', placeholder: 'ej. Ser conciso' },
-                    steps: { label: 'Pasos', placeholder: 'Cada paso en nueva línea...' },
-                    outputFormat: { label: 'Formato de Salida', placeholder: 'ej. Markdown' },
-                    expectations: { label: 'Expectativas', placeholder: 'ej. Documentación clara' },
-                    examples: { label: 'Ejemplos', placeholder: 'ej. Entrada → Salida' },
-                    fewshot: { label: 'Ejemplos Few-Shot', placeholder: 'Entrada → Salida' },
-                },
-                methods: {
-                    title: 'Métodos de Investigación', active: 'método(s) activo(s)',
-                    cot: { name: 'Chain-of-Thought', citation: 'Google Brain 2022', tip: 'Para matemáticas y lógica. +39pp en GSM8K.' },
-                    zeroshot: { name: 'Zero-Shot CoT', citation: 'U.Tokyo + Google 2022', tip: '"Paso a paso" - sin ejemplos. +61pp en MultiArith.' },
-                    fewshot: { name: 'Few-Shot', citation: 'OpenAI 2020', tip: 'Aprende de 1-10 ejemplos. 0%→90% mejora.' },
-                    tot: { name: 'Tree of Thoughts', citation: 'Princeton + DeepMind 2023', tip: 'Explora múltiples caminos. 4%→74% en Game of 24.' },
-                    selfconsistency: { name: 'Self-Consistency', citation: 'Google Research 2022', tip: 'Múltiples caminos de razonamiento, voto mayoritario. +17.9% en GSM8K.' },
-                    react: { name: 'ReAct', citation: 'Princeton + Google 2022', tip: 'Ciclo Pensamiento-Acción-Observación. +34% en ALFWorld.' },
-                    risen: { name: 'RISEN', citation: 'Kyle Balmer', tip: 'Estructura Rol-Instrucciones-Pasos-Meta-Restricciones.' },
-                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft + CAS 2023', tip: 'Estímulos emocionales mejoran rendimiento. +8% instrucción, +115% BIG-Bench.' },
-                    plansolve: { name: 'Plan-and-Solve', citation: 'SUTD 2023', tip: 'Planificación zero-shot antes de resolver. +5% sobre Zero-Shot-CoT.' },
-                    selfask: { name: 'Self-Ask', citation: 'UW + Meta AI 2022', tip: 'Se hace preguntas de seguimiento. Ideal para QA multi-salto.' },
-                    pal: { name: 'PAL (Asistido por Programa)', citation: 'CMU 2022', tip: 'Genera código para cálculos. +40% en GSM-Hard.' },
-                    selfrefine: { name: 'Self-Refine', citation: 'CMU + AI2 + Google 2023', tip: 'Bucle Generar→Feedback→Refinar. ~20% mejora promedio.' },
-                    stepback: { name: 'Step-Back Prompting', citation: 'Google DeepMind 2023', tip: 'Primero abstrae a principios. +27% en TimeQA.' },
-                    analogical: { name: 'Analogical Prompting', citation: 'DeepMind + Stanford 2023', tip: 'Genera sus propios ejemplos relevantes. +5% sobre 0-shot CoT.' },
-                    rar: { name: 'Rephrase & Respond', citation: 'UCLA 2023', tip: 'Reformula pregunta antes de responder. Reduce ambigüedad.' },
-                },
-                database: {
-                    title: 'Prompts Guardados', save: 'Guardar', load: 'Cargar', delete: 'Eliminar',
-                    duplicate: 'Duplicar', edit: 'Editar', export: 'Exportar JSON', import: 'Importar JSON',
-                    noPrompts: 'Sin prompts guardados', promptName: 'Nombre del prompt',
-                    saveAs: 'Guardar prompt como...', confirmDelete: '¿Eliminar este prompt?',
-                    imported: '¡Prompts importados!', exportedCount: 'prompts exportados', savedCount: 'prompts guardados',
-                },
-                share: {
-                    title: 'Compartir Prompt', subtitle: 'Comparte tu configuración mediante código',
-                    codeLabel: 'Código de compartir', wordsLabel: 'Frase de palabras (alternativa)', urlLabel: 'Enlace directo',
-                    copyCode: 'Copiar código', copyWords: 'Copiar palabras', copyUrl: 'Copiar enlace',
-                    importTitle: 'Cargar desde código', importPlaceholder: 'Pega el código aquí...',
-                    importBtn: 'Cargar prompt', importSuccess: '¡Prompt cargado con éxito!',
-                    importError: 'Código inválido', generating: 'Generando...',
-                    tip: 'Consejo: El código contiene toda tu configuración. ¡Compártelo por mensaje o email!',
-                },
-                preview: 'Prompt Formateado', copy: 'Copiar', copied: '¡Copiado!',
-                placeholder: 'Completa los campos', chars: 'caracteres', optimizedFor: 'Optimizado para',
-                required: '*', newPrompt: 'Nuevo', footer: 'Métodos: The Prompt Report • Wharton • DeepMind • Princeton',
-                promptParts: {
-                    youAre: 'Eres', actAs: 'Actúa como', role: 'Rol',
-                    emotion: 'Esta tarea es muy importante para mí. Tu respuesta cuidadosa y detallada me ayudará mucho.',
-                    context: 'Contexto', task: 'Tarea',
-                    cotInstructions: 'Piensa paso a paso:\n1. Analiza el problema\n2. Divídelo en pasos\n3. Muestra tu razonamiento\n4. Luego da tu respuesta final',
-                    cotSimple: 'Pensemos paso a paso.',
-                    zeroshotTrigger: 'Pensemos paso a paso.',
-                    zeroshotSimple: 'Abordemos esto paso a paso, pensando cuidadosamente cada parte antes de llegar a una conclusión.',
-                    totExperts: 'Imagina 3 expertos con diferentes enfoques:\n- Experto 1: Enfoque metódico y sistemático\n- Experto 2: Soluciones creativas y no convencionales\n- Experto 3: Soluciones prácticas y eficientes\n\nCada experto comparte un paso de su pensamiento y luego evalúa.',
-                    totSimple: 'Considera 3 enfoques diferentes y sigue los mejores caminos.',
-                    scVerify: 'Genera 3 soluciones independientes y compara. Selecciona la respuesta más consistente.',
-                    scSimple: 'Resuelve de 3 formas y explica la mejor.',
-                    reactCycle: 'Sigue este ciclo Pensamiento-Acción-Observación:\n1. Pensamiento: Razona qué hacer a continuación\n2. Acción: Describe la acción a tomar\n3. Observación: Nota lo que aprendiste',
-                    reactSimple: 'Para cada paso: Pensamiento, Acción, Observación.',
-                    plansolveInstructions: 'Primero entendamos el problema, extraigamos variables relevantes y diseñemos un plan. Luego ejecutemos el plan, calculemos variables intermedias y mostremos la respuesta.',
-                    plansolveSimple: 'Primero entender y planificar. Luego ejecutar paso a paso.',
-                    selfaskInstructions: 'Hazte preguntas de seguimiento y respóndelas:\n1. ¿Se necesitan preguntas de seguimiento? Si es así:\n2. Seguimiento: [tu pregunta]\n3. Respuesta intermedia: [respuesta]\n4. Repite hasta dar la respuesta final.',
-                    selfaskSimple: 'Divídelo en preguntas de seguimiento. Responde cada una antes de continuar, luego da la respuesta final.',
-                    palInstructions: 'Resuelve esto escribiendo código Python:\n1. Define las variables del problema\n2. Escribe cálculos como código\n3. Usa comentarios para explicar\n4. Imprime la respuesta final',
-                    palSimple: 'Escribe código Python para resolver. Usa variables y cálculos.',
-                    selfrefineInstructions: 'Sigue este proceso de mejora iterativa:\n1. GENERAR: Crea tu respuesta inicial\n2. FEEDBACK: Critica tu respuesta\n3. REFINAR: Crea una versión mejorada\nRepite hasta estar satisfecho.',
-                    selfrefineSimple: 'Genera una respuesta, critícala y mejórala.',
-                    stepbackInstructions: 'Antes de resolver, da un paso atrás y considera:\n1. ¿Cuáles son los principios subyacentes relevantes?\n2. ¿Qué enfoque de alto nivel aplica aquí?\n3. Ahora aplica estos principios al problema específico.',
-                    stepbackSimple: 'Primero identifica los principios clave, luego aplícalos.',
-                    analogicalInstructions: 'Antes de resolver, recuerda problemas similares:\n1. Piensa en 2-3 problemas relevantes que sabes resolver\n2. Describe brevemente cada uno y su solución\n3. Aplica el enfoque más relevante al problema actual',
-                    analogicalSimple: 'Piensa en problemas similares que hayas resuelto y aplica el mismo enfoque.',
-                    rarInstructions: 'Reformula y expande la pregunta para mayor claridad, luego responde a la versión reformulada.',
-                    rarSimple: 'Primero reformula esta pregunta más claramente, luego respóndela.',
-                    stepsFollow: 'Sigue estos pasos', constraints: 'Requisitos',
-                    examplesIntro: 'Ejemplos:', examplesFollow: 'Sigue estos patrones.',
-                    fewshotIntro: 'Aprende de ejemplos:', fewshotFollow: 'Aplica el patrón.',
-                    outputFormat: 'Formato de Salida', expectations: 'Resultado Esperado',
-                },
-                checklist: {
-                    title: 'Checklist de X Pasos para Prompts',
-                    subtitle: 'Elementos esenciales para crear prompts efectivos',
-                    showColors: 'Mostrar colores en salida',
-                    steps: [
-                        { key: 'role', name: 'Rol / Persona', desc: 'Define QUIÉN debe ser la IA', example: '"Eres un experto científico de datos..."', color: 'purple', icon: 'User' },
-                        { key: 'context', name: 'Contexto', desc: 'Proporciona información de fondo', example: '"Estamos construyendo una app fintech..."', color: 'blue', icon: 'Info' },
-                        { key: 'task', name: 'Tarea', desc: 'Indica claramente QUÉ quieres', example: '"Escribe una función que valide..."', color: 'green', icon: 'Target' },
-                        { key: 'constraints', name: 'Restricciones', desc: 'Establece límites y requisitos', example: '"Máximo 100 líneas, usa TypeScript..."', color: 'orange', icon: 'Lock' },
-                        { key: 'format', name: 'Formato de Salida', desc: 'Especifica CÓMO quieres la respuesta', example: '"Devuelve como JSON con campos: name..."', color: 'pink', icon: 'FileText' },
-                        { key: 'examples', name: 'Ejemplos', desc: 'Muestra patrones entrada→salida', example: '"Entrada: 5 → Salida: 120"', color: 'yellow', icon: 'Lightbulb' },
-                        { key: 'methods', name: 'Métodos (opcional)', desc: 'Añade técnicas de razonamiento (CoT)', example: '"Piensa paso a paso..."', color: 'red', icon: 'Brain' },
-                    ],
-                    tip: 'No todos los pasos son obligatorios. Mínimo: Tarea. Recomendado: Rol + Tarea + Contexto + Formato.',
-                    legend: 'Leyenda de colores',
-                }
-            },
-            fr: {
-                title: 'Formateur de Prompts',
-                subtitle: 'Techniques de prompting basées sur la recherche 2025',
-                backToHub: 'Retour au Hub',
-                templates: {
-                    general: { name: 'Tâche Générale', desc: 'Format flexible', context: '' },
-                    coding: { name: 'Code', desc: 'Déboguer, écrire', context: 'Concentre-toi sur un code propre, efficace et bien documenté. Inclus des commentaires où utile.' },
-                    creative: { name: 'Écriture Créative', desc: 'Histoires, contenu', context: 'Concentre-toi sur la créativité, un récit captivant et un langage vivant. Sois original et expressif.' },
-                    analysis: { name: 'Analyse', desc: 'Recherche, comparer', context: 'Fournis une analyse approfondie avec un raisonnement basé sur les preuves. Considère plusieurs perspectives et cite les sources.' },
-                    explanation: { name: 'Explication', desc: 'Enseigner concepts', context: 'Explique clairement pour le public cible. Utilise des analogies et exemples pour rendre les concepts complexes accessibles.' },
-                },
-                fields: {
-                    role: { label: 'Rôle / Persona', placeholder: 'ex. rédacteur technique' },
-                    task: { label: 'Tâche', placeholder: 'ex. Écrire documentation' },
-                    context: { label: 'Contexte', placeholder: 'ex. Pour une startup' },
-                    constraints: { label: 'Exigences', placeholder: 'ex. Être concis' },
-                    steps: { label: 'Étapes', placeholder: 'Chaque étape sur nouvelle ligne...' },
-                    outputFormat: { label: 'Format de Sortie', placeholder: 'ex. Markdown' },
-                    expectations: { label: 'Attentes', placeholder: 'ex. Documentation claire' },
-                    examples: { label: 'Exemples', placeholder: 'ex. Entrée → Sortie' },
-                    fewshot: { label: 'Exemples Few-Shot', placeholder: 'Entrée → Sortie' },
-                },
-                methods: {
-                    title: 'Méthodes de Recherche', active: 'méthode(s) active(s)',
-                    cot: { name: 'Chain-of-Thought', citation: 'Google Brain 2022', tip: 'Pour maths et logique. +39pp sur GSM8K.' },
-                    zeroshot: { name: 'Zero-Shot CoT', citation: 'U.Tokyo + Google 2022', tip: '"Étape par étape" - sans exemples. +61pp sur MultiArith.' },
-                    fewshot: { name: 'Few-Shot', citation: 'OpenAI 2020', tip: 'Apprend de 1-10 exemples. 0%→90% amélioration.' },
-                    tot: { name: 'Tree of Thoughts', citation: 'Princeton + DeepMind 2023', tip: 'Explore plusieurs chemins. 4%→74% sur Game of 24.' },
-                    selfconsistency: { name: 'Self-Consistency', citation: 'Google Research 2022', tip: 'Plusieurs chemins de raisonnement, vote majoritaire. +17.9% sur GSM8K.' },
-                    react: { name: 'ReAct', citation: 'Princeton + Google 2022', tip: 'Cycle Pensée-Action-Observation. +34% sur ALFWorld.' },
-                    risen: { name: 'RISEN', citation: 'Kyle Balmer', tip: 'Structure Rôle-Instructions-Étapes-Objectif-Contraintes.' },
-                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft + CAS 2023', tip: 'Stimuli émotionnels améliorent performance. +8% instruction, +115% BIG-Bench.' },
-                    plansolve: { name: 'Plan-and-Solve', citation: 'SUTD 2023', tip: 'Planification zero-shot avant résolution. +5% sur Zero-Shot-CoT.' },
-                    selfask: { name: 'Self-Ask', citation: 'UW + Meta AI 2022', tip: 'Se pose des questions de suivi. Idéal pour QA multi-saut.' },
-                    pal: { name: 'PAL (Assisté par Programme)', citation: 'CMU 2022', tip: 'Génère du code pour calculs. +40% sur GSM-Hard.' },
-                    selfrefine: { name: 'Self-Refine', citation: 'CMU + AI2 + Google 2023', tip: 'Boucle Générer→Feedback→Affiner. ~20% amélioration moyenne.' },
-                    stepback: { name: 'Step-Back Prompting', citation: 'Google DeepMind 2023', tip: "D'abord abstraire aux principes. +27% sur TimeQA." },
-                    analogical: { name: 'Analogical Prompting', citation: 'DeepMind + Stanford 2023', tip: 'Génère ses propres exemples pertinents. +5% sur 0-shot CoT.' },
-                    rar: { name: 'Rephrase & Respond', citation: 'UCLA 2023', tip: 'Reformule la question avant de répondre. Réduit ambiguïté.' },
-                },
-                database: {
-                    title: 'Prompts Sauvegardés', save: 'Sauvegarder', load: 'Charger', delete: 'Supprimer',
-                    duplicate: 'Dupliquer', edit: 'Modifier', export: 'Exporter JSON', import: 'Importer JSON',
-                    noPrompts: 'Aucun prompt sauvegardé', promptName: 'Nom du prompt',
-                    saveAs: 'Sauvegarder prompt comme...', confirmDelete: 'Supprimer ce prompt?',
-                    imported: 'Prompts importés!', exportedCount: 'prompts exportés', savedCount: 'prompts sauvegardés',
-                },
-                share: {
-                    title: 'Partager Prompt', subtitle: 'Partagez vos paramètres par code',
-                    codeLabel: 'Code de partage', wordsLabel: 'Phrase de mots (alternative)', urlLabel: 'Lien direct',
-                    copyCode: 'Copier code', copyWords: 'Copier mots', copyUrl: 'Copier lien',
-                    importTitle: 'Charger depuis code', importPlaceholder: 'Collez le code ici...',
-                    importBtn: 'Charger prompt', importSuccess: 'Prompt chargé avec succès!',
-                    importError: 'Code invalide', generating: 'Génération...',
-                    tip: 'Astuce: Le code contient tous vos paramètres. Partagez-le par message ou email!',
-                },
-                preview: 'Prompt Formaté', copy: 'Copier', copied: 'Copié!',
-                placeholder: 'Remplissez les champs', chars: 'caractères', optimizedFor: 'Optimisé pour',
-                required: '*', newPrompt: 'Nouveau', footer: 'Méthodes: The Prompt Report • Wharton • DeepMind • Princeton',
-                promptParts: {
-                    youAre: 'Tu es', actAs: 'Agis comme', role: 'Rôle',
-                    emotion: "Cette tâche est très importante pour moi. Ta réponse soigneuse et détaillée m'aidera beaucoup.",
-                    context: 'Contexte', task: 'Tâche',
-                    cotInstructions: 'Réfléchis étape par étape:\n1. Analyse le problème\n2. Décompose-le\n3. Montre ton raisonnement\n4. Puis donne ta réponse finale',
-                    cotSimple: 'Réfléchissons étape par étape.',
-                    zeroshotTrigger: 'Réfléchissons étape par étape.',
-                    zeroshotSimple: 'Abordons cela étape par étape, en réfléchissant soigneusement à chaque partie avant de conclure.',
-                    totExperts: "Imagine 3 experts avec différentes approches:\n- Expert 1: Approche méthodique et systématique\n- Expert 2: Solutions créatives et non conventionnelles\n- Expert 3: Solutions pratiques et efficaces\n\nChaque expert partage une étape de sa réflexion puis évalue.",
-                    totSimple: 'Considère 3 approches différentes et suis les meilleurs chemins.',
-                    scVerify: 'Génère 3 solutions indépendantes et compare. Sélectionne la réponse la plus cohérente.',
-                    scSimple: 'Résous de 3 façons et explique la meilleure.',
-                    reactCycle: 'Suis ce cycle Pensée-Action-Observation:\n1. Pensée: Réfléchis à ce qui doit être fait\n2. Action: Décris action à effectuer\n3. Observation: Note ce que tu as appris',
-                    reactSimple: 'Pour chaque étape: Pensée, Action, Observation.',
-                    plansolveInstructions: "D'abord comprenons le problème, extrayons les variables pertinentes et élaborons un plan. Puis exécutons le plan, calculons les variables intermédiaires et montrons la réponse.",
-                    plansolveSimple: "D'abord comprendre et planifier. Puis exécuter étape par étape.",
-                    selfaskInstructions: "Pose-toi des questions de suivi et réponds-y:\n1. Des questions de suivi sont-elles nécessaires? Si oui:\n2. Suivi: [ta question]\n3. Réponse intermédiaire: [réponse]\n4. Répète jusqu'à la réponse finale.",
-                    selfaskSimple: 'Décompose en questions de suivi. Réponds à chacune avant de continuer, puis donne la réponse finale.',
-                    palInstructions: 'Résous en écrivant du code Python:\n1. Définis les variables du problème\n2. Écris les calculs comme code\n3. Utilise des commentaires pour expliquer\n4. Affiche la réponse finale',
-                    palSimple: 'Écris du code Python pour résoudre. Utilise variables et calculs.',
-                    selfrefineInstructions: "Suis ce processus d'amélioration itérative:\n1. GÉNÉRER: Crée ta réponse initiale\n2. FEEDBACK: Critique ta réponse\n3. AFFINER: Crée une version améliorée\nRépète jusqu'à satisfaction.",
-                    selfrefineSimple: 'Génère une réponse, critique-la et améliore-la.',
-                    stepbackInstructions: "Avant de résoudre, prends du recul et considère:\n1. Quels sont les principes sous-jacents pertinents?\n2. Quelle approche de haut niveau s'applique ici?\n3. Maintenant applique ces principes au problème spécifique.",
-                    stepbackSimple: "D'abord identifie les principes clés, puis applique-les.",
-                    analogicalInstructions: 'Avant de résoudre, rappelle-toi des problèmes similaires:\n1. Pense à 2-3 problèmes pertinents que tu sais résoudre\n2. Décris brièvement chacun et sa solution\n3. Applique approche la plus pertinente au problème actuel',
-                    analogicalSimple: 'Pense à des problèmes similaires résolus et applique la même approche.',
-                    rarInstructions: 'Reformule et développe la question pour plus de clarté, puis réponds à la version reformulée.',
-                    rarSimple: "D'abord reformule cette question plus clairement, puis réponds-y.",
-                    stepsFollow: 'Suis ces étapes', constraints: 'Exigences',
-                    examplesIntro: 'Exemples:', examplesFollow: 'Suis ces modèles.',
-                    fewshotIntro: 'Apprends des exemples:', fewshotFollow: 'Applique le modèle.',
-                    outputFormat: 'Format de Sortie', expectations: 'Résultat Attendu',
-                },
-                checklist: {
-                    title: 'Checklist X Étapes pour Prompts',
-                    subtitle: 'Éléments essentiels pour des prompts IA efficaces',
-                    showColors: 'Afficher couleurs dans sortie',
-                    steps: [
-                        { key: 'role', name: 'Rôle / Persona', desc: 'Définis QUI doit être l\'IA', example: '"Tu es un expert data scientist..."', color: 'purple', icon: 'User' },
-                        { key: 'context', name: 'Contexte', desc: 'Fournis des informations de fond', example: '"Nous construisons une app fintech..."', color: 'blue', icon: 'Info' },
-                        { key: 'task', name: 'Tâche', desc: 'Indique clairement CE que tu veux', example: '"Écris une fonction qui valide..."', color: 'green', icon: 'Target' },
-                        { key: 'constraints', name: 'Contraintes', desc: 'Définis limites et exigences', example: '"Maximum 100 lignes, TypeScript..."', color: 'orange', icon: 'Lock' },
-                        { key: 'format', name: 'Format de Sortie', desc: 'Spécifie COMMENT tu veux la réponse', example: '"Retourne en JSON avec champs: name..."', color: 'pink', icon: 'FileText' },
-                        { key: 'examples', name: 'Exemples', desc: 'Montre des patterns entrée→sortie', example: '"Entrée: 5 → Sortie: 120"', color: 'yellow', icon: 'Lightbulb' },
-                        { key: 'methods', name: 'Méthodes (optionnel)', desc: 'Ajoute des techniques de raisonnement', example: '"Réfléchis étape par étape..."', color: 'red', icon: 'Brain' },
-                    ],
-                    tip: 'Tous les steps ne sont pas obligatoires. Minimum: Tâche. Recommandé: Rôle + Tâche + Contexte + Format.',
-                    legend: 'Légende des couleurs',
-                }
-            },
+            }
         };
+
+        // ==================== TRANSLATION API & CACHE ====================
+        // Translation cache stored in localStorage
+        let translationCache = JSON.parse(localStorage.getItem('ai_prompt_translation_cache') || '{}');
+
+        // Dynamic translations storage (cached translations for non-English languages)
+        let dynamicTranslations = { en: BASE_TRANSLATIONS.en };
+
+        // Translate single text using MyMemory API
+        const translateText = async (text, fromLang, toLang) => {
+            if (!text || text.trim() === '') return text;
+            if (fromLang === toLang) return text;
+
+            // Check cache first
+            const cacheKey = `${fromLang}_${toLang}_${text}`;
+            if (translationCache[cacheKey]) {
+                return translationCache[cacheKey];
+            }
+
+            try {
+                const response = await fetch(
+                    `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${fromLang}|${toLang}`
+                );
+
+                if (!response.ok) throw new Error('Translation API error');
+
+                const data = await response.json();
+
+                if (data.responseStatus === 200 && data.responseData?.translatedText) {
+                    const translated = data.responseData.translatedText;
+                    // Cache the translation
+                    translationCache[cacheKey] = translated;
+                    // Save cache to localStorage (limit size to prevent overflow)
+                    const cacheKeys = Object.keys(translationCache);
+                    if (cacheKeys.length > 1000) {
+                        // Remove oldest 200 entries
+                        const keysToRemove = cacheKeys.slice(0, 200);
+                        keysToRemove.forEach(k => delete translationCache[k]);
+                    }
+                    localStorage.setItem('ai_prompt_translation_cache', JSON.stringify(translationCache));
+                    return translated;
+                }
+
+                return text;
+            } catch (error) {
+                console.warn('Translation failed:', error);
+                return text;
+            }
+        };
+
+        // Recursively translate all strings in an object
+        const translateObject = async (obj, fromLang, toLang) => {
+            if (typeof obj === 'string') {
+                return await translateText(obj, fromLang, toLang);
+            }
+            if (Array.isArray(obj)) {
+                return await Promise.all(obj.map(item => translateObject(item, fromLang, toLang)));
+            }
+            if (typeof obj === 'object' && obj !== null) {
+                const result = {};
+                for (const key of Object.keys(obj)) {
+                    result[key] = await translateObject(obj[key], fromLang, toLang);
+                }
+                return result;
+            }
+            return obj;
+        };
+
+        // Translate all base translations to target language
+        const translateAllTexts = async (targetLang, onProgress = null) => {
+            // English uses base translations directly
+            if (targetLang === 'en') {
+                dynamicTranslations[targetLang] = BASE_TRANSLATIONS.en;
+                return BASE_TRANSLATIONS.en;
+            }
+
+            // Check if we already have cached translations for this language
+            const cachedTranslations = localStorage.getItem(`ai_prompt_translations_${targetLang}`);
+            if (cachedTranslations) {
+                const parsed = JSON.parse(cachedTranslations);
+                dynamicTranslations[targetLang] = parsed;
+                return parsed;
+            }
+
+            // Translate from English (as base)
+            const sourceTexts = BASE_TRANSLATIONS.en;
+
+            try {
+                const translatedTexts = await translateObject(sourceTexts, 'en', targetLang);
+
+                dynamicTranslations[targetLang] = translatedTexts;
+
+                // Cache the translations in localStorage
+                localStorage.setItem(`ai_prompt_translations_${targetLang}`, JSON.stringify(translatedTexts));
+
+                return translatedTexts;
+            } catch (error) {
+                console.error('Failed to translate:', error);
+                // Fallback to English
+                return BASE_TRANSLATIONS.en;
+            }
+        };
+
+        // Get current translations (returns English as fallback)
+        const getTranslations = (lang) => {
+            return dynamicTranslations[lang] || BASE_TRANSLATIONS.en;
+        };
+
+        // Legacy alias for backward compatibility
+        const translations = new Proxy({}, {
+            get: (target, prop) => {
+                return dynamicTranslations[prop] || BASE_TRANSLATIONS.en;
+            }
+        });
+
+        // NOTE: Legacy translations (cs, de, es, fr) removed - now using automatic translation via MyMemory API
+
+        // All non-English translations are now handled via MyMemory Translation API
+        // See translateAllTexts() function above
 
         // ==================== ICON COMPONENT ====================
         const Icon = ({ name, size = 20, className = "" }) => {
@@ -718,11 +419,13 @@
         const ALL_METHODS = ['cot', 'zeroshot', 'fewshot', 'tot', 'selfconsistency', 'react', 'risen', 'emotion', 'plansolve', 'selfask', 'pal', 'selfrefine', 'stepback', 'analogical', 'rar'];
         const generateShareCode = (promptData) => {
             try {
+                // Get all language codes from AVAILABLE_LANGUAGES
+                const langs = AVAILABLE_LANGUAGES.map(l => l.code);
                 const minimal = {
                     t: ['general', 'coding', 'creative', 'analysis', 'explanation'].indexOf(promptData.template),
                     a: ['claude', 'gpt', 'general'].indexOf(promptData.target),
                     m: promptData.selectedMethods.map(m => ALL_METHODS.indexOf(m)).filter(i => i >= 0),
-                    l: ['en', 'cs', 'de', 'es', 'fr'].indexOf(promptData.lang),
+                    l: langs.indexOf(promptData.lang),
                     f: promptData.fields
                 };
                 const json = JSON.stringify(minimal);
@@ -742,7 +445,8 @@
                 const minimal = JSON.parse(json);
                 const templates = ['general', 'coding', 'creative', 'analysis', 'explanation'];
                 const targets = ['claude', 'gpt', 'general'];
-                const langs = ['en', 'cs', 'de', 'es', 'fr'];
+                // Get all language codes from AVAILABLE_LANGUAGES
+                const langs = AVAILABLE_LANGUAGES.map(l => l.code);
 
                 return {
                     template: templates[minimal.t] || 'general',
@@ -791,7 +495,7 @@
 
         // ==================== MAIN APP ====================
         const App = () => {
-            const [lang, setLang] = useState(() => localStorage.getItem('ai-prompt-lang') || 'en');
+            const [lang, setLangState] = useState(() => localStorage.getItem('ai-prompt-lang') || 'en');
             const [template, setTemplate] = useState('general');
             const [target, setTarget] = useState('claude');
             const [copied, setCopied] = useState(false);
@@ -810,13 +514,55 @@
             const [shareData, setShareData] = useState(null);
             const [importCode, setImportCode] = useState('');
             const [showColors, setShowColors] = useState(true);
+            // Translation state
+            const [isTranslating, setIsTranslating] = useState(false);
+            const [currentTranslations, setCurrentTranslations] = useState(BASE_TRANSLATIONS.en);
+            const [langSearchQuery, setLangSearchQuery] = useState('');
 
             const [fields, setFields] = useState({
                 role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '',
             });
 
-            const t = translations[lang] || translations.en;
-            const selectedLang = languages.find(l => l.code === lang);
+            // Get translations for current language
+            const t = currentTranslations;
+            const selectedLang = AVAILABLE_LANGUAGES.find(l => l.code === lang);
+
+            // Filter languages based on search query
+            const filteredLanguages = useMemo(() => {
+                if (!langSearchQuery.trim()) return AVAILABLE_LANGUAGES;
+                const query = langSearchQuery.toLowerCase();
+                return AVAILABLE_LANGUAGES.filter(l =>
+                    l.name.toLowerCase().includes(query) ||
+                    l.native.toLowerCase().includes(query) ||
+                    l.code.toLowerCase().includes(query)
+                );
+            }, [langSearchQuery]);
+
+            // Language change handler with automatic translation
+            const setLang = useCallback(async (newLang) => {
+                if (isTranslating) return;
+
+                setIsTranslating(true);
+                setShowLangDropdown(false);
+
+                try {
+                    const translated = await translateAllTexts(newLang);
+                    setCurrentTranslations(translated);
+                    setLangState(newLang);
+                    localStorage.setItem('ai-prompt-lang', newLang);
+                } catch (error) {
+                    console.error('Translation failed:', error);
+                    showNotification(BASE_TRANSLATIONS.en.translationError || 'Translation error');
+                } finally {
+                    setIsTranslating(false);
+                }
+            }, [isTranslating]);
+
+            // Initialize translations on mount
+            useEffect(() => {
+                const initLang = localStorage.getItem('ai-prompt-lang') || 'en';
+                setLang(initLang);
+            }, []);
 
             // Load database on mount
             useEffect(() => {
@@ -1289,22 +1035,55 @@
                                     <span className="text-sm">{savedPrompts.length}</span>
                                 </button>
 
-                                {/* Language Selector */}
-                                <div className="relative">
-                                    <button onClick={() => setShowLangDropdown(!showLangDropdown)} className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700">
+                                {/* Language Selector with Translation Indicator */}
+                                <div className="relative flex items-center gap-2">
+                                    {/* Translation Indicator */}
+                                    {isTranslating && (
+                                        <div className="flex items-center gap-2 px-3 py-2 bg-amber-500/20 border border-amber-500/50 rounded-lg">
+                                            <span className="animate-pulse">⏳</span>
+                                            <span className="text-xs text-amber-300">{BASE_TRANSLATIONS.en.translating}</span>
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={() => !isTranslating && setShowLangDropdown(!showLangDropdown)}
+                                        disabled={isTranslating}
+                                        className={`flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 ${isTranslating ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
                                         <Icon name="Globe" size={16} className="text-slate-400" />
                                         <span className="text-lg">{selectedLang?.flag}</span>
+                                        <span className="hidden sm:inline text-sm text-slate-300">{selectedLang?.native}</span>
                                         <Icon name="ChevronDown" size={14} className={`transition-transform ${showLangDropdown ? 'rotate-180' : ''}`} />
                                     </button>
                                     {showLangDropdown && (
-                                        <div className="absolute top-full right-0 mt-1 w-40 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-30">
-                                            {languages.map(l => (
-                                                <button key={l.code} onClick={() => { setLang(l.code); setShowLangDropdown(false); }}
-                                                    className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-700 text-left ${lang === l.code ? 'bg-slate-700' : ''}`}>
-                                                    <span className="text-lg">{l.flag}</span>
-                                                    <span className="text-sm text-white">{l.name}</span>
-                                                </button>
-                                            ))}
+                                        <div className="absolute top-full right-0 mt-1 w-56 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-30 max-h-80 overflow-hidden flex flex-col">
+                                            {/* Search Input */}
+                                            <div className="p-2 border-b border-slate-700">
+                                                <input
+                                                    type="text"
+                                                    value={langSearchQuery}
+                                                    onChange={(e) => setLangSearchQuery(e.target.value)}
+                                                    placeholder={BASE_TRANSLATIONS.en.searchLanguage}
+                                                    className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-white text-sm placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                                    autoFocus
+                                                />
+                                            </div>
+                                            {/* Language List */}
+                                            <div className="overflow-y-auto flex-1">
+                                                {filteredLanguages.map(l => (
+                                                    <button
+                                                        key={l.code}
+                                                        onClick={() => setLang(l.code)}
+                                                        className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-700 text-left ${lang === l.code ? 'bg-slate-700 border-l-2 border-amber-500' : ''}`}
+                                                    >
+                                                        <span className="text-lg">{l.flag}</span>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="text-sm text-white truncate">{l.native}</div>
+                                                            <div className="text-xs text-slate-400 truncate">{l.name}</div>
+                                                        </div>
+                                                        <span className="text-xs text-slate-500 uppercase">{l.code}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
                                     )}
                                 </div>
