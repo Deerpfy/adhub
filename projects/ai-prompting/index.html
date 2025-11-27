@@ -3,110 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Prompting - Prompt Formatter</title>
+    <title>AI Prompt Formatter</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
         body {
             margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
             min-height: 100vh;
         }
-        #root {
-            min-height: 100vh;
-        }
-        .glass {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .gradient-text {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        .btn-gradient {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        .btn-gradient:hover {
-            background: linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%);
-        }
-        textarea:focus, input:focus, select:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
-        }
-        .method-card {
-            transition: all 0.3s ease;
-        }
-        .method-card:hover {
-            transform: translateY(-2px);
-        }
-        .method-card.selected {
-            border-color: #667eea;
-            background: rgba(102, 126, 234, 0.1);
-        }
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(102, 126, 234, 0.5);
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: rgba(102, 126, 234, 0.7);
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .fade-in {
-            animation: fadeIn 0.3s ease-out;
-        }
+        #root { min-height: 100vh; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+        ::-webkit-scrollbar-thumb { background: rgba(251,191,36,0.4); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(251,191,36,0.6); }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        .animate-pulse { animation: pulse 2s infinite; }
     </style>
     <script>
         tailwind.config = {
-            darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        primary: {
-                            50: '#f0f1ff',
-                            100: '#e0e2ff',
-                            200: '#c7caff',
-                            300: '#a4a9ff',
-                            400: '#8185ff',
-                            500: '#667eea',
-                            600: '#5a5dd4',
-                            700: '#4a4bb0',
-                            800: '#3d3f8f',
-                            900: '#363874',
-                        },
-                        dark: {
-                            50: '#f7f7f8',
-                            100: '#ececf1',
-                            200: '#d9d9e3',
-                            300: '#c5c5d2',
-                            400: '#acacbe',
-                            500: '#8e8ea0',
-                            600: '#6e6e80',
-                            700: '#565869',
-                            800: '#343541',
-                            900: '#202123',
-                            950: '#0f0f23',
+                        slate: {
+                            750: '#293548',
+                            850: '#172033',
                         }
                     }
                 }
@@ -114,944 +40,875 @@
         }
     </script>
 </head>
-<body class="dark">
+<body>
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useCallback, useMemo } = React;
+        const { useState, useEffect, useMemo, useRef, useCallback } = React;
+
+        // ==================== LANGUAGES ====================
+        const languages = [
+            { code: 'en', name: 'English', flag: '🇬🇧' },
+            { code: 'cs', name: 'Čeština', flag: '🇨🇿' },
+            { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+            { code: 'es', name: 'Español', flag: '🇪🇸' },
+            { code: 'fr', name: 'Français', flag: '🇫🇷' },
+        ];
 
         // ==================== TRANSLATIONS ====================
         const translations = {
             en: {
-                title: "AI Prompting",
-                subtitle: "Professional Prompt Formatter",
-                language: "Language",
-                targetAI: "Target AI",
-                template: "Template",
-                method: "Prompting Method",
-                yourPrompt: "Your Prompt",
-                promptPlaceholder: "Enter your prompt here...",
-                formattedPrompt: "Formatted Prompt",
-                copy: "Copy",
-                copied: "Copied!",
-                clear: "Clear",
-                save: "Save",
-                savedPrompts: "Saved Prompts",
-                noSavedPrompts: "No saved prompts yet",
-                export: "Export",
-                import: "Import",
-                delete: "Delete",
-                load: "Load",
-                promptName: "Prompt Name",
-                enterName: "Enter prompt name...",
-                cancel: "Cancel",
-                savePrompt: "Save Prompt",
-                deleteAll: "Delete All",
-                confirmDelete: "Are you sure you want to delete all saved prompts?",
-                importSuccess: "Prompts imported successfully!",
-                importError: "Error importing prompts. Please check the file format.",
-                general: "General",
-                coding: "Coding",
-                creative: "Creative",
-                analysis: "Analysis",
-                explanation: "Explanation",
-                claude: "Claude",
-                chatgpt: "ChatGPT",
-                any: "Any AI",
-                methodChainOfThought: "Chain-of-Thought",
-                methodChainOfThoughtDesc: "Step-by-step reasoning for complex problems",
-                methodFewShot: "Few-Shot",
-                methodFewShotDesc: "Learn from examples provided in the prompt",
-                methodTreeOfThoughts: "Tree of Thoughts",
-                methodTreeOfThoughtsDesc: "Explore multiple reasoning paths",
-                methodSelfConsistency: "Self-Consistency",
-                methodSelfConsistencyDesc: "Generate multiple solutions and find consensus",
-                methodReAct: "ReAct",
-                methodReActDesc: "Reasoning + Acting for task completion",
-                methodRISEN: "RISEN",
-                methodRISENDesc: "Role, Instructions, Steps, End goal, Narrowing",
-                methodEmotionPrompt: "EmotionPrompt",
-                methodEmotionPromptDesc: "Add emotional context to improve responses",
-                backToHub: "Back to Hub"
+                title: 'AI Prompt Formatter',
+                subtitle: 'Research-backed prompting techniques from 2025 studies',
+                backToHub: 'Back to Hub',
+                templates: {
+                    general: { name: 'General Task', desc: 'Flexible format for any task' },
+                    coding: { name: 'Coding Help', desc: 'Debug, write, or explain code' },
+                    creative: { name: 'Creative Writing', desc: 'Stories, content, copywriting' },
+                    analysis: { name: 'Analysis', desc: 'Research, compare, evaluate' },
+                    explanation: { name: 'Explanation', desc: 'Teach or clarify concepts' },
+                },
+                fields: {
+                    role: { label: 'Role / Persona', placeholder: 'e.g., an expert technical writer' },
+                    task: { label: 'Task', placeholder: 'e.g., Write documentation for a REST API endpoint' },
+                    context: { label: 'Context / Background', placeholder: 'e.g., This is for a fintech startup' },
+                    constraints: { label: 'Constraints / Requirements', placeholder: 'e.g., Keep it concise, use examples' },
+                    steps: { label: 'Steps to Follow', placeholder: 'Enter each step on a new line...' },
+                    outputFormat: { label: 'Output Format', placeholder: 'e.g., Markdown with headers and code blocks' },
+                    expectations: { label: 'Expectations / End Goal', placeholder: 'e.g., Clear, actionable documentation' },
+                    examples: { label: 'Examples (optional)', placeholder: 'e.g., Input: ... → Output: ...' },
+                    fewshot: { label: 'Few-Shot Examples (Input → Output)', placeholder: 'Input: ... → Output: ...' },
+                },
+                methods: {
+                    title: 'Research-Backed Methods',
+                    active: 'method(s) active',
+                    cot: { name: 'Chain-of-Thought', citation: 'Google DeepMind', tip: 'Best for math, logic, multi-step problems.' },
+                    fewshot: { name: 'Few-Shot Learning', citation: 'UMD + OpenAI + Stanford', tip: 'Can improve accuracy from 0% to 90%.' },
+                    tot: { name: 'Tree of Thoughts', citation: 'Princeton + Google', tip: 'Best for complex planning and puzzles.' },
+                    selfconsistency: { name: 'Self-Consistency', citation: 'Google Research', tip: 'Multiple paths, majority vote.' },
+                    react: { name: 'ReAct', citation: 'Princeton + Google', tip: 'Best for tasks needing external tools.' },
+                    risen: { name: 'RISEN Framework', citation: 'Kyle Balmer', tip: 'Structured approach for complex tasks.' },
+                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft + PKU', tip: 'Emotional stimuli enhance performance.' },
+                },
+                database: {
+                    title: 'Saved Prompts',
+                    save: 'Save',
+                    load: 'Load',
+                    delete: 'Delete',
+                    duplicate: 'Duplicate',
+                    edit: 'Edit',
+                    export: 'Export JSON',
+                    import: 'Import JSON',
+                    noPrompts: 'No saved prompts yet',
+                    promptName: 'Prompt name',
+                    saveAs: 'Save prompt as...',
+                    confirmDelete: 'Delete this prompt?',
+                    imported: 'Prompts imported successfully!',
+                    exportedCount: 'prompts exported',
+                    savedCount: 'prompts saved',
+                },
+                preview: 'Formatted Prompt',
+                copy: 'Copy',
+                copied: 'Copied!',
+                placeholder: 'Fill in the fields to see your formatted prompt',
+                chars: 'chars',
+                optimizedFor: 'Optimized for',
+                required: '*',
+                newPrompt: 'New',
+                footer: 'Methods based on: The Prompt Report (UMD, OpenAI, Stanford, 2025) • Wharton GenAI Labs • Google DeepMind • Princeton NLP',
+                promptParts: {
+                    youAre: 'You are', actAs: 'Act as', role: 'Role',
+                    emotion: 'This task is very important to me. Your thorough and careful response will greatly help my work.',
+                    context: 'Background/Context', task: 'Task',
+                    cotInstructions: 'Think through this step-by-step:\n1. First, analyze the problem carefully\n2. Break it down into logical steps\n3. Show your reasoning for each step\n4. Then provide your final answer',
+                    cotSimple: "Let's think through this step-by-step. Show your reasoning at each stage before reaching a conclusion.",
+                    totExperts: "Imagine 3 different experts approaching this problem:\n- Expert 1: Takes a methodical, systematic approach\n- Expert 2: Looks for creative, unconventional solutions\n- Expert 3: Focuses on practical, efficient solutions\n\nEach expert shares one step of their thinking, then evaluates. If any approach seems wrong, abandon it and explore alternatives. Continue until reaching the best solution.",
+                    totSimple: "Consider 3 different approaches to this problem. For each, take one step, evaluate if it's promising, and continue the best paths while abandoning dead ends.",
+                    scVerify: 'Generate 3 independent solutions using different reasoning approaches. Then compare them and select the answer that appears most consistently across approaches, explaining why.',
+                    scSimple: 'Solve this problem 3 different ways, then compare your answers and explain which is most likely correct and why.',
+                    reactCycle: 'Follow this Thought-Action-Observation cycle:\n1. Thought: Reason about what you need to do next\n2. Action: Describe what action to take\n3. Observation: Note what you learned from the action\nRepeat until you have a complete solution.',
+                    reactSimple: 'For each step, state your Thought (reasoning), Action (what to do), and Observation (what you learned). Repeat this cycle until solved.',
+                    stepsFollow: 'Follow these steps', constraints: 'Requirements/Constraints',
+                    examplesIntro: 'Here are examples of the expected input-output format:', examplesFollow: 'Follow these patterns for your response.',
+                    fewshotIntro: 'Learn from these examples:', fewshotFollow: 'Apply the same pattern to the current task.',
+                    outputFormat: 'Expected Output Format', expectations: 'Expected Outcome',
+                }
             },
             cs: {
-                title: "AI Prompting",
-                subtitle: "Profesionální formátovač promptů",
-                language: "Jazyk",
-                targetAI: "Cílové AI",
-                template: "Šablona",
-                method: "Metoda promptingu",
-                yourPrompt: "Váš prompt",
-                promptPlaceholder: "Zadejte svůj prompt zde...",
-                formattedPrompt: "Naformátovaný prompt",
-                copy: "Kopírovat",
-                copied: "Zkopírováno!",
-                clear: "Vymazat",
-                save: "Uložit",
-                savedPrompts: "Uložené prompty",
-                noSavedPrompts: "Zatím žádné uložené prompty",
-                export: "Exportovat",
-                import: "Importovat",
-                delete: "Smazat",
-                load: "Načíst",
-                promptName: "Název promptu",
-                enterName: "Zadejte název promptu...",
-                cancel: "Zrušit",
-                savePrompt: "Uložit prompt",
-                deleteAll: "Smazat vše",
-                confirmDelete: "Opravdu chcete smazat všechny uložené prompty?",
-                importSuccess: "Prompty úspěšně importovány!",
-                importError: "Chyba při importu promptů. Zkontrolujte formát souboru.",
-                general: "Obecné",
-                coding: "Programování",
-                creative: "Kreativní",
-                analysis: "Analýza",
-                explanation: "Vysvětlení",
-                claude: "Claude",
-                chatgpt: "ChatGPT",
-                any: "Jakékoliv AI",
-                methodChainOfThought: "Chain-of-Thought",
-                methodChainOfThoughtDesc: "Krokové uvažování pro složité problémy",
-                methodFewShot: "Few-Shot",
-                methodFewShotDesc: "Učení z příkladů v promptu",
-                methodTreeOfThoughts: "Tree of Thoughts",
-                methodTreeOfThoughtsDesc: "Prozkoumání více cest uvažování",
-                methodSelfConsistency: "Self-Consistency",
-                methodSelfConsistencyDesc: "Generování více řešení a hledání konsenzu",
-                methodReAct: "ReAct",
-                methodReActDesc: "Uvažování + Akce pro dokončení úkolu",
-                methodRISEN: "RISEN",
-                methodRISENDesc: "Role, Instrukce, Kroky, Cíl, Zúžení",
-                methodEmotionPrompt: "EmotionPrompt",
-                methodEmotionPromptDesc: "Přidání emočního kontextu pro lepší odpovědi",
-                backToHub: "Zpět do Hubu"
+                title: 'AI Formátovač Promptů',
+                subtitle: 'Techniky promptování založené na výzkumu z roku 2025',
+                backToHub: 'Zpět do Hubu',
+                templates: {
+                    general: { name: 'Obecný úkol', desc: 'Flexibilní formát pro jakýkoli úkol' },
+                    coding: { name: 'Programování', desc: 'Ladění, psaní nebo vysvětlení kódu' },
+                    creative: { name: 'Kreativní psaní', desc: 'Příběhy, obsah, copywriting' },
+                    analysis: { name: 'Analýza', desc: 'Výzkum, porovnání, hodnocení' },
+                    explanation: { name: 'Vysvětlení', desc: 'Výuka nebo objasnění konceptů' },
+                },
+                fields: {
+                    role: { label: 'Role / Persona', placeholder: 'např. expertní technický autor' },
+                    task: { label: 'Úkol', placeholder: 'např. Napište dokumentaci pro REST API endpoint' },
+                    context: { label: 'Kontext / Pozadí', placeholder: 'např. Toto je pro fintech startup' },
+                    constraints: { label: 'Omezení / Požadavky', placeholder: 'např. Buďte struční, používejte příklady' },
+                    steps: { label: 'Kroky k následování', placeholder: 'Zadejte každý krok na nový řádek...' },
+                    outputFormat: { label: 'Formát výstupu', placeholder: 'např. Markdown s nadpisy a bloky kódu' },
+                    expectations: { label: 'Očekávání / Cíl', placeholder: 'např. Jasná, použitelná dokumentace' },
+                    examples: { label: 'Příklady (volitelné)', placeholder: 'např. Vstup: ... → Výstup: ...' },
+                    fewshot: { label: 'Few-Shot příklady (Vstup → Výstup)', placeholder: 'Vstup: ... → Výstup: ...' },
+                },
+                methods: {
+                    title: 'Metody založené na výzkumu',
+                    active: 'aktivní metod(y)',
+                    cot: { name: 'Chain-of-Thought', citation: 'Google DeepMind', tip: 'Nejlepší pro matematiku a logiku.' },
+                    fewshot: { name: 'Few-Shot učení', citation: 'UMD + OpenAI + Stanford', tip: 'Může zlepšit přesnost z 0% na 90%.' },
+                    tot: { name: 'Tree of Thoughts', citation: 'Princeton + Google', tip: 'Nejlepší pro komplexní plánování.' },
+                    selfconsistency: { name: 'Self-Consistency', citation: 'Google Research', tip: 'Více cest, většinové hlasování.' },
+                    react: { name: 'ReAct', citation: 'Princeton + Google', tip: 'Pro úkoly vyžadující externí nástroje.' },
+                    risen: { name: 'RISEN Framework', citation: 'Kyle Balmer', tip: 'Strukturovaný přístup pro složité úkoly.' },
+                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft + PKU', tip: 'Emoční stimuly zlepšují výkon.' },
+                },
+                database: {
+                    title: 'Uložené prompty',
+                    save: 'Uložit',
+                    load: 'Načíst',
+                    delete: 'Smazat',
+                    duplicate: 'Duplikovat',
+                    edit: 'Upravit',
+                    export: 'Export JSON',
+                    import: 'Import JSON',
+                    noPrompts: 'Zatím žádné uložené prompty',
+                    promptName: 'Název promptu',
+                    saveAs: 'Uložit prompt jako...',
+                    confirmDelete: 'Smazat tento prompt?',
+                    imported: 'Prompty úspěšně importovány!',
+                    exportedCount: 'promptů exportováno',
+                    savedCount: 'promptů uloženo',
+                },
+                preview: 'Formátovaný prompt',
+                copy: 'Kopírovat',
+                copied: 'Zkopírováno!',
+                placeholder: 'Vyplňte pole pro zobrazení formátovaného promptu',
+                chars: 'znaků',
+                optimizedFor: 'Optimalizováno pro',
+                required: '*',
+                newPrompt: 'Nový',
+                footer: 'Metody založené na: The Prompt Report (UMD, OpenAI, Stanford, 2025) • Wharton GenAI Labs • Google DeepMind • Princeton NLP',
+                promptParts: {
+                    youAre: 'Jsi', actAs: 'Jednej jako', role: 'Role',
+                    emotion: 'Tento úkol je pro mě velmi důležitý. Tvá důkladná a pečlivá odpověď mi velmi pomůže.',
+                    context: 'Pozadí/Kontext', task: 'Úkol',
+                    cotInstructions: 'Přemýšlej nad tím krok za krokem:\n1. Nejprve pečlivě analyzuj problém\n2. Rozděl ho na logické kroky\n3. Ukaž své uvažování pro každý krok\n4. Poté poskytni svou konečnou odpověď',
+                    cotSimple: 'Pojďme to promyslet krok za krokem. Ukaž své uvažování v každé fázi před dosažením závěru.',
+                    totExperts: 'Představ si 3 různé experty, kteří přistupují k tomuto problému:\n- Expert 1: Používá metodický, systematický přístup\n- Expert 2: Hledá kreativní, nekonvenční řešení\n- Expert 3: Zaměřuje se na praktická, efektivní řešení\n\nKaždý expert sdílí jeden krok svého myšlení a poté vyhodnocuje.',
+                    totSimple: 'Zvaž 3 různé přístupy k tomuto problému. Pro každý udělej jeden krok, vyhodnoť, zda je slibný.',
+                    scVerify: 'Vygeneruj 3 nezávislá řešení pomocí různých přístupů. Poté je porovnej a vyber odpověď, která se objevuje nejkonzistentněji.',
+                    scSimple: 'Vyřeš tento problém 3 různými způsoby, poté porovnej své odpovědi.',
+                    reactCycle: 'Následuj tento cyklus Myšlenka-Akce-Pozorování:\n1. Myšlenka: Uvažuj o tom, co je třeba udělat\n2. Akce: Popiš, jakou akci provést\n3. Pozorování: Zaznamenej, co jsi se naučil',
+                    reactSimple: 'Pro každý krok uveď svou Myšlenku, Akci a Pozorování.',
+                    stepsFollow: 'Následuj tyto kroky', constraints: 'Požadavky/Omezení',
+                    examplesIntro: 'Zde jsou příklady očekávaného formátu:', examplesFollow: 'Řiď se těmito vzory.',
+                    fewshotIntro: 'Uč se z těchto příkladů:', fewshotFollow: 'Aplikuj stejný vzor na aktuální úkol.',
+                    outputFormat: 'Očekávaný formát výstupu', expectations: 'Očekávaný výsledek',
+                }
             },
             de: {
-                title: "AI Prompting",
-                subtitle: "Professioneller Prompt-Formatierer",
-                language: "Sprache",
-                targetAI: "Ziel-KI",
-                template: "Vorlage",
-                method: "Prompting-Methode",
-                yourPrompt: "Ihr Prompt",
-                promptPlaceholder: "Geben Sie hier Ihren Prompt ein...",
-                formattedPrompt: "Formatierter Prompt",
-                copy: "Kopieren",
-                copied: "Kopiert!",
-                clear: "Löschen",
-                save: "Speichern",
-                savedPrompts: "Gespeicherte Prompts",
-                noSavedPrompts: "Noch keine gespeicherten Prompts",
-                export: "Exportieren",
-                import: "Importieren",
-                delete: "Löschen",
-                load: "Laden",
-                promptName: "Prompt-Name",
-                enterName: "Prompt-Namen eingeben...",
-                cancel: "Abbrechen",
-                savePrompt: "Prompt speichern",
-                deleteAll: "Alle löschen",
-                confirmDelete: "Möchten Sie wirklich alle gespeicherten Prompts löschen?",
-                importSuccess: "Prompts erfolgreich importiert!",
-                importError: "Fehler beim Importieren. Bitte überprüfen Sie das Dateiformat.",
-                general: "Allgemein",
-                coding: "Programmierung",
-                creative: "Kreativ",
-                analysis: "Analyse",
-                explanation: "Erklärung",
-                claude: "Claude",
-                chatgpt: "ChatGPT",
-                any: "Jede KI",
-                methodChainOfThought: "Chain-of-Thought",
-                methodChainOfThoughtDesc: "Schrittweises Denken für komplexe Probleme",
-                methodFewShot: "Few-Shot",
-                methodFewShotDesc: "Lernen aus Beispielen im Prompt",
-                methodTreeOfThoughts: "Tree of Thoughts",
-                methodTreeOfThoughtsDesc: "Mehrere Denkpfade erkunden",
-                methodSelfConsistency: "Self-Consistency",
-                methodSelfConsistencyDesc: "Mehrere Lösungen generieren und Konsens finden",
-                methodReAct: "ReAct",
-                methodReActDesc: "Denken + Handeln zur Aufgabenerfüllung",
-                methodRISEN: "RISEN",
-                methodRISENDesc: "Rolle, Anweisungen, Schritte, Ziel, Eingrenzung",
-                methodEmotionPrompt: "EmotionPrompt",
-                methodEmotionPromptDesc: "Emotionaler Kontext für bessere Antworten",
-                backToHub: "Zurück zum Hub"
+                title: 'AI Prompt-Formatierer',
+                subtitle: 'Forschungsbasierte Prompting-Techniken aus 2025',
+                backToHub: 'Zurück zum Hub',
+                templates: {
+                    general: { name: 'Allgemeine Aufgabe', desc: 'Flexibles Format' },
+                    coding: { name: 'Programmierhilfe', desc: 'Debuggen, schreiben' },
+                    creative: { name: 'Kreatives Schreiben', desc: 'Geschichten, Inhalte' },
+                    analysis: { name: 'Analyse', desc: 'Recherche, vergleichen' },
+                    explanation: { name: 'Erklärung', desc: 'Lehren oder klären' },
+                },
+                fields: {
+                    role: { label: 'Rolle / Persona', placeholder: 'z.B. technischer Autor' },
+                    task: { label: 'Aufgabe', placeholder: 'z.B. Dokumentation schreiben' },
+                    context: { label: 'Kontext', placeholder: 'z.B. Für ein Startup' },
+                    constraints: { label: 'Anforderungen', placeholder: 'z.B. Kurz halten' },
+                    steps: { label: 'Schritte', placeholder: 'Jeden Schritt eingeben...' },
+                    outputFormat: { label: 'Ausgabeformat', placeholder: 'z.B. Markdown' },
+                    expectations: { label: 'Erwartungen', placeholder: 'z.B. Klare Dokumentation' },
+                    examples: { label: 'Beispiele', placeholder: 'z.B. Eingabe → Ausgabe' },
+                    fewshot: { label: 'Few-Shot Beispiele', placeholder: 'Eingabe → Ausgabe' },
+                },
+                methods: {
+                    title: 'Forschungsbasierte Methoden', active: 'Methode(n) aktiv',
+                    cot: { name: 'Chain-of-Thought', citation: 'Google DeepMind', tip: 'Für Mathematik und Logik.' },
+                    fewshot: { name: 'Few-Shot', citation: 'UMD + OpenAI', tip: 'Verbessert Genauigkeit.' },
+                    tot: { name: 'Tree of Thoughts', citation: 'Princeton', tip: 'Für komplexe Planung.' },
+                    selfconsistency: { name: 'Self-Consistency', citation: 'Google', tip: 'Mehrheitsentscheidung.' },
+                    react: { name: 'ReAct', citation: 'Princeton', tip: 'Mit externen Tools.' },
+                    risen: { name: 'RISEN', citation: 'Kyle Balmer', tip: 'Strukturierter Ansatz.' },
+                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft', tip: 'Emotionale Stimuli.' },
+                },
+                database: {
+                    title: 'Gespeicherte Prompts', save: 'Speichern', load: 'Laden', delete: 'Löschen',
+                    duplicate: 'Duplizieren', edit: 'Bearbeiten', export: 'Export JSON', import: 'Import JSON',
+                    noPrompts: 'Keine gespeicherten Prompts', promptName: 'Prompt-Name',
+                    saveAs: 'Prompt speichern als...', confirmDelete: 'Diesen Prompt löschen?',
+                    imported: 'Prompts erfolgreich importiert!', exportedCount: 'Prompts exportiert', savedCount: 'Prompts gespeichert',
+                },
+                preview: 'Formatierter Prompt', copy: 'Kopieren', copied: 'Kopiert!',
+                placeholder: 'Felder ausfüllen', chars: 'Zeichen', optimizedFor: 'Optimiert für',
+                required: '*', newPrompt: 'Neu', footer: 'Methoden: The Prompt Report • Wharton • DeepMind • Princeton',
+                promptParts: {
+                    youAre: 'Du bist', actAs: 'Agiere als', role: 'Rolle',
+                    emotion: 'Diese Aufgabe ist sehr wichtig für mich.',
+                    context: 'Kontext', task: 'Aufgabe',
+                    cotInstructions: 'Denke Schritt für Schritt:\n1. Analysiere das Problem\n2. Teile es auf\n3. Zeige deine Überlegungen',
+                    cotSimple: 'Lass uns das Schritt für Schritt durchdenken.',
+                    totExperts: 'Stelle dir 3 Experten vor mit verschiedenen Ansätzen.',
+                    totSimple: 'Betrachte 3 verschiedene Ansätze.',
+                    scVerify: 'Generiere 3 unabhängige Lösungen und vergleiche.',
+                    scSimple: 'Löse auf 3 Arten und erkläre die beste.',
+                    reactCycle: 'Folge: Gedanke → Aktion → Beobachtung',
+                    reactSimple: 'Für jeden Schritt: Gedanke, Aktion, Beobachtung.',
+                    stepsFollow: 'Folge diesen Schritten', constraints: 'Anforderungen',
+                    examplesIntro: 'Beispiele:', examplesFollow: 'Folge diesen Mustern.',
+                    fewshotIntro: 'Lerne aus Beispielen:', fewshotFollow: 'Wende das Muster an.',
+                    outputFormat: 'Ausgabeformat', expectations: 'Erwartetes Ergebnis',
+                }
             },
             es: {
-                title: "AI Prompting",
-                subtitle: "Formateador Profesional de Prompts",
-                language: "Idioma",
-                targetAI: "IA Objetivo",
-                template: "Plantilla",
-                method: "Método de Prompting",
-                yourPrompt: "Tu Prompt",
-                promptPlaceholder: "Ingresa tu prompt aquí...",
-                formattedPrompt: "Prompt Formateado",
-                copy: "Copiar",
-                copied: "¡Copiado!",
-                clear: "Limpiar",
-                save: "Guardar",
-                savedPrompts: "Prompts Guardados",
-                noSavedPrompts: "Sin prompts guardados aún",
-                export: "Exportar",
-                import: "Importar",
-                delete: "Eliminar",
-                load: "Cargar",
-                promptName: "Nombre del Prompt",
-                enterName: "Ingresa el nombre del prompt...",
-                cancel: "Cancelar",
-                savePrompt: "Guardar Prompt",
-                deleteAll: "Eliminar Todo",
-                confirmDelete: "¿Estás seguro de que quieres eliminar todos los prompts guardados?",
-                importSuccess: "¡Prompts importados exitosamente!",
-                importError: "Error al importar prompts. Por favor verifica el formato del archivo.",
-                general: "General",
-                coding: "Programación",
-                creative: "Creativo",
-                analysis: "Análisis",
-                explanation: "Explicación",
-                claude: "Claude",
-                chatgpt: "ChatGPT",
-                any: "Cualquier IA",
-                methodChainOfThought: "Chain-of-Thought",
-                methodChainOfThoughtDesc: "Razonamiento paso a paso para problemas complejos",
-                methodFewShot: "Few-Shot",
-                methodFewShotDesc: "Aprender de ejemplos proporcionados en el prompt",
-                methodTreeOfThoughts: "Tree of Thoughts",
-                methodTreeOfThoughtsDesc: "Explorar múltiples caminos de razonamiento",
-                methodSelfConsistency: "Self-Consistency",
-                methodSelfConsistencyDesc: "Generar múltiples soluciones y encontrar consenso",
-                methodReAct: "ReAct",
-                methodReActDesc: "Razonamiento + Acción para completar tareas",
-                methodRISEN: "RISEN",
-                methodRISENDesc: "Rol, Instrucciones, Pasos, Meta, Restricción",
-                methodEmotionPrompt: "EmotionPrompt",
-                methodEmotionPromptDesc: "Añadir contexto emocional para mejores respuestas",
-                backToHub: "Volver al Hub"
+                title: 'Formateador de Prompts',
+                subtitle: 'Técnicas de prompting basadas en investigación 2025',
+                backToHub: 'Volver al Hub',
+                templates: {
+                    general: { name: 'Tarea General', desc: 'Formato flexible' },
+                    coding: { name: 'Código', desc: 'Depurar, escribir' },
+                    creative: { name: 'Escritura Creativa', desc: 'Historias, contenido' },
+                    analysis: { name: 'Análisis', desc: 'Investigar, comparar' },
+                    explanation: { name: 'Explicación', desc: 'Enseñar conceptos' },
+                },
+                fields: {
+                    role: { label: 'Rol / Persona', placeholder: 'ej. escritor técnico' },
+                    task: { label: 'Tarea', placeholder: 'ej. Escribir documentación' },
+                    context: { label: 'Contexto', placeholder: 'ej. Para una startup' },
+                    constraints: { label: 'Requisitos', placeholder: 'ej. Ser conciso' },
+                    steps: { label: 'Pasos', placeholder: 'Cada paso en nueva línea...' },
+                    outputFormat: { label: 'Formato de Salida', placeholder: 'ej. Markdown' },
+                    expectations: { label: 'Expectativas', placeholder: 'ej. Documentación clara' },
+                    examples: { label: 'Ejemplos', placeholder: 'ej. Entrada → Salida' },
+                    fewshot: { label: 'Ejemplos Few-Shot', placeholder: 'Entrada → Salida' },
+                },
+                methods: {
+                    title: 'Métodos de Investigación', active: 'método(s) activo(s)',
+                    cot: { name: 'Chain-of-Thought', citation: 'Google DeepMind', tip: 'Para matemáticas y lógica.' },
+                    fewshot: { name: 'Few-Shot', citation: 'UMD + OpenAI', tip: 'Mejora precisión.' },
+                    tot: { name: 'Tree of Thoughts', citation: 'Princeton', tip: 'Planificación compleja.' },
+                    selfconsistency: { name: 'Self-Consistency', citation: 'Google', tip: 'Voto mayoritario.' },
+                    react: { name: 'ReAct', citation: 'Princeton', tip: 'Herramientas externas.' },
+                    risen: { name: 'RISEN', citation: 'Kyle Balmer', tip: 'Enfoque estructurado.' },
+                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft', tip: 'Estímulos emocionales.' },
+                },
+                database: {
+                    title: 'Prompts Guardados', save: 'Guardar', load: 'Cargar', delete: 'Eliminar',
+                    duplicate: 'Duplicar', edit: 'Editar', export: 'Exportar JSON', import: 'Importar JSON',
+                    noPrompts: 'Sin prompts guardados', promptName: 'Nombre del prompt',
+                    saveAs: 'Guardar prompt como...', confirmDelete: '¿Eliminar este prompt?',
+                    imported: '¡Prompts importados!', exportedCount: 'prompts exportados', savedCount: 'prompts guardados',
+                },
+                preview: 'Prompt Formateado', copy: 'Copiar', copied: '¡Copiado!',
+                placeholder: 'Completa los campos', chars: 'caracteres', optimizedFor: 'Optimizado para',
+                required: '*', newPrompt: 'Nuevo', footer: 'Métodos: The Prompt Report • Wharton • DeepMind • Princeton',
+                promptParts: {
+                    youAre: 'Eres', actAs: 'Actúa como', role: 'Rol',
+                    emotion: 'Esta tarea es muy importante para mí.',
+                    context: 'Contexto', task: 'Tarea',
+                    cotInstructions: 'Piensa paso a paso:\n1. Analiza el problema\n2. Divídelo en pasos\n3. Muestra tu razonamiento',
+                    cotSimple: 'Pensemos paso a paso.',
+                    totExperts: 'Imagina 3 expertos con diferentes enfoques.',
+                    totSimple: 'Considera 3 enfoques diferentes.',
+                    scVerify: 'Genera 3 soluciones independientes y compara.',
+                    scSimple: 'Resuelve de 3 formas y explica la mejor.',
+                    reactCycle: 'Sigue: Pensamiento → Acción → Observación',
+                    reactSimple: 'Para cada paso: Pensamiento, Acción, Observación.',
+                    stepsFollow: 'Sigue estos pasos', constraints: 'Requisitos',
+                    examplesIntro: 'Ejemplos:', examplesFollow: 'Sigue estos patrones.',
+                    fewshotIntro: 'Aprende de ejemplos:', fewshotFollow: 'Aplica el patrón.',
+                    outputFormat: 'Formato de Salida', expectations: 'Resultado Esperado',
+                }
             },
             fr: {
-                title: "AI Prompting",
-                subtitle: "Formateur de Prompts Professionnel",
-                language: "Langue",
-                targetAI: "IA Cible",
-                template: "Modèle",
-                method: "Méthode de Prompting",
-                yourPrompt: "Votre Prompt",
-                promptPlaceholder: "Entrez votre prompt ici...",
-                formattedPrompt: "Prompt Formaté",
-                copy: "Copier",
-                copied: "Copié!",
-                clear: "Effacer",
-                save: "Enregistrer",
-                savedPrompts: "Prompts Enregistrés",
-                noSavedPrompts: "Aucun prompt enregistré",
-                export: "Exporter",
-                import: "Importer",
-                delete: "Supprimer",
-                load: "Charger",
-                promptName: "Nom du Prompt",
-                enterName: "Entrez le nom du prompt...",
-                cancel: "Annuler",
-                savePrompt: "Enregistrer le Prompt",
-                deleteAll: "Tout Supprimer",
-                confirmDelete: "Êtes-vous sûr de vouloir supprimer tous les prompts enregistrés?",
-                importSuccess: "Prompts importés avec succès!",
-                importError: "Erreur lors de l'importation. Veuillez vérifier le format du fichier.",
-                general: "Général",
-                coding: "Programmation",
-                creative: "Créatif",
-                analysis: "Analyse",
-                explanation: "Explication",
-                claude: "Claude",
-                chatgpt: "ChatGPT",
-                any: "N'importe quelle IA",
-                methodChainOfThought: "Chain-of-Thought",
-                methodChainOfThoughtDesc: "Raisonnement étape par étape pour problèmes complexes",
-                methodFewShot: "Few-Shot",
-                methodFewShotDesc: "Apprendre des exemples fournis dans le prompt",
-                methodTreeOfThoughts: "Tree of Thoughts",
-                methodTreeOfThoughtsDesc: "Explorer plusieurs chemins de raisonnement",
-                methodSelfConsistency: "Self-Consistency",
-                methodSelfConsistencyDesc: "Générer plusieurs solutions et trouver un consensus",
-                methodReAct: "ReAct",
-                methodReActDesc: "Raisonnement + Action pour accomplir des tâches",
-                methodRISEN: "RISEN",
-                methodRISENDesc: "Rôle, Instructions, Étapes, Objectif, Restriction",
-                methodEmotionPrompt: "EmotionPrompt",
-                methodEmotionPromptDesc: "Ajouter un contexte émotionnel pour de meilleures réponses",
-                backToHub: "Retour au Hub"
-            }
+                title: 'Formateur de Prompts',
+                subtitle: 'Techniques de prompting basées sur la recherche 2025',
+                backToHub: 'Retour au Hub',
+                templates: {
+                    general: { name: 'Tâche Générale', desc: 'Format flexible' },
+                    coding: { name: 'Code', desc: 'Déboguer, écrire' },
+                    creative: { name: 'Écriture Créative', desc: 'Histoires, contenu' },
+                    analysis: { name: 'Analyse', desc: 'Recherche, comparer' },
+                    explanation: { name: 'Explication', desc: 'Enseigner concepts' },
+                },
+                fields: {
+                    role: { label: 'Rôle / Persona', placeholder: 'ex. rédacteur technique' },
+                    task: { label: 'Tâche', placeholder: 'ex. Écrire documentation' },
+                    context: { label: 'Contexte', placeholder: 'ex. Pour une startup' },
+                    constraints: { label: 'Exigences', placeholder: 'ex. Être concis' },
+                    steps: { label: 'Étapes', placeholder: 'Chaque étape sur nouvelle ligne...' },
+                    outputFormat: { label: 'Format de Sortie', placeholder: 'ex. Markdown' },
+                    expectations: { label: 'Attentes', placeholder: 'ex. Documentation claire' },
+                    examples: { label: 'Exemples', placeholder: 'ex. Entrée → Sortie' },
+                    fewshot: { label: 'Exemples Few-Shot', placeholder: 'Entrée → Sortie' },
+                },
+                methods: {
+                    title: 'Méthodes de Recherche', active: 'méthode(s) active(s)',
+                    cot: { name: 'Chain-of-Thought', citation: 'Google DeepMind', tip: 'Pour maths et logique.' },
+                    fewshot: { name: 'Few-Shot', citation: 'UMD + OpenAI', tip: 'Améliore précision.' },
+                    tot: { name: 'Tree of Thoughts', citation: 'Princeton', tip: 'Planification complexe.' },
+                    selfconsistency: { name: 'Self-Consistency', citation: 'Google', tip: 'Vote majoritaire.' },
+                    react: { name: 'ReAct', citation: 'Princeton', tip: 'Outils externes.' },
+                    risen: { name: 'RISEN', citation: 'Kyle Balmer', tip: 'Approche structurée.' },
+                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft', tip: 'Stimuli émotionnels.' },
+                },
+                database: {
+                    title: 'Prompts Sauvegardés', save: 'Sauvegarder', load: 'Charger', delete: 'Supprimer',
+                    duplicate: 'Dupliquer', edit: 'Modifier', export: 'Exporter JSON', import: 'Importer JSON',
+                    noPrompts: 'Aucun prompt sauvegardé', promptName: 'Nom du prompt',
+                    saveAs: 'Sauvegarder prompt comme...', confirmDelete: 'Supprimer ce prompt?',
+                    imported: 'Prompts importés!', exportedCount: 'prompts exportés', savedCount: 'prompts sauvegardés',
+                },
+                preview: 'Prompt Formaté', copy: 'Copier', copied: 'Copié!',
+                placeholder: 'Remplissez les champs', chars: 'caractères', optimizedFor: 'Optimisé pour',
+                required: '*', newPrompt: 'Nouveau', footer: 'Méthodes: The Prompt Report • Wharton • DeepMind • Princeton',
+                promptParts: {
+                    youAre: 'Tu es', actAs: 'Agis comme', role: 'Rôle',
+                    emotion: 'Cette tâche est très importante pour moi.',
+                    context: 'Contexte', task: 'Tâche',
+                    cotInstructions: 'Réfléchis étape par étape:\n1. Analyse le problème\n2. Décompose-le\n3. Montre ton raisonnement',
+                    cotSimple: 'Réfléchissons étape par étape.',
+                    totExperts: 'Imagine 3 experts avec différentes approches.',
+                    totSimple: 'Considère 3 approches différentes.',
+                    scVerify: 'Génère 3 solutions indépendantes et compare.',
+                    scSimple: 'Résous de 3 façons et explique la meilleure.',
+                    reactCycle: 'Suis: Pensée → Action → Observation',
+                    reactSimple: 'Pour chaque étape: Pensée, Action, Observation.',
+                    stepsFollow: 'Suis ces étapes', constraints: 'Exigences',
+                    examplesIntro: 'Exemples:', examplesFollow: 'Suis ces modèles.',
+                    fewshotIntro: 'Apprends des exemples:', fewshotFollow: 'Applique le modèle.',
+                    outputFormat: 'Format de Sortie', expectations: 'Résultat Attendu',
+                }
+            },
         };
 
-        // ==================== PROMPTING METHODS ====================
-        const promptingMethods = {
-            'chain-of-thought': {
-                name: 'methodChainOfThought',
-                desc: 'methodChainOfThoughtDesc',
-                icon: 'Link',
-                format: (prompt, ai, template, t) => {
-                    const intro = ai === 'claude'
-                        ? "I need you to think through this step by step."
-                        : ai === 'chatgpt'
-                        ? "Please think through this carefully, step by step."
-                        : "Think through this step by step.";
-
-                    return `${intro}
-
-**Task:** ${prompt}
-
-Please break down your reasoning into clear steps:
-1. First, analyze the problem
-2. Then, consider possible approaches
-3. Finally, provide your solution with explanation
-
-Show your thinking process for each step.`;
-                }
-            },
-            'few-shot': {
-                name: 'methodFewShot',
-                desc: 'methodFewShotDesc',
-                icon: 'ListOrdered',
-                format: (prompt, ai, template, t) => {
-                    const examples = {
-                        general: `Example 1:
-Input: "What is the capital of France?"
-Output: "The capital of France is Paris."
-
-Example 2:
-Input: "What is 2+2?"
-Output: "2+2 equals 4."`,
-                        coding: `Example 1:
-Input: "Write a function to add two numbers"
-Output: "function add(a, b) { return a + b; }"
-
-Example 2:
-Input: "Write a function to check if a number is even"
-Output: "function isEven(n) { return n % 2 === 0; }"`,
-                        creative: `Example 1:
-Input: "Write a haiku about rain"
-Output: "Gentle drops falling / Nature's symphony plays on / Peace in every drop"
-
-Example 2:
-Input: "Write a haiku about mountains"
-Output: "Peaks touch the sky high / Ancient guardians standing / Silence speaks volumes"`,
-                        analysis: `Example 1:
-Input: "Analyze the trend in this data: 10, 15, 20, 25"
-Output: "The data shows a consistent linear growth pattern with an increase of 5 units per interval."
-
-Example 2:
-Input: "Compare A vs B where A=100 and B=80"
-Output: "A is 25% higher than B, showing a significant advantage."`,
-                        explanation: `Example 1:
-Input: "Explain what an API is"
-Output: "An API (Application Programming Interface) is like a waiter in a restaurant - it takes your request, communicates with the kitchen (server), and brings back what you ordered (data)."
-
-Example 2:
-Input: "Explain recursion"
-Output: "Recursion is when a function calls itself. Think of it like Russian nesting dolls - each doll contains a smaller version of itself until you reach the smallest one."`
-                    };
-
-                    return `Learn from these examples, then answer the new question:
-
-${examples[template] || examples.general}
-
-Now, your turn:
-Input: "${prompt}"
-Output:`;
-                }
-            },
-            'tree-of-thoughts': {
-                name: 'methodTreeOfThoughts',
-                desc: 'methodTreeOfThoughtsDesc',
-                icon: 'GitBranch',
-                format: (prompt, ai, template, t) => {
-                    return `**Problem:** ${prompt}
-
-Please explore this problem using the Tree of Thoughts approach:
-
-**Branch 1 - First Approach:**
-- Initial thought:
-- Evaluation:
-- Score (1-10):
-
-**Branch 2 - Alternative Approach:**
-- Initial thought:
-- Evaluation:
-- Score (1-10):
-
-**Branch 3 - Creative Approach:**
-- Initial thought:
-- Evaluation:
-- Score (1-10):
-
-**Best Path Selection:**
-Based on the evaluations above, select and expand the most promising approach.
-
-**Final Solution:**
-Provide the complete solution following the best path.`;
-                }
-            },
-            'self-consistency': {
-                name: 'methodSelfConsistency',
-                desc: 'methodSelfConsistencyDesc',
-                icon: 'RefreshCw',
-                format: (prompt, ai, template, t) => {
-                    return `**Task:** ${prompt}
-
-Please provide 3 different solutions to this problem, then analyze which one is best:
-
-**Solution 1:**
-[Provide first approach]
-
-**Solution 2:**
-[Provide second approach]
-
-**Solution 3:**
-[Provide third approach]
-
-**Consistency Analysis:**
-- Compare the three solutions
-- Identify common elements
-- Note any contradictions
-
-**Final Answer:**
-Based on the consistency analysis, provide the most reliable solution with confidence level (low/medium/high).`;
-                }
-            },
-            'react': {
-                name: 'methodReAct',
-                desc: 'methodReActDesc',
-                icon: 'Zap',
-                format: (prompt, ai, template, t) => {
-                    return `**Task:** ${prompt}
-
-Use the ReAct (Reasoning + Acting) framework:
-
-**Thought 1:** [What do I need to understand first?]
-**Action 1:** [What should I do?]
-**Observation 1:** [What did I learn?]
-
-**Thought 2:** [Based on observation, what's next?]
-**Action 2:** [Next step to take]
-**Observation 2:** [Results of the action]
-
-**Thought 3:** [Am I close to the solution?]
-**Action 3:** [Final action if needed]
-**Observation 3:** [Final observation]
-
-**Final Answer:** [Complete solution based on the reasoning chain]`;
-                }
-            },
-            'risen': {
-                name: 'methodRISEN',
-                desc: 'methodRISENDesc',
-                icon: 'Target',
-                format: (prompt, ai, template, t) => {
-                    const roles = {
-                        general: "a helpful assistant",
-                        coding: "an expert software developer",
-                        creative: "a creative writer",
-                        analysis: "a data analyst",
-                        explanation: "a patient teacher"
-                    };
-
-                    return `**R - Role:** You are ${roles[template] || roles.general}.
-
-**I - Instructions:** ${prompt}
-
-**S - Steps to follow:**
-1. Understand the requirements completely
-2. Plan your approach
-3. Execute systematically
-4. Review and refine
-
-**E - End goal:** Provide a complete, accurate, and helpful response.
-
-**N - Narrowing (Constraints):**
-- Be concise but thorough
-- Focus on practical solutions
-- Provide examples where helpful
-- Avoid unnecessary complexity
-
-Please proceed with your response following this RISEN framework.`;
-                }
-            },
-            'emotion-prompt': {
-                name: 'methodEmotionPrompt',
-                desc: 'methodEmotionPromptDesc',
-                icon: 'Heart',
-                format: (prompt, ai, template, t) => {
-                    const emotional = ai === 'claude'
-                        ? "This is really important to me, and I appreciate your thoughtful help."
-                        : "This matters a lot to me. Please take your time and give this your best effort.";
-
-                    return `${emotional}
-
-${prompt}
-
-I would be grateful if you could:
-- Take extra care with your response
-- Consider multiple perspectives
-- Provide your most thoughtful analysis
-- Share any insights that could be particularly valuable
-
-Thank you for your dedication to helping me with this.`;
-                }
-            }
-        };
-
-        // ==================== ICONS COMPONENT ====================
+        // ==================== ICON COMPONENT ====================
         const Icon = ({ name, size = 20, className = "" }) => {
-            const iconRef = React.useRef(null);
-
+            const ref = useRef(null);
             useEffect(() => {
-                if (iconRef.current && lucide[name]) {
-                    iconRef.current.innerHTML = '';
+                if (ref.current && lucide[name]) {
+                    ref.current.innerHTML = '';
                     const svg = lucide.createElement(lucide[name]);
                     svg.setAttribute('width', size);
                     svg.setAttribute('height', size);
-                    iconRef.current.appendChild(svg);
+                    ref.current.appendChild(svg);
                 }
             }, [name, size]);
-
-            return <span ref={iconRef} className={`inline-flex items-center justify-center ${className}`}></span>;
+            return <span ref={ref} className={`inline-flex items-center justify-center ${className}`}></span>;
         };
+
+        // ==================== LOCALSTORAGE DATABASE ====================
+        const DB_KEY = 'ai_prompt_formatter_db';
+        const loadDatabase = () => {
+            try {
+                const data = localStorage.getItem(DB_KEY);
+                return data ? JSON.parse(data) : [];
+            } catch { return []; }
+        };
+        const saveDatabase = (prompts) => {
+            localStorage.setItem(DB_KEY, JSON.stringify(prompts));
+        };
+
+        // ==================== TEMPLATE ICONS ====================
+        const templateIcons = { general: 'FileText', coding: 'Code', creative: 'Pencil', analysis: 'Lightbulb', explanation: 'MessageSquare' };
+        const methodIcons = { cot: 'Brain', fewshot: 'Zap', tot: 'TreeDeciduous', selfconsistency: 'RefreshCw', react: 'GitBranch', risen: 'Target', emotion: 'Heart' };
 
         // ==================== MAIN APP ====================
         const App = () => {
-            const [language, setLanguage] = useState(() =>
-                localStorage.getItem('ai-prompting-lang') || 'en'
-            );
-            const [targetAI, setTargetAI] = useState('any');
+            const [lang, setLang] = useState(() => localStorage.getItem('ai-prompt-lang') || 'en');
             const [template, setTemplate] = useState('general');
-            const [method, setMethod] = useState('chain-of-thought');
-            const [prompt, setPrompt] = useState('');
+            const [target, setTarget] = useState('claude');
             const [copied, setCopied] = useState(false);
-            const [savedPrompts, setSavedPrompts] = useState(() => {
-                const saved = localStorage.getItem('ai-prompting-saved');
-                return saved ? JSON.parse(saved) : [];
-            });
-            const [showSaveModal, setShowSaveModal] = useState(false);
+            const [showTemplates, setShowTemplates] = useState(false);
+            const [selectedMethods, setSelectedMethods] = useState([]);
+            const [showMethodInfo, setShowMethodInfo] = useState(null);
+            const [showLangDropdown, setShowLangDropdown] = useState(false);
+            const [showDatabase, setShowDatabase] = useState(false);
+            const [savedPrompts, setSavedPrompts] = useState([]);
+            const [saveModalOpen, setSaveModalOpen] = useState(false);
             const [promptName, setPromptName] = useState('');
-            const [notification, setNotification] = useState(null);
+            const [editingId, setEditingId] = useState(null);
+            const [notification, setNotification] = useState('');
 
-            const t = useCallback((key) => {
-                return translations[language]?.[key] || translations['en'][key] || key;
-            }, [language]);
+            const [fields, setFields] = useState({
+                role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '',
+            });
 
-            // Save prompts to localStorage
+            const t = translations[lang] || translations.en;
+            const selectedLang = languages.find(l => l.code === lang);
+
+            // Load database on mount
             useEffect(() => {
-                localStorage.setItem('ai-prompting-saved', JSON.stringify(savedPrompts));
-            }, [savedPrompts]);
+                setSavedPrompts(loadDatabase());
+            }, []);
 
-            // Save language preference
+            // Save language
             useEffect(() => {
-                localStorage.setItem('ai-prompting-lang', language);
-            }, [language]);
+                localStorage.setItem('ai-prompt-lang', lang);
+            }, [lang]);
+
+            const showNotification = (msg) => {
+                setNotification(msg);
+                setTimeout(() => setNotification(''), 3000);
+            };
+
+            const updateField = (key, value) => setFields(prev => ({ ...prev, [key]: value }));
+            const toggleMethod = (methodId) => setSelectedMethods(prev =>
+                prev.includes(methodId) ? prev.filter(m => m !== methodId) : [...prev, methodId]
+            );
+
+            const selectedTemplate = t.templates[template];
+            const TemplateIcon = templateIcons[template];
 
             // Generate formatted prompt
             const formattedPrompt = useMemo(() => {
-                if (!prompt.trim()) return '';
-                const methodConfig = promptingMethods[method];
-                if (!methodConfig) return prompt;
-                return methodConfig.format(prompt, targetAI, template, t);
-            }, [prompt, method, targetAI, template, t]);
+                const parts = [];
+                const p = t.promptParts;
 
-            // Copy to clipboard
-            const handleCopy = async () => {
-                try {
-                    await navigator.clipboard.writeText(formattedPrompt);
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                } catch (err) {
-                    console.error('Failed to copy:', err);
+                if (fields.role) {
+                    parts.push(target === 'claude' ? `${p.youAre} ${fields.role}.` : target === 'gpt' ? `${p.actAs} ${fields.role}.` : `${p.role}: ${fields.role}`);
+                    parts.push('');
                 }
-            };
-
-            // Clear prompt
-            const handleClear = () => {
-                setPrompt('');
-            };
-
-            // Save prompt
-            const handleSave = () => {
-                if (!prompt.trim() || !promptName.trim()) return;
-
-                const newPrompt = {
-                    id: Date.now(),
-                    name: promptName,
-                    prompt: prompt,
-                    method: method,
-                    targetAI: targetAI,
-                    template: template,
-                    createdAt: new Date().toISOString()
-                };
-
-                setSavedPrompts(prev => [newPrompt, ...prev]);
-                setShowSaveModal(false);
-                setPromptName('');
-                showNotification(t('copied'));
-            };
-
-            // Load saved prompt
-            const handleLoad = (savedPrompt) => {
-                setPrompt(savedPrompt.prompt);
-                setMethod(savedPrompt.method);
-                setTargetAI(savedPrompt.targetAI);
-                setTemplate(savedPrompt.template);
-            };
-
-            // Delete saved prompt
-            const handleDelete = (id) => {
-                setSavedPrompts(prev => prev.filter(p => p.id !== id));
-            };
-
-            // Delete all prompts
-            const handleDeleteAll = () => {
-                if (window.confirm(t('confirmDelete'))) {
-                    setSavedPrompts([]);
+                if (selectedMethods.includes('emotion')) { parts.push(p.emotion); parts.push(''); }
+                if (fields.context) {
+                    parts.push(target === 'claude' ? `<context>\n${fields.context}\n</context>` : `**${p.context}:**\n${fields.context}`);
+                    parts.push('');
                 }
-            };
-
-            // Export prompts
-            const handleExport = () => {
-                const dataStr = JSON.stringify(savedPrompts, null, 2);
-                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
-                const exportFileDefaultName = 'ai-prompts-export.json';
-
-                const linkElement = document.createElement('a');
-                linkElement.setAttribute('href', dataUri);
-                linkElement.setAttribute('download', exportFileDefaultName);
-                linkElement.click();
-            };
-
-            // Import prompts
-            const handleImport = (event) => {
-                const file = event.target.files[0];
-                if (!file) return;
-
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    try {
-                        const imported = JSON.parse(e.target.result);
-                        if (Array.isArray(imported)) {
-                            setSavedPrompts(prev => [...imported, ...prev]);
-                            showNotification(t('importSuccess'));
-                        }
-                    } catch (err) {
-                        showNotification(t('importError'));
+                if (fields.task) {
+                    parts.push(target === 'claude' ? `<task>\n${fields.task}\n</task>` : target === 'gpt' ? `**${p.task}:**\n${fields.task}` : `${p.task}: ${fields.task}`);
+                    parts.push('');
+                }
+                if (selectedMethods.includes('cot')) {
+                    parts.push(target === 'claude' ? `<instructions>\n${p.cotInstructions}\n</instructions>` : `**Instructions:** ${p.cotSimple}`);
+                    parts.push('');
+                }
+                if (selectedMethods.includes('tot')) {
+                    parts.push(target === 'claude' ? `<reasoning_approach>\n${p.totExperts}\n</reasoning_approach>` : `**Multi-path:** ${p.totSimple}`);
+                    parts.push('');
+                }
+                if (selectedMethods.includes('selfconsistency')) {
+                    parts.push(target === 'claude' ? `<verification>\n${p.scVerify}\n</verification>` : `**Self-verification:** ${p.scSimple}`);
+                    parts.push('');
+                }
+                if (selectedMethods.includes('react')) {
+                    parts.push(target === 'claude' ? `<approach>\n${p.reactCycle}\n</approach>` : `**ReAct:** ${p.reactSimple}`);
+                    parts.push('');
+                }
+                if (selectedMethods.includes('risen') && fields.constraints) {
+                    const steps = fields.constraints.split('\n').map((s, i) => `${i + 1}. ${s}`).join('\n');
+                    parts.push(target === 'claude' ? `<steps>\n${p.stepsFollow}:\n${steps}\n</steps>` : `**${p.stepsFollow}:**\n${steps}`);
+                    parts.push('');
+                } else if (fields.constraints) {
+                    parts.push(target === 'claude' ? `<constraints>\n${fields.constraints}\n</constraints>` : `**${p.constraints}:**\n${fields.constraints}`);
+                    parts.push('');
+                }
+                if (fields.examples) {
+                    if (selectedMethods.includes('fewshot')) {
+                        parts.push(target === 'claude' ? `<examples>\n${p.examplesIntro}\n\n${fields.examples}\n\n${p.examplesFollow}\n</examples>` : `**Few-shot:**\n${p.fewshotIntro}\n\n${fields.examples}\n\n${p.fewshotFollow}`);
+                    } else {
+                        parts.push(target === 'claude' ? `<examples>\n${fields.examples}\n</examples>` : `**Examples:**\n${fields.examples}`);
                     }
+                    parts.push('');
+                }
+                if (fields.outputFormat) {
+                    if (selectedMethods.includes('risen')) {
+                        parts.push(target === 'claude' ? `<expectations>\n${fields.outputFormat}\n</expectations>` : `**${p.expectations}:**\n${fields.outputFormat}`);
+                    } else {
+                        parts.push(target === 'claude' ? `<output_format>\n${fields.outputFormat}\n</output_format>` : `**${p.outputFormat}:**\n${fields.outputFormat}`);
+                    }
+                }
+                return parts.join('\n').trim();
+            }, [fields, target, selectedMethods, t]);
+
+            const copyToClipboard = async () => {
+                await navigator.clipboard.writeText(formattedPrompt);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            };
+
+            // Database functions
+            const savePrompt = () => {
+                if (!promptName.trim()) return;
+                const newPrompt = {
+                    id: editingId || Date.now().toString(),
+                    name: promptName,
+                    template, target, fields, selectedMethods, lang,
+                    createdAt: editingId ? savedPrompts.find(p => p.id === editingId)?.createdAt : new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                };
+                let updated;
+                if (editingId) {
+                    updated = savedPrompts.map(p => p.id === editingId ? newPrompt : p);
+                } else {
+                    updated = [...savedPrompts, newPrompt];
+                }
+                setSavedPrompts(updated);
+                saveDatabase(updated);
+                setSaveModalOpen(false);
+                setPromptName('');
+                setEditingId(null);
+                showNotification(`${updated.length} ${t.database.savedCount}`);
+            };
+
+            const loadPrompt = (prompt) => {
+                setTemplate(prompt.template || 'general');
+                setTarget(prompt.target || 'claude');
+                setFields(prompt.fields || { role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '' });
+                setSelectedMethods(prompt.selectedMethods || []);
+                if (prompt.lang) setLang(prompt.lang);
+                setShowDatabase(false);
+            };
+
+            const deletePrompt = (id) => {
+                const updated = savedPrompts.filter(p => p.id !== id);
+                setSavedPrompts(updated);
+                saveDatabase(updated);
+            };
+
+            const duplicatePrompt = (prompt) => {
+                const newPrompt = { ...prompt, id: Date.now().toString(), name: `${prompt.name} (copy)`, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
+                const updated = [...savedPrompts, newPrompt];
+                setSavedPrompts(updated);
+                saveDatabase(updated);
+            };
+
+            const editPrompt = (prompt) => {
+                loadPrompt(prompt);
+                setEditingId(prompt.id);
+                setPromptName(prompt.name);
+                setSaveModalOpen(true);
+                setShowDatabase(false);
+            };
+
+            const exportDatabase = () => {
+                const dataStr = JSON.stringify(savedPrompts, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `prompts_backup_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                showNotification(`${savedPrompts.length} ${t.database.exportedCount}`);
+            };
+
+            const importDatabase = (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const imported = JSON.parse(event.target?.result);
+                        if (Array.isArray(imported)) {
+                            const merged = [...savedPrompts, ...imported.map(p => ({ ...p, id: Date.now().toString() + Math.random() }))];
+                            setSavedPrompts(merged);
+                            saveDatabase(merged);
+                            showNotification(t.database.imported);
+                        }
+                    } catch { showNotification('Import failed'); }
                 };
                 reader.readAsText(file);
-                event.target.value = '';
+                e.target.value = '';
             };
 
-            // Show notification
-            const showNotification = (message) => {
-                setNotification(message);
-                setTimeout(() => setNotification(null), 3000);
+            const resetForm = () => {
+                setFields({ role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '' });
+                setSelectedMethods([]);
+                setEditingId(null);
             };
 
-            const languages = [
-                { code: 'en', name: 'English', flag: '🇬🇧' },
-                { code: 'cs', name: 'Čeština', flag: '🇨🇿' },
-                { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
-                { code: 'es', name: 'Español', flag: '🇪🇸' },
-                { code: 'fr', name: 'Français', flag: '🇫🇷' }
-            ];
-
-            const templates = ['general', 'coding', 'creative', 'analysis', 'explanation'];
-            const aiOptions = ['claude', 'chatgpt', 'any'];
+            const aiTargets = [{ id: 'claude', name: 'Claude' }, { id: 'gpt', name: 'ChatGPT' }, { id: 'general', name: 'Any AI' }];
 
             return (
-                <div className="min-h-screen p-4 md:p-8">
+                <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-6">
                     {/* Notification */}
                     {notification && (
-                        <div className="fixed top-4 right-4 z-50 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg fade-in">
+                        <div className="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-pulse">
                             {notification}
                         </div>
                     )}
 
-                    {/* Header */}
-                    <header className="max-w-7xl mx-auto mb-8">
-                        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                            <div className="flex items-center gap-4">
-                                <a
-                                    href="../../index.html"
-                                    className="glass px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 transition-all flex items-center gap-2"
-                                >
-                                    <Icon name="ArrowLeft" size={18} />
-                                    <span className="hidden sm:inline">{t('backToHub')}</span>
-                                </a>
-                                <div>
-                                    <h1 className="text-3xl md:text-4xl font-bold gradient-text">{t('title')}</h1>
-                                    <p className="text-gray-400 mt-1">{t('subtitle')}</p>
-                                </div>
-                            </div>
-
-                            {/* Language Selector */}
-                            <div className="flex items-center gap-2">
-                                <Icon name="Globe" size={18} className="text-gray-400" />
-                                <select
-                                    value={language}
-                                    onChange={(e) => setLanguage(e.target.value)}
-                                    className="glass bg-transparent text-white px-4 py-2 rounded-lg cursor-pointer"
-                                >
-                                    {languages.map(lang => (
-                                        <option key={lang.code} value={lang.code} className="bg-dark-900">
-                                            {lang.flag} {lang.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                    </header>
-
-                    {/* Main Content */}
-                    <main className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        {/* Left Panel - Settings */}
-                        <div className="lg:col-span-1 space-y-6">
-                            {/* Target AI */}
-                            <div className="glass rounded-xl p-6">
-                                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                                    <Icon name="Bot" size={20} />
-                                    {t('targetAI')}
-                                </h3>
-                                <div className="grid grid-cols-3 gap-2">
-                                    {aiOptions.map(ai => (
-                                        <button
-                                            key={ai}
-                                            onClick={() => setTargetAI(ai)}
-                                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                                                targetAI === ai
-                                                    ? 'btn-gradient text-white'
-                                                    : 'bg-white/5 text-gray-300 hover:bg-white/10'
-                                            }`}
-                                        >
-                                            {t(ai)}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Template */}
-                            <div className="glass rounded-xl p-6">
-                                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                                    <Icon name="Layout" size={20} />
-                                    {t('template')}
-                                </h3>
-                                <div className="grid grid-cols-2 gap-2">
-                                    {templates.map(tmpl => (
-                                        <button
-                                            key={tmpl}
-                                            onClick={() => setTemplate(tmpl)}
-                                            className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                                                template === tmpl
-                                                    ? 'btn-gradient text-white'
-                                                    : 'bg-white/5 text-gray-300 hover:bg-white/10'
-                                            }`}
-                                        >
-                                            {t(tmpl)}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            {/* Method */}
-                            <div className="glass rounded-xl p-6">
-                                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                                    <Icon name="Sparkles" size={20} />
-                                    {t('method')}
-                                </h3>
-                                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                                    {Object.entries(promptingMethods).map(([key, config]) => (
-                                        <button
-                                            key={key}
-                                            onClick={() => setMethod(key)}
-                                            className={`method-card w-full p-3 rounded-lg text-left transition-all border ${
-                                                method === key
-                                                    ? 'selected border-primary-500'
-                                                    : 'border-white/10 hover:border-white/20'
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <Icon name={config.icon} size={16} className="text-primary-400" />
-                                                <span className="font-medium text-white">{t(config.name)}</span>
-                                            </div>
-                                            <p className="text-xs text-gray-400">{t(config.desc)}</p>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Center Panel - Prompt Editor */}
-                        <div className="lg:col-span-2 space-y-6">
-                            {/* Input */}
-                            <div className="glass rounded-xl p-6">
-                                <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                                    <Icon name="Edit3" size={20} />
-                                    {t('yourPrompt')}
-                                </h3>
-                                <textarea
-                                    value={prompt}
-                                    onChange={(e) => setPrompt(e.target.value)}
-                                    placeholder={t('promptPlaceholder')}
-                                    className="w-full h-32 bg-white/5 border border-white/10 rounded-lg p-4 text-white placeholder-gray-500 resize-none"
-                                />
-                                <div className="flex gap-2 mt-4">
-                                    <button
-                                        onClick={handleClear}
-                                        className="px-4 py-2 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 transition-all flex items-center gap-2"
-                                    >
-                                        <Icon name="Trash2" size={16} />
-                                        {t('clear')}
-                                    </button>
-                                    <button
-                                        onClick={() => setShowSaveModal(true)}
-                                        disabled={!prompt.trim()}
-                                        className="px-4 py-2 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 transition-all flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    >
-                                        <Icon name="Save" size={16} />
-                                        {t('save')}
-                                    </button>
-                                </div>
-                            </div>
-
-                            {/* Output */}
-                            <div className="glass rounded-xl p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                                        <Icon name="FileText" size={20} />
-                                        {t('formattedPrompt')}
-                                    </h3>
-                                    <button
-                                        onClick={handleCopy}
-                                        disabled={!formattedPrompt}
-                                        className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${
-                                            copied
-                                                ? 'bg-green-500 text-white'
-                                                : 'btn-gradient text-white hover:opacity-90'
-                                        } disabled:opacity-50 disabled:cursor-not-allowed`}
-                                    >
-                                        <Icon name={copied ? "Check" : "Copy"} size={16} />
-                                        {copied ? t('copied') : t('copy')}
-                                    </button>
-                                </div>
-                                <div className="bg-white/5 border border-white/10 rounded-lg p-4 min-h-[200px] max-h-[400px] overflow-y-auto">
-                                    <pre className="text-gray-300 whitespace-pre-wrap font-mono text-sm">
-                                        {formattedPrompt || <span className="text-gray-500 italic">{t('promptPlaceholder')}</span>}
-                                    </pre>
-                                </div>
-                            </div>
-
-                            {/* Saved Prompts */}
-                            <div className="glass rounded-xl p-6">
-                                <div className="flex items-center justify-between mb-4">
-                                    <h3 className="text-lg font-semibold text-white flex items-center gap-2">
-                                        <Icon name="Bookmark" size={20} />
-                                        {t('savedPrompts')}
-                                    </h3>
-                                    <div className="flex gap-2">
-                                        <label className="px-3 py-1.5 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 transition-all flex items-center gap-2 cursor-pointer text-sm">
-                                            <Icon name="Upload" size={14} />
-                                            {t('import')}
-                                            <input type="file" accept=".json" onChange={handleImport} className="hidden" />
-                                        </label>
-                                        <button
-                                            onClick={handleExport}
-                                            disabled={savedPrompts.length === 0}
-                                            className="px-3 py-1.5 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 transition-all flex items-center gap-2 disabled:opacity-50 text-sm"
-                                        >
-                                            <Icon name="Download" size={14} />
-                                            {t('export')}
-                                        </button>
-                                        {savedPrompts.length > 0 && (
-                                            <button
-                                                onClick={handleDeleteAll}
-                                                className="px-3 py-1.5 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-all flex items-center gap-2 text-sm"
-                                            >
-                                                <Icon name="Trash2" size={14} />
-                                                {t('deleteAll')}
-                                            </button>
-                                        )}
-                                    </div>
-                                </div>
-
-                                {savedPrompts.length === 0 ? (
-                                    <div className="text-center py-8 text-gray-500">
-                                        <Icon name="Inbox" size={48} className="mx-auto mb-2 opacity-50" />
-                                        <p>{t('noSavedPrompts')}</p>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                                        {savedPrompts.map(saved => (
-                                            <div key={saved.id} className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center justify-between gap-4">
-                                                <div className="flex-1 min-w-0">
-                                                    <h4 className="font-medium text-white truncate">{saved.name}</h4>
-                                                    <p className="text-xs text-gray-400 truncate">{saved.prompt}</p>
-                                                </div>
-                                                <div className="flex gap-1 flex-shrink-0">
-                                                    <button
-                                                        onClick={() => handleLoad(saved)}
-                                                        className="p-2 rounded-lg bg-primary-500/20 text-primary-400 hover:bg-primary-500/30 transition-all"
-                                                        title={t('load')}
-                                                    >
-                                                        <Icon name="Upload" size={14} />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDelete(saved.id)}
-                                                        className="p-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-all"
-                                                        title={t('delete')}
-                                                    >
-                                                        <Icon name="Trash2" size={14} />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    </main>
-
                     {/* Save Modal */}
-                    {showSaveModal && (
-                        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                            <div className="glass rounded-xl p-6 w-full max-w-md fade-in">
-                                <h3 className="text-xl font-semibold text-white mb-4">{t('savePrompt')}</h3>
+                    {saveModalOpen && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSaveModalOpen(false)}>
+                            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-96" onClick={e => e.stopPropagation()}>
+                                <h3 className="text-lg font-bold text-white mb-4">{t.database.saveAs}</h3>
                                 <input
                                     type="text"
                                     value={promptName}
-                                    onChange={(e) => setPromptName(e.target.value)}
-                                    placeholder={t('enterName')}
-                                    className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder-gray-500 mb-4"
+                                    onChange={e => setPromptName(e.target.value)}
+                                    placeholder={t.database.promptName}
+                                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white mb-4 focus:outline-none focus:ring-2 focus:ring-amber-500"
                                     autoFocus
                                 />
-                                <div className="flex gap-2 justify-end">
-                                    <button
-                                        onClick={() => setShowSaveModal(false)}
-                                        className="px-4 py-2 rounded-lg bg-white/5 text-gray-300 hover:bg-white/10 transition-all"
-                                    >
-                                        {t('cancel')}
+                                <div className="flex gap-2">
+                                    <button onClick={() => setSaveModalOpen(false)} className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600">
+                                        Cancel
                                     </button>
-                                    <button
-                                        onClick={handleSave}
-                                        disabled={!promptName.trim()}
-                                        className="px-4 py-2 rounded-lg btn-gradient text-white disabled:opacity-50"
-                                    >
-                                        {t('save')}
+                                    <button onClick={savePrompt} className="flex-1 px-4 py-2 bg-amber-500 text-slate-900 rounded-lg hover:bg-amber-400 font-medium">
+                                        {t.database.save}
                                     </button>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Footer */}
-                    <footer className="max-w-7xl mx-auto mt-12 text-center text-gray-500 text-sm">
-                        <p>AI Prompting - Part of AdHUB</p>
-                    </footer>
+                    {/* Database Panel */}
+                    {showDatabase && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowDatabase(false)}>
+                            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-[500px] max-h-[80vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Icon name="Database" size={20} className="text-amber-400" />
+                                        {t.database.title} ({savedPrompts.length})
+                                    </h3>
+                                    <button onClick={() => setShowDatabase(false)} className="text-slate-400 hover:text-white">
+                                        <Icon name="X" size={20} />
+                                    </button>
+                                </div>
+
+                                {/* Import/Export */}
+                                <div className="flex gap-2 mb-4">
+                                    <button onClick={exportDatabase} disabled={savedPrompts.length === 0} className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 disabled:opacity-50 text-sm">
+                                        <Icon name="Download" size={16} /> {t.database.export}
+                                    </button>
+                                    <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 cursor-pointer text-sm">
+                                        <Icon name="Upload" size={16} /> {t.database.import}
+                                        <input type="file" accept=".json" onChange={importDatabase} className="hidden" />
+                                    </label>
+                                </div>
+
+                                {/* Prompts List */}
+                                <div className="flex-1 overflow-y-auto space-y-2">
+                                    {savedPrompts.length === 0 ? (
+                                        <div className="text-center text-slate-500 py-8">{t.database.noPrompts}</div>
+                                    ) : (
+                                        savedPrompts.map(prompt => (
+                                            <div key={prompt.id} className="bg-slate-700/50 p-3 rounded-lg border border-slate-600">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <div className="text-white font-medium">{prompt.name}</div>
+                                                        <div className="text-xs text-slate-400">{new Date(prompt.updatedAt).toLocaleDateString()}</div>
+                                                    </div>
+                                                    <div className="flex gap-1">
+                                                        <button onClick={() => loadPrompt(prompt)} className="p-1.5 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30" title={t.database.load}>
+                                                            <Icon name="FolderOpen" size={14} />
+                                                        </button>
+                                                        <button onClick={() => editPrompt(prompt)} className="p-1.5 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30" title={t.database.edit}>
+                                                            <Icon name="Edit3" size={14} />
+                                                        </button>
+                                                        <button onClick={() => duplicatePrompt(prompt)} className="p-1.5 bg-amber-500/20 text-amber-400 rounded hover:bg-amber-500/30" title={t.database.duplicate}>
+                                                            <Icon name="Copy" size={14} />
+                                                        </button>
+                                                        <button onClick={() => deletePrompt(prompt.id)} className="p-1.5 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30" title={t.database.delete}>
+                                                            <Icon name="Trash2" size={14} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="text-xs text-slate-400 truncate">{prompt.fields?.task?.substring(0, 80)}...</div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="max-w-7xl mx-auto">
+                        {/* Header */}
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+                            <div className="flex items-center gap-4">
+                                <a href="../../index.html" className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors">
+                                    <Icon name="ArrowLeft" size={18} />
+                                    <span className="hidden sm:inline">{t.backToHub}</span>
+                                </a>
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <Icon name="Sparkles" size={24} className="text-amber-400" />
+                                        <h1 className="text-2xl font-bold text-white">{t.title}</h1>
+                                    </div>
+                                    <p className="text-slate-400 text-sm">{t.subtitle}</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                {/* Database Button */}
+                                <button onClick={() => setShowDatabase(true)} className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700">
+                                    <Icon name="Database" size={16} className="text-amber-400" />
+                                    <span className="text-sm">{savedPrompts.length}</span>
+                                </button>
+
+                                {/* Language Selector */}
+                                <div className="relative">
+                                    <button onClick={() => setShowLangDropdown(!showLangDropdown)} className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700">
+                                        <Icon name="Globe" size={16} className="text-slate-400" />
+                                        <span className="text-lg">{selectedLang?.flag}</span>
+                                        <Icon name="ChevronDown" size={14} className={`transition-transform ${showLangDropdown ? 'rotate-180' : ''}`} />
+                                    </button>
+                                    {showLangDropdown && (
+                                        <div className="absolute top-full right-0 mt-1 w-40 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-30">
+                                            {languages.map(l => (
+                                                <button key={l.code} onClick={() => { setLang(l.code); setShowLangDropdown(false); }}
+                                                    className={`w-full flex items-center gap-2 px-3 py-2 hover:bg-slate-700 text-left ${lang === l.code ? 'bg-slate-700' : ''}`}>
+                                                    <span className="text-lg">{l.flag}</span>
+                                                    <span className="text-sm text-white">{l.name}</span>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid lg:grid-cols-5 gap-6">
+                            {/* Input Panel */}
+                            <div className="lg:col-span-2 space-y-4">
+                                {/* Template & Target */}
+                                <div className="flex gap-3">
+                                    <div className="relative flex-1">
+                                        <button onClick={() => setShowTemplates(!showTemplates)} className="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white">
+                                            <div className="flex items-center gap-2">
+                                                <Icon name={TemplateIcon} size={16} className="text-amber-400" />
+                                                <span className="text-sm">{selectedTemplate?.name}</span>
+                                            </div>
+                                            <Icon name="ChevronDown" size={16} className={`transition-transform ${showTemplates ? 'rotate-180' : ''}`} />
+                                        </button>
+                                        {showTemplates && (
+                                            <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-lg overflow-hidden z-10 shadow-xl">
+                                                {Object.entries(t.templates).map(([key, val]) => (
+                                                    <button key={key} onClick={() => { setTemplate(key); setShowTemplates(false); }}
+                                                        className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-700 ${template === key ? 'bg-slate-700' : ''}`}>
+                                                        <Icon name={templateIcons[key]} size={16} className="text-amber-400" />
+                                                        <div className="text-left">
+                                                            <div className="text-white text-sm">{val.name}</div>
+                                                            <div className="text-slate-400 text-xs">{val.desc}</div>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="flex bg-slate-800 border border-slate-700 rounded-lg p-1">
+                                        {aiTargets.map(ai => (
+                                            <button key={ai.id} onClick={() => setTarget(ai.id)}
+                                                className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${target === ai.id ? 'bg-amber-500 text-slate-900' : 'text-slate-400 hover:text-white'}`}>
+                                                {ai.name}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Input Fields */}
+                                <div className="space-y-3">
+                                    {[
+                                        { key: 'role', field: t.fields.role },
+                                        { key: 'task', field: t.fields.task, required: true },
+                                        { key: 'context', field: t.fields.context },
+                                        { key: 'constraints', field: selectedMethods.includes('risen') ? t.fields.steps : t.fields.constraints },
+                                        { key: 'outputFormat', field: selectedMethods.includes('risen') ? t.fields.expectations : t.fields.outputFormat },
+                                        { key: 'examples', field: selectedMethods.includes('fewshot') ? t.fields.fewshot : t.fields.examples },
+                                    ].map(({ key, field, required }) => (
+                                        <div key={key}>
+                                            <label className="block text-sm font-medium text-slate-300 mb-1.5">
+                                                {field.label} {required && <span className="text-amber-400">{t.required}</span>}
+                                            </label>
+                                            {key === 'role' ? (
+                                                <input type="text" value={fields[key]} onChange={e => updateField(key, e.target.value)} placeholder={field.placeholder}
+                                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm" />
+                                            ) : (
+                                                <textarea value={fields[key]} onChange={e => updateField(key, e.target.value)} placeholder={field.placeholder} rows={2}
+                                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-none text-sm" />
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="flex gap-2">
+                                    <button onClick={resetForm} className="flex items-center gap-2 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 text-sm">
+                                        <Icon name="Plus" size={16} /> {t.newPrompt}
+                                    </button>
+                                    <button onClick={() => { setEditingId(null); setPromptName(''); setSaveModalOpen(true); }} disabled={!formattedPrompt}
+                                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 disabled:opacity-50 text-sm font-medium">
+                                        <Icon name="Save" size={16} /> {t.database.save}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Methods Panel */}
+                            <div className="lg:col-span-1">
+                                <h3 className="text-sm font-medium text-slate-300 mb-3">{t.methods.title}</h3>
+                                <div className="space-y-2">
+                                    {Object.entries(t.methods).filter(([k]) => !['title', 'active'].includes(k)).map(([key, method]) => (
+                                        <div key={key} className="relative">
+                                            <button onClick={() => toggleMethod(key)} onMouseEnter={() => setShowMethodInfo(key)} onMouseLeave={() => setShowMethodInfo(null)}
+                                                className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-left ${
+                                                    selectedMethods.includes(key) ? 'bg-amber-500/20 border-amber-500/50 text-amber-300' : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-600'
+                                                }`}>
+                                                <Icon name={methodIcons[key]} size={16} className={`flex-shrink-0 ${selectedMethods.includes(key) ? 'text-amber-400' : 'text-slate-500'}`} />
+                                                <div className="min-w-0">
+                                                    <div className="text-xs font-medium truncate">{method.name}</div>
+                                                    <div className="text-xs text-slate-500 truncate">{method.citation}</div>
+                                                </div>
+                                            </button>
+                                            {showMethodInfo === key && (
+                                                <div className="absolute left-full ml-2 top-0 w-48 p-3 bg-slate-800 border border-slate-600 rounded-lg shadow-xl z-20">
+                                                    <div className="text-xs font-medium text-white mb-1">{method.name}</div>
+                                                    <div className="text-xs text-amber-400">{method.tip}</div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                                {selectedMethods.length > 0 && (
+                                    <div className="mt-3 p-2 bg-slate-800/50 rounded-lg border border-slate-700">
+                                        <div className="text-xs text-slate-400"><span className="text-amber-400">{selectedMethods.length}</span> {t.methods.active}</div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Preview Panel */}
+                            <div className="lg:col-span-2 flex flex-col">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h2 className="text-sm font-medium text-slate-300">{t.preview}</h2>
+                                    <button onClick={copyToClipboard} disabled={!formattedPrompt}
+                                        className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${formattedPrompt ? 'bg-amber-500 text-slate-900 hover:bg-amber-400' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}>
+                                        <Icon name={copied ? "Check" : "Copy"} size={16} />
+                                        {copied ? t.copied : t.copy}
+                                    </button>
+                                </div>
+                                <div className="flex-1 bg-slate-800/50 border border-slate-700 rounded-lg p-4 overflow-auto min-h-[400px]">
+                                    {formattedPrompt ? (
+                                        <pre className="text-slate-200 text-sm whitespace-pre-wrap font-mono leading-relaxed">{formattedPrompt}</pre>
+                                    ) : (
+                                        <div className="h-full flex items-center justify-center text-slate-500 text-sm text-center px-4">{t.placeholder}</div>
+                                    )}
+                                </div>
+                                {formattedPrompt && (
+                                    <div className="mt-3 flex justify-between text-xs text-slate-500">
+                                        <span>{t.optimizedFor} {aiTargets.find(a => a.id === target)?.name}</span>
+                                        <span>{formattedPrompt.length} {t.chars}</span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="mt-6 p-4 bg-slate-800/30 border border-slate-700/50 rounded-lg">
+                            <div className="text-xs text-slate-500 text-center">{t.footer}</div>
+                        </div>
+                    </div>
                 </div>
             );
         };
