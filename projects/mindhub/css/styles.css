@@ -1,0 +1,265 @@
+/* Blitzfit - Visual System & Design Tokens */
+
+:root {
+    /* Primary color palette */
+    --bf-primary-500: #2563EB;
+    --bf-primary-600: #1D4ED8;
+    --bf-primary-700: #1E40AF;
+    --bf-accent-500: #06B6D4;
+    --bf-accent-600: #0891B2;
+    --bf-success-500: #16A34A;
+    --bf-warning-500: #F59E0B;
+    --bf-danger-500: #DC2626;
+
+    /* Light theme - Neutral / UI surfaces */
+    --bf-bg: #FFFFFF;
+    --bf-surface-100: #F8FAFC;
+    --bf-surface-200: #F1F5F9;
+    --bf-surface-300: #E2E8F0;
+    --bf-text-900: #0F172A;
+    --bf-text-700: #334155;
+    --bf-text-500: #64748B;
+    --bf-text-300: #CBD5E1;
+
+    /* Spacing & radii */
+    --bf-radius-sm: 6px;
+    --bf-radius-md: 12px;
+    --bf-radius-lg: 24px;
+    --bf-spacing-xs: 4px;
+    --bf-spacing-sm: 8px;
+    --bf-spacing-md: 16px;
+    --bf-spacing-lg: 24px;
+    --bf-spacing-xl: 32px;
+
+    /* Typography */
+    --bf-font-family-sans: Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --bf-font-size-xs: 12px;
+    --bf-font-size-sm: 14px;
+    --bf-font-size-base: 16px;
+    --bf-font-size-lg: 18px;
+    --bf-font-size-xl: 20px;
+    --bf-font-size-2xl: 24px;
+    --bf-font-size-3xl: 30px;
+
+    /* Shadows */
+    --bf-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --bf-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --bf-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    --bf-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+
+    /* Transitions */
+    --bf-transition-fast: 150ms ease;
+    --bf-transition-base: 200ms ease;
+    --bf-transition-slow: 300ms ease;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+    --bf-bg: #0B1220;
+    --bf-surface-100: #0F1724;
+    --bf-surface-200: #111827;
+    --bf-surface-300: #1F2937;
+    --bf-text-100: #E6EEF8;
+    --bf-text-300: #94A3B8;
+    --bf-text-500: #64748B;
+    --bf-text-700: #475569;
+}
+
+/* High contrast theme */
+[data-theme="high-contrast"] {
+    --bf-bg: #FFFFFF;
+    --bf-surface-100: #F5F5F5;
+    --bf-surface-200: #E0E0E0;
+    --bf-text-900: #000000;
+    --bf-text-700: #333333;
+    --bf-primary-500: #0066CC;
+    --bf-danger-500: #CC0000;
+}
+
+/* Base styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--bf-font-family-sans);
+    font-size: var(--bf-font-size-base);
+    background-color: var(--bf-bg);
+    color: var(--bf-text-900);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--bf-text-900);
+}
+
+h1 { font-size: var(--bf-font-size-3xl); }
+h2 { font-size: var(--bf-font-size-2xl); }
+h3 { font-size: var(--bf-font-size-xl); }
+h4 { font-size: var(--bf-font-size-lg); }
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--bf-spacing-sm);
+    padding: var(--bf-spacing-sm) var(--bf-spacing-md);
+    border-radius: var(--bf-radius-md);
+    font-size: var(--bf-font-size-base);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--bf-transition-base);
+    border: none;
+    outline: none;
+}
+
+.btn-primary {
+    background-color: var(--bf-primary-500);
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: var(--bf-primary-600);
+}
+
+.btn-secondary {
+    background-color: var(--bf-surface-100);
+    color: var(--bf-text-900);
+    border: 1px solid var(--bf-surface-200);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: var(--bf-surface-200);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-icon {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border-radius: var(--bf-radius-md);
+    background-color: transparent;
+}
+
+.btn-icon:hover {
+    background-color: var(--bf-surface-100);
+}
+
+/* Inputs */
+.input {
+    width: 100%;
+    padding: var(--bf-spacing-sm) var(--bf-spacing-md);
+    border: 1px solid var(--bf-surface-200);
+    border-radius: var(--bf-radius-md);
+    background-color: var(--bf-surface-100);
+    color: var(--bf-text-900);
+    font-size: var(--bf-font-size-base);
+    font-family: inherit;
+    outline: none;
+    transition: border-color var(--bf-transition-base);
+}
+
+.input:focus {
+    border-color: var(--bf-primary-500);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+/* Cards */
+.card {
+    background-color: var(--bf-surface-100);
+    border: 1px solid var(--bf-surface-200);
+    border-radius: var(--bf-radius-md);
+    padding: var(--bf-spacing-md);
+    transition: all var(--bf-transition-base);
+}
+
+.card:hover {
+    border-color: var(--bf-primary-500);
+    box-shadow: var(--bf-shadow-md);
+}
+
+/* Checkbox */
+.checkbox {
+    width: 44px;
+    height: 44px;
+    cursor: pointer;
+    accent-color: var(--bf-primary-500);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bf-surface-100);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--bf-surface-300);
+    border-radius: var(--bf-radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--bf-text-500);
+}
+
+/* Focus visible */
+*:focus-visible {
+    outline: 2px solid var(--bf-primary-500);
+    outline-offset: 2px;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn var(--bf-transition-base);
+}
+
+/* Utility classes */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+
+
+
+
+
