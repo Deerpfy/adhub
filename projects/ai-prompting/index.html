@@ -523,51 +523,12 @@
             'urchin', 'vine', 'willow', 'yarrow', 'zinnia', 'acorn', 'birch', 'cedar'
         ];
 
-        // Encode bytes to Base58
-        const encodeBase58 = (bytes) => {
-            const digits = [0];
-            for (const byte of bytes) {
-                let carry = byte;
-                for (let i = 0; i < digits.length; i++) {
-                    carry += digits[i] << 8;
-                    digits[i] = carry % 58;
-                    carry = Math.floor(carry / 58);
-                }
-                while (carry > 0) {
-                    digits.push(carry % 58);
-                    carry = Math.floor(carry / 58);
-                }
-            }
-            let result = '';
-            for (let i = digits.length - 1; i >= 0; i--) {
-                result += BASE58_ALPHABET[digits[i]];
-            }
-            return result;
-        };
-
-        // Decode Base58 to bytes
-        const decodeBase58 = (str) => {
-            const bytes = [0];
-            for (const char of str) {
-                const value = BASE58_ALPHABET.indexOf(char);
-                if (value === -1) return null;
-                let carry = value;
-                for (let i = 0; i < bytes.length; i++) {
-                    carry += bytes[i] * 58;
-                    bytes[i] = carry & 0xff;
-                    carry >>= 8;
-                }
-                while (carry > 0) {
-                    bytes.push(carry & 0xff);
-                    carry >>= 8;
-                }
-            }
-            return new Uint8Array(bytes.reverse());
-        };
-
-        // Generate share code from prompt data
+        // Generate share code from prompt data (using LZ-String URI encoding)
         const generateShareCode = (promptData) => {
             try {
+                console.log('[SHARE] Starting code generation...');
+                console.log('[SHARE] Input data:', promptData);
+
                 // Create minimal data structure
                 const minimal = {
                     t: ['general', 'coding', 'creative', 'analysis', 'explanation'].indexOf(promptData.template),
@@ -577,16 +538,19 @@
                     f: promptData.fields
                 };
 
-                // Compress with LZ-String
+                console.log('[SHARE] Minimal structure:', minimal);
+
+                // Compress with LZ-String using URI-safe encoding
                 const json = JSON.stringify(minimal);
-                const compressed = LZString.compressToUint8Array(json);
+                console.log('[SHARE] JSON length:', json.length);
 
-                // Encode to Base58
-                const base58Code = encodeBase58(compressed);
+                const compressed = LZString.compressToEncodedURIComponent(json);
+                console.log('[SHARE] Compressed code:', compressed);
+                console.log('[SHARE] Compressed length:', compressed.length);
 
-                return base58Code;
+                return compressed;
             } catch (e) {
-                console.error('Share code generation failed:', e);
+                console.error('[SHARE] Generation failed:', e);
                 return null;
             }
         };
@@ -594,18 +558,25 @@
         // Decode share code to prompt data
         const decodeShareCode = (code) => {
             try {
-                // Clean the code
+                console.log('[IMPORT] Starting decode...');
+                console.log('[IMPORT] Input code:', code);
+                console.log('[IMPORT] Code length:', code.length);
+
+                // Clean the code (remove whitespace)
                 const cleanCode = code.trim().replace(/\s+/g, '');
+                console.log('[IMPORT] Clean code:', cleanCode);
 
-                // Try Base58 decode
-                const bytes = decodeBase58(cleanCode);
-                if (!bytes) return null;
+                // Decompress using LZ-String URI decoding
+                const json = LZString.decompressFromEncodedURIComponent(cleanCode);
+                console.log('[IMPORT] Decompressed JSON:', json);
 
-                // Decompress
-                const json = LZString.decompressFromUint8Array(bytes);
-                if (!json) return null;
+                if (!json) {
+                    console.error('[IMPORT] Decompression returned null/empty');
+                    return null;
+                }
 
                 const minimal = JSON.parse(json);
+                console.log('[IMPORT] Parsed minimal:', minimal);
 
                 // Reconstruct full data
                 const templates = ['general', 'coding', 'creative', 'analysis', 'explanation'];
@@ -613,43 +584,46 @@
                 const methods = ['cot', 'fewshot', 'tot', 'selfconsistency', 'react', 'risen', 'emotion'];
                 const langs = ['en', 'cs', 'de', 'es', 'fr'];
 
-                return {
+                const result = {
                     template: templates[minimal.t] || 'general',
                     target: targets[minimal.a] || 'claude',
                     selectedMethods: (minimal.m || []).map(i => methods[i]).filter(Boolean),
                     lang: langs[minimal.l] || 'en',
                     fields: minimal.f || { role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '' }
                 };
+
+                console.log('[IMPORT] Final result:', result);
+                return result;
             } catch (e) {
-                console.error('Share code decode failed:', e);
+                console.error('[IMPORT] Decode failed:', e);
+                console.error('[IMPORT] Error stack:', e.stack);
                 return null;
             }
         };
 
-        // Generate mnemonic (word-based) code
+        // Generate mnemonic (word-based) code from share code
         const generateMnemonicCode = (promptData) => {
             try {
-                const base58 = generateShareCode(promptData);
-                if (!base58) return null;
+                const code = generateShareCode(promptData);
+                if (!code) return null;
 
-                // Convert Base58 to words (every 2 chars = 1 word index approximately)
+                console.log('[MNEMONIC] Generating words for code:', code);
+
+                // Convert code to words (every 2-3 chars = 1 word)
                 const words = [];
-                for (let i = 0; i < base58.length; i += 2) {
-                    const chunk = base58.slice(i, i + 2);
+                for (let i = 0; i < code.length; i += 3) {
+                    const chunk = code.slice(i, i + 3);
                     let index = 0;
                     for (const char of chunk) {
-                        index = (index * 58 + BASE58_ALPHABET.indexOf(char)) % SHARE_WORDLIST.length;
+                        index = (index * 64 + char.charCodeAt(0)) % SHARE_WORDLIST.length;
                     }
                     words.push(SHARE_WORDLIST[index]);
                 }
 
-                // Add checksum word
-                const checksum = base58.split('').reduce((acc, c) => (acc + BASE58_ALPHABET.indexOf(c)) % SHARE_WORDLIST.length, 0);
-                words.push(SHARE_WORDLIST[checksum]);
-
-                return { words, base58 };
+                console.log('[MNEMONIC] Generated words:', words);
+                return { words, code };
             } catch (e) {
-                console.error('Mnemonic generation failed:', e);
+                console.error('[MNEMONIC] Generation failed:', e);
                 return null;
             }
         };
@@ -881,15 +855,31 @@
 
             // Share code functions
             const openShareModal = () => {
+                console.log('[UI] Opening share modal...');
                 const promptData = { template, target, selectedMethods, lang, fields };
                 const result = generateMnemonicCode(promptData);
+                console.log('[UI] Mnemonic result:', result);
                 if (result) {
-                    setShareData({
-                        code: result.base58,
+                    const shareInfo = {
+                        code: result.code,
                         words: result.words.join(' '),
-                        url: getShareURL(result.base58)
-                    });
+                        url: getShareURL(result.code)
+                    };
+                    console.log('[UI] Share info:', shareInfo);
+                    setShareData(shareInfo);
                     setShowShareModal(true);
+                }
+            };
+
+            // Quick share - copy code directly to clipboard
+            const quickShare = async () => {
+                console.log('[UI] Quick share...');
+                const promptData = { template, target, selectedMethods, lang, fields };
+                const code = generateShareCode(promptData);
+                if (code) {
+                    await navigator.clipboard.writeText(code);
+                    showNotification(t.copied + ' (Share code)');
+                    console.log('[UI] Copied to clipboard:', code);
                 }
             };
 
@@ -899,8 +889,15 @@
             };
 
             const importFromCode = () => {
+                console.log('[UI] Import button clicked');
+                console.log('[UI] Import code value:', importCode);
+                console.log('[UI] Import code type:', typeof importCode);
+
                 const decoded = decodeShareCode(importCode);
+                console.log('[UI] Decode result:', decoded);
+
                 if (decoded) {
+                    console.log('[UI] Applying decoded data...');
                     setTemplate(decoded.template);
                     setTarget(decoded.target);
                     setSelectedMethods(decoded.selectedMethods);
@@ -909,7 +906,9 @@
                     setShowImportModal(false);
                     setImportCode('');
                     showNotification(t.share.importSuccess);
+                    console.log('[UI] Import successful!');
                 } else {
+                    console.error('[UI] Import failed - decoded is null/undefined');
                     showNotification(t.share.importError);
                 }
             };
@@ -968,67 +967,59 @@
                         </div>
                     )}
 
-                    {/* Share Modal */}
+                    {/* Share Modal - Compact Design */}
                     {showShareModal && shareData && (
                         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowShareModal(false)}>
-                            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-[480px] max-w-[95vw]" onClick={e => e.stopPropagation()}>
+                            <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 w-[420px] max-w-[95vw]" onClick={e => e.stopPropagation()}>
                                 <div className="flex justify-between items-center mb-4">
-                                    <div>
-                                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                            <Icon name="Share2" size={20} className="text-amber-400" />
-                                            {t.share.title}
-                                        </h3>
-                                        <p className="text-sm text-slate-400">{t.share.subtitle}</p>
-                                    </div>
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Icon name="Share2" size={20} className="text-amber-400" />
+                                        {t.share.title}
+                                    </h3>
                                     <button onClick={() => setShowShareModal(false)} className="text-slate-400 hover:text-white">
                                         <Icon name="X" size={20} />
                                     </button>
                                 </div>
 
-                                {/* Share Code */}
-                                <div className="mb-4">
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">{t.share.codeLabel}</label>
-                                    <div className="flex gap-2">
-                                        <input type="text" readOnly value={shareData.code}
-                                            className="flex-1 px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-amber-400 font-mono text-sm" />
-                                        <button onClick={() => copyShareCode(shareData.code)}
-                                            className="px-3 py-2 bg-amber-500 text-slate-900 rounded-lg hover:bg-amber-400 font-medium text-sm flex items-center gap-1">
-                                            <Icon name="Copy" size={14} /> {t.share.copyCode}
-                                        </button>
+                                {/* Share Code - Main */}
+                                <div className="mb-3">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="text-xs text-slate-400">{t.share.codeLabel}:</span>
+                                        <span className="text-xs text-slate-500">({shareData.code.length} chars)</span>
+                                    </div>
+                                    <div className="p-3 bg-slate-900 border border-slate-600 rounded-lg font-mono text-sm text-amber-400 break-all max-h-20 overflow-y-auto">
+                                        {shareData.code}
                                     </div>
                                 </div>
 
-                                {/* Word Phrase */}
-                                <div className="mb-4">
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">{t.share.wordsLabel}</label>
-                                    <div className="flex gap-2">
-                                        <div className="flex-1 px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-green-400 text-sm leading-relaxed break-words">
-                                            {shareData.words}
-                                        </div>
-                                        <button onClick={() => copyShareCode(shareData.words)}
-                                            className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 font-medium text-sm flex items-center gap-1 self-start">
-                                            <Icon name="Copy" size={14} /> {t.share.copyWords}
-                                        </button>
-                                    </div>
+                                {/* Action Buttons - Row */}
+                                <div className="grid grid-cols-3 gap-2 mb-3">
+                                    <button onClick={() => copyShareCode(shareData.code)}
+                                        className="px-3 py-2 bg-amber-500 text-slate-900 rounded-lg hover:bg-amber-400 font-medium text-xs flex items-center justify-center gap-1">
+                                        <Icon name="Copy" size={14} /> {t.share.copyCode}
+                                    </button>
+                                    <button onClick={() => copyShareCode(shareData.words)}
+                                        className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 font-medium text-xs flex items-center justify-center gap-1">
+                                        <Icon name="Type" size={14} /> {t.share.copyWords}
+                                    </button>
+                                    <button onClick={() => copyShareCode(shareData.url)}
+                                        className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 font-medium text-xs flex items-center justify-center gap-1">
+                                        <Icon name="Link" size={14} /> {t.share.copyUrl}
+                                    </button>
                                 </div>
 
-                                {/* Direct Link */}
-                                <div className="mb-4">
-                                    <label className="block text-sm font-medium text-slate-300 mb-2">{t.share.urlLabel}</label>
-                                    <div className="flex gap-2">
-                                        <input type="text" readOnly value={shareData.url}
-                                            className="flex-1 px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-blue-400 font-mono text-xs truncate" />
-                                        <button onClick={() => copyShareCode(shareData.url)}
-                                            className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 font-medium text-sm flex items-center gap-1">
-                                            <Icon name="Link" size={14} /> {t.share.copyUrl}
-                                        </button>
+                                {/* Word Phrase - Collapsed */}
+                                <details className="mb-3">
+                                    <summary className="text-xs text-slate-400 cursor-pointer hover:text-slate-300">{t.share.wordsLabel}</summary>
+                                    <div className="mt-2 p-2 bg-slate-900/50 border border-slate-700 rounded text-xs text-green-400 break-words">
+                                        {shareData.words}
                                     </div>
-                                </div>
+                                </details>
 
                                 {/* Tip */}
-                                <div className="p-3 bg-slate-700/50 rounded-lg border border-slate-600">
-                                    <p className="text-xs text-slate-400 flex items-start gap-2">
-                                        <Icon name="Lightbulb" size={14} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                                <div className="p-2 bg-slate-700/30 rounded-lg border border-slate-700/50">
+                                    <p className="text-xs text-slate-500 flex items-start gap-2">
+                                        <Icon name="Lightbulb" size={12} className="text-amber-400/70 flex-shrink-0 mt-0.5" />
                                         {t.share.tip}
                                     </p>
                                 </div>
