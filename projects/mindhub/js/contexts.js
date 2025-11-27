@@ -1,4 +1,4 @@
-// Blitzfit - React Contexts (Theme, Auth)
+// MindHub - React Contexts (Theme, Auth)
 
 const { useState, useEffect, createContext, useContext } = React;
 
@@ -7,13 +7,13 @@ const ThemeContext = createContext();
 
 function ThemeProvider({ children }) {
     const [theme, setTheme] = useState(() => {
-        const stored = localStorage.getItem('blitzfit_theme');
+        const stored = localStorage.getItem('mindhub_theme');
         return stored || 'light';
     });
 
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('blitzfit_theme', theme);
+        localStorage.setItem('mindhub_theme', theme);
     }, [theme]);
 
     const toggleTheme = () => {

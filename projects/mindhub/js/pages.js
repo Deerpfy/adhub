@@ -1,4 +1,4 @@
-// Blitzfit - Pages (Main Screens)
+// MindHub - Pages (Main Screens)
 // Section 4: Layout and main screens
 
 const { useState, useEffect } = React;
@@ -378,7 +378,7 @@ function LoginPage() {
                     textAlign: 'center',
                     marginBottom: '8px',
                 }}>
-                    ⚡ Blitzfit
+                    ⚡ MindHub
                 </h1>
                 <p style={{
                     textAlign: 'center',

@@ -1,24 +1,24 @@
-// Blitzfit - Storage Service (LocalStorage implementation)
+// MindHub - Storage Service (LocalStorage implementation)
 // Implements the data model from the spec using localStorage
 
 const StorageService = {
     // Users
     getCurrentUser() {
-        const user = localStorage.getItem('blitzfit_user');
+        const user = localStorage.getItem('mindhub_user');
         return user ? JSON.parse(user) : null;
     },
 
     setCurrentUser(user) {
         if (user) {
-            localStorage.setItem('blitzfit_user', JSON.stringify(user));
+            localStorage.setItem('mindhub_user', JSON.stringify(user));
         } else {
-            localStorage.removeItem('blitzfit_user');
+            localStorage.removeItem('mindhub_user');
         }
     },
 
     // Tasks
     getTasks(filters = {}) {
-        const tasks = JSON.parse(localStorage.getItem('blitzfit_tasks') || '[]');
+        const tasks = JSON.parse(localStorage.getItem('mindhub_tasks') || '[]');
         let filtered = [...tasks];
 
         if (filters.status) {
@@ -54,7 +54,7 @@ const StorageService = {
     },
 
     saveTasks(tasks) {
-        localStorage.setItem('blitzfit_tasks', JSON.stringify(tasks));
+        localStorage.setItem('mindhub_tasks', JSON.stringify(tasks));
     },
 
     createTask(task) {
@@ -104,7 +104,7 @@ const StorageService = {
 
     // Projects
     getProjects() {
-        return JSON.parse(localStorage.getItem('blitzfit_projects') || '[]');
+        return JSON.parse(localStorage.getItem('mindhub_projects') || '[]');
     },
 
     getProject(id) {
@@ -113,7 +113,7 @@ const StorageService = {
     },
 
     saveProjects(projects) {
-        localStorage.setItem('blitzfit_projects', JSON.stringify(projects));
+        localStorage.setItem('mindhub_projects', JSON.stringify(projects));
     },
 
     createProject(project) {
@@ -156,16 +156,16 @@ const StorageService = {
 
     // Subtasks
     getSubtasks(taskId) {
-        const subtasks = JSON.parse(localStorage.getItem('blitzfit_subtasks') || '[]');
+        const subtasks = JSON.parse(localStorage.getItem('mindhub_subtasks') || '[]');
         return subtasks.filter(st => st.task_id === taskId).sort((a, b) => a.ord - b.ord);
     },
 
     saveSubtasks(subtasks) {
-        localStorage.setItem('blitzfit_subtasks', JSON.stringify(subtasks));
+        localStorage.setItem('mindhub_subtasks', JSON.stringify(subtasks));
     },
 
     createSubtask(taskId, title) {
-        const subtasks = JSON.parse(localStorage.getItem('blitzfit_subtasks') || '[]');
+        const subtasks = JSON.parse(localStorage.getItem('mindhub_subtasks') || '[]');
         const taskSubtasks = subtasks.filter(st => st.task_id === taskId);
         const newSubtask = {
             id: this.generateId(),
@@ -180,7 +180,7 @@ const StorageService = {
     },
 
     updateSubtask(id, updates) {
-        const subtasks = JSON.parse(localStorage.getItem('blitzfit_subtasks') || '[]');
+        const subtasks = JSON.parse(localStorage.getItem('mindhub_subtasks') || '[]');
         const index = subtasks.findIndex(st => st.id === id);
         if (index !== -1) {
             subtasks[index] = { ...subtasks[index], ...updates };
@@ -191,14 +191,14 @@ const StorageService = {
     },
 
     deleteSubtask(id) {
-        const subtasks = JSON.parse(localStorage.getItem('blitzfit_subtasks') || '[]');
+        const subtasks = JSON.parse(localStorage.getItem('mindhub_subtasks') || '[]');
         const filtered = subtasks.filter(st => st.id !== id);
         this.saveSubtasks(filtered);
     },
 
     // Tags
     getTags() {
-        return JSON.parse(localStorage.getItem('blitzfit_tags') || '[]');
+        return JSON.parse(localStorage.getItem('mindhub_tags') || '[]');
     },
 
     getTag(id) {
@@ -207,7 +207,7 @@ const StorageService = {
     },
 
     saveTags(tags) {
-        localStorage.setItem('blitzfit_tags', JSON.stringify(tags));
+        localStorage.setItem('mindhub_tags', JSON.stringify(tags));
     },
 
     createTag(tag) {
@@ -235,32 +235,32 @@ const StorageService = {
 
     // Task Tags (many-to-many)
     getTaskTags(taskId) {
-        const taskTags = JSON.parse(localStorage.getItem('blitzfit_task_tags') || '[]');
+        const taskTags = JSON.parse(localStorage.getItem('mindhub_task_tags') || '[]');
         return taskTags.filter(tt => tt.task_id === taskId).map(tt => this.getTag(tt.tag_id)).filter(Boolean);
     },
 
     addTaskTag(taskId, tagId) {
-        const taskTags = JSON.parse(localStorage.getItem('blitzfit_task_tags') || '[]');
+        const taskTags = JSON.parse(localStorage.getItem('mindhub_task_tags') || '[]');
         if (!taskTags.find(tt => tt.task_id === taskId && tt.tag_id === tagId)) {
             taskTags.push({ task_id: taskId, tag_id: tagId });
-            localStorage.setItem('blitzfit_task_tags', JSON.stringify(taskTags));
+            localStorage.setItem('mindhub_task_tags', JSON.stringify(taskTags));
         }
     },
 
     removeTaskTag(taskId, tagId) {
-        const taskTags = JSON.parse(localStorage.getItem('blitzfit_task_tags') || '[]');
+        const taskTags = JSON.parse(localStorage.getItem('mindhub_task_tags') || '[]');
         const filtered = taskTags.filter(tt => !(tt.task_id === taskId && tt.tag_id === tagId));
-        localStorage.setItem('blitzfit_task_tags', JSON.stringify(filtered));
+        localStorage.setItem('mindhub_task_tags', JSON.stringify(filtered));
     },
 
     // Attachments
     getAttachments(taskId) {
-        const attachments = JSON.parse(localStorage.getItem('blitzfit_attachments') || '[]');
+        const attachments = JSON.parse(localStorage.getItem('mindhub_attachments') || '[]');
         return attachments.filter(a => a.task_id === taskId);
     },
 
     createAttachment(taskId, url, mime) {
-        const attachments = JSON.parse(localStorage.getItem('blitzfit_attachments') || '[]');
+        const attachments = JSON.parse(localStorage.getItem('mindhub_attachments') || '[]');
         const newAttachment = {
             id: this.generateId(),
             task_id: taskId,
@@ -269,13 +269,13 @@ const StorageService = {
             created_at: new Date().toISOString(),
         };
         attachments.push(newAttachment);
-        localStorage.setItem('blitzfit_attachments', JSON.stringify(attachments));
+        localStorage.setItem('mindhub_attachments', JSON.stringify(attachments));
         return newAttachment;
     },
 
     // Agent Actions
     getAgentActions(filters = {}) {
-        const actions = JSON.parse(localStorage.getItem('blitzfit_agent_actions') || '[]');
+        const actions = JSON.parse(localStorage.getItem('mindhub_agent_actions') || '[]');
         let filtered = [...actions];
 
         if (filters.status) {
@@ -289,7 +289,7 @@ const StorageService = {
     },
 
     createAgentAction(action) {
-        const actions = JSON.parse(localStorage.getItem('blitzfit_agent_actions') || '[]');
+        const actions = JSON.parse(localStorage.getItem('mindhub_agent_actions') || '[]');
         const user = this.getCurrentUser();
         const newAction = {
             id: this.generateId(),
@@ -301,16 +301,16 @@ const StorageService = {
             created_at: new Date().toISOString(),
         };
         actions.push(newAction);
-        localStorage.setItem('blitzfit_agent_actions', JSON.stringify(actions));
+        localStorage.setItem('mindhub_agent_actions', JSON.stringify(actions));
         return newAction;
     },
 
     updateAgentAction(id, updates) {
-        const actions = JSON.parse(localStorage.getItem('blitzfit_agent_actions') || '[]');
+        const actions = JSON.parse(localStorage.getItem('mindhub_agent_actions') || '[]');
         const index = actions.findIndex(a => a.id === id);
         if (index !== -1) {
             actions[index] = { ...actions[index], ...updates };
-            localStorage.setItem('blitzfit_agent_actions', JSON.stringify(actions));
+            localStorage.setItem('mindhub_agent_actions', JSON.stringify(actions));
             return actions[index];
         }
         return null;
@@ -336,13 +336,13 @@ const StorageService = {
 
     // Settings
     getSettings() {
-        return JSON.parse(localStorage.getItem('blitzfit_settings') || '{}');
+        return JSON.parse(localStorage.getItem('mindhub_settings') || '{}');
     },
 
     updateSettings(settings) {
         const current = this.getSettings();
         const updated = { ...current, ...settings };
-        localStorage.setItem('blitzfit_settings', JSON.stringify(updated));
+        localStorage.setItem('mindhub_settings', JSON.stringify(updated));
         return updated;
     },
 };

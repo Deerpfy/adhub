@@ -1,4 +1,4 @@
-// Blitzfit - Utility Functions
+// MindHub - Utility Functions
 
 const Utils = {
     // Date formatting
