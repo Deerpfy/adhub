@@ -78,6 +78,8 @@ const BASE_TRANSLATIONS = {
         tool_resignation_desc: 'Casino aplikace pro sázení na to, kdo dá dřív výpověď z práce. Zábavná ruleta s offline úložištěm.',
         tool_ai_prompting_name: 'AI Prompting',
         tool_ai_prompting_desc: 'Profesionální formátovač promptů s 7 metodami (CoT, Few-Shot, ToT, atd.), 5 jazyky a lokálním úložištěm.',
+        tool_pdf_merge_name: 'PDF Merge',
+        tool_pdf_merge_desc: 'Spojte více PDF souborů do jednoho dokumentu. Jednoduché přetažení, náhled stránek a změna pořadí.',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
         link_ninite_desc: 'Vyber aplikace a nainstaluj je jedním kliknutím po čisté instalaci Windows.',
         link_winget_name: 'Winget.run katalog balíčků',
@@ -123,6 +125,8 @@ const BASE_TRANSLATIONS = {
         tool_resignation_desc: 'Casino app for betting on who will resign from work first. Fun roulette with offline storage.',
         tool_ai_prompting_name: 'AI Prompting',
         tool_ai_prompting_desc: 'Professional prompt formatter with 7 methods (CoT, Few-Shot, ToT, etc.), 5 languages and local storage.',
+        tool_pdf_merge_name: 'PDF Merge',
+        tool_pdf_merge_desc: 'Combine multiple PDF files into one document. Simple drag and drop, page preview and reordering.',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
         link_ninite_desc: 'Select apps and install them with one click after a clean Windows installation.',
         link_winget_name: 'Winget.run Package Catalog',
@@ -482,6 +486,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["ai", "prompting", "claude", "chatgpt", "prompt", "formatter", "react"]
+            },
+            {
+                "id": "pdf-merge",
+                "name": t('tool_pdf_merge_name'),
+                "description": t('tool_pdf_merge_desc'),
+                "category": "tools",
+                "icon": "📄",
+                "url": "projects/pdf-merge/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["pdf", "merge", "combine", "document", "files"]
             }
         ],
         "links": [
