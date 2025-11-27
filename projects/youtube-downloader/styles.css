@@ -82,6 +82,33 @@ header h1 {
     text-shadow: 0 10px 30px rgba(139, 92, 246, 0.35);
 }
 
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.back-to-hub {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--adhub-card-strong);
+    border: 1px solid var(--adhub-card-border-soft);
+    border-radius: 10px;
+    color: var(--adhub-muted);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    transition: all 0.2s ease;
+}
+
+.back-to-hub:hover {
+    background: var(--adhub-card);
+    border-color: var(--adhub-primary);
+    color: var(--adhub-text);
+}
+
 .controls {
     display: flex;
     gap: 14px;

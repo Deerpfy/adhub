@@ -4091,6 +4091,29 @@ body.theme-11 {
     padding: 1rem 20px;
 }
 
+/* Back to Hub link - AdHUB Integration */
+.back-to-hub {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    color: var(--text-color);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: var(--transition);
+    margin-right: 12px;
+}
+
+.back-to-hub:hover {
+    background: rgba(139, 92, 246, 0.1);
+    border-color: #8b5cf6;
+    color: #8b5cf6;
+}
+
 .nav-brand {
     display: flex;
     align-items: center;
