@@ -114,13 +114,21 @@
                 methods: {
                     title: 'Research-Backed Methods',
                     active: 'method(s) active',
-                    cot: { name: 'Chain-of-Thought', citation: 'Google DeepMind', tip: 'Best for math, logic, multi-step problems.' },
-                    fewshot: { name: 'Few-Shot Learning', citation: 'UMD + OpenAI + Stanford', tip: 'Can improve accuracy from 0% to 90%.' },
-                    tot: { name: 'Tree of Thoughts', citation: 'Princeton + Google', tip: 'Best for complex planning and puzzles.' },
-                    selfconsistency: { name: 'Self-Consistency', citation: 'Google Research', tip: 'Multiple paths, majority vote.' },
-                    react: { name: 'ReAct', citation: 'Princeton + Google', tip: 'Best for tasks needing external tools.' },
-                    risen: { name: 'RISEN Framework', citation: 'Kyle Balmer', tip: 'Structured approach for complex tasks.' },
-                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft + PKU', tip: 'Emotional stimuli enhance performance.' },
+                    cot: { name: 'Chain-of-Thought', citation: 'Google Brain 2022', tip: 'Best for math, logic, multi-step problems. +39pp on GSM8K.' },
+                    zeroshot: { name: 'Zero-Shot CoT', citation: 'U.Tokyo + Google 2022', tip: '"Let\'s think step by step" - no examples needed. +61pp on MultiArith.' },
+                    fewshot: { name: 'Few-Shot Learning', citation: 'OpenAI 2020', tip: 'Learn from 1-10 examples. Can improve accuracy 0%→90%.' },
+                    tot: { name: 'Tree of Thoughts', citation: 'Princeton + DeepMind 2023', tip: 'Explore multiple paths with backtracking. 4%→74% on Game of 24.' },
+                    selfconsistency: { name: 'Self-Consistency', citation: 'Google Research 2022', tip: 'Multiple reasoning paths, majority vote. +17.9% on GSM8K.' },
+                    react: { name: 'ReAct', citation: 'Princeton + Google 2022', tip: 'Thought-Action-Observation cycle for tool use. +34% on ALFWorld.' },
+                    risen: { name: 'RISEN Framework', citation: 'Kyle Balmer', tip: 'Role-Instructions-Steps-End Goal-Narrowing structure.' },
+                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft + CAS 2023', tip: 'Emotional stimuli boost performance. +8% instruction, +115% BIG-Bench.' },
+                    plansolve: { name: 'Plan-and-Solve', citation: 'SUTD 2023', tip: 'Zero-shot planning before solving. +5% over Zero-Shot-CoT.' },
+                    selfask: { name: 'Self-Ask', citation: 'UW + Meta AI 2022', tip: 'Ask follow-up questions until solved. Great for multi-hop QA.' },
+                    pal: { name: 'PAL (Program-Aided)', citation: 'CMU 2022', tip: 'Generate code for calculations. +40% on GSM-Hard.' },
+                    selfrefine: { name: 'Self-Refine', citation: 'CMU + AI2 + Google 2023', tip: 'Generate→Feedback→Refine loop. ~20% avg improvement.' },
+                    stepback: { name: 'Step-Back Prompting', citation: 'Google DeepMind 2023', tip: 'Abstract to high-level principles first. +27% on TimeQA.' },
+                    analogical: { name: 'Analogical Prompting', citation: 'DeepMind + Stanford 2023', tip: 'Generate own relevant examples. +5% over 0-shot CoT.' },
+                    rar: { name: 'Rephrase & Respond', citation: 'UCLA 2023', tip: 'Rephrase question before answering. Reduces ambiguity.' },
                 },
                 database: {
                     title: 'Saved Prompts',
@@ -171,12 +179,28 @@
                     context: 'Background/Context', task: 'Task',
                     cotInstructions: 'Think through this step-by-step:\n1. First, analyze the problem carefully\n2. Break it down into logical steps\n3. Show your reasoning for each step\n4. Then provide your final answer',
                     cotSimple: "Let's think through this step-by-step. Show your reasoning at each stage before reaching a conclusion.",
+                    zeroshotTrigger: "Let's think step by step.",
+                    zeroshotSimple: "Let's approach this step by step, thinking through each part carefully before reaching a conclusion.",
                     totExperts: "Imagine 3 different experts approaching this problem:\n- Expert 1: Takes a methodical, systematic approach\n- Expert 2: Looks for creative, unconventional solutions\n- Expert 3: Focuses on practical, efficient solutions\n\nEach expert shares one step of their thinking, then evaluates. If any approach seems wrong, abandon it and explore alternatives. Continue until reaching the best solution.",
                     totSimple: "Consider 3 different approaches to this problem. For each, take one step, evaluate if it's promising, and continue the best paths while abandoning dead ends.",
                     scVerify: 'Generate 3 independent solutions using different reasoning approaches. Then compare them and select the answer that appears most consistently across approaches, explaining why.',
                     scSimple: 'Solve this problem 3 different ways, then compare your answers and explain which is most likely correct and why.',
                     reactCycle: 'Follow this Thought-Action-Observation cycle:\n1. Thought: Reason about what you need to do next\n2. Action: Describe what action to take\n3. Observation: Note what you learned from the action\nRepeat until you have a complete solution.',
                     reactSimple: 'For each step, state your Thought (reasoning), Action (what to do), and Observation (what you learned). Repeat this cycle until solved.',
+                    plansolveInstructions: "Let's first understand the problem, extract relevant variables and their corresponding numerals, and devise a plan. Then, let's carry out the plan, calculate intermediate variables (pay attention to correct numerical calculation and commonsense), solve the problem step by step, and show the answer.",
+                    plansolveSimple: "First, understand and plan. Then execute step by step, showing calculations and reasoning at each stage.",
+                    selfaskInstructions: "To answer this question, ask yourself follow-up questions and answer them:\n1. Are follow-up questions needed? If yes:\n2. Follow-up: [your question]\n3. Intermediate answer: [answer]\n4. Repeat until you can provide the final answer.",
+                    selfaskSimple: "Break this down by asking yourself follow-up questions. Answer each one before moving to the next, then provide the final answer.",
+                    palInstructions: "Solve this by writing Python code:\n1. Define the problem variables\n2. Write step-by-step calculations as code\n3. Use comments to explain your reasoning\n4. Print the final answer",
+                    palSimple: "Write Python code to solve this problem. Use variables, calculations, and comments to show your reasoning.",
+                    selfrefineInstructions: "Follow this iterative improvement process:\n1. GENERATE: Create your initial response\n2. FEEDBACK: Critique your response - what could be improved?\n3. REFINE: Create an improved version based on feedback\nRepeat the feedback-refine cycle until satisfied.",
+                    selfrefineSimple: "Generate a response, then critique it and improve it. Repeat until you're satisfied with the quality.",
+                    stepbackInstructions: "Before solving, step back and consider:\n1. What are the underlying principles or concepts relevant to this problem?\n2. What high-level approach or framework applies here?\n3. Now apply these principles to solve the specific problem.",
+                    stepbackSimple: "First identify the key principles and concepts, then apply them to solve this specific problem.",
+                    analogicalInstructions: "Before solving, recall similar problems:\n1. Think of 2-3 relevant problems you know how to solve\n2. Briefly describe each and its solution approach\n3. Apply the most relevant approach to the current problem",
+                    analogicalSimple: "Think of similar problems you've solved before, then apply the same approach here.",
+                    rarInstructions: "Rephrase and expand the question to ensure clarity, then respond to the rephrased version.",
+                    rarSimple: "First rephrase this question more clearly, then answer the rephrased version.",
                     stepsFollow: 'Follow these steps', constraints: 'Requirements/Constraints',
                     examplesIntro: 'Here are examples of the expected input-output format:', examplesFollow: 'Follow these patterns for your response.',
                     fewshotIntro: 'Learn from these examples:', fewshotFollow: 'Apply the same pattern to the current task.',
@@ -224,13 +248,21 @@
                 methods: {
                     title: 'Metody založené na výzkumu',
                     active: 'aktivní metod(y)',
-                    cot: { name: 'Chain-of-Thought', citation: 'Google DeepMind', tip: 'Nejlepší pro matematiku a logiku.' },
-                    fewshot: { name: 'Few-Shot učení', citation: 'UMD + OpenAI + Stanford', tip: 'Může zlepšit přesnost z 0% na 90%.' },
-                    tot: { name: 'Tree of Thoughts', citation: 'Princeton + Google', tip: 'Nejlepší pro komplexní plánování.' },
-                    selfconsistency: { name: 'Self-Consistency', citation: 'Google Research', tip: 'Více cest, většinové hlasování.' },
-                    react: { name: 'ReAct', citation: 'Princeton + Google', tip: 'Pro úkoly vyžadující externí nástroje.' },
-                    risen: { name: 'RISEN Framework', citation: 'Kyle Balmer', tip: 'Strukturovaný přístup pro složité úkoly.' },
-                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft + PKU', tip: 'Emoční stimuly zlepšují výkon.' },
+                    cot: { name: 'Chain-of-Thought', citation: 'Google Brain 2022', tip: 'Nejlepší pro matematiku a logiku. +39pp na GSM8K.' },
+                    zeroshot: { name: 'Zero-Shot CoT', citation: 'U.Tokyo + Google 2022', tip: '"Pojďme krok za krokem" - bez příkladů. +61pp na MultiArith.' },
+                    fewshot: { name: 'Few-Shot učení', citation: 'OpenAI 2020', tip: 'Učení z 1-10 příkladů. Zlepšení 0%→90%.' },
+                    tot: { name: 'Tree of Thoughts', citation: 'Princeton + DeepMind 2023', tip: 'Prozkoumá více cest s backtrackingem. 4%→74% na Game of 24.' },
+                    selfconsistency: { name: 'Self-Consistency', citation: 'Google Research 2022', tip: 'Více reasoning cest, většinové hlasování. +17.9% na GSM8K.' },
+                    react: { name: 'ReAct', citation: 'Princeton + Google 2022', tip: 'Cyklus Myšlenka-Akce-Pozorování pro nástroje. +34% na ALFWorld.' },
+                    risen: { name: 'RISEN Framework', citation: 'Kyle Balmer', tip: 'Struktura Role-Instrukce-Kroky-Cíl-Omezení.' },
+                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft + CAS 2023', tip: 'Emoční stimuly zlepšují výkon. +8% instrukce, +115% BIG-Bench.' },
+                    plansolve: { name: 'Plan-and-Solve', citation: 'SUTD 2023', tip: 'Zero-shot plánování před řešením. +5% oproti Zero-Shot-CoT.' },
+                    selfask: { name: 'Self-Ask', citation: 'UW + Meta AI 2022', tip: 'Pokládá si follow-up otázky. Skvělé pro multi-hop QA.' },
+                    pal: { name: 'PAL (Program-Aided)', citation: 'CMU 2022', tip: 'Generuje kód pro výpočty. +40% na GSM-Hard.' },
+                    selfrefine: { name: 'Self-Refine', citation: 'CMU + AI2 + Google 2023', tip: 'Smyčka Generuj→Zpětná vazba→Vylepši. ~20% průměrné zlepšení.' },
+                    stepback: { name: 'Step-Back Prompting', citation: 'Google DeepMind 2023', tip: 'Nejdříve abstrakce na principy. +27% na TimeQA.' },
+                    analogical: { name: 'Analogical Prompting', citation: 'DeepMind + Stanford 2023', tip: 'Generuje vlastní relevantní příklady. +5% oproti 0-shot CoT.' },
+                    rar: { name: 'Rephrase & Respond', citation: 'UCLA 2023', tip: 'Přeformuluje otázku před odpovědí. Snižuje nejednoznačnost.' },
                 },
                 database: {
                     title: 'Uložené prompty',
@@ -281,12 +313,28 @@
                     context: 'Pozadí/Kontext', task: 'Úkol',
                     cotInstructions: 'Přemýšlej nad tím krok za krokem:\n1. Nejprve pečlivě analyzuj problém\n2. Rozděl ho na logické kroky\n3. Ukaž své uvažování pro každý krok\n4. Poté poskytni svou konečnou odpověď',
                     cotSimple: 'Pojďme to promyslet krok za krokem. Ukaž své uvažování v každé fázi před dosažením závěru.',
+                    zeroshotTrigger: 'Pojďme přemýšlet krok za krokem.',
+                    zeroshotSimple: 'Pojďme to řešit krok za krokem, pečlivě promýšlejíc každou část před závěrem.',
                     totExperts: 'Představ si 3 různé experty, kteří přistupují k tomuto problému:\n- Expert 1: Používá metodický, systematický přístup\n- Expert 2: Hledá kreativní, nekonvenční řešení\n- Expert 3: Zaměřuje se na praktická, efektivní řešení\n\nKaždý expert sdílí jeden krok svého myšlení a poté vyhodnocuje.',
                     totSimple: 'Zvaž 3 různé přístupy k tomuto problému. Pro každý udělej jeden krok, vyhodnoť, zda je slibný.',
                     scVerify: 'Vygeneruj 3 nezávislá řešení pomocí různých přístupů. Poté je porovnej a vyber odpověď, která se objevuje nejkonzistentněji.',
                     scSimple: 'Vyřeš tento problém 3 různými způsoby, poté porovnej své odpovědi.',
                     reactCycle: 'Následuj tento cyklus Myšlenka-Akce-Pozorování:\n1. Myšlenka: Uvažuj o tom, co je třeba udělat\n2. Akce: Popiš, jakou akci provést\n3. Pozorování: Zaznamenej, co jsi se naučil',
                     reactSimple: 'Pro každý krok uveď svou Myšlenku, Akci a Pozorování.',
+                    plansolveInstructions: 'Nejprve pochopme problém, extrahujme relevantní proměnné a jejich hodnoty, a sestavme plán. Poté plán proveďme, vypočítejme mezivýsledky (dbej na správné výpočty a zdravý rozum), řešme problém krok za krokem a ukažme odpověď.',
+                    plansolveSimple: 'Nejprve pochop a naplánuj. Pak prováděj krok za krokem, ukazuj výpočty a uvažování.',
+                    selfaskInstructions: 'Pro zodpovězení této otázky si polož follow-up otázky a odpověz na ně:\n1. Jsou potřeba follow-up otázky? Pokud ano:\n2. Follow-up: [tvá otázka]\n3. Mezivýsledek: [odpověď]\n4. Opakuj, dokud nemůžeš poskytnout finální odpověď.',
+                    selfaskSimple: 'Rozděl to na follow-up otázky. Odpověz na každou před přechodem na další, pak poskytni finální odpověď.',
+                    palInstructions: 'Vyřeš toto napsáním Python kódu:\n1. Definuj proměnné problému\n2. Napiš výpočty krok za krokem jako kód\n3. Použij komentáře k vysvětlení uvažování\n4. Vypiš finální odpověď',
+                    palSimple: 'Napiš Python kód k vyřešení tohoto problému. Použij proměnné, výpočty a komentáře.',
+                    selfrefineInstructions: 'Následuj tento iterativní proces vylepšování:\n1. GENERUJ: Vytvoř počáteční odpověď\n2. ZPĚTNÁ VAZBA: Zkritizuj svou odpověď - co by se dalo zlepšit?\n3. VYLEPŠI: Vytvoř vylepšenou verzi na základě zpětné vazby\nOpakuj cyklus zpětná vazba-vylepšení, dokud nejsi spokojen.',
+                    selfrefineSimple: 'Vygeneruj odpověď, pak ji zkritizuj a vylepši. Opakuj, dokud nejsi spokojen s kvalitou.',
+                    stepbackInstructions: 'Před řešením ustup a zvaž:\n1. Jaké jsou základní principy nebo koncepty relevantní k tomuto problému?\n2. Jaký vysokoúrovňový přístup nebo framework zde platí?\n3. Nyní aplikuj tyto principy k vyřešení konkrétního problému.',
+                    stepbackSimple: 'Nejprve identifikuj klíčové principy a koncepty, pak je aplikuj k vyřešení tohoto konkrétního problému.',
+                    analogicalInstructions: 'Před řešením si vzpomeň na podobné problémy:\n1. Vzpomeň si na 2-3 relevantní problémy, které umíš řešit\n2. Stručně popiš každý a jeho řešení\n3. Aplikuj nejrelevantnější přístup na aktuální problém',
+                    analogicalSimple: 'Vzpomeň si na podobné problémy, které jsi řešil, pak použij stejný přístup zde.',
+                    rarInstructions: 'Přeformuluj a rozšiř otázku pro zajištění jasnosti, pak odpověz na přeformulovanou verzi.',
+                    rarSimple: 'Nejprve přeformuluj tuto otázku jasněji, pak odpověz na přeformulovanou verzi.',
                     stepsFollow: 'Následuj tyto kroky', constraints: 'Požadavky/Omezení',
                     examplesIntro: 'Zde jsou příklady očekávaného formátu:', examplesFollow: 'Řiď se těmito vzory.',
                     fewshotIntro: 'Uč se z těchto příkladů:', fewshotFollow: 'Aplikuj stejný vzor na aktuální úkol.',
@@ -333,13 +381,21 @@
                 },
                 methods: {
                     title: 'Forschungsbasierte Methoden', active: 'Methode(n) aktiv',
-                    cot: { name: 'Chain-of-Thought', citation: 'Google DeepMind', tip: 'Für Mathematik und Logik.' },
-                    fewshot: { name: 'Few-Shot', citation: 'UMD + OpenAI', tip: 'Verbessert Genauigkeit.' },
-                    tot: { name: 'Tree of Thoughts', citation: 'Princeton', tip: 'Für komplexe Planung.' },
-                    selfconsistency: { name: 'Self-Consistency', citation: 'Google', tip: 'Mehrheitsentscheidung.' },
-                    react: { name: 'ReAct', citation: 'Princeton', tip: 'Mit externen Tools.' },
-                    risen: { name: 'RISEN', citation: 'Kyle Balmer', tip: 'Strukturierter Ansatz.' },
-                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft', tip: 'Emotionale Stimuli.' },
+                    cot: { name: 'Chain-of-Thought', citation: 'Google Brain 2022', tip: 'Für Mathematik und Logik. +39pp auf GSM8K.' },
+                    zeroshot: { name: 'Zero-Shot CoT', citation: 'U.Tokyo + Google 2022', tip: '"Schritt für Schritt" - keine Beispiele nötig. +61pp auf MultiArith.' },
+                    fewshot: { name: 'Few-Shot', citation: 'OpenAI 2020', tip: 'Lernen aus 1-10 Beispielen. 0%→90% Verbesserung.' },
+                    tot: { name: 'Tree of Thoughts', citation: 'Princeton + DeepMind 2023', tip: 'Mehrere Pfade mit Backtracking. 4%→74% auf Game of 24.' },
+                    selfconsistency: { name: 'Self-Consistency', citation: 'Google Research 2022', tip: 'Mehrere Reasoning-Pfade, Mehrheitsentscheidung. +17.9% auf GSM8K.' },
+                    react: { name: 'ReAct', citation: 'Princeton + Google 2022', tip: 'Gedanke-Aktion-Beobachtung Zyklus. +34% auf ALFWorld.' },
+                    risen: { name: 'RISEN', citation: 'Kyle Balmer', tip: 'Rolle-Anweisungen-Schritte-Ziel-Einschränkungen Struktur.' },
+                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft + CAS 2023', tip: 'Emotionale Stimuli verbessern Leistung. +8% Instruktion, +115% BIG-Bench.' },
+                    plansolve: { name: 'Plan-and-Solve', citation: 'SUTD 2023', tip: 'Zero-shot Planung vor Lösung. +5% über Zero-Shot-CoT.' },
+                    selfask: { name: 'Self-Ask', citation: 'UW + Meta AI 2022', tip: 'Stellt sich Follow-up Fragen. Ideal für Multi-hop QA.' },
+                    pal: { name: 'PAL (Programm-gestützt)', citation: 'CMU 2022', tip: 'Generiert Code für Berechnungen. +40% auf GSM-Hard.' },
+                    selfrefine: { name: 'Self-Refine', citation: 'CMU + AI2 + Google 2023', tip: 'Generieren→Feedback→Verfeinern Schleife. ~20% durchschnittliche Verbesserung.' },
+                    stepback: { name: 'Step-Back Prompting', citation: 'Google DeepMind 2023', tip: 'Erst zu Prinzipien abstrahieren. +27% auf TimeQA.' },
+                    analogical: { name: 'Analogical Prompting', citation: 'DeepMind + Stanford 2023', tip: 'Generiert eigene relevante Beispiele. +5% über 0-shot CoT.' },
+                    rar: { name: 'Rephrase & Respond', citation: 'UCLA 2023', tip: 'Frage vor Antwort umformulieren. Reduziert Mehrdeutigkeit.' },
                 },
                 database: {
                     title: 'Gespeicherte Prompts', save: 'Speichern', load: 'Laden', delete: 'Löschen',
@@ -362,16 +418,32 @@
                 required: '*', newPrompt: 'Neu', footer: 'Methoden: The Prompt Report • Wharton • DeepMind • Princeton',
                 promptParts: {
                     youAre: 'Du bist', actAs: 'Agiere als', role: 'Rolle',
-                    emotion: 'Diese Aufgabe ist sehr wichtig für mich.',
+                    emotion: 'Diese Aufgabe ist sehr wichtig für mich. Deine gründliche und sorgfältige Antwort wird mir sehr helfen.',
                     context: 'Kontext', task: 'Aufgabe',
-                    cotInstructions: 'Denke Schritt für Schritt:\n1. Analysiere das Problem\n2. Teile es auf\n3. Zeige deine Überlegungen',
+                    cotInstructions: 'Denke Schritt für Schritt:\n1. Analysiere das Problem\n2. Teile es auf\n3. Zeige deine Überlegungen\n4. Gib dann deine endgültige Antwort',
                     cotSimple: 'Lass uns das Schritt für Schritt durchdenken.',
-                    totExperts: 'Stelle dir 3 Experten vor mit verschiedenen Ansätzen.',
-                    totSimple: 'Betrachte 3 verschiedene Ansätze.',
-                    scVerify: 'Generiere 3 unabhängige Lösungen und vergleiche.',
+                    zeroshotTrigger: 'Lass uns Schritt für Schritt denken.',
+                    zeroshotSimple: 'Lass uns das Schritt für Schritt angehen, jeden Teil sorgfältig durchdenken bevor wir eine Schlussfolgerung ziehen.',
+                    totExperts: 'Stelle dir 3 Experten vor mit verschiedenen Ansätzen:\n- Experte 1: Methodischer, systematischer Ansatz\n- Experte 2: Kreative, unkonventionelle Lösungen\n- Experte 3: Praktische, effiziente Lösungen\n\nJeder Experte teilt einen Schritt seines Denkens und bewertet dann.',
+                    totSimple: 'Betrachte 3 verschiedene Ansätze und verfolge die besten Pfade.',
+                    scVerify: 'Generiere 3 unabhängige Lösungen und vergleiche. Wähle die konsistenteste Antwort.',
                     scSimple: 'Löse auf 3 Arten und erkläre die beste.',
-                    reactCycle: 'Folge: Gedanke → Aktion → Beobachtung',
+                    reactCycle: 'Folge diesem Gedanke-Aktion-Beobachtung Zyklus:\n1. Gedanke: Überlege was als nächstes zu tun ist\n2. Aktion: Beschreibe die durchzuführende Aktion\n3. Beobachtung: Notiere was du gelernt hast',
                     reactSimple: 'Für jeden Schritt: Gedanke, Aktion, Beobachtung.',
+                    plansolveInstructions: 'Lass uns zuerst das Problem verstehen, relevante Variablen extrahieren und einen Plan erstellen. Dann führen wir den Plan aus, berechnen Zwischenergebnisse und zeigen die Antwort.',
+                    plansolveSimple: 'Zuerst verstehen und planen. Dann Schritt für Schritt ausführen.',
+                    selfaskInstructions: 'Stelle dir Follow-up Fragen und beantworte sie:\n1. Sind Follow-up Fragen nötig? Wenn ja:\n2. Follow-up: [deine Frage]\n3. Zwischenantwort: [Antwort]\n4. Wiederhole bis zur endgültigen Antwort.',
+                    selfaskSimple: 'Zerlege es in Follow-up Fragen. Beantworte jede einzeln, dann gib die endgültige Antwort.',
+                    palInstructions: 'Löse dies durch Python-Code:\n1. Definiere Problemvariablen\n2. Schreibe Berechnungen als Code\n3. Verwende Kommentare zur Erklärung\n4. Gib die endgültige Antwort aus',
+                    palSimple: 'Schreibe Python-Code zur Lösung. Verwende Variablen und Berechnungen.',
+                    selfrefineInstructions: 'Folge diesem iterativen Verbesserungsprozess:\n1. GENERIEREN: Erstelle eine erste Antwort\n2. FEEDBACK: Kritisiere deine Antwort\n3. VERFEINERN: Erstelle eine verbesserte Version\nWiederhole bis zufrieden.',
+                    selfrefineSimple: 'Generiere eine Antwort, kritisiere sie und verbessere sie.',
+                    stepbackInstructions: 'Bevor du löst, tritt zurück und überlege:\n1. Welche grundlegenden Prinzipien sind relevant?\n2. Welcher übergeordnete Ansatz gilt hier?\n3. Wende diese Prinzipien auf das konkrete Problem an.',
+                    stepbackSimple: 'Identifiziere erst die Schlüsselprinzipien, dann wende sie an.',
+                    analogicalInstructions: 'Erinnere dich an ähnliche Probleme:\n1. Denke an 2-3 relevante Probleme die du lösen kannst\n2. Beschreibe kurz jeden und seine Lösung\n3. Wende den relevantesten Ansatz hier an',
+                    analogicalSimple: 'Denke an ähnliche Probleme und wende denselben Ansatz an.',
+                    rarInstructions: 'Formuliere die Frage um und erweitere sie für Klarheit, dann antworte auf die umformulierte Version.',
+                    rarSimple: 'Formuliere diese Frage erst klarer um, dann beantworte sie.',
                     stepsFollow: 'Folge diesen Schritten', constraints: 'Anforderungen',
                     examplesIntro: 'Beispiele:', examplesFollow: 'Folge diesen Mustern.',
                     fewshotIntro: 'Lerne aus Beispielen:', fewshotFollow: 'Wende das Muster an.',
@@ -418,13 +490,21 @@
                 },
                 methods: {
                     title: 'Métodos de Investigación', active: 'método(s) activo(s)',
-                    cot: { name: 'Chain-of-Thought', citation: 'Google DeepMind', tip: 'Para matemáticas y lógica.' },
-                    fewshot: { name: 'Few-Shot', citation: 'UMD + OpenAI', tip: 'Mejora precisión.' },
-                    tot: { name: 'Tree of Thoughts', citation: 'Princeton', tip: 'Planificación compleja.' },
-                    selfconsistency: { name: 'Self-Consistency', citation: 'Google', tip: 'Voto mayoritario.' },
-                    react: { name: 'ReAct', citation: 'Princeton', tip: 'Herramientas externas.' },
-                    risen: { name: 'RISEN', citation: 'Kyle Balmer', tip: 'Enfoque estructurado.' },
-                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft', tip: 'Estímulos emocionales.' },
+                    cot: { name: 'Chain-of-Thought', citation: 'Google Brain 2022', tip: 'Para matemáticas y lógica. +39pp en GSM8K.' },
+                    zeroshot: { name: 'Zero-Shot CoT', citation: 'U.Tokyo + Google 2022', tip: '"Paso a paso" - sin ejemplos. +61pp en MultiArith.' },
+                    fewshot: { name: 'Few-Shot', citation: 'OpenAI 2020', tip: 'Aprende de 1-10 ejemplos. 0%→90% mejora.' },
+                    tot: { name: 'Tree of Thoughts', citation: 'Princeton + DeepMind 2023', tip: 'Explora múltiples caminos. 4%→74% en Game of 24.' },
+                    selfconsistency: { name: 'Self-Consistency', citation: 'Google Research 2022', tip: 'Múltiples caminos de razonamiento, voto mayoritario. +17.9% en GSM8K.' },
+                    react: { name: 'ReAct', citation: 'Princeton + Google 2022', tip: 'Ciclo Pensamiento-Acción-Observación. +34% en ALFWorld.' },
+                    risen: { name: 'RISEN', citation: 'Kyle Balmer', tip: 'Estructura Rol-Instrucciones-Pasos-Meta-Restricciones.' },
+                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft + CAS 2023', tip: 'Estímulos emocionales mejoran rendimiento. +8% instrucción, +115% BIG-Bench.' },
+                    plansolve: { name: 'Plan-and-Solve', citation: 'SUTD 2023', tip: 'Planificación zero-shot antes de resolver. +5% sobre Zero-Shot-CoT.' },
+                    selfask: { name: 'Self-Ask', citation: 'UW + Meta AI 2022', tip: 'Se hace preguntas de seguimiento. Ideal para QA multi-salto.' },
+                    pal: { name: 'PAL (Asistido por Programa)', citation: 'CMU 2022', tip: 'Genera código para cálculos. +40% en GSM-Hard.' },
+                    selfrefine: { name: 'Self-Refine', citation: 'CMU + AI2 + Google 2023', tip: 'Bucle Generar→Feedback→Refinar. ~20% mejora promedio.' },
+                    stepback: { name: 'Step-Back Prompting', citation: 'Google DeepMind 2023', tip: 'Primero abstrae a principios. +27% en TimeQA.' },
+                    analogical: { name: 'Analogical Prompting', citation: 'DeepMind + Stanford 2023', tip: 'Genera sus propios ejemplos relevantes. +5% sobre 0-shot CoT.' },
+                    rar: { name: 'Rephrase & Respond', citation: 'UCLA 2023', tip: 'Reformula pregunta antes de responder. Reduce ambigüedad.' },
                 },
                 database: {
                     title: 'Prompts Guardados', save: 'Guardar', load: 'Cargar', delete: 'Eliminar',
@@ -447,16 +527,32 @@
                 required: '*', newPrompt: 'Nuevo', footer: 'Métodos: The Prompt Report • Wharton • DeepMind • Princeton',
                 promptParts: {
                     youAre: 'Eres', actAs: 'Actúa como', role: 'Rol',
-                    emotion: 'Esta tarea es muy importante para mí.',
+                    emotion: 'Esta tarea es muy importante para mí. Tu respuesta cuidadosa y detallada me ayudará mucho.',
                     context: 'Contexto', task: 'Tarea',
-                    cotInstructions: 'Piensa paso a paso:\n1. Analiza el problema\n2. Divídelo en pasos\n3. Muestra tu razonamiento',
+                    cotInstructions: 'Piensa paso a paso:\n1. Analiza el problema\n2. Divídelo en pasos\n3. Muestra tu razonamiento\n4. Luego da tu respuesta final',
                     cotSimple: 'Pensemos paso a paso.',
-                    totExperts: 'Imagina 3 expertos con diferentes enfoques.',
-                    totSimple: 'Considera 3 enfoques diferentes.',
-                    scVerify: 'Genera 3 soluciones independientes y compara.',
+                    zeroshotTrigger: 'Pensemos paso a paso.',
+                    zeroshotSimple: 'Abordemos esto paso a paso, pensando cuidadosamente cada parte antes de llegar a una conclusión.',
+                    totExperts: 'Imagina 3 expertos con diferentes enfoques:\n- Experto 1: Enfoque metódico y sistemático\n- Experto 2: Soluciones creativas y no convencionales\n- Experto 3: Soluciones prácticas y eficientes\n\nCada experto comparte un paso de su pensamiento y luego evalúa.',
+                    totSimple: 'Considera 3 enfoques diferentes y sigue los mejores caminos.',
+                    scVerify: 'Genera 3 soluciones independientes y compara. Selecciona la respuesta más consistente.',
                     scSimple: 'Resuelve de 3 formas y explica la mejor.',
-                    reactCycle: 'Sigue: Pensamiento → Acción → Observación',
+                    reactCycle: 'Sigue este ciclo Pensamiento-Acción-Observación:\n1. Pensamiento: Razona qué hacer a continuación\n2. Acción: Describe la acción a tomar\n3. Observación: Nota lo que aprendiste',
                     reactSimple: 'Para cada paso: Pensamiento, Acción, Observación.',
+                    plansolveInstructions: 'Primero entendamos el problema, extraigamos variables relevantes y diseñemos un plan. Luego ejecutemos el plan, calculemos variables intermedias y mostremos la respuesta.',
+                    plansolveSimple: 'Primero entender y planificar. Luego ejecutar paso a paso.',
+                    selfaskInstructions: 'Hazte preguntas de seguimiento y respóndelas:\n1. ¿Se necesitan preguntas de seguimiento? Si es así:\n2. Seguimiento: [tu pregunta]\n3. Respuesta intermedia: [respuesta]\n4. Repite hasta dar la respuesta final.',
+                    selfaskSimple: 'Divídelo en preguntas de seguimiento. Responde cada una antes de continuar, luego da la respuesta final.',
+                    palInstructions: 'Resuelve esto escribiendo código Python:\n1. Define las variables del problema\n2. Escribe cálculos como código\n3. Usa comentarios para explicar\n4. Imprime la respuesta final',
+                    palSimple: 'Escribe código Python para resolver. Usa variables y cálculos.',
+                    selfrefineInstructions: 'Sigue este proceso de mejora iterativa:\n1. GENERAR: Crea tu respuesta inicial\n2. FEEDBACK: Critica tu respuesta\n3. REFINAR: Crea una versión mejorada\nRepite hasta estar satisfecho.',
+                    selfrefineSimple: 'Genera una respuesta, critícala y mejórala.',
+                    stepbackInstructions: 'Antes de resolver, da un paso atrás y considera:\n1. ¿Cuáles son los principios subyacentes relevantes?\n2. ¿Qué enfoque de alto nivel aplica aquí?\n3. Ahora aplica estos principios al problema específico.',
+                    stepbackSimple: 'Primero identifica los principios clave, luego aplícalos.',
+                    analogicalInstructions: 'Antes de resolver, recuerda problemas similares:\n1. Piensa en 2-3 problemas relevantes que sabes resolver\n2. Describe brevemente cada uno y su solución\n3. Aplica el enfoque más relevante al problema actual',
+                    analogicalSimple: 'Piensa en problemas similares que hayas resuelto y aplica el mismo enfoque.',
+                    rarInstructions: 'Reformula y expande la pregunta para mayor claridad, luego responde a la versión reformulada.',
+                    rarSimple: 'Primero reformula esta pregunta más claramente, luego respóndela.',
                     stepsFollow: 'Sigue estos pasos', constraints: 'Requisitos',
                     examplesIntro: 'Ejemplos:', examplesFollow: 'Sigue estos patrones.',
                     fewshotIntro: 'Aprende de ejemplos:', fewshotFollow: 'Aplica el patrón.',
@@ -503,13 +599,21 @@
                 },
                 methods: {
                     title: 'Méthodes de Recherche', active: 'méthode(s) active(s)',
-                    cot: { name: 'Chain-of-Thought', citation: 'Google DeepMind', tip: 'Pour maths et logique.' },
-                    fewshot: { name: 'Few-Shot', citation: 'UMD + OpenAI', tip: 'Améliore précision.' },
-                    tot: { name: 'Tree of Thoughts', citation: 'Princeton', tip: 'Planification complexe.' },
-                    selfconsistency: { name: 'Self-Consistency', citation: 'Google', tip: 'Vote majoritaire.' },
-                    react: { name: 'ReAct', citation: 'Princeton', tip: 'Outils externes.' },
-                    risen: { name: 'RISEN', citation: 'Kyle Balmer', tip: 'Approche structurée.' },
-                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft', tip: 'Stimuli émotionnels.' },
+                    cot: { name: 'Chain-of-Thought', citation: 'Google Brain 2022', tip: 'Pour maths et logique. +39pp sur GSM8K.' },
+                    zeroshot: { name: 'Zero-Shot CoT', citation: 'U.Tokyo + Google 2022', tip: '"Étape par étape" - sans exemples. +61pp sur MultiArith.' },
+                    fewshot: { name: 'Few-Shot', citation: 'OpenAI 2020', tip: 'Apprend de 1-10 exemples. 0%→90% amélioration.' },
+                    tot: { name: 'Tree of Thoughts', citation: 'Princeton + DeepMind 2023', tip: 'Explore plusieurs chemins. 4%→74% sur Game of 24.' },
+                    selfconsistency: { name: 'Self-Consistency', citation: 'Google Research 2022', tip: 'Plusieurs chemins de raisonnement, vote majoritaire. +17.9% sur GSM8K.' },
+                    react: { name: 'ReAct', citation: 'Princeton + Google 2022', tip: 'Cycle Pensée-Action-Observation. +34% sur ALFWorld.' },
+                    risen: { name: 'RISEN', citation: 'Kyle Balmer', tip: 'Structure Rôle-Instructions-Étapes-Objectif-Contraintes.' },
+                    emotion: { name: 'EmotionPrompt', citation: 'Microsoft + CAS 2023', tip: 'Stimuli émotionnels améliorent performance. +8% instruction, +115% BIG-Bench.' },
+                    plansolve: { name: 'Plan-and-Solve', citation: 'SUTD 2023', tip: 'Planification zero-shot avant résolution. +5% sur Zero-Shot-CoT.' },
+                    selfask: { name: 'Self-Ask', citation: 'UW + Meta AI 2022', tip: 'Se pose des questions de suivi. Idéal pour QA multi-saut.' },
+                    pal: { name: 'PAL (Assisté par Programme)', citation: 'CMU 2022', tip: 'Génère du code pour calculs. +40% sur GSM-Hard.' },
+                    selfrefine: { name: 'Self-Refine', citation: 'CMU + AI2 + Google 2023', tip: 'Boucle Générer→Feedback→Affiner. ~20% amélioration moyenne.' },
+                    stepback: { name: 'Step-Back Prompting', citation: 'Google DeepMind 2023', tip: "D'abord abstraire aux principes. +27% sur TimeQA." },
+                    analogical: { name: 'Analogical Prompting', citation: 'DeepMind + Stanford 2023', tip: 'Génère ses propres exemples pertinents. +5% sur 0-shot CoT.' },
+                    rar: { name: 'Rephrase & Respond', citation: 'UCLA 2023', tip: 'Reformule la question avant de répondre. Réduit ambiguïté.' },
                 },
                 database: {
                     title: 'Prompts Sauvegardés', save: 'Sauvegarder', load: 'Charger', delete: 'Supprimer',
@@ -532,16 +636,32 @@
                 required: '*', newPrompt: 'Nouveau', footer: 'Méthodes: The Prompt Report • Wharton • DeepMind • Princeton',
                 promptParts: {
                     youAre: 'Tu es', actAs: 'Agis comme', role: 'Rôle',
-                    emotion: 'Cette tâche est très importante pour moi.',
+                    emotion: "Cette tâche est très importante pour moi. Ta réponse soigneuse et détaillée m'aidera beaucoup.",
                     context: 'Contexte', task: 'Tâche',
-                    cotInstructions: 'Réfléchis étape par étape:\n1. Analyse le problème\n2. Décompose-le\n3. Montre ton raisonnement',
+                    cotInstructions: 'Réfléchis étape par étape:\n1. Analyse le problème\n2. Décompose-le\n3. Montre ton raisonnement\n4. Puis donne ta réponse finale',
                     cotSimple: 'Réfléchissons étape par étape.',
-                    totExperts: 'Imagine 3 experts avec différentes approches.',
-                    totSimple: 'Considère 3 approches différentes.',
-                    scVerify: 'Génère 3 solutions indépendantes et compare.',
+                    zeroshotTrigger: 'Réfléchissons étape par étape.',
+                    zeroshotSimple: 'Abordons cela étape par étape, en réfléchissant soigneusement à chaque partie avant de conclure.',
+                    totExperts: "Imagine 3 experts avec différentes approches:\n- Expert 1: Approche méthodique et systématique\n- Expert 2: Solutions créatives et non conventionnelles\n- Expert 3: Solutions pratiques et efficaces\n\nChaque expert partage une étape de sa réflexion puis évalue.",
+                    totSimple: 'Considère 3 approches différentes et suis les meilleurs chemins.',
+                    scVerify: 'Génère 3 solutions indépendantes et compare. Sélectionne la réponse la plus cohérente.',
                     scSimple: 'Résous de 3 façons et explique la meilleure.',
-                    reactCycle: 'Suis: Pensée → Action → Observation',
+                    reactCycle: 'Suis ce cycle Pensée-Action-Observation:\n1. Pensée: Réfléchis à ce qui doit être fait\n2. Action: Décris action à effectuer\n3. Observation: Note ce que tu as appris',
                     reactSimple: 'Pour chaque étape: Pensée, Action, Observation.',
+                    plansolveInstructions: "D'abord comprenons le problème, extrayons les variables pertinentes et élaborons un plan. Puis exécutons le plan, calculons les variables intermédiaires et montrons la réponse.",
+                    plansolveSimple: "D'abord comprendre et planifier. Puis exécuter étape par étape.",
+                    selfaskInstructions: "Pose-toi des questions de suivi et réponds-y:\n1. Des questions de suivi sont-elles nécessaires? Si oui:\n2. Suivi: [ta question]\n3. Réponse intermédiaire: [réponse]\n4. Répète jusqu'à la réponse finale.",
+                    selfaskSimple: 'Décompose en questions de suivi. Réponds à chacune avant de continuer, puis donne la réponse finale.',
+                    palInstructions: 'Résous en écrivant du code Python:\n1. Définis les variables du problème\n2. Écris les calculs comme code\n3. Utilise des commentaires pour expliquer\n4. Affiche la réponse finale',
+                    palSimple: 'Écris du code Python pour résoudre. Utilise variables et calculs.',
+                    selfrefineInstructions: "Suis ce processus d'amélioration itérative:\n1. GÉNÉRER: Crée ta réponse initiale\n2. FEEDBACK: Critique ta réponse\n3. AFFINER: Crée une version améliorée\nRépète jusqu'à satisfaction.",
+                    selfrefineSimple: 'Génère une réponse, critique-la et améliore-la.',
+                    stepbackInstructions: "Avant de résoudre, prends du recul et considère:\n1. Quels sont les principes sous-jacents pertinents?\n2. Quelle approche de haut niveau s'applique ici?\n3. Maintenant applique ces principes au problème spécifique.",
+                    stepbackSimple: "D'abord identifie les principes clés, puis applique-les.",
+                    analogicalInstructions: 'Avant de résoudre, rappelle-toi des problèmes similaires:\n1. Pense à 2-3 problèmes pertinents que tu sais résoudre\n2. Décris brièvement chacun et sa solution\n3. Applique approche la plus pertinente au problème actuel',
+                    analogicalSimple: 'Pense à des problèmes similaires résolus et applique la même approche.',
+                    rarInstructions: 'Reformule et développe la question pour plus de clarté, puis réponds à la version reformulée.',
+                    rarSimple: "D'abord reformule cette question plus clairement, puis réponds-y.",
                     stepsFollow: 'Suis ces étapes', constraints: 'Exigences',
                     examplesIntro: 'Exemples:', examplesFollow: 'Suis ces modèles.',
                     fewshotIntro: 'Apprends des exemples:', fewshotFollow: 'Applique le modèle.',
@@ -595,12 +715,13 @@
 
         // ==================== SHARE CODE SYSTEM ====================
         // Generate share code from prompt data (using LZ-String URI encoding)
+        const ALL_METHODS = ['cot', 'zeroshot', 'fewshot', 'tot', 'selfconsistency', 'react', 'risen', 'emotion', 'plansolve', 'selfask', 'pal', 'selfrefine', 'stepback', 'analogical', 'rar'];
         const generateShareCode = (promptData) => {
             try {
                 const minimal = {
                     t: ['general', 'coding', 'creative', 'analysis', 'explanation'].indexOf(promptData.template),
                     a: ['claude', 'gpt', 'general'].indexOf(promptData.target),
-                    m: promptData.selectedMethods.map(m => ['cot', 'fewshot', 'tot', 'selfconsistency', 'react', 'risen', 'emotion'].indexOf(m)).filter(i => i >= 0),
+                    m: promptData.selectedMethods.map(m => ALL_METHODS.indexOf(m)).filter(i => i >= 0),
                     l: ['en', 'cs', 'de', 'es', 'fr'].indexOf(promptData.lang),
                     f: promptData.fields
                 };
@@ -621,13 +742,12 @@
                 const minimal = JSON.parse(json);
                 const templates = ['general', 'coding', 'creative', 'analysis', 'explanation'];
                 const targets = ['claude', 'gpt', 'general'];
-                const methods = ['cot', 'fewshot', 'tot', 'selfconsistency', 'react', 'risen', 'emotion'];
                 const langs = ['en', 'cs', 'de', 'es', 'fr'];
 
                 return {
                     template: templates[minimal.t] || 'general',
                     target: targets[minimal.a] || 'claude',
-                    selectedMethods: (minimal.m || []).map(i => methods[i]).filter(Boolean),
+                    selectedMethods: (minimal.m || []).map(i => ALL_METHODS[i]).filter(Boolean),
                     lang: langs[minimal.l] || 'en',
                     fields: minimal.f || { role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '' }
                 };
@@ -651,7 +771,23 @@
 
         // ==================== TEMPLATE ICONS ====================
         const templateIcons = { general: 'FileText', coding: 'Code', creative: 'Pencil', analysis: 'Lightbulb', explanation: 'MessageSquare' };
-        const methodIcons = { cot: 'Brain', fewshot: 'Zap', tot: 'TreeDeciduous', selfconsistency: 'RefreshCw', react: 'GitBranch', risen: 'Target', emotion: 'Heart' };
+        const methodIcons = {
+            cot: 'Brain',
+            zeroshot: 'Sparkles',
+            fewshot: 'Zap',
+            tot: 'TreeDeciduous',
+            selfconsistency: 'RefreshCw',
+            react: 'GitBranch',
+            risen: 'Target',
+            emotion: 'Heart',
+            plansolve: 'ClipboardList',
+            selfask: 'HelpCircle',
+            pal: 'Code2',
+            selfrefine: 'RotateCw',
+            stepback: 'ArrowLeftCircle',
+            analogical: 'GitCompare',
+            rar: 'MessageCircle'
+        };
 
         // ==================== MAIN APP ====================
         const App = () => {
@@ -725,6 +861,9 @@
                 if (selectedMethods.includes('cot')) {
                     sections.push({ type: 'methods', text: target === 'claude' ? `<instructions>\n${p.cotInstructions}\n</instructions>` : `**Instructions:** ${p.cotSimple}` });
                 }
+                if (selectedMethods.includes('zeroshot')) {
+                    sections.push({ type: 'methods', text: target === 'claude' ? `<thinking>\n${p.zeroshotTrigger}\n</thinking>` : `**Approach:** ${p.zeroshotSimple}` });
+                }
                 if (selectedMethods.includes('tot')) {
                     sections.push({ type: 'methods', text: target === 'claude' ? `<reasoning_approach>\n${p.totExperts}\n</reasoning_approach>` : `**Multi-path:** ${p.totSimple}` });
                 }
@@ -733,6 +872,27 @@
                 }
                 if (selectedMethods.includes('react')) {
                     sections.push({ type: 'methods', text: target === 'claude' ? `<approach>\n${p.reactCycle}\n</approach>` : `**ReAct:** ${p.reactSimple}` });
+                }
+                if (selectedMethods.includes('plansolve')) {
+                    sections.push({ type: 'methods', text: target === 'claude' ? `<planning>\n${p.plansolveInstructions}\n</planning>` : `**Plan-and-Solve:** ${p.plansolveSimple}` });
+                }
+                if (selectedMethods.includes('selfask')) {
+                    sections.push({ type: 'methods', text: target === 'claude' ? `<self_questioning>\n${p.selfaskInstructions}\n</self_questioning>` : `**Self-Ask:** ${p.selfaskSimple}` });
+                }
+                if (selectedMethods.includes('pal')) {
+                    sections.push({ type: 'methods', text: target === 'claude' ? `<code_solution>\n${p.palInstructions}\n</code_solution>` : `**Program-Aided:** ${p.palSimple}` });
+                }
+                if (selectedMethods.includes('selfrefine')) {
+                    sections.push({ type: 'methods', text: target === 'claude' ? `<iterative_improvement>\n${p.selfrefineInstructions}\n</iterative_improvement>` : `**Self-Refine:** ${p.selfrefineSimple}` });
+                }
+                if (selectedMethods.includes('stepback')) {
+                    sections.push({ type: 'methods', text: target === 'claude' ? `<abstraction>\n${p.stepbackInstructions}\n</abstraction>` : `**Step-Back:** ${p.stepbackSimple}` });
+                }
+                if (selectedMethods.includes('analogical')) {
+                    sections.push({ type: 'methods', text: target === 'claude' ? `<analogical_reasoning>\n${p.analogicalInstructions}\n</analogical_reasoning>` : `**Analogical:** ${p.analogicalSimple}` });
+                }
+                if (selectedMethods.includes('rar')) {
+                    sections.push({ type: 'methods', text: target === 'claude' ? `<clarification>\n${p.rarInstructions}\n</clarification>` : `**Rephrase:** ${p.rarSimple}` });
                 }
                 if (selectedMethods.includes('risen') && fields.constraints) {
                     const steps = fields.constraints.split('\n').map((s, i) => `${i + 1}. ${s}`).join('\n');
