@@ -9,6 +9,8 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- LZ-String compression library -->
+    <script src="https://unpkg.com/lz-string@1.5.0/libs/lz-string.min.js"></script>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -107,6 +109,23 @@
                     exportedCount: 'prompts exported',
                     savedCount: 'prompts saved',
                 },
+                share: {
+                    title: 'Share Prompt',
+                    subtitle: 'Share your prompt settings via code',
+                    codeLabel: 'Share Code',
+                    wordsLabel: 'Word Phrase (alternative)',
+                    urlLabel: 'Direct Link',
+                    copyCode: 'Copy Code',
+                    copyWords: 'Copy Words',
+                    copyUrl: 'Copy Link',
+                    importTitle: 'Import from Code',
+                    importPlaceholder: 'Paste share code here...',
+                    importBtn: 'Load Prompt',
+                    importSuccess: 'Prompt loaded successfully!',
+                    importError: 'Invalid share code',
+                    generating: 'Generating...',
+                    tip: 'Tip: The code contains all your settings. Share it via message or email!',
+                },
                 preview: 'Formatted Prompt',
                 copy: 'Copy',
                 copied: 'Copied!',
@@ -184,6 +203,23 @@
                     exportedCount: 'promptů exportováno',
                     savedCount: 'promptů uloženo',
                 },
+                share: {
+                    title: 'Sdílet Prompt',
+                    subtitle: 'Sdílejte nastavení promptu pomocí kódu',
+                    codeLabel: 'Sdílecí kód',
+                    wordsLabel: 'Slovní fráze (alternativa)',
+                    urlLabel: 'Přímý odkaz',
+                    copyCode: 'Kopírovat kód',
+                    copyWords: 'Kopírovat slova',
+                    copyUrl: 'Kopírovat odkaz',
+                    importTitle: 'Načíst z kódu',
+                    importPlaceholder: 'Vložte sdílecí kód...',
+                    importBtn: 'Načíst prompt',
+                    importSuccess: 'Prompt úspěšně načten!',
+                    importError: 'Neplatný sdílecí kód',
+                    generating: 'Generuji...',
+                    tip: 'Tip: Kód obsahuje všechna vaše nastavení. Sdílejte ho přes zprávu nebo email!',
+                },
                 preview: 'Formátovaný prompt',
                 copy: 'Kopírovat',
                 copied: 'Zkopírováno!',
@@ -250,6 +286,15 @@
                     saveAs: 'Prompt speichern als...', confirmDelete: 'Diesen Prompt löschen?',
                     imported: 'Prompts erfolgreich importiert!', exportedCount: 'Prompts exportiert', savedCount: 'Prompts gespeichert',
                 },
+                share: {
+                    title: 'Prompt teilen', subtitle: 'Teilen Sie Ihre Einstellungen per Code',
+                    codeLabel: 'Freigabecode', wordsLabel: 'Wortphrase (alternativ)', urlLabel: 'Direktlink',
+                    copyCode: 'Code kopieren', copyWords: 'Wörter kopieren', copyUrl: 'Link kopieren',
+                    importTitle: 'Aus Code laden', importPlaceholder: 'Freigabecode einfügen...',
+                    importBtn: 'Prompt laden', importSuccess: 'Prompt erfolgreich geladen!',
+                    importError: 'Ungültiger Code', generating: 'Generiere...',
+                    tip: 'Tipp: Der Code enthält alle Einstellungen. Per Nachricht oder E-Mail teilen!',
+                },
                 preview: 'Formatierter Prompt', copy: 'Kopieren', copied: 'Kopiert!',
                 placeholder: 'Felder ausfüllen', chars: 'Zeichen', optimizedFor: 'Optimiert für',
                 required: '*', newPrompt: 'Neu', footer: 'Methoden: The Prompt Report • Wharton • DeepMind • Princeton',
@@ -309,6 +354,15 @@
                     noPrompts: 'Sin prompts guardados', promptName: 'Nombre del prompt',
                     saveAs: 'Guardar prompt como...', confirmDelete: '¿Eliminar este prompt?',
                     imported: '¡Prompts importados!', exportedCount: 'prompts exportados', savedCount: 'prompts guardados',
+                },
+                share: {
+                    title: 'Compartir Prompt', subtitle: 'Comparte tu configuración mediante código',
+                    codeLabel: 'Código de compartir', wordsLabel: 'Frase de palabras (alternativa)', urlLabel: 'Enlace directo',
+                    copyCode: 'Copiar código', copyWords: 'Copiar palabras', copyUrl: 'Copiar enlace',
+                    importTitle: 'Cargar desde código', importPlaceholder: 'Pega el código aquí...',
+                    importBtn: 'Cargar prompt', importSuccess: '¡Prompt cargado con éxito!',
+                    importError: 'Código inválido', generating: 'Generando...',
+                    tip: 'Consejo: El código contiene toda tu configuración. ¡Compártelo por mensaje o email!',
                 },
                 preview: 'Prompt Formateado', copy: 'Copiar', copied: '¡Copiado!',
                 placeholder: 'Completa los campos', chars: 'caracteres', optimizedFor: 'Optimizado para',
@@ -370,6 +424,15 @@
                     saveAs: 'Sauvegarder prompt comme...', confirmDelete: 'Supprimer ce prompt?',
                     imported: 'Prompts importés!', exportedCount: 'prompts exportés', savedCount: 'prompts sauvegardés',
                 },
+                share: {
+                    title: 'Partager Prompt', subtitle: 'Partagez vos paramètres par code',
+                    codeLabel: 'Code de partage', wordsLabel: 'Phrase de mots (alternative)', urlLabel: 'Lien direct',
+                    copyCode: 'Copier code', copyWords: 'Copier mots', copyUrl: 'Copier lien',
+                    importTitle: 'Charger depuis code', importPlaceholder: 'Collez le code ici...',
+                    importBtn: 'Charger prompt', importSuccess: 'Prompt chargé avec succès!',
+                    importError: 'Code invalide', generating: 'Génération...',
+                    tip: 'Astuce: Le code contient tous vos paramètres. Partagez-le par message ou email!',
+                },
                 preview: 'Prompt Formaté', copy: 'Copier', copied: 'Copié!',
                 placeholder: 'Remplissez les champs', chars: 'caractères', optimizedFor: 'Optimisé pour',
                 required: '*', newPrompt: 'Nouveau', footer: 'Méthodes: The Prompt Report • Wharton • DeepMind • Princeton',
@@ -420,6 +483,190 @@
             localStorage.setItem(DB_KEY, JSON.stringify(prompts));
         };
 
+        // ==================== SHARE CODE SYSTEM ====================
+        // Base58 alphabet (no 0, O, I, l to avoid confusion)
+        const BASE58_ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz';
+
+        // Wordlist for mnemonic codes (256 simple words)
+        const SHARE_WORDLIST = [
+            'alpha', 'beta', 'gamma', 'delta', 'echo', 'foxtrot', 'golf', 'hotel',
+            'india', 'juliet', 'kilo', 'lima', 'mike', 'november', 'oscar', 'papa',
+            'quebec', 'romeo', 'sierra', 'tango', 'uniform', 'victor', 'whiskey', 'xray',
+            'yankee', 'zulu', 'apple', 'banana', 'cherry', 'dragon', 'eagle', 'falcon',
+            'grape', 'hammer', 'ice', 'jungle', 'knight', 'lemon', 'mango', 'ninja',
+            'ocean', 'piano', 'queen', 'river', 'storm', 'tiger', 'ultra', 'violet',
+            'wolf', 'xenon', 'yellow', 'zebra', 'arrow', 'blade', 'castle', 'dawn',
+            'ember', 'flame', 'ghost', 'horizon', 'iron', 'jade', 'karma', 'lunar',
+            'meteor', 'nebula', 'orbit', 'phoenix', 'quartz', 'radar', 'solar', 'thunder',
+            'umbra', 'vortex', 'wave', 'xeno', 'yeti', 'zenith', 'anchor', 'breeze',
+            'coral', 'drift', 'eclipse', 'frost', 'glow', 'haze', 'iris', 'jazz',
+            'kinetic', 'laser', 'magnet', 'nova', 'opal', 'prism', 'quantum', 'ripple',
+            'spark', 'tempo', 'unity', 'vapor', 'wind', 'xerox', 'yoga', 'zone',
+            'atom', 'bolt', 'comet', 'dust', 'energy', 'fusion', 'galaxy', 'hyper',
+            'ion', 'jet', 'keen', 'light', 'matrix', 'neon', 'omega', 'pulse',
+            'quest', 'ray', 'star', 'turbo', 'ultra', 'volt', 'warp', 'axis',
+            'byte', 'cyber', 'data', 'edge', 'fiber', 'grid', 'hash', 'index',
+            'jump', 'kernel', 'link', 'mesh', 'node', 'optic', 'pixel', 'query',
+            'root', 'sync', 'token', 'user', 'vector', 'wire', 'xml', 'yield',
+            'zip', 'amp', 'bass', 'chord', 'drum', 'echo', 'flute', 'guitar',
+            'harp', 'ivory', 'jam', 'key', 'lyric', 'melody', 'note', 'octave',
+            'pitch', 'quiet', 'rhythm', 'scale', 'tune', 'verse', 'waltz', 'xylo',
+            'yodel', 'zen', 'art', 'brush', 'canvas', 'design', 'easel', 'frame',
+            'glyph', 'hue', 'ink', 'jewel', 'kit', 'layer', 'mural', 'noir',
+            'oil', 'paint', 'quill', 'resin', 'shade', 'tint', 'umber', 'vivid',
+            'wash', 'xray', 'yarn', 'zinc', 'azure', 'bronze', 'crimson', 'dusk',
+            'emerald', 'fuchsia', 'gold', 'honey', 'indigo', 'jasper', 'khaki', 'lilac',
+            'maroon', 'navy', 'olive', 'peach', 'rose', 'sage', 'teal', 'umber',
+            'velvet', 'wheat', 'xanadu', 'yam', 'zephyr', 'amber', 'blaze', 'coral',
+            'dawn', 'elm', 'fern', 'grove', 'heath', 'ivy', 'juniper', 'kelp',
+            'laurel', 'moss', 'nectar', 'oak', 'petal', 'reed', 'spruce', 'thistle',
+            'urchin', 'vine', 'willow', 'yarrow', 'zinnia', 'acorn', 'birch', 'cedar'
+        ];
+
+        // Encode bytes to Base58
+        const encodeBase58 = (bytes) => {
+            const digits = [0];
+            for (const byte of bytes) {
+                let carry = byte;
+                for (let i = 0; i < digits.length; i++) {
+                    carry += digits[i] << 8;
+                    digits[i] = carry % 58;
+                    carry = Math.floor(carry / 58);
+                }
+                while (carry > 0) {
+                    digits.push(carry % 58);
+                    carry = Math.floor(carry / 58);
+                }
+            }
+            let result = '';
+            for (let i = digits.length - 1; i >= 0; i--) {
+                result += BASE58_ALPHABET[digits[i]];
+            }
+            return result;
+        };
+
+        // Decode Base58 to bytes
+        const decodeBase58 = (str) => {
+            const bytes = [0];
+            for (const char of str) {
+                const value = BASE58_ALPHABET.indexOf(char);
+                if (value === -1) return null;
+                let carry = value;
+                for (let i = 0; i < bytes.length; i++) {
+                    carry += bytes[i] * 58;
+                    bytes[i] = carry & 0xff;
+                    carry >>= 8;
+                }
+                while (carry > 0) {
+                    bytes.push(carry & 0xff);
+                    carry >>= 8;
+                }
+            }
+            return new Uint8Array(bytes.reverse());
+        };
+
+        // Generate share code from prompt data
+        const generateShareCode = (promptData) => {
+            try {
+                // Create minimal data structure
+                const minimal = {
+                    t: ['general', 'coding', 'creative', 'analysis', 'explanation'].indexOf(promptData.template),
+                    a: ['claude', 'gpt', 'general'].indexOf(promptData.target),
+                    m: promptData.selectedMethods.map(m => ['cot', 'fewshot', 'tot', 'selfconsistency', 'react', 'risen', 'emotion'].indexOf(m)).filter(i => i >= 0),
+                    l: ['en', 'cs', 'de', 'es', 'fr'].indexOf(promptData.lang),
+                    f: promptData.fields
+                };
+
+                // Compress with LZ-String
+                const json = JSON.stringify(minimal);
+                const compressed = LZString.compressToUint8Array(json);
+
+                // Encode to Base58
+                const base58Code = encodeBase58(compressed);
+
+                return base58Code;
+            } catch (e) {
+                console.error('Share code generation failed:', e);
+                return null;
+            }
+        };
+
+        // Decode share code to prompt data
+        const decodeShareCode = (code) => {
+            try {
+                // Clean the code
+                const cleanCode = code.trim().replace(/\s+/g, '');
+
+                // Try Base58 decode
+                const bytes = decodeBase58(cleanCode);
+                if (!bytes) return null;
+
+                // Decompress
+                const json = LZString.decompressFromUint8Array(bytes);
+                if (!json) return null;
+
+                const minimal = JSON.parse(json);
+
+                // Reconstruct full data
+                const templates = ['general', 'coding', 'creative', 'analysis', 'explanation'];
+                const targets = ['claude', 'gpt', 'general'];
+                const methods = ['cot', 'fewshot', 'tot', 'selfconsistency', 'react', 'risen', 'emotion'];
+                const langs = ['en', 'cs', 'de', 'es', 'fr'];
+
+                return {
+                    template: templates[minimal.t] || 'general',
+                    target: targets[minimal.a] || 'claude',
+                    selectedMethods: (minimal.m || []).map(i => methods[i]).filter(Boolean),
+                    lang: langs[minimal.l] || 'en',
+                    fields: minimal.f || { role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '' }
+                };
+            } catch (e) {
+                console.error('Share code decode failed:', e);
+                return null;
+            }
+        };
+
+        // Generate mnemonic (word-based) code
+        const generateMnemonicCode = (promptData) => {
+            try {
+                const base58 = generateShareCode(promptData);
+                if (!base58) return null;
+
+                // Convert Base58 to words (every 2 chars = 1 word index approximately)
+                const words = [];
+                for (let i = 0; i < base58.length; i += 2) {
+                    const chunk = base58.slice(i, i + 2);
+                    let index = 0;
+                    for (const char of chunk) {
+                        index = (index * 58 + BASE58_ALPHABET.indexOf(char)) % SHARE_WORDLIST.length;
+                    }
+                    words.push(SHARE_WORDLIST[index]);
+                }
+
+                // Add checksum word
+                const checksum = base58.split('').reduce((acc, c) => (acc + BASE58_ALPHABET.indexOf(c)) % SHARE_WORDLIST.length, 0);
+                words.push(SHARE_WORDLIST[checksum]);
+
+                return { words, base58 };
+            } catch (e) {
+                console.error('Mnemonic generation failed:', e);
+                return null;
+            }
+        };
+
+        // Get shareable URL
+        const getShareURL = (code) => {
+            const url = new URL(window.location.href);
+            url.searchParams.set('share', code);
+            return url.toString();
+        };
+
+        // Check URL for share code on load
+        const getShareCodeFromURL = () => {
+            const params = new URLSearchParams(window.location.search);
+            return params.get('share');
+        };
+
         // ==================== TEMPLATE ICONS ====================
         const templateIcons = { general: 'FileText', coding: 'Code', creative: 'Pencil', analysis: 'Lightbulb', explanation: 'MessageSquare' };
         const methodIcons = { cot: 'Brain', fewshot: 'Zap', tot: 'TreeDeciduous', selfconsistency: 'RefreshCw', react: 'GitBranch', risen: 'Target', emotion: 'Heart' };
@@ -440,6 +687,10 @@
             const [promptName, setPromptName] = useState('');
             const [editingId, setEditingId] = useState(null);
             const [notification, setNotification] = useState('');
+            const [showShareModal, setShowShareModal] = useState(false);
+            const [showImportModal, setShowImportModal] = useState(false);
+            const [shareData, setShareData] = useState(null);
+            const [importCode, setImportCode] = useState('');
 
             const [fields, setFields] = useState({
                 role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '',
@@ -628,6 +879,59 @@
                 setEditingId(null);
             };
 
+            // Share code functions
+            const openShareModal = () => {
+                const promptData = { template, target, selectedMethods, lang, fields };
+                const result = generateMnemonicCode(promptData);
+                if (result) {
+                    setShareData({
+                        code: result.base58,
+                        words: result.words.join(' '),
+                        url: getShareURL(result.base58)
+                    });
+                    setShowShareModal(true);
+                }
+            };
+
+            const copyShareCode = async (text, type) => {
+                await navigator.clipboard.writeText(text);
+                showNotification(t.copied);
+            };
+
+            const importFromCode = () => {
+                const decoded = decodeShareCode(importCode);
+                if (decoded) {
+                    setTemplate(decoded.template);
+                    setTarget(decoded.target);
+                    setSelectedMethods(decoded.selectedMethods);
+                    setLang(decoded.lang);
+                    setFields(decoded.fields);
+                    setShowImportModal(false);
+                    setImportCode('');
+                    showNotification(t.share.importSuccess);
+                } else {
+                    showNotification(t.share.importError);
+                }
+            };
+
+            // Check for share code in URL on mount
+            useEffect(() => {
+                const urlCode = getShareCodeFromURL();
+                if (urlCode) {
+                    const decoded = decodeShareCode(urlCode);
+                    if (decoded) {
+                        setTemplate(decoded.template);
+                        setTarget(decoded.target);
+                        setSelectedMethods(decoded.selectedMethods);
+                        setLang(decoded.lang);
+                        setFields(decoded.fields);
+                        showNotification(t.share.importSuccess);
+                        // Clean URL
+                        window.history.replaceState({}, '', window.location.pathname);
+                    }
+                }
+            }, []);
+
             const aiTargets = [{ id: 'claude', name: 'Claude' }, { id: 'gpt', name: 'ChatGPT' }, { id: 'general', name: 'Any AI' }];
 
             return (
@@ -658,6 +962,108 @@
                                     </button>
                                     <button onClick={savePrompt} className="flex-1 px-4 py-2 bg-amber-500 text-slate-900 rounded-lg hover:bg-amber-400 font-medium">
                                         {t.database.save}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Share Modal */}
+                    {showShareModal && shareData && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowShareModal(false)}>
+                            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-[480px] max-w-[95vw]" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-center mb-4">
+                                    <div>
+                                        <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                            <Icon name="Share2" size={20} className="text-amber-400" />
+                                            {t.share.title}
+                                        </h3>
+                                        <p className="text-sm text-slate-400">{t.share.subtitle}</p>
+                                    </div>
+                                    <button onClick={() => setShowShareModal(false)} className="text-slate-400 hover:text-white">
+                                        <Icon name="X" size={20} />
+                                    </button>
+                                </div>
+
+                                {/* Share Code */}
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">{t.share.codeLabel}</label>
+                                    <div className="flex gap-2">
+                                        <input type="text" readOnly value={shareData.code}
+                                            className="flex-1 px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-amber-400 font-mono text-sm" />
+                                        <button onClick={() => copyShareCode(shareData.code)}
+                                            className="px-3 py-2 bg-amber-500 text-slate-900 rounded-lg hover:bg-amber-400 font-medium text-sm flex items-center gap-1">
+                                            <Icon name="Copy" size={14} /> {t.share.copyCode}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Word Phrase */}
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">{t.share.wordsLabel}</label>
+                                    <div className="flex gap-2">
+                                        <div className="flex-1 px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-green-400 text-sm leading-relaxed break-words">
+                                            {shareData.words}
+                                        </div>
+                                        <button onClick={() => copyShareCode(shareData.words)}
+                                            className="px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 font-medium text-sm flex items-center gap-1 self-start">
+                                            <Icon name="Copy" size={14} /> {t.share.copyWords}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Direct Link */}
+                                <div className="mb-4">
+                                    <label className="block text-sm font-medium text-slate-300 mb-2">{t.share.urlLabel}</label>
+                                    <div className="flex gap-2">
+                                        <input type="text" readOnly value={shareData.url}
+                                            className="flex-1 px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-blue-400 font-mono text-xs truncate" />
+                                        <button onClick={() => copyShareCode(shareData.url)}
+                                            className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 font-medium text-sm flex items-center gap-1">
+                                            <Icon name="Link" size={14} /> {t.share.copyUrl}
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Tip */}
+                                <div className="p-3 bg-slate-700/50 rounded-lg border border-slate-600">
+                                    <p className="text-xs text-slate-400 flex items-start gap-2">
+                                        <Icon name="Lightbulb" size={14} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                                        {t.share.tip}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Import Modal */}
+                    {showImportModal && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowImportModal(false)}>
+                            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-96" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Icon name="Download" size={20} className="text-amber-400" />
+                                        {t.share.importTitle}
+                                    </h3>
+                                    <button onClick={() => setShowImportModal(false)} className="text-slate-400 hover:text-white">
+                                        <Icon name="X" size={20} />
+                                    </button>
+                                </div>
+                                <textarea
+                                    value={importCode}
+                                    onChange={e => setImportCode(e.target.value)}
+                                    placeholder={t.share.importPlaceholder}
+                                    rows={4}
+                                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white mb-4 focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono text-sm"
+                                    autoFocus
+                                />
+                                <div className="flex gap-2">
+                                    <button onClick={() => setShowImportModal(false)} className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600">
+                                        Cancel
+                                    </button>
+                                    <button onClick={importFromCode} disabled={!importCode.trim()}
+                                        className="flex-1 px-4 py-2 bg-amber-500 text-slate-900 rounded-lg hover:bg-amber-400 font-medium disabled:opacity-50">
+                                        {t.share.importBtn}
                                     </button>
                                 </div>
                             </div>
@@ -743,6 +1149,16 @@
                             </div>
 
                             <div className="flex items-center gap-2">
+                                {/* Share Button */}
+                                <button onClick={openShareModal} disabled={!formattedPrompt} className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 disabled:opacity-50" title={t.share.title}>
+                                    <Icon name="Share2" size={16} className="text-green-400" />
+                                </button>
+
+                                {/* Import Button */}
+                                <button onClick={() => setShowImportModal(true)} className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700" title={t.share.importTitle}>
+                                    <Icon name="Download" size={16} className="text-blue-400" />
+                                </button>
+
                                 {/* Database Button */}
                                 <button onClick={() => setShowDatabase(true)} className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700">
                                     <Icon name="Database" size={16} className="text-amber-400" />
