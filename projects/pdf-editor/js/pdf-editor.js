@@ -35,6 +35,7 @@ const PDFEditor = {
     history: [],
     historyIndex: -1,
     maxHistory: 50,
+    _isLoadingHistory: false, // Flag pro prevenci ukládání při načítání historie
 
     // Callbacks
     onObjectAdded: null,
@@ -94,6 +95,10 @@ const PDFEditor = {
         this.historyIndex = -1;
         this.pageAnnotations = {};
 
+        // DŮLEŽITÉ: Uložit počáteční prázdný stav do historie
+        // To umožní undo zpět na prázdný canvas
+        this._saveToHistory();
+
         // Přepočítat offset při inicializaci
         setTimeout(() => {
             if (this.fabricCanvas) {
@@ -110,7 +115,10 @@ const PDFEditor = {
     _setupEventListeners() {
         // Object added
         this.fabricCanvas.on('object:added', (e) => {
-            if (!e.target._isHistoryAction) {
+            // Neukládat do historie pokud:
+            // - objekt má flag _isHistoryAction (např. paste)
+            // - právě se načítá z historie (_isLoadingHistory)
+            if (!e.target._isHistoryAction && !this._isLoadingHistory) {
                 this._saveToHistory();
             }
             if (this.onObjectAdded) {
@@ -120,7 +128,10 @@ const PDFEditor = {
 
         // Object modified
         this.fabricCanvas.on('object:modified', (e) => {
-            this._saveToHistory();
+            // Neukládat pokud právě načítáme z historie
+            if (!this._isLoadingHistory) {
+                this._saveToHistory();
+            }
             if (this.onObjectModified) {
                 this.onObjectModified(e.target);
             }
@@ -731,7 +742,12 @@ const PDFEditor = {
         // Parse state pro získání vlastních vlastností
         const parsedState = typeof state === 'string' ? JSON.parse(state) : state;
 
+        // DŮLEŽITÉ: Nastavit flag, aby se při načítání neukládalo znovu do historie
+        this._isLoadingHistory = true;
+
         this.fabricCanvas.loadFromJSON(parsedState, () => {
+            // Reset flag
+            this._isLoadingHistory = false;
             // OPRAVENO: Obnovit rozměry a pozici wrapper elementu
             this.fabricCanvas.setWidth(currentWidth);
             this.fabricCanvas.setHeight(currentHeight);
