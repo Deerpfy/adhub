@@ -293,28 +293,90 @@ header {
     position: relative;
     background: #2a2a3a;
     border-radius: 12px;
-    overflow: hidden;
+    overflow: auto;
     min-height: 500px;
+    max-height: 70vh;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
+    padding: 20px;
 }
 
 .pdf-canvas-wrapper {
     position: relative;
     display: inline-block;
+    flex-shrink: 0;
 }
 
 #pdfCanvas {
     display: block;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+}
+
+/* Fabric.js creates a wrapper - we need to style it */
+.pdf-canvas-wrapper .canvas-container {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+}
+
+.pdf-canvas-wrapper .canvas-container canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
 }
 
 #fabricCanvas {
     position: absolute;
     top: 0;
     left: 0;
-    pointer-events: auto;
+}
+
+/* Toolbar zoom and page controls */
+.toolbar-zoom,
+.toolbar-pages {
+    margin-left: auto;
+}
+
+.toolbar-zoom {
+    border-right: none !important;
+    padding-right: 8px !important;
+}
+
+.toolbar-pages {
+    border-right: none !important;
+    padding-right: 0 !important;
+}
+
+.zoom-display,
+.page-display {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 0 8px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    min-width: 50px;
+    justify-content: center;
+}
+
+.page-display input[type="number"] {
+    width: 40px;
+    padding: 4px;
+    text-align: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    -moz-appearance: textfield;
+}
+
+.page-display input[type="number"]::-webkit-outer-spin-button,
+.page-display input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 /* =====================================================
@@ -1009,91 +1071,6 @@ header {
 }
 
 /* =====================================================
-   Page Navigation
-   ===================================================== */
-.page-nav {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 16px;
-    background: var(--bg-card-hover);
-    border-radius: 12px;
-    margin-top: 16px;
-}
-
-.page-nav button {
-    padding: 8px 16px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.page-nav button:hover:not(:disabled) {
-    background: var(--bg-card-hover);
-    border-color: var(--primary-color);
-}
-
-.page-nav button:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-}
-
-.page-nav .page-info {
-    color: var(--text-muted);
-    min-width: 100px;
-    text-align: center;
-}
-
-.page-nav input[type="number"] {
-    width: 60px;
-    padding: 8px;
-    text-align: center;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    color: var(--text-primary);
-}
-
-/* =====================================================
-   Zoom Controls
-   ===================================================== */
-.zoom-controls {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.zoom-controls button {
-    width: 36px;
-    height: 36px;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    color: var(--text-primary);
-    cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.zoom-controls button:hover {
-    background: var(--bg-card-hover);
-    border-color: var(--primary-color);
-}
-
-.zoom-controls span {
-    min-width: 50px;
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 0.9rem;
-}
-
-/* =====================================================
    Footer
    ===================================================== */
 footer {
@@ -1169,6 +1146,26 @@ footer a:hover {
 
     .tab-nav {
         flex-direction: column;
+    }
+
+    /* Toolbar responsive */
+    .toolbar {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .toolbar-zoom,
+    .toolbar-pages {
+        margin-left: 0;
+        width: 100%;
+        justify-content: center;
+        margin-top: 8px;
+        padding-top: 8px;
+        border-top: 1px solid var(--border-color);
+    }
+
+    .pdf-canvas-container {
+        max-height: 50vh;
     }
 
     .tab-btn {

@@ -37,7 +37,7 @@ const PDFViewer = {
         // Set PDF.js worker
         if (typeof pdfjsLib !== 'undefined') {
             pdfjsLib.GlobalWorkerOptions.workerSrc =
-                'https://unpkg.com/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs';
+                'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
         }
     },
 

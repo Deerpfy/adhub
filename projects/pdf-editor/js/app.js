@@ -762,6 +762,20 @@ const PDFEditorApp = {
             // Update current file data
             this.currentFileData = result.data;
 
+            // Auto-download compressed PDF
+            const blob = new Blob([result.data], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+
+            const fileName = this.currentFile?.name?.replace('.pdf', '_compressed.pdf') || 'compressed.pdf';
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
             // Show result
             this._showStatus(
                 `Compressed: ${PDFCompress.formatSize(result.originalSize)} → ${PDFCompress.formatSize(result.compressedSize)} (${result.reduction}% saved)`,
@@ -769,6 +783,7 @@ const PDFEditorApp = {
             );
 
         } catch (error) {
+            console.error('Compression error:', error);
             this._showStatus(this.t('error_processing'), 'error');
         }
 

@@ -45,13 +45,28 @@ const PDFEditor = {
      * @param {number} height - Canvas height
      */
     init(canvasElement, width, height) {
+        // Dispose existing canvas if any
+        if (this.fabricCanvas) {
+            this.fabricCanvas.dispose();
+        }
+
         // Create Fabric canvas
         this.fabricCanvas = new fabric.Canvas(canvasElement, {
             width: width,
             height: height,
             selection: true,
-            preserveObjectStacking: true
+            preserveObjectStacking: true,
+            renderOnAddRemove: true
         });
+
+        // Get the wrapper that Fabric.js creates and ensure proper positioning
+        const wrapper = this.fabricCanvas.wrapperEl;
+        if (wrapper) {
+            wrapper.style.position = 'absolute';
+            wrapper.style.top = '0';
+            wrapper.style.left = '0';
+            wrapper.style.pointerEvents = 'auto';
+        }
 
         // Setup event listeners
         this._setupEventListeners();
@@ -61,7 +76,7 @@ const PDFEditor = {
         this.historyIndex = -1;
         this.pageAnnotations = {};
 
-        console.log('PDF Editor initialized');
+        console.log('PDF Editor initialized with dimensions:', width, 'x', height);
     },
 
     /**
@@ -104,6 +119,17 @@ const PDFEditor = {
         if (this.fabricCanvas) {
             this.fabricCanvas.setWidth(width);
             this.fabricCanvas.setHeight(height);
+
+            // Update wrapper dimensions as well
+            const wrapper = this.fabricCanvas.wrapperEl;
+            if (wrapper) {
+                wrapper.style.width = width + 'px';
+                wrapper.style.height = height + 'px';
+                wrapper.style.position = 'absolute';
+                wrapper.style.top = '0';
+                wrapper.style.left = '0';
+            }
+
             this.fabricCanvas.renderAll();
         }
     },
