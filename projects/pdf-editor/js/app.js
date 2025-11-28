@@ -595,12 +595,20 @@ const PDFEditorApp = {
      */
     async _prevPage() {
         const wasTextEditingEnabled = this.isTextEditingEnabled;
+        const currentPage = PDFViewer.currentPage;
+
+        // Pokud je text editing aktivní, uložit změny do cache
+        if (wasTextEditingEnabled) {
+            PDFEditor.saveTextEditingToCache(currentPage);
+        }
+
         // Pouze odebrat text overlays, neměnit stav editace
         PDFEditor.disableTextEditing();
-        PDFEditor.savePageAnnotations(PDFViewer.currentPage);
+        PDFEditor.savePageAnnotations(currentPage);
         await PDFViewer.prevPage();
         PDFEditor.loadPageAnnotations(PDFViewer.currentPage);
-        // Pokud byla editace zapnutá, znovu ji načíst pro novou stránku
+
+        // Pokud byla editace zapnutá, načíst pro novou stránku (z cache nebo extrahovat)
         if (wasTextEditingEnabled) {
             await this._reloadTextEditing();
         }
@@ -608,12 +616,20 @@ const PDFEditorApp = {
 
     async _nextPage() {
         const wasTextEditingEnabled = this.isTextEditingEnabled;
+        const currentPage = PDFViewer.currentPage;
+
+        // Pokud je text editing aktivní, uložit změny do cache
+        if (wasTextEditingEnabled) {
+            PDFEditor.saveTextEditingToCache(currentPage);
+        }
+
         // Pouze odebrat text overlays, neměnit stav editace
         PDFEditor.disableTextEditing();
-        PDFEditor.savePageAnnotations(PDFViewer.currentPage);
+        PDFEditor.savePageAnnotations(currentPage);
         await PDFViewer.nextPage();
         PDFEditor.loadPageAnnotations(PDFViewer.currentPage);
-        // Pokud byla editace zapnutá, znovu ji načíst pro novou stránku
+
+        // Pokud byla editace zapnutá, načíst pro novou stránku (z cache nebo extrahovat)
         if (wasTextEditingEnabled) {
             await this._reloadTextEditing();
         }
@@ -621,24 +637,42 @@ const PDFEditorApp = {
 
     async _goToPage(pageNum) {
         const wasTextEditingEnabled = this.isTextEditingEnabled;
+        const currentPage = PDFViewer.currentPage;
+
+        // Pokud je text editing aktivní, uložit změny do cache
+        if (wasTextEditingEnabled) {
+            PDFEditor.saveTextEditingToCache(currentPage);
+        }
+
         // Pouze odebrat text overlays, neměnit stav editace
         PDFEditor.disableTextEditing();
-        PDFEditor.savePageAnnotations(PDFViewer.currentPage);
+        PDFEditor.savePageAnnotations(currentPage);
         await PDFViewer.goToPage(pageNum);
         PDFEditor.loadPageAnnotations(PDFViewer.currentPage);
-        // Pokud byla editace zapnutá, znovu ji načíst pro novou stránku
+
+        // Pokud byla editace zapnutá, načíst pro novou stránku (z cache nebo extrahovat)
         if (wasTextEditingEnabled) {
             await this._reloadTextEditing();
         }
     },
 
     /**
-     * Reload text editing for current page (without toggle)
+     * Reload text editing for current page (from cache or extract new)
      */
     async _reloadTextEditing() {
         try {
-            const page = await PDFViewer.pdfDoc.getPage(PDFViewer.currentPage);
-            await PDFEditor.enableTextEditing(page, PDFViewer.scale);
+            const currentPage = PDFViewer.currentPage;
+
+            // Nejdřív zkusit načíst z cache
+            if (PDFEditor.hasTextEditingCache(currentPage)) {
+                console.log(`Loading text editing from cache for page ${currentPage}`);
+                await PDFEditor.loadTextEditingFromCache(currentPage);
+            } else {
+                // Není v cache - extrahovat z PDF
+                console.log(`Extracting text from PDF for page ${currentPage}`);
+                const page = await PDFViewer.pdfDoc.getPage(currentPage);
+                await PDFEditor.enableTextEditing(page, PDFViewer.scale);
+            }
         } catch (error) {
             console.error('Error reloading text editing:', error);
         }
@@ -844,6 +878,8 @@ const PDFEditorApp = {
         if (this.isTextEditingEnabled) {
             // Disable text editing (bez uložení - zahazuje změny)
             PDFEditor.disableTextEditing();
+            // Vyčistit cache pro všechny stránky
+            PDFEditor.clearTextEditingCache();
             this.isTextEditingEnabled = false;
             if (editTextBtn) {
                 editTextBtn.classList.remove('active');
@@ -857,8 +893,16 @@ const PDFEditorApp = {
             this._showLoading('Extracting text...');
 
             try {
-                const page = await PDFViewer.pdfDoc.getPage(PDFViewer.currentPage);
-                await PDFEditor.enableTextEditing(page, PDFViewer.scale);
+                const currentPage = PDFViewer.currentPage;
+
+                // Zkontrolovat zda máme cache pro tuto stránku
+                if (PDFEditor.hasTextEditingCache(currentPage)) {
+                    await PDFEditor.loadTextEditingFromCache(currentPage);
+                } else {
+                    const page = await PDFViewer.pdfDoc.getPage(currentPage);
+                    await PDFEditor.enableTextEditing(page, PDFViewer.scale);
+                }
+
                 this.isTextEditingEnabled = true;
 
                 if (editTextBtn) {
@@ -887,6 +931,9 @@ const PDFEditorApp = {
 
         // Uložit změny textu
         const savedCount = PDFEditor.saveTextEditing();
+
+        // Vyčistit cache po uložení (změny jsou nyní v anotacích)
+        PDFEditor.clearTextEditingCache();
 
         // Ukončit režim editace
         this.isTextEditingEnabled = false;
