@@ -650,14 +650,22 @@ const PDFEditor = {
         // Remove any future states
         this.history = this.history.slice(0, this.historyIndex + 1);
 
-        // Add current state - včetně vlastních vlastností
+        // Add current state - včetně vlastních vlastností (text i obrázky)
         const state = JSON.stringify(this.fabricCanvas.toJSON([
             '_isTextBackground',
             '_isExtractedText',
             '_textIndex',
             '_originalText',
             '_originalFont',
-            '_savedTextEdit'
+            '_savedTextEdit',
+            '_isExtractedImage',
+            '_imageIndex',
+            '_originalX',
+            '_originalY',
+            '_originalWidth',
+            '_originalHeight',
+            '_imageName',
+            '_savedImageEdit'
         ]));
         this.history.push(state);
 
@@ -728,13 +736,22 @@ const PDFEditor = {
             if (parsedState.objects && objects.length === parsedState.objects.length) {
                 objects.forEach((obj, index) => {
                     const savedObj = parsedState.objects[index];
-                    // Aplikovat vlastní vlastnosti
+                    // Aplikovat vlastní vlastnosti pro text
                     if (savedObj._isTextBackground !== undefined) obj._isTextBackground = savedObj._isTextBackground;
                     if (savedObj._isExtractedText !== undefined) obj._isExtractedText = savedObj._isExtractedText;
                     if (savedObj._textIndex !== undefined) obj._textIndex = savedObj._textIndex;
                     if (savedObj._originalText !== undefined) obj._originalText = savedObj._originalText;
                     if (savedObj._originalFont !== undefined) obj._originalFont = savedObj._originalFont;
                     if (savedObj._savedTextEdit !== undefined) obj._savedTextEdit = savedObj._savedTextEdit;
+                    // Aplikovat vlastní vlastnosti pro obrázky
+                    if (savedObj._isExtractedImage !== undefined) obj._isExtractedImage = savedObj._isExtractedImage;
+                    if (savedObj._imageIndex !== undefined) obj._imageIndex = savedObj._imageIndex;
+                    if (savedObj._originalX !== undefined) obj._originalX = savedObj._originalX;
+                    if (savedObj._originalY !== undefined) obj._originalY = savedObj._originalY;
+                    if (savedObj._originalWidth !== undefined) obj._originalWidth = savedObj._originalWidth;
+                    if (savedObj._originalHeight !== undefined) obj._originalHeight = savedObj._originalHeight;
+                    if (savedObj._imageName !== undefined) obj._imageName = savedObj._imageName;
+                    if (savedObj._savedImageEdit !== undefined) obj._savedImageEdit = savedObj._savedImageEdit;
                 });
             }
 
@@ -760,14 +777,22 @@ const PDFEditor = {
      * @param {number} pageNum - Page number
      */
     savePageAnnotations(pageNum) {
-        // Důležité: Přidat vlastní vlastnosti do serializace
+        // Důležité: Přidat vlastní vlastnosti do serializace (text i obrázky)
         const state = this.fabricCanvas.toJSON([
             '_isTextBackground',
             '_isExtractedText',
             '_textIndex',
             '_originalText',
             '_originalFont',
-            '_savedTextEdit'
+            '_savedTextEdit',
+            '_isExtractedImage',
+            '_imageIndex',
+            '_originalX',
+            '_originalY',
+            '_originalWidth',
+            '_originalHeight',
+            '_imageName',
+            '_savedImageEdit'
         ]);
         this.pageAnnotations[pageNum] = state;
     },
@@ -798,13 +823,22 @@ const PDFEditor = {
                 if (annotations.objects && objects.length === annotations.objects.length) {
                     objects.forEach((obj, index) => {
                         const savedObj = annotations.objects[index];
-                        // Aplikovat vlastní vlastnosti
+                        // Aplikovat vlastní vlastnosti pro text
                         if (savedObj._isTextBackground !== undefined) obj._isTextBackground = savedObj._isTextBackground;
                         if (savedObj._isExtractedText !== undefined) obj._isExtractedText = savedObj._isExtractedText;
                         if (savedObj._textIndex !== undefined) obj._textIndex = savedObj._textIndex;
                         if (savedObj._originalText !== undefined) obj._originalText = savedObj._originalText;
                         if (savedObj._originalFont !== undefined) obj._originalFont = savedObj._originalFont;
                         if (savedObj._savedTextEdit !== undefined) obj._savedTextEdit = savedObj._savedTextEdit;
+                        // Aplikovat vlastní vlastnosti pro obrázky
+                        if (savedObj._isExtractedImage !== undefined) obj._isExtractedImage = savedObj._isExtractedImage;
+                        if (savedObj._imageIndex !== undefined) obj._imageIndex = savedObj._imageIndex;
+                        if (savedObj._originalX !== undefined) obj._originalX = savedObj._originalX;
+                        if (savedObj._originalY !== undefined) obj._originalY = savedObj._originalY;
+                        if (savedObj._originalWidth !== undefined) obj._originalWidth = savedObj._originalWidth;
+                        if (savedObj._originalHeight !== undefined) obj._originalHeight = savedObj._originalHeight;
+                        if (savedObj._imageName !== undefined) obj._imageName = savedObj._imageName;
+                        if (savedObj._savedImageEdit !== undefined) obj._savedImageEdit = savedObj._savedImageEdit;
                     });
                 }
 
@@ -1124,24 +1158,224 @@ const PDFEditor = {
     },
 
     /**
-     * Enable text editing mode - extracts and overlays existing text
+     * Enable text editing mode - extracts and overlays existing text AND images
      * @param {Object} pdfPage - PDF.js page object
      * @param {number} scale - Current view scale
      */
     async enableTextEditing(pdfPage, scale = 1) {
+        // Extrahovat text
         const textItems = await this.extractTextWithPositions(pdfPage, scale);
         this.createTextOverlays(textItems);
+
+        // Extrahovat obrázky
+        try {
+            const imageItems = await this.extractImagesWithPositions(pdfPage, scale);
+            if (imageItems.length > 0) {
+                await this.createImageOverlays(imageItems);
+                console.log(`Created ${imageItems.length} image overlays`);
+            }
+        } catch (error) {
+            console.warn('Could not extract images:', error);
+        }
+
         this._saveToHistory();
     },
 
     /**
-     * Remove text editing overlays
+     * Extract images from PDF page using operatorList
+     * @param {Object} pdfPage - PDF.js page object
+     * @param {number} scale - Current view scale
+     * @returns {Promise<Array>} - Array of image items with positions
+     */
+    async extractImagesWithPositions(pdfPage, scale = 1) {
+        const operatorList = await pdfPage.getOperatorList();
+        const viewport = pdfPage.getViewport({ scale: scale });
+        const imageItems = [];
+
+        // OPS konstanty pro obrázky
+        const OPS = pdfjsLib.OPS;
+        const paintImageXObject = OPS.paintImageXObject;
+        const paintJpegXObject = OPS.paintJpegXObject;
+        const paintImageMaskXObject = OPS.paintImageMaskXObject;
+
+        // Sledovat transformační matici
+        let currentTransform = [1, 0, 0, 1, 0, 0];
+        const transformStack = [];
+
+        for (let i = 0; i < operatorList.fnArray.length; i++) {
+            const fn = operatorList.fnArray[i];
+            const args = operatorList.argsArray[i];
+
+            // Sledovat transformace
+            if (fn === OPS.save) {
+                transformStack.push([...currentTransform]);
+            } else if (fn === OPS.restore) {
+                if (transformStack.length > 0) {
+                    currentTransform = transformStack.pop();
+                }
+            } else if (fn === OPS.transform) {
+                // Kombinovat transformace
+                const [a, b, c, d, e, f] = args;
+                const [ca, cb, cc, cd, ce, cf] = currentTransform;
+                currentTransform = [
+                    ca * a + cc * b,
+                    cb * a + cd * b,
+                    ca * c + cc * d,
+                    cb * c + cd * d,
+                    ca * e + cc * f + ce,
+                    cb * e + cd * f + cf
+                ];
+            }
+
+            // Detekovat obrázky
+            if (fn === paintImageXObject || fn === paintJpegXObject || fn === paintImageMaskXObject) {
+                const imageName = args[0];
+
+                try {
+                    // Získat obrázek z resources
+                    const objs = pdfPage.objs;
+                    const imgData = objs.get(imageName);
+
+                    if (imgData && imgData.data) {
+                        // Transformovat pozici pomocí viewport
+                        const transform = currentTransform;
+
+                        // Vypočítat pozici a velikost v canvas koordinátech
+                        const width = Math.abs(transform[0]) * scale;
+                        const height = Math.abs(transform[3]) * scale;
+
+                        // Transformovat pozici
+                        let x, y;
+                        if (pdfjsLib.Util && pdfjsLib.Util.transform) {
+                            const combined = pdfjsLib.Util.transform(viewport.transform, transform);
+                            x = combined[4];
+                            y = combined[5] - height; // Posunout nahoru
+                        } else {
+                            x = transform[4] * scale;
+                            y = viewport.height - (transform[5] * scale) - height;
+                        }
+
+                        // Vytvořit canvas s obrázkem
+                        const imgCanvas = document.createElement('canvas');
+                        imgCanvas.width = imgData.width;
+                        imgCanvas.height = imgData.height;
+                        const ctx = imgCanvas.getContext('2d');
+
+                        // Vytvořit ImageData
+                        const imageData = ctx.createImageData(imgData.width, imgData.height);
+
+                        // Kopírovat data (PDF.js může mít různé formáty)
+                        if (imgData.data.length === imgData.width * imgData.height * 4) {
+                            // RGBA formát
+                            imageData.data.set(imgData.data);
+                        } else if (imgData.data.length === imgData.width * imgData.height * 3) {
+                            // RGB formát - převést na RGBA
+                            for (let j = 0, k = 0; j < imgData.data.length; j += 3, k += 4) {
+                                imageData.data[k] = imgData.data[j];
+                                imageData.data[k + 1] = imgData.data[j + 1];
+                                imageData.data[k + 2] = imgData.data[j + 2];
+                                imageData.data[k + 3] = 255;
+                            }
+                        } else {
+                            // Grayscale nebo jiný formát
+                            const bytesPerPixel = imgData.data.length / (imgData.width * imgData.height);
+                            if (bytesPerPixel === 1) {
+                                for (let j = 0, k = 0; j < imgData.data.length; j++, k += 4) {
+                                    imageData.data[k] = imgData.data[j];
+                                    imageData.data[k + 1] = imgData.data[j];
+                                    imageData.data[k + 2] = imgData.data[j];
+                                    imageData.data[k + 3] = 255;
+                                }
+                            }
+                        }
+
+                        ctx.putImageData(imageData, 0, 0);
+
+                        // Převést na data URL
+                        const dataUrl = imgCanvas.toDataURL('image/png');
+
+                        imageItems.push({
+                            dataUrl: dataUrl,
+                            x: x,
+                            y: y,
+                            width: width,
+                            height: height,
+                            originalWidth: imgData.width,
+                            originalHeight: imgData.height,
+                            imageName: imageName
+                        });
+                    }
+                } catch (error) {
+                    console.warn(`Could not extract image ${imageName}:`, error);
+                }
+            }
+        }
+
+        console.log(`Extracted ${imageItems.length} images from PDF`);
+        return imageItems;
+    },
+
+    /**
+     * Create editable image overlays on canvas
+     * @param {Array} imageItems - Array of image items from extractImagesWithPositions
+     */
+    async createImageOverlays(imageItems) {
+        if (!this.fabricCanvas || !imageItems.length) return;
+
+        console.log(`Creating ${imageItems.length} image overlays`);
+
+        for (let index = 0; index < imageItems.length; index++) {
+            const item = imageItems[index];
+
+            try {
+                // Načíst obrázek do Fabric.js
+                const img = await new Promise((resolve, reject) => {
+                    fabric.Image.fromURL(item.dataUrl, (fabricImg) => {
+                        if (fabricImg) {
+                            resolve(fabricImg);
+                        } else {
+                            reject(new Error('Failed to load image'));
+                        }
+                    });
+                });
+
+                // Nastavit pozici a velikost
+                img.set({
+                    left: item.x,
+                    top: item.y,
+                    scaleX: item.width / item.originalWidth,
+                    scaleY: item.height / item.originalHeight,
+                    selectable: true,
+                    hasControls: true,
+                    hasBorders: true,
+                    // Vlastní vlastnosti pro identifikaci
+                    _isExtractedImage: true,
+                    _imageIndex: index,
+                    _originalX: item.x,
+                    _originalY: item.y,
+                    _originalWidth: item.width,
+                    _originalHeight: item.height,
+                    _imageName: item.imageName
+                });
+
+                // Přidat na canvas
+                this.fabricCanvas.add(img);
+            } catch (error) {
+                console.warn(`Could not create overlay for image ${index}:`, error);
+            }
+        }
+
+        this.fabricCanvas.renderAll();
+    },
+
+    /**
+     * Remove text and image editing overlays
      */
     disableTextEditing() {
         if (!this.fabricCanvas) return;
 
         const toRemove = this.fabricCanvas.getObjects().filter(
-            obj => obj._isExtractedText || obj._isTextBackground
+            obj => obj._isExtractedText || obj._isTextBackground || obj._isExtractedImage
         );
 
         toRemove.forEach(obj => this.fabricCanvas.remove(obj));
@@ -1184,37 +1418,45 @@ const PDFEditor = {
     },
 
     /**
-     * Save current text editing state to cache for page persistence
+     * Save current text/image editing state to cache for page persistence
      * @param {number} pageNum - Page number
      */
     saveTextEditingToCache(pageNum) {
         if (!this.fabricCanvas) return;
 
-        // Najít všechny text editing objekty (extracted nebo jejich background)
-        const textEditObjects = this.fabricCanvas.getObjects().filter(
-            obj => obj._isExtractedText || obj._isTextBackground
+        // Najít všechny editovatelné objekty (text, background, obrázky)
+        const editObjects = this.fabricCanvas.getObjects().filter(
+            obj => obj._isExtractedText || obj._isTextBackground || obj._isExtractedImage
         );
 
-        if (textEditObjects.length === 0) {
-            // Žádné text edity - vymazat cache pro tuto stránku
+        if (editObjects.length === 0) {
+            // Žádné edity - vymazat cache pro tuto stránku
             delete this.textEditingCache[pageNum];
             return;
         }
 
-        // Serializovat text editing objekty
-        const cacheData = textEditObjects.map(obj => {
+        // Serializovat editovatelné objekty (text i obrázky)
+        const cacheData = editObjects.map(obj => {
             return obj.toJSON([
                 '_isTextBackground',
                 '_isExtractedText',
                 '_textIndex',
                 '_originalText',
                 '_originalFont',
-                '_savedTextEdit'
+                '_savedTextEdit',
+                '_isExtractedImage',
+                '_imageIndex',
+                '_originalX',
+                '_originalY',
+                '_originalWidth',
+                '_originalHeight',
+                '_imageName',
+                '_savedImageEdit'
             ]);
         });
 
         this.textEditingCache[pageNum] = cacheData;
-        console.log(`Cached ${cacheData.length} text editing objects for page ${pageNum}`);
+        console.log(`Cached ${cacheData.length} editing objects for page ${pageNum}`);
     },
 
     /**
