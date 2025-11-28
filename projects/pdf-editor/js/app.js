@@ -348,6 +348,12 @@ const PDFEditorApp = {
         this.elements.undoBtn?.addEventListener('click', () => this._undo());
         this.elements.redoBtn?.addEventListener('click', () => this._redo());
 
+        // Edit existing text button
+        const editTextBtn = document.getElementById('editTextBtn');
+        if (editTextBtn) {
+            editTextBtn.addEventListener('click', () => this._toggleTextEditing());
+        }
+
         // Tool options
         this.elements.textColor?.addEventListener('input', (e) => {
             PDFEditor.updateSettings({ textColor: e.target.value });
@@ -538,21 +544,38 @@ const PDFEditorApp = {
      * Page navigation
      */
     async _prevPage() {
+        this._resetTextEditingState();
         PDFEditor.savePageAnnotations(PDFViewer.currentPage);
         await PDFViewer.prevPage();
         PDFEditor.loadPageAnnotations(PDFViewer.currentPage);
     },
 
     async _nextPage() {
+        this._resetTextEditingState();
         PDFEditor.savePageAnnotations(PDFViewer.currentPage);
         await PDFViewer.nextPage();
         PDFEditor.loadPageAnnotations(PDFViewer.currentPage);
     },
 
     async _goToPage(pageNum) {
+        this._resetTextEditingState();
         PDFEditor.savePageAnnotations(PDFViewer.currentPage);
         await PDFViewer.goToPage(pageNum);
         PDFEditor.loadPageAnnotations(PDFViewer.currentPage);
+    },
+
+    /**
+     * Reset text editing state
+     */
+    _resetTextEditingState() {
+        if (this.isTextEditingEnabled) {
+            PDFEditor.disableTextEditing();
+            this.isTextEditingEnabled = false;
+            const editTextBtn = document.getElementById('editTextBtn');
+            if (editTextBtn) {
+                editTextBtn.classList.remove('active');
+            }
+        }
     },
 
     async _zoomIn() {
@@ -634,6 +657,51 @@ const PDFEditorApp = {
         }
         if (this.elements.redoBtn) {
             this.elements.redoBtn.disabled = !state.canRedo;
+        }
+    },
+
+    // Text editing state
+    isTextEditingEnabled: false,
+
+    /**
+     * Toggle text editing mode
+     */
+    async _toggleTextEditing() {
+        if (!PDFViewer.pdfDoc) {
+            this._showStatus('Please load a PDF first', 'warning');
+            return;
+        }
+
+        const editTextBtn = document.getElementById('editTextBtn');
+
+        if (this.isTextEditingEnabled) {
+            // Disable text editing
+            PDFEditor.disableTextEditing();
+            this.isTextEditingEnabled = false;
+            if (editTextBtn) {
+                editTextBtn.classList.remove('active');
+            }
+            this._showStatus('Text editing disabled', 'success');
+        } else {
+            // Enable text editing
+            this._showLoading('Extracting text...');
+
+            try {
+                const page = await PDFViewer.pdfDoc.getPage(PDFViewer.currentPage);
+                await PDFEditor.enableTextEditing(page, PDFViewer.scale);
+                this.isTextEditingEnabled = true;
+
+                if (editTextBtn) {
+                    editTextBtn.classList.add('active');
+                }
+
+                this._showStatus('Text editing enabled - click text to edit', 'success');
+            } catch (error) {
+                console.error('Error enabling text editing:', error);
+                this._showStatus('Error extracting text', 'error');
+            }
+
+            this._hideLoading();
         }
     },
 

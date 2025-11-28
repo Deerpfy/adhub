@@ -4,30 +4,33 @@
  */
 
 const PDFCompress = {
-    // Compression levels
+    // Compression levels - using lower scales for actual size reduction
     LEVELS: {
         low: {
             name: 'low',
             label: 'Low Compression',
             description: 'Best quality, larger file',
-            imageQuality: 0.92,
-            scale: 1.5,
-            expectedReduction: '10-20%'
+            imageQuality: 0.85,
+            scale: 1.0,
+            dpi: 150,
+            expectedReduction: '10-30%'
         },
         medium: {
             name: 'medium',
             label: 'Medium Compression',
             description: 'Balanced quality and size',
-            imageQuality: 0.75,
-            scale: 1.2,
+            imageQuality: 0.65,
+            scale: 0.85,
+            dpi: 120,
             expectedReduction: '30-50%'
         },
         high: {
             name: 'high',
             label: 'High Compression',
             description: 'Smallest file, lower quality',
-            imageQuality: 0.5,
-            scale: 1.0,
+            imageQuality: 0.45,
+            scale: 0.72,
+            dpi: 96,
             expectedReduction: '50-70%'
         }
     },
@@ -57,7 +60,7 @@ const PDFCompress = {
     },
 
     /**
-     * Compress PDF
+     * Compress PDF - tries optimization first, then image compression if needed
      * @param {Uint8Array} pdfData - Original PDF data
      * @param {string} level - Compression level (optional, uses currentLevel if not provided)
      * @returns {Promise<Object>} - Compressed PDF data and stats
@@ -74,7 +77,27 @@ const PDFCompress = {
 
         try {
             // Report progress
-            this._reportProgress(0, 'Loading PDF...');
+            this._reportProgress(0, 'Analyzing PDF...');
+
+            // First, try optimization only (works well for text-heavy PDFs)
+            const optimizedResult = await this.optimize(pdfData);
+
+            // If optimization achieved good results, use that
+            if (optimizedResult.reduction >= 10) {
+                this._reportProgress(100, 'Compression complete!');
+                return {
+                    data: optimizedResult.data,
+                    originalSize: originalSize,
+                    compressedSize: optimizedResult.optimizedSize,
+                    reduction: optimizedResult.reduction,
+                    level: compressionLevel,
+                    pageCount: await this._getPageCount(pdfData),
+                    method: 'optimization'
+                };
+            }
+
+            // Otherwise, use image-based compression
+            this._reportProgress(10, 'Loading PDF...');
 
             // Load PDF with PDF.js for rendering
             const loadingTask = pdfjsLib.getDocument({ data: pdfData.slice() });
@@ -85,22 +108,37 @@ const PDFCompress = {
             const { PDFDocument } = PDFLib;
             const newPdf = await PDFDocument.create();
 
+            // Calculate DPI-based scale
+            const dpiScale = settings.dpi / 72; // PDF uses 72 points per inch
+
             // Process each page
             for (let i = 1; i <= numPages; i++) {
                 this._reportProgress(
-                    (i - 1) / numPages * 90,
-                    `Processing page ${i} of ${numPages}...`
+                    10 + (i - 1) / numPages * 80,
+                    `Compressing page ${i} of ${numPages}...`
                 );
 
                 const page = await pdfDoc.getPage(i);
-                const viewport = page.getViewport({ scale: settings.scale });
+
+                // Get original page dimensions in points
+                const originalViewport = page.getViewport({ scale: 1.0 });
+                const pageWidthPt = originalViewport.width;
+                const pageHeightPt = originalViewport.height;
+
+                // Calculate render scale based on DPI and compression level
+                const renderScale = dpiScale * settings.scale;
+                const viewport = page.getViewport({ scale: renderScale });
 
                 // Create canvas for rendering
                 const canvas = document.createElement('canvas');
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
+                canvas.width = Math.floor(viewport.width);
+                canvas.height = Math.floor(viewport.height);
 
                 const ctx = canvas.getContext('2d');
+
+                // Fill with white background
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
 
                 // Render page to canvas
                 await page.render({
@@ -108,44 +146,52 @@ const PDFCompress = {
                     viewport: viewport
                 }).promise;
 
-                // Convert canvas to JPEG
+                // Convert canvas to JPEG with compression quality
                 const jpegDataUrl = canvas.toDataURL('image/jpeg', settings.imageQuality);
                 const jpegData = this._dataUrlToUint8Array(jpegDataUrl);
 
                 // Embed JPEG in new PDF
                 const jpegImage = await newPdf.embedJpg(jpegData);
 
-                // Calculate page dimensions (convert from pixels to points)
-                // PDF points = pixels * 72 / 96 (assuming 96 DPI screen)
-                const originalViewport = page.getViewport({ scale: 1.0 });
-                const pageWidth = originalViewport.width * 0.75; // Convert to points
-                const pageHeight = originalViewport.height * 0.75;
-
-                // Add page with image
-                const newPage = newPdf.addPage([pageWidth, pageHeight]);
+                // Add page with original dimensions (not scaled)
+                const newPage = newPdf.addPage([pageWidthPt, pageHeightPt]);
                 newPage.drawImage(jpegImage, {
                     x: 0,
                     y: 0,
-                    width: pageWidth,
-                    height: pageHeight
+                    width: pageWidthPt,
+                    height: pageHeightPt
                 });
             }
 
             this._reportProgress(95, 'Finalizing PDF...');
 
-            // Save compressed PDF
+            // Save compressed PDF with object streams for additional compression
             const compressedData = await newPdf.save({
                 useObjectStreams: true,
                 addDefaultPage: false
             });
 
             const compressedSize = compressedData.length;
-            const reduction = ((originalSize - compressedSize) / originalSize * 100).toFixed(1);
-
-            this._reportProgress(100, 'Compression complete!');
 
             // Cleanup
             pdfDoc.destroy();
+
+            // If compression made file larger, return the optimized version instead
+            if (compressedSize >= originalSize && optimizedResult.optimizedSize < originalSize) {
+                this._reportProgress(100, 'Using optimized version (better result)');
+                return {
+                    data: optimizedResult.data,
+                    originalSize: originalSize,
+                    compressedSize: optimizedResult.optimizedSize,
+                    reduction: optimizedResult.reduction,
+                    level: compressionLevel,
+                    pageCount: numPages,
+                    method: 'optimization'
+                };
+            }
+
+            const reduction = ((originalSize - compressedSize) / originalSize * 100).toFixed(1);
+            this._reportProgress(100, 'Compression complete!');
 
             return {
                 data: compressedData,
@@ -153,12 +199,24 @@ const PDFCompress = {
                 compressedSize: compressedSize,
                 reduction: parseFloat(reduction),
                 level: compressionLevel,
-                pageCount: numPages
+                pageCount: numPages,
+                method: 'image-compression'
             };
         } catch (error) {
             console.error('Compression error:', error);
             throw error;
         }
+    },
+
+    /**
+     * Get page count from PDF data
+     * @param {Uint8Array} pdfData - PDF data
+     * @returns {Promise<number>}
+     */
+    async _getPageCount(pdfData) {
+        const { PDFDocument } = PDFLib;
+        const doc = await PDFDocument.load(pdfData);
+        return doc.getPageCount();
     },
 
     /**

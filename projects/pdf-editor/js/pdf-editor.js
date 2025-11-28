@@ -50,6 +50,10 @@ const PDFEditor = {
             this.fabricCanvas.dispose();
         }
 
+        // Reset dimensions tracking for new PDF
+        this.lastWidth = width;
+        this.lastHeight = height;
+
         // Create Fabric canvas
         this.fabricCanvas = new fabric.Canvas(canvasElement, {
             width: width,
@@ -110,28 +114,68 @@ const PDFEditor = {
         document.addEventListener('keydown', (e) => this._handleKeyDown(e));
     },
 
+    // Store last dimensions for scaling calculations
+    lastWidth: 0,
+    lastHeight: 0,
+
     /**
-     * Set canvas dimensions
+     * Set canvas dimensions and scale objects proportionally
      * @param {number} width - Width
      * @param {number} height - Height
      */
     setDimensions(width, height) {
-        if (this.fabricCanvas) {
-            this.fabricCanvas.setWidth(width);
-            this.fabricCanvas.setHeight(height);
+        if (!this.fabricCanvas) return;
 
-            // Update wrapper dimensions as well
-            const wrapper = this.fabricCanvas.wrapperEl;
-            if (wrapper) {
-                wrapper.style.width = width + 'px';
-                wrapper.style.height = height + 'px';
-                wrapper.style.position = 'absolute';
-                wrapper.style.top = '0';
-                wrapper.style.left = '0';
-            }
+        // Calculate scale factor based on previous dimensions
+        const previousWidth = this.lastWidth || width;
+        const previousHeight = this.lastHeight || height;
+        const scaleFactor = width / previousWidth;
 
-            this.fabricCanvas.renderAll();
+        // Only scale if there's an actual change in size
+        const needsScaling = this.lastWidth > 0 && Math.abs(scaleFactor - 1) > 0.001;
+
+        // Update canvas size
+        this.fabricCanvas.setWidth(width);
+        this.fabricCanvas.setHeight(height);
+
+        // Update wrapper dimensions
+        const wrapper = this.fabricCanvas.wrapperEl;
+        if (wrapper) {
+            wrapper.style.width = width + 'px';
+            wrapper.style.height = height + 'px';
+            wrapper.style.position = 'absolute';
+            wrapper.style.top = '0';
+            wrapper.style.left = '0';
         }
+
+        // Scale all objects proportionally
+        if (needsScaling) {
+            const objects = this.fabricCanvas.getObjects();
+            objects.forEach(obj => {
+                // Scale position
+                obj.set({
+                    left: obj.left * scaleFactor,
+                    top: obj.top * scaleFactor,
+                    scaleX: obj.scaleX * scaleFactor,
+                    scaleY: obj.scaleY * scaleFactor
+                });
+                obj.setCoords();
+            });
+        }
+
+        // Store current dimensions for next scaling calculation
+        this.lastWidth = width;
+        this.lastHeight = height;
+
+        this.fabricCanvas.renderAll();
+    },
+
+    /**
+     * Reset dimensions tracking (call when loading new PDF)
+     */
+    resetDimensions() {
+        this.lastWidth = 0;
+        this.lastHeight = 0;
     },
 
     /**
@@ -729,6 +773,128 @@ const PDFEditor = {
         this.pageAnnotations = {};
         this.history = [];
         this.historyIndex = -1;
+        this.lastWidth = 0;
+        this.lastHeight = 0;
+    },
+
+    /**
+     * Extract text content from page with positions (for text editing)
+     * @param {Object} pdfPage - PDF.js page object
+     * @param {number} scale - Current view scale
+     * @returns {Promise<Array>} - Array of text items with positions
+     */
+    async extractTextWithPositions(pdfPage, scale = 1) {
+        const textContent = await pdfPage.getTextContent();
+        const viewport = pdfPage.getViewport({ scale: scale });
+
+        const textItems = [];
+
+        for (const item of textContent.items) {
+            if (!item.str || item.str.trim() === '') continue;
+
+            // Transform position using viewport
+            const tx = fabric.util.transformPoint(
+                { x: item.transform[4], y: item.transform[5] },
+                viewport.transform
+            );
+
+            // Calculate dimensions
+            const fontSize = Math.sqrt(
+                item.transform[0] * item.transform[0] +
+                item.transform[1] * item.transform[1]
+            ) * scale;
+
+            textItems.push({
+                text: item.str,
+                x: tx.x,
+                y: viewport.height - tx.y - fontSize, // Flip Y coordinate
+                width: item.width * scale,
+                height: item.height * scale || fontSize * 1.2,
+                fontSize: fontSize,
+                fontFamily: item.fontName || 'sans-serif'
+            });
+        }
+
+        return textItems;
+    },
+
+    /**
+     * Create editable text overlays for extracted text
+     * @param {Array} textItems - Array of text items from extractTextWithPositions
+     */
+    createTextOverlays(textItems) {
+        if (!this.fabricCanvas || !textItems) return;
+
+        textItems.forEach((item, index) => {
+            // Create a background rectangle to "whiteout" original text
+            const bg = new fabric.Rect({
+                left: item.x - 2,
+                top: item.y - 2,
+                width: item.width + 4,
+                height: item.height + 4,
+                fill: '#ffffff',
+                selectable: false,
+                evented: false,
+                _isTextBackground: true,
+                _textIndex: index
+            });
+
+            // Create editable text
+            const text = new fabric.IText(item.text, {
+                left: item.x,
+                top: item.y,
+                fontSize: item.fontSize,
+                fontFamily: 'Helvetica',
+                fill: '#000000',
+                editable: true,
+                selectable: true,
+                _isExtractedText: true,
+                _textIndex: index,
+                _originalText: item.text
+            });
+
+            // Link background to text
+            text._background = bg;
+
+            // Update background when text changes
+            text.on('changed', () => {
+                // Adjust background width based on text width
+                bg.set({
+                    width: text.width + 4
+                });
+                this.fabricCanvas.renderAll();
+            });
+
+            this.fabricCanvas.add(bg);
+            this.fabricCanvas.add(text);
+        });
+
+        this.fabricCanvas.renderAll();
+    },
+
+    /**
+     * Enable text editing mode - extracts and overlays existing text
+     * @param {Object} pdfPage - PDF.js page object
+     * @param {number} scale - Current view scale
+     */
+    async enableTextEditing(pdfPage, scale = 1) {
+        const textItems = await this.extractTextWithPositions(pdfPage, scale);
+        this.createTextOverlays(textItems);
+        this._saveToHistory();
+    },
+
+    /**
+     * Remove text editing overlays
+     */
+    disableTextEditing() {
+        if (!this.fabricCanvas) return;
+
+        const toRemove = this.fabricCanvas.getObjects().filter(
+            obj => obj._isExtractedText || obj._isTextBackground
+        );
+
+        toRemove.forEach(obj => this.fabricCanvas.remove(obj));
+        this.fabricCanvas.renderAll();
     }
 };
 

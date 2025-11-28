@@ -46,18 +46,28 @@ const PDFSigner = {
             return;
         }
 
+        // Store canvas reference
+        this.canvas = canvas;
+
+        // First resize the canvas
+        this._resizeCanvas(canvas);
+
         // Create SignaturePad instance
         this.signaturePad = new SignaturePad(canvas, {
             backgroundColor: this.settings.backgroundColor,
             penColor: this.settings.penColor,
             minWidth: this.settings.minWidth,
             maxWidth: this.settings.maxWidth,
-            velocityFilterWeight: 0.7
+            velocityFilterWeight: 0.7,
+            throttle: 16
         });
 
-        // Handle resize
-        this._resizeCanvas(canvas);
-        window.addEventListener('resize', () => this._resizeCanvas(canvas));
+        // Handle resize with debounce
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => this._resizeCanvas(canvas), 100);
+        });
 
         // Handle signature end
         this.signaturePad.addEventListener('endStroke', () => {
@@ -71,16 +81,34 @@ const PDFSigner = {
 
     /**
      * Resize canvas to maintain quality
+     * Uses a simpler approach that works reliably with SignaturePad
      */
     _resizeCanvas(canvas) {
+        // Get the display size from CSS
+        const displayWidth = canvas.offsetWidth || canvas.clientWidth;
+        const displayHeight = canvas.offsetHeight || canvas.clientHeight;
+
+        // Only resize if dimensions are valid
+        if (displayWidth === 0 || displayHeight === 0) {
+            // Canvas not visible yet, try again later
+            setTimeout(() => this._resizeCanvas(canvas), 50);
+            return;
+        }
+
+        // Use device pixel ratio for high DPI displays
         const ratio = Math.max(window.devicePixelRatio || 1, 1);
-        const rect = canvas.getBoundingClientRect();
 
-        canvas.width = rect.width * ratio;
-        canvas.height = rect.height * ratio;
+        // Set the canvas internal size to match display size * ratio
+        canvas.width = displayWidth * ratio;
+        canvas.height = displayHeight * ratio;
 
+        // Scale the canvas context to counter the size increase
         const ctx = canvas.getContext('2d');
         ctx.scale(ratio, ratio);
+
+        // Clear with white background for visibility (signature drawing area)
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, displayWidth, displayHeight);
 
         // Restore signature if exists
         if (this.signaturePad && !this.signaturePad.isEmpty()) {
