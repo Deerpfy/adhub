@@ -742,6 +742,16 @@ const PDFEditor = {
         // Parse state pro získání vlastních vlastností
         const parsedState = typeof state === 'string' ? JSON.parse(state) : state;
 
+        // DŮLEŽITÉ: Sanitizovat textBaseline PŘED loadFromJSON
+        // Fabric.js ukládá 'alphabetical' ale Canvas API vyžaduje 'alphabetic'
+        if (parsedState.objects) {
+            parsedState.objects.forEach(obj => {
+                if (obj.textBaseline === 'alphabetical') {
+                    obj.textBaseline = 'alphabetic';
+                }
+            });
+        }
+
         // DŮLEŽITÉ: Nastavit flag, aby se při načítání neukládalo znovu do historie
         this._isLoadingHistory = true;
 
@@ -848,7 +858,10 @@ const PDFEditor = {
                 });
             }
 
+            // Zabránit ukládání do historie při načítání
+            this._isLoadingHistory = true;
             this.fabricCanvas.loadFromJSON(annotations, () => {
+                this._isLoadingHistory = false;
                 // OPRAVENO: Aplikovat vlastní vlastnosti z annotations na živé objekty
                 const objects = this.fabricCanvas.getObjects();
                 if (annotations.objects && objects.length === annotations.objects.length) {
@@ -877,8 +890,11 @@ const PDFEditor = {
                 this.fabricCanvas.renderAll();
             });
         } else {
+            // Zabránit ukládání do historie při čištění
+            this._isLoadingHistory = true;
             this.fabricCanvas.clear();
             this.fabricCanvas.renderAll();
+            this._isLoadingHistory = false;
         }
 
         // Reset history for new page
@@ -1527,6 +1543,9 @@ const PDFEditor = {
         });
 
         // Načíst objekty z cache
+        // Zabránit ukládání do historie při načítání z cache
+        this._isLoadingHistory = true;
+
         return new Promise((resolve) => {
             fabric.util.enlivenObjects(sanitizedData, (objects) => {
                 // Přidat objekty na canvas
@@ -1544,6 +1563,7 @@ const PDFEditor = {
                 });
 
                 this.fabricCanvas.renderAll();
+                this._isLoadingHistory = false;
                 resolve(true);
             });
         });
