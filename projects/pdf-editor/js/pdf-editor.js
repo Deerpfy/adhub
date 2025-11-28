@@ -75,6 +75,16 @@ const PDFEditor = {
             wrapper.style.pointerEvents = 'auto';
         }
 
+        // OPRAVA: Přidat listener na scroll parent kontejneru pro přepočítání offsetu
+        const scrollContainer = document.querySelector('.pdf-canvas-container');
+        if (scrollContainer) {
+            scrollContainer.addEventListener('scroll', () => {
+                if (this.fabricCanvas) {
+                    this.fabricCanvas.calcOffset();
+                }
+            });
+        }
+
         // Setup event listeners
         this._setupEventListeners();
 
@@ -82,6 +92,13 @@ const PDFEditor = {
         this.history = [];
         this.historyIndex = -1;
         this.pageAnnotations = {};
+
+        // Přepočítat offset při inicializaci
+        setTimeout(() => {
+            if (this.fabricCanvas) {
+                this.fabricCanvas.calcOffset();
+            }
+        }, 100);
 
         console.log('PDF Editor initialized with dimensions:', width, 'x', height);
     },
@@ -169,6 +186,9 @@ const PDFEditor = {
         // Store current dimensions for next scaling calculation
         this.lastWidth = width;
         this.lastHeight = height;
+
+        // OPRAVA: Přepočítat offset canvasu pro správné pozicování myši
+        this.fabricCanvas.calcOffset();
 
         this.fabricCanvas.renderAll();
     },
@@ -678,14 +698,17 @@ const PDFEditor = {
 
     /**
      * Load state from history
-     * OPRAVENO: Zachovat pozice wrapper elementu
+     * OPRAVENO: Zachovat pozice wrapper elementu a vlastní vlastnosti
      */
     _loadState(state) {
         // Uložit aktuální rozměry před načtením
         const currentWidth = this.fabricCanvas.getWidth();
         const currentHeight = this.fabricCanvas.getHeight();
 
-        this.fabricCanvas.loadFromJSON(state, () => {
+        // Parse state pro získání vlastních vlastností
+        const parsedState = typeof state === 'string' ? JSON.parse(state) : state;
+
+        this.fabricCanvas.loadFromJSON(parsedState, () => {
             // OPRAVENO: Obnovit rozměry a pozici wrapper elementu
             this.fabricCanvas.setWidth(currentWidth);
             this.fabricCanvas.setHeight(currentHeight);
@@ -700,11 +723,27 @@ const PDFEditor = {
                 wrapper.style.height = currentHeight + 'px';
             }
 
+            // OPRAVENO: Aplikovat vlastní vlastnosti z parsedState na živé objekty
+            const objects = this.fabricCanvas.getObjects();
+            if (parsedState.objects && objects.length === parsedState.objects.length) {
+                objects.forEach((obj, index) => {
+                    const savedObj = parsedState.objects[index];
+                    // Aplikovat vlastní vlastnosti
+                    if (savedObj._isTextBackground !== undefined) obj._isTextBackground = savedObj._isTextBackground;
+                    if (savedObj._isExtractedText !== undefined) obj._isExtractedText = savedObj._isExtractedText;
+                    if (savedObj._textIndex !== undefined) obj._textIndex = savedObj._textIndex;
+                    if (savedObj._originalText !== undefined) obj._originalText = savedObj._originalText;
+                    if (savedObj._originalFont !== undefined) obj._originalFont = savedObj._originalFont;
+                    if (savedObj._savedTextEdit !== undefined) obj._savedTextEdit = savedObj._savedTextEdit;
+                });
+            }
+
             // Aktualizovat souřadnice všech objektů
             this.fabricCanvas.getObjects().forEach(obj => {
                 obj.setCoords();
             });
 
+            this.fabricCanvas.calcOffset();
             this.fabricCanvas.renderAll();
 
             if (this.onHistoryChange) {
@@ -754,6 +793,22 @@ const PDFEditor = {
             }
 
             this.fabricCanvas.loadFromJSON(annotations, () => {
+                // OPRAVENO: Aplikovat vlastní vlastnosti z annotations na živé objekty
+                const objects = this.fabricCanvas.getObjects();
+                if (annotations.objects && objects.length === annotations.objects.length) {
+                    objects.forEach((obj, index) => {
+                        const savedObj = annotations.objects[index];
+                        // Aplikovat vlastní vlastnosti
+                        if (savedObj._isTextBackground !== undefined) obj._isTextBackground = savedObj._isTextBackground;
+                        if (savedObj._isExtractedText !== undefined) obj._isExtractedText = savedObj._isExtractedText;
+                        if (savedObj._textIndex !== undefined) obj._textIndex = savedObj._textIndex;
+                        if (savedObj._originalText !== undefined) obj._originalText = savedObj._originalText;
+                        if (savedObj._originalFont !== undefined) obj._originalFont = savedObj._originalFont;
+                        if (savedObj._savedTextEdit !== undefined) obj._savedTextEdit = savedObj._savedTextEdit;
+                    });
+                }
+
+                this.fabricCanvas.calcOffset();
                 this.fabricCanvas.renderAll();
             });
         } else {
