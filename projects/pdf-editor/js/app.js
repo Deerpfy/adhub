@@ -1506,7 +1506,7 @@ const PDFEditorApp = {
     },
 
     /**
-     * Download PDF with all changes
+     * Download PDF with all changes (page order, rotations, deletions, annotations)
      */
     async _downloadPDF() {
         if (!this.currentFileData || this.isProcessing) return;
@@ -1515,13 +1515,19 @@ const PDFEditorApp = {
         this._showLoading('Preparing PDF...');
 
         try {
-            // Get editor annotations
-            const annotations = PDFEditor.getAllAnnotations();
-
-            // Apply annotations to PDF
             let pdfData = this.currentFileData;
 
+            // First apply page changes (order, rotation, deletion) if any
+            if (PDFPages.hasChanges()) {
+                this._showLoading('Applying page changes...');
+                pdfData = await PDFPages.applyChanges();
+            }
+
+            // Then apply editor annotations
+            const annotations = PDFEditor.getAllAnnotations();
+
             if (Object.keys(annotations).length > 0) {
+                this._showLoading('Applying annotations...');
                 pdfData = await this._applyAnnotationsToPDF(pdfData, annotations);
             }
 
