@@ -80,6 +80,8 @@ const BASE_TRANSLATIONS = {
         tool_ai_prompting_desc: 'Profesionální formátovač promptů s 7 metodami (CoT, Few-Shot, ToT, atd.), 5 jazyky a lokálním úložištěm.',
         tool_pdf_merge_name: 'PDF Merge',
         tool_pdf_merge_desc: 'Spojte více PDF souborů do jednoho dokumentu. Jednoduché přetažení, náhled stránek a změna pořadí.',
+        tool_pdf_editor_name: 'PDF Editor',
+        tool_pdf_editor_desc: 'Editujte, podepisujte, komprimujte a reorganizujte PDF soubory. 100% client-side zpracování.',
         tool_mindhub_name: 'MindHub',
         tool_mindhub_desc: 'Osobní koordinační platforma pro správu myšlenek, úkolů a myšlenkových map. Organizujte své nápady vizuálně.',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
@@ -129,6 +131,8 @@ const BASE_TRANSLATIONS = {
         tool_ai_prompting_desc: 'Professional prompt formatter with 7 methods (CoT, Few-Shot, ToT, etc.), 5 languages and local storage.',
         tool_pdf_merge_name: 'PDF Merge',
         tool_pdf_merge_desc: 'Combine multiple PDF files into one document. Simple drag and drop, page preview and reordering.',
+        tool_pdf_editor_name: 'PDF Editor',
+        tool_pdf_editor_desc: 'Edit, sign, compress and reorganize PDF files. 100% client-side processing.',
         tool_mindhub_name: 'MindHub',
         tool_mindhub_desc: 'Personal coordination platform for managing thoughts, tasks and mind maps. Organize your ideas visually.',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
@@ -501,6 +505,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["pdf", "merge", "combine", "document", "files"]
+            },
+            {
+                "id": "pdf-editor",
+                "name": t('tool_pdf_editor_name'),
+                "description": t('tool_pdf_editor_desc'),
+                "category": "tools",
+                "icon": "✏️",
+                "url": "projects/pdf-editor/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["pdf", "editor", "sign", "compress", "signature", "document", "annotation"]
             },
             {
                 "id": "mindhub",

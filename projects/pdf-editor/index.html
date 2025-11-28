@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#8b5cf6">
+    <meta name="description" content="PDF Editor - Edit, sign, compress and reorganize PDF files. 100% client-side, no server upload.">
+    <title>PDF Editor - AdHUB</title>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Google Fonts for signatures -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&family=Great+Vibes&family=Pacifico&family=Sacramento&family=Allura&display=swap" rel="stylesheet">
+
+    <!-- PDF Libraries -->
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+    <script src="https://unpkg.com/pdfjs-dist@4.0.379/build/pdf.min.mjs" type="module"></script>
+    <script>
+        // Fallback for PDF.js if module doesn't load
+        if (typeof pdfjsLib === 'undefined') {
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/pdfjs-dist@3.11.174/build/pdf.min.js';
+            document.head.appendChild(script);
+        }
+    </script>
+
+    <!-- Fabric.js for canvas manipulation -->
+    <script src="https://unpkg.com/fabric@5.3.0/dist/fabric.min.js"></script>
+
+    <!-- SignaturePad for drawing signatures -->
+    <script src="https://unpkg.com/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header>
+            <div class="header-content">
+                <!-- Back to Hub -->
+                <a href="../../index.html" class="back-to-hub">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    <span>Hub</span>
+                </a>
+
+                <!-- Language Selector -->
+                <div class="lang-selector">
+                    <button class="lang-btn active" data-lang="cs">CZ</button>
+                    <button class="lang-btn" data-lang="en">EN</button>
+                </div>
+
+                <div class="page-title">
+                    <h1 data-i18n="title">PDF Editor</h1>
+                    <p class="subtitle" data-i18n="subtitle">Editujte, podepisujte, komprimujte a reorganizujte PDF soubory</p>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-card">
+            <!-- Mobile Warning -->
+            <div class="mobile-warning">
+                <p data-i18n="mobile_warning">Pro nejlepsi zazitky doporucujeme pouzit pocitac.</p>
+            </div>
+
+            <!-- Drop Zone (visible when no file loaded) -->
+            <div class="drop-zone" id="dropZone">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+                <div class="drop-text">
+                    <span data-i18n="drop_title">Kliknete pro nahrani</span>
+                    <span data-i18n="drop_subtitle">nebo pretahnete PDF soubor</span>
+                </div>
+                <p class="drop-hint" data-i18n="drop_hint">Pouze PDF soubory</p>
+            </div>
+            <input type="file" id="fileInput" accept=".pdf" hidden>
+
+            <!-- Workspace (visible when file loaded) -->
+            <div class="pdf-workspace" id="workspace">
+                <!-- File Info Bar -->
+                <div class="file-info-bar" id="fileInfoBar">
+                    <div class="file-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                            <polyline points="14 2 14 8 20 8"/>
+                        </svg>
+                    </div>
+                    <div class="file-details">
+                        <div class="file-name">document.pdf</div>
+                        <div class="file-meta">0 pages · 0 KB</div>
+                    </div>
+                    <div class="file-actions">
+                        <button class="btn btn-secondary" id="newFileBtn" data-i18n="new_file">Novy soubor</button>
+                        <button class="btn btn-primary" id="downloadBtn" data-i18n="download">Stahnout PDF</button>
+                    </div>
+                </div>
+
+                <!-- Tab Navigation -->
+                <div class="tab-nav">
+                    <button class="tab-btn active" data-tab="editor">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                        <span data-i18n="tab_editor">Editor</span>
+                    </button>
+                    <button class="tab-btn" data-tab="sign">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 19.5v.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8.5L18 5.5"/>
+                            <path d="M16 2v4a2 2 0 0 0 2 2h4"/>
+                            <path d="M8 18s1.5-2 4-2 4 2 4 2"/>
+                        </svg>
+                        <span data-i18n="tab_sign">Podpisy</span>
+                    </button>
+                    <button class="tab-btn" data-tab="compress">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M4 14h6v6H4z"/>
+                            <path d="M14 4h6v6h-6z"/>
+                            <path d="M17 17l4 4"/>
+                            <path d="M3 3l4 4"/>
+                            <path d="M14 10l7-7"/>
+                            <path d="M3 21l7-7"/>
+                        </svg>
+                        <span data-i18n="tab_compress">Komprese</span>
+                    </button>
+                    <button class="tab-btn" data-tab="pages">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="9"/>
+                            <rect x="14" y="3" width="7" height="5"/>
+                            <rect x="14" y="12" width="7" height="9"/>
+                            <rect x="3" y="16" width="7" height="5"/>
+                        </svg>
+                        <span data-i18n="tab_pages">Stranky</span>
+                    </button>
+                </div>
+
+                <!-- Tab Contents -->
+                <!-- Editor Tab -->
+                <div class="tab-content active" id="tab-editor">
+                    <!-- Toolbar -->
+                    <div class="toolbar" id="toolbar">
+                        <div class="toolbar-group">
+                            <button class="tool-btn active" data-tool="select" title="Select">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/>
+                                </svg>
+                            </button>
+                            <button class="tool-btn" data-tool="text" title="Text">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="4 7 4 4 20 4 20 7"/>
+                                    <line x1="9" y1="20" x2="15" y2="20"/>
+                                    <line x1="12" y1="4" x2="12" y2="20"/>
+                                </svg>
+                            </button>
+                            <button class="tool-btn" data-tool="highlight" title="Highlight">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M9 11l-6 6v3h9l3-3"/>
+                                    <path d="M22 12l-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="toolbar-group">
+                            <button class="tool-btn" data-tool="rectangle" title="Rectangle">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                </svg>
+                            </button>
+                            <button class="tool-btn" data-tool="circle" title="Circle">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="12" cy="12" r="10"/>
+                                </svg>
+                            </button>
+                            <button class="tool-btn" data-tool="line" title="Line">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <line x1="5" y1="19" x2="19" y2="5"/>
+                                </svg>
+                            </button>
+                            <button class="tool-btn" data-tool="freehand" title="Draw">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+                                    <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+                                    <path d="M2 2l7.586 7.586"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="toolbar-group">
+                            <button class="tool-btn" id="undoBtn" title="Undo" disabled>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M3 7v6h6"/>
+                                    <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/>
+                                </svg>
+                            </button>
+                            <button class="tool-btn" id="redoBtn" title="Redo" disabled>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 7v6h-6"/>
+                                    <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/>
+                                </svg>
+                            </button>
+                            <button class="tool-btn danger" data-tool="delete" title="Delete Selected">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <polyline points="3 6 5 6 21 6"/>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tool Options -->
+                    <div class="tool-options" id="toolOptions">
+                        <div class="option-group">
+                            <label>Text Color</label>
+                            <input type="color" id="textColor" value="#000000">
+                        </div>
+                        <div class="option-group">
+                            <label>Text Size</label>
+                            <input type="number" id="textSize" value="16" min="8" max="72">
+                        </div>
+                        <div class="option-group">
+                            <label>Stroke Color</label>
+                            <input type="color" id="strokeColor" value="#ff0000">
+                        </div>
+                        <div class="option-group">
+                            <label>Stroke Width</label>
+                            <input type="number" id="strokeWidth" value="2" min="1" max="20">
+                        </div>
+                    </div>
+
+                    <!-- PDF Canvas Container -->
+                    <div class="pdf-canvas-container">
+                        <div class="pdf-canvas-wrapper">
+                            <canvas id="pdfCanvas"></canvas>
+                            <canvas id="fabricCanvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Page Navigation -->
+                    <div class="page-nav" id="pageNav">
+                        <button id="prevPageBtn" data-i18n="prev_page">Predchozi</button>
+                        <div class="page-info">
+                            <input type="number" id="pageInput" value="1" min="1">
+                            <span data-i18n="page_of">z</span>
+                            <span id="pageTotal">1</span>
+                        </div>
+                        <button id="nextPageBtn" data-i18n="next_page">Dalsi</button>
+                        <div class="zoom-controls">
+                            <button id="zoomOutBtn" title="Zoom Out">-</button>
+                            <span id="zoomLevel">100%</span>
+                            <button id="zoomInBtn" title="Zoom In">+</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Signature Tab -->
+                <div class="tab-content" id="tab-sign">
+                    <div class="signature-panel">
+                        <div class="signature-tabs">
+                            <button class="sig-tab-btn active" data-sig-tab="draw" data-i18n="sig_draw">Nakreslit</button>
+                            <button class="sig-tab-btn" data-sig-tab="upload" data-i18n="sig_upload">Nahrat</button>
+                            <button class="sig-tab-btn" data-sig-tab="text" data-i18n="sig_text">Text</button>
+                        </div>
+
+                        <!-- Draw Signature -->
+                        <div class="sig-tab-content active" id="sig-draw">
+                            <div class="signature-draw-area">
+                                <canvas id="signatureCanvas"></canvas>
+                            </div>
+                            <div class="signature-actions">
+                                <button class="btn btn-secondary" id="sigClearBtn" data-i18n="sig_clear">Vymazat</button>
+                                <button class="btn btn-primary" id="sigAddBtn" data-i18n="sig_add">Pridat podpis</button>
+                            </div>
+                        </div>
+
+                        <!-- Upload Signature -->
+                        <div class="sig-tab-content" id="sig-upload">
+                            <div class="signature-upload-area" id="sigUploadArea">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 32px; height: 32px; margin-bottom: 8px; color: var(--primary-color);">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="17 8 12 3 7 8"/>
+                                    <line x1="12" y1="3" x2="12" y2="15"/>
+                                </svg>
+                                <p data-i18n="sig_upload_hint">Kliknete nebo pretahnete obrazek</p>
+                            </div>
+                            <input type="file" id="sigUploadInput" accept="image/*" hidden>
+                            <div class="signature-preview" id="sigUploadPreview"></div>
+                            <div class="signature-actions" style="margin-top: 12px;">
+                                <button class="btn btn-primary" id="sigAddUploadedBtn" data-i18n="sig_add">Pridat podpis</button>
+                            </div>
+                        </div>
+
+                        <!-- Text Signature -->
+                        <div class="sig-tab-content" id="sig-text">
+                            <input type="text" class="signature-text-input" id="sigTextInput" data-i18n-placeholder="sig_text_placeholder" placeholder="Vase jmeno">
+                            <div class="font-selector" id="fontSelector">
+                                <button class="font-option active" data-font="Dancing Script" style="font-family: 'Dancing Script'">Dancing</button>
+                                <button class="font-option" data-font="Great Vibes" style="font-family: 'Great Vibes'">Great Vibes</button>
+                                <button class="font-option" data-font="Pacifico" style="font-family: 'Pacifico'">Pacifico</button>
+                                <button class="font-option" data-font="Sacramento" style="font-family: 'Sacramento'">Sacramento</button>
+                                <button class="font-option" data-font="Allura" style="font-family: 'Allura'">Allura</button>
+                            </div>
+                            <div class="text-signature-preview" id="sigTextPreview">
+                                <span style="font-family: 'Dancing Script'; font-size: 2rem; color: #000;">Preview</span>
+                            </div>
+                            <div class="signature-actions">
+                                <button class="btn btn-primary" id="sigAddTextBtn" data-i18n="sig_add">Pridat podpis</button>
+                            </div>
+                        </div>
+
+                        <!-- Saved Signatures -->
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                            <h4 style="margin-bottom: 12px; color: var(--text-muted);">Saved Signatures</h4>
+                            <div id="savedSignatures" style="display: flex; gap: 12px; flex-wrap: wrap;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Compression Tab -->
+                <div class="tab-content" id="tab-compress">
+                    <div class="compress-options">
+                        <div class="compress-option" data-level="low">
+                            <h3 data-i18n="compress_low">Nizka</h3>
+                            <p>Best quality, larger file</p>
+                            <span class="quality">10-20% reduction</span>
+                        </div>
+                        <div class="compress-option selected" data-level="medium">
+                            <h3 data-i18n="compress_medium">Stredni</h3>
+                            <p>Balanced quality and size</p>
+                            <span class="quality">30-50% reduction</span>
+                        </div>
+                        <div class="compress-option" data-level="high">
+                            <h3 data-i18n="compress_high">Vysoka</h3>
+                            <p>Smallest file, lower quality</p>
+                            <span class="quality">50-70% reduction</span>
+                        </div>
+                    </div>
+
+                    <div class="progress-container" id="progressContainer">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressBar"></div>
+                        </div>
+                        <p class="progress-text" id="progressText">Processing...</p>
+                    </div>
+
+                    <div class="actions" style="justify-content: center;">
+                        <button class="btn btn-primary" id="compressBtn" data-i18n="compress_btn">Komprimovat PDF</button>
+                    </div>
+                </div>
+
+                <!-- Pages Tab -->
+                <div class="tab-content" id="tab-pages">
+                    <div class="toolbar" style="justify-content: center;">
+                        <button class="tool-btn" id="pagesRotateBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M23 4v6h-6"/>
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+                            </svg>
+                            <span data-i18n="pages_rotate">Otocit</span>
+                        </button>
+                        <button class="tool-btn danger" id="pagesDeleteBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="3 6 5 6 21 6"/>
+                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            </svg>
+                            <span data-i18n="pages_delete">Smazat vybrane</span>
+                        </button>
+                        <button class="tool-btn" id="pagesResetBtn">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                                <path d="M3 3v5h5"/>
+                            </svg>
+                            <span data-i18n="pages_reset">Obnovit</span>
+                        </button>
+                    </div>
+
+                    <div class="page-grid" id="pageGrid">
+                        <!-- Page thumbnails will be rendered here -->
+                    </div>
+
+                    <div class="actions" style="justify-content: center; margin-top: 24px;">
+                        <button class="btn btn-primary" id="pagesApplyBtn" data-i18n="pages_apply">Pouzit zmeny</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <p class="status" id="status"></p>
+        </main>
+
+        <footer>
+            <p><a href="../../index.html">AdHUB</a> — PDF Editor</p>
+            <p style="font-size: 0.8rem; margin-top: 8px; color: var(--text-muted);">
+                100% client-side processing. Your files never leave your device.
+            </p>
+        </footer>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <p class="loading-text" id="loadingText">Loading...</p>
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/storage.js"></script>
+    <script src="js/pdf-viewer.js"></script>
+    <script src="js/pdf-editor.js"></script>
+    <script src="js/pdf-signer.js"></script>
+    <script src="js/pdf-compress.js"></script>
+    <script src="js/pdf-pages.js"></script>
+    <script src="js/app.js"></script>
+
+    <!-- Initialize PDF.js worker -->
+    <script>
+        // Ensure PDF.js is loaded before initializing
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@4.0.379/build/pdf.worker.min.mjs';
+        }
+    </script>
+</body>
+</html>
