@@ -1459,6 +1459,49 @@ const PDFEditorApp = {
                     case 'image':
                         if (obj.src) {
                             try {
+                                // Pro extrahované obrázky zkontrolovat, zda byly SKUTEČNĚ přesunuty
+                                if (obj._isExtractedImage || obj._savedImageEdit) {
+                                    const originalX = obj._originalX || obj.left;
+                                    const originalY = obj._originalY || obj.top;
+                                    const originalWidth = obj._originalWidth || (obj.width * obj.scaleX);
+                                    const originalHeight = obj._originalHeight || (obj.height * obj.scaleY);
+
+                                    const currentX = obj.left;
+                                    const currentY = obj.top;
+                                    const currentWidth = obj.width * obj.scaleX;
+                                    const currentHeight = obj.height * obj.scaleY;
+
+                                    // Tolerance pro porovnání pozic (pixel threshold)
+                                    const tolerance = 2;
+                                    const wasMoved = Math.abs(currentX - originalX) > tolerance ||
+                                                    Math.abs(currentY - originalY) > tolerance;
+                                    const wasResized = Math.abs(currentWidth - originalWidth) > tolerance ||
+                                                      Math.abs(currentHeight - originalHeight) > tolerance;
+
+                                    // Pokud obrázek nebyl přesunut ani změněna velikost, přeskočit
+                                    if (!wasMoved && !wasResized) {
+                                        console.log(`Skipping unchanged image at (${originalX}, ${originalY})`);
+                                        break;
+                                    }
+
+                                    console.log(`Exporting moved image: (${originalX}, ${originalY}) → (${currentX}, ${currentY})`);
+
+                                    // Nakreslit bílý obdélník přes původní pozici, aby zakryl originál
+                                    const origPdfX = originalX / scale;
+                                    const origPdfY = pageHeight - originalY / scale - originalHeight / scale;
+                                    const origPdfWidth = originalWidth / scale;
+                                    const origPdfHeight = originalHeight / scale;
+
+                                    page.drawRectangle({
+                                        x: origPdfX - 2,
+                                        y: origPdfY - 2,
+                                        width: origPdfWidth + 4,
+                                        height: origPdfHeight + 4,
+                                        color: PDFLib.rgb(1, 1, 1), // Bílá barva - zakryje originál
+                                        borderWidth: 0
+                                    });
+                                }
+
                                 const imgBytes = await fetch(obj.src).then(r => r.arrayBuffer());
                                 let pdfImage;
 
