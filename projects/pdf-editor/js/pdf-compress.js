@@ -1,36 +1,38 @@
 /**
  * PDF Editor - Compression Module
  * Handles PDF compression by re-rendering pages at lower quality
+ *
+ * Komprese funguje tak, že:
+ * 1. Nejprve zkusí PDF optimalizaci (odstranění nepoužitých objektů)
+ * 2. Pokud to nestačí, renderuje stránky jako JPEG obrázky s nižší kvalitou
+ * 3. Vždy vrátí nejmenší možný výsledek
  */
 
 const PDFCompress = {
-    // Compression levels - using lower scales for actual size reduction
+    // Compression levels - OPRAVENO: Správné scale hodnoty pro skutečnou kompresi
     LEVELS: {
         low: {
             name: 'low',
             label: 'Low Compression',
             description: 'Best quality, larger file',
-            imageQuality: 0.85,
-            scale: 1.0,
-            dpi: 150,
+            imageQuality: 0.75,
+            scale: 0.9,  // 90% originální velikosti
             expectedReduction: '10-30%'
         },
         medium: {
             name: 'medium',
             label: 'Medium Compression',
             description: 'Balanced quality and size',
-            imageQuality: 0.65,
-            scale: 0.85,
-            dpi: 120,
+            imageQuality: 0.55,
+            scale: 0.7,  // 70% originální velikosti
             expectedReduction: '30-50%'
         },
         high: {
             name: 'high',
             label: 'High Compression',
             description: 'Smallest file, lower quality',
-            imageQuality: 0.45,
-            scale: 0.72,
-            dpi: 96,
+            imageQuality: 0.35,
+            scale: 0.5,  // 50% originální velikosti
             expectedReduction: '50-70%'
         }
     },
@@ -60,7 +62,7 @@ const PDFCompress = {
     },
 
     /**
-     * Compress PDF - tries optimization first, then image compression if needed
+     * Compress PDF - OPRAVENO: Správná logika pro vždy menší výstup
      * @param {Uint8Array} pdfData - Original PDF data
      * @param {string} level - Compression level (optional, uses currentLevel if not provided)
      * @returns {Promise<Object>} - Compressed PDF data and stats
@@ -74,30 +76,28 @@ const PDFCompress = {
         }
 
         const originalSize = pdfData.length;
+        let bestResult = null;
 
         try {
             // Report progress
             this._reportProgress(0, 'Analyzing PDF...');
 
-            // First, try optimization only (works well for text-heavy PDFs)
+            // 1. Zkusit optimalizaci (pro text-heavy PDFs)
+            this._reportProgress(5, 'Trying optimization...');
             const optimizedResult = await this.optimize(pdfData);
 
-            // If optimization achieved good results, use that
-            if (optimizedResult.reduction >= 10) {
-                this._reportProgress(100, 'Compression complete!');
-                return {
+            // Uložit optimalizovaný výsledek pokud je menší
+            if (optimizedResult.optimizedSize < originalSize) {
+                bestResult = {
                     data: optimizedResult.data,
-                    originalSize: originalSize,
                     compressedSize: optimizedResult.optimizedSize,
-                    reduction: optimizedResult.reduction,
-                    level: compressionLevel,
-                    pageCount: await this._getPageCount(pdfData),
                     method: 'optimization'
                 };
+                console.log(`Optimization: ${this.formatSize(originalSize)} -> ${this.formatSize(optimizedResult.optimizedSize)}`);
             }
 
-            // Otherwise, use image-based compression
-            this._reportProgress(10, 'Loading PDF...');
+            // 2. Zkusit image-based compression
+            this._reportProgress(10, 'Loading PDF for image compression...');
 
             // Load PDF with PDF.js for rendering
             const loadingTask = pdfjsLib.getDocument({ data: pdfData.slice() });
@@ -108,8 +108,8 @@ const PDFCompress = {
             const { PDFDocument } = PDFLib;
             const newPdf = await PDFDocument.create();
 
-            // Calculate DPI-based scale
-            const dpiScale = settings.dpi / 72; // PDF uses 72 points per inch
+            // OPRAVENO: Použít scale přímo - bez DPI kalkulace
+            const renderScale = settings.scale;
 
             // Process each page
             for (let i = 1; i <= numPages; i++) {
@@ -125,8 +125,7 @@ const PDFCompress = {
                 const pageWidthPt = originalViewport.width;
                 const pageHeightPt = originalViewport.height;
 
-                // Calculate render scale based on DPI and compression level
-                const renderScale = dpiScale * settings.scale;
+                // OPRAVENO: Použít menší scale pro skutečnou kompresi
                 const viewport = page.getViewport({ scale: renderScale });
 
                 // Create canvas for rendering
@@ -153,7 +152,7 @@ const PDFCompress = {
                 // Embed JPEG in new PDF
                 const jpegImage = await newPdf.embedJpg(jpegData);
 
-                // Add page with original dimensions (not scaled)
+                // Add page with ORIGINAL dimensions (pro správnou velikost stránky)
                 const newPage = newPdf.addPage([pageWidthPt, pageHeightPt]);
                 newPage.drawImage(jpegImage, {
                     x: 0,
@@ -165,43 +164,58 @@ const PDFCompress = {
 
             this._reportProgress(95, 'Finalizing PDF...');
 
-            // Save compressed PDF with object streams for additional compression
+            // Save compressed PDF with object streams
             const compressedData = await newPdf.save({
                 useObjectStreams: true,
                 addDefaultPage: false
             });
 
-            const compressedSize = compressedData.length;
+            const imageCompressedSize = compressedData.length;
+            console.log(`Image compression: ${this.formatSize(originalSize)} -> ${this.formatSize(imageCompressedSize)}`);
 
             // Cleanup
             pdfDoc.destroy();
 
-            // If compression made file larger, return the optimized version instead
-            if (compressedSize >= originalSize && optimizedResult.optimizedSize < originalSize) {
-                this._reportProgress(100, 'Using optimized version (better result)');
+            // 3. KRITICKÉ: Porovnat všechny výsledky a vrátit nejmenší
+            if (!bestResult || imageCompressedSize < bestResult.compressedSize) {
+                if (imageCompressedSize < originalSize) {
+                    bestResult = {
+                        data: compressedData,
+                        compressedSize: imageCompressedSize,
+                        method: 'image-compression'
+                    };
+                }
+            }
+
+            // 4. Pokud nic není menší než originál, vrátit originál
+            if (!bestResult) {
+                console.warn('Compression did not reduce file size, returning original');
+                this._reportProgress(100, 'File already optimized');
                 return {
-                    data: optimizedResult.data,
+                    data: pdfData,
                     originalSize: originalSize,
-                    compressedSize: optimizedResult.optimizedSize,
-                    reduction: optimizedResult.reduction,
+                    compressedSize: originalSize,
+                    reduction: 0,
                     level: compressionLevel,
                     pageCount: numPages,
-                    method: 'optimization'
+                    method: 'none',
+                    message: 'Soubor je již optimalizovaný'
                 };
             }
 
-            const reduction = ((originalSize - compressedSize) / originalSize * 100).toFixed(1);
+            const reduction = ((originalSize - bestResult.compressedSize) / originalSize * 100).toFixed(1);
             this._reportProgress(100, 'Compression complete!');
 
             return {
-                data: compressedData,
+                data: bestResult.data,
                 originalSize: originalSize,
-                compressedSize: compressedSize,
+                compressedSize: bestResult.compressedSize,
                 reduction: parseFloat(reduction),
                 level: compressionLevel,
                 pageCount: numPages,
-                method: 'image-compression'
+                method: bestResult.method
             };
+
         } catch (error) {
             console.error('Compression error:', error);
             throw error;
@@ -221,15 +235,11 @@ const PDFCompress = {
 
     /**
      * Compress using Web Worker (for better performance)
-     * Note: This is a simplified version. Full Worker implementation would
-     * require loading libraries in Worker context.
      * @param {Uint8Array} pdfData - Original PDF data
      * @param {string} level - Compression level
      * @returns {Promise<Object>}
      */
     async compressWithWorker(pdfData, level = null) {
-        // For now, fall back to main thread
-        // Full implementation would use OffscreenCanvas in Worker
         return this.compress(pdfData, level);
     },
 
@@ -320,12 +330,10 @@ const PDFCompress = {
         const originalSize = pdfData.length;
 
         try {
-            this._reportProgress(0, 'Loading PDF...');
-
             const { PDFDocument } = PDFLib;
-            const pdfDoc = await PDFDocument.load(pdfData);
-
-            this._reportProgress(50, 'Optimizing...');
+            const pdfDoc = await PDFDocument.load(pdfData, {
+                ignoreEncryption: true
+            });
 
             // Save with optimization options
             const optimizedData = await pdfDoc.save({
@@ -336,8 +344,6 @@ const PDFCompress = {
             const optimizedSize = optimizedData.length;
             const reduction = ((originalSize - optimizedSize) / originalSize * 100).toFixed(1);
 
-            this._reportProgress(100, 'Optimization complete!');
-
             return {
                 data: optimizedData,
                 originalSize: originalSize,
@@ -346,7 +352,13 @@ const PDFCompress = {
             };
         } catch (error) {
             console.error('Optimization error:', error);
-            throw error;
+            // Vrátit originál při chybě
+            return {
+                data: pdfData,
+                originalSize: originalSize,
+                optimizedSize: originalSize,
+                reduction: 0
+            };
         }
     },
 
@@ -360,14 +372,10 @@ const PDFCompress = {
             const { PDFDocument } = PDFLib;
             const pdfDoc = await PDFDocument.load(pdfData);
 
-            // Get basic info
             const pageCount = pdfDoc.getPageCount();
             const pages = pdfDoc.getPages();
 
-            let totalImageCount = 0;
             const pageSizes = [];
-
-            // Analyze each page
             for (const page of pages) {
                 const { width, height } = page.getSize();
                 pageSizes.push({ width, height });

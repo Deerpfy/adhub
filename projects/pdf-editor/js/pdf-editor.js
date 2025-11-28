@@ -779,6 +779,7 @@ const PDFEditor = {
 
     /**
      * Extract text content from page with positions (for text editing)
+     * OPRAVENO: Správná transformace PDF souřadnic na canvas souřadnice
      * @param {Object} pdfPage - PDF.js page object
      * @param {number} scale - Current view scale
      * @returns {Promise<Array>} - Array of text items with positions
@@ -792,47 +793,79 @@ const PDFEditor = {
         for (const item of textContent.items) {
             if (!item.str || item.str.trim() === '') continue;
 
-            // Transform position using viewport
-            const tx = fabric.util.transformPoint(
-                { x: item.transform[4], y: item.transform[5] },
-                viewport.transform
-            );
+            // item.transform je matice [scaleX, skewX, skewY, scaleY, translateX, translateY]
+            const transform = item.transform;
 
-            // Calculate dimensions
-            const fontSize = Math.sqrt(
-                item.transform[0] * item.transform[0] +
-                item.transform[1] * item.transform[1]
-            ) * scale;
+            // Vypočítat velikost fontu z transformační matice
+            const fontSize = Math.sqrt(transform[0] * transform[0] + transform[1] * transform[1]) * scale;
+
+            // OPRAVENO: Použít viewport.transform pro správnou konverzi PDF -> Canvas
+            // PDF koordináty: origin je vlevo dole
+            // Canvas koordináty: origin je vlevo nahoře
+
+            // Použít PDF.js Util pro transformaci pokud je dostupné
+            let x, y;
+
+            if (window.pdfjsLib && pdfjsLib.Util && pdfjsLib.Util.transform) {
+                // Kombinovat transformace: viewport transform + text transform
+                const combined = pdfjsLib.Util.transform(viewport.transform, transform);
+                x = combined[4];
+                y = combined[5];
+            } else {
+                // Fallback: manuální transformace
+                // Aplikovat viewport transformaci na pozici textu
+                const pdfX = transform[4];
+                const pdfY = transform[5];
+
+                // viewport.transform = [scaleX, 0, 0, -scaleY, offsetX, offsetY]
+                // Pro konverzi PDF (vlevo dole) -> Canvas (vlevo nahoře)
+                x = pdfX * viewport.transform[0] + viewport.transform[4];
+                y = pdfY * viewport.transform[3] + viewport.transform[5];
+            }
+
+            // Šířka textu (aproximace pokud není dostupná)
+            const width = (item.width || item.str.length * fontSize * 0.6) * scale;
+            const height = fontSize * 1.2;
 
             textItems.push({
                 text: item.str,
-                x: tx.x,
-                y: viewport.height - tx.y - fontSize, // Flip Y coordinate
-                width: item.width * scale,
-                height: item.height * scale || fontSize * 1.2,
-                fontSize: fontSize,
-                fontFamily: item.fontName || 'sans-serif'
+                x: x,
+                y: y - fontSize, // Posunout nahoru o výšku fontu (baseline adjustment)
+                width: Math.max(width, 20), // Minimální šířka
+                height: height,
+                fontSize: Math.max(fontSize, 8), // Minimální velikost fontu
+                fontFamily: item.fontName || 'Helvetica',
+                transform: transform
             });
         }
 
+        console.log(`Extracted ${textItems.length} text items from PDF`);
         return textItems;
     },
 
     /**
      * Create editable text overlays for extracted text
+     * OPRAVENO: Lepší vizualizace a interakce
      * @param {Array} textItems - Array of text items from extractTextWithPositions
      */
     createTextOverlays(textItems) {
-        if (!this.fabricCanvas || !textItems) return;
+        if (!this.fabricCanvas || !textItems || textItems.length === 0) {
+            console.warn('No text items to create overlays for');
+            return;
+        }
+
+        console.log(`Creating ${textItems.length} text overlays`);
 
         textItems.forEach((item, index) => {
-            // Create a background rectangle to "whiteout" original text
+            // Create a semi-transparent background to show editable area
             const bg = new fabric.Rect({
                 left: item.x - 2,
                 top: item.y - 2,
                 width: item.width + 4,
                 height: item.height + 4,
-                fill: '#ffffff',
+                fill: 'rgba(255, 255, 255, 0.9)', // Bílé pozadí pro zakrytí originálu
+                stroke: 'rgba(139, 92, 246, 0.5)', // Fialový okraj pro viditelnost
+                strokeWidth: 1,
                 selectable: false,
                 evented: false,
                 _isTextBackground: true,
@@ -844,32 +877,55 @@ const PDFEditor = {
                 left: item.x,
                 top: item.y,
                 fontSize: item.fontSize,
-                fontFamily: 'Helvetica',
+                fontFamily: item.fontFamily,
                 fill: '#000000',
                 editable: true,
                 selectable: true,
+                hasControls: true,
+                hasBorders: true,
+                lockScalingX: false,
+                lockScalingY: false,
                 _isExtractedText: true,
                 _textIndex: index,
-                _originalText: item.text
+                _originalText: item.text,
+                _background: bg
             });
 
-            // Link background to text
-            text._background = bg;
+            // Update background when text is modified or moved
+            const updateBackground = () => {
+                if (text._background) {
+                    text._background.set({
+                        left: text.left - 2,
+                        top: text.top - 2,
+                        width: (text.width * text.scaleX) + 4,
+                        height: (text.height * text.scaleY) + 4
+                    });
+                    text._background.setCoords();
+                }
+            };
 
-            // Update background when text changes
             text.on('changed', () => {
-                // Adjust background width based on text width
-                bg.set({
-                    width: text.width + 4
-                });
+                updateBackground();
                 this.fabricCanvas.renderAll();
             });
 
+            text.on('moving', updateBackground);
+            text.on('scaling', updateBackground);
+            text.on('modified', () => {
+                updateBackground();
+                this.fabricCanvas.renderAll();
+            });
+
+            // Přidat na canvas (pozadí pod text)
             this.fabricCanvas.add(bg);
             this.fabricCanvas.add(text);
         });
 
+        // Přepnout do režimu výběru
+        this.setTool('select');
         this.fabricCanvas.renderAll();
+
+        console.log('Text overlays created successfully');
     },
 
     /**

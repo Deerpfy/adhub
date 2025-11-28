@@ -437,6 +437,26 @@ header {
     height: 18px;
 }
 
+.tool-btn .tool-label {
+    font-size: 0.75rem;
+    margin-left: 4px;
+}
+
+/* Edit Text button special styling */
+#editTextBtn {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2));
+    border-color: var(--primary-color);
+}
+
+#editTextBtn:hover {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.4), rgba(236, 72, 153, 0.4));
+}
+
+#editTextBtn.active {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    color: white;
+}
+
 .tool-btn.danger:hover {
     background: rgba(239, 68, 68, 0.2);
     border-color: var(--error);
