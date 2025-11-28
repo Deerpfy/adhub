@@ -16,26 +16,40 @@
 /* MindHub - Visual System & Design Tokens */
 
 :root {
-    /* Primary color palette - Purple & Lime Green MindHub theme */
-    --bf-primary-500: #9333EA; /* Purple */
-    --bf-primary-600: #7E22CE;
-    --bf-primary-700: #6B21A8;
-    --bf-accent-500: #A855F7; /* Light purple */
-    --bf-accent-600: #9333EA;
-    --bf-success-500: #84CC16; /* Lime green */
-    --bf-success-600: #65A30D;
-    --bf-warning-500: #F59E0B;
-    --bf-danger-500: #DC2626;
+    /*
+     * MindHub - Barevná paleta sjednocená s AdHUB
+     * Tmavé téma jako výchozí pro konzistenci s AdHUB designem
+     */
 
-    /* Light theme - Neutral / UI surfaces */
-    --bf-bg: #FFFFFF;
-    --bf-surface-100: #F8FAFC;
-    --bf-surface-200: #F1F5F9;
-    --bf-surface-300: #E2E8F0;
-    --bf-text-900: #0F172A;
-    --bf-text-700: #334155;
-    --bf-text-500: #64748B;
-    --bf-text-300: #CBD5E1;
+    /* Primární barvy - sjednoceno s AdHUB */
+    --bf-primary-500: #8b5cf6; /* AdHUB primary */
+    --bf-primary-600: #7c3aed; /* AdHUB primary-dark */
+    --bf-primary-700: #6d28d9;
+    --bf-primary-light: #a78bfa; /* AdHUB primary-light */
+
+    /* Akcenty a sekundární barvy */
+    --bf-accent-500: #ec4899; /* AdHUB secondary (růžová) */
+    --bf-accent-600: #db2777;
+    --bf-secondary-500: #06b6d4; /* AdHUB accent (tyrkysová) */
+
+    /* Funkční barvy */
+    --bf-success-500: #10b981; /* AdHUB success */
+    --bf-success-600: #059669;
+    --bf-warning-500: #f59e0b; /* AdHUB warning */
+    --bf-danger-500: #ef4444; /* AdHUB danger */
+
+    /* Tmavé téma jako výchozí - sjednoceno s AdHUB */
+    --bf-bg: #0a0a0f; /* AdHUB bg-color */
+    --bf-surface-100: #121218; /* AdHUB bg-secondary */
+    --bf-surface-200: #1a1a24; /* AdHUB bg-tertiary */
+    --bf-surface-300: #161620; /* AdHUB bg-card */
+
+    /* Texty - sjednoceno s AdHUB */
+    --bf-text-900: #ffffff; /* AdHUB text-primary */
+    --bf-text-700: #a0a0b0; /* AdHUB text-secondary */
+    --bf-text-500: #6b6b7d; /* AdHUB text-muted */
+    --bf-text-300: #4a4a5a;
+    --bf-text-100: #3a3a4a;
 
     /* Spacing & radii */
     --bf-radius-sm: 6px;
@@ -69,17 +83,17 @@
     --bf-transition-slow: 300ms ease;
 }
 
-/* Dark theme - Purple tinted */
+/* Dark theme - sjednoceno s AdHUB */
 [data-theme="dark"] {
-    --bf-bg: #0F0519; /* Dark purple background */
-    --bf-surface-100: #1A0F2E; /* Purple tinted surface */
-    --bf-surface-200: #251A3A;
-    --bf-surface-300: #2D1F47;
-    --bf-text-100: #F3E8FF; /* Light purple text */
-    --bf-text-300: #E9D5FF; /* Brighter for better contrast */
-    --bf-text-500: #C4B5FD;
-    --bf-text-700: #A78BFA;
-    --bf-text-900: #F3E8FF; /* Main text color */
+    --bf-bg: #0a0a0f; /* AdHUB bg-color */
+    --bf-surface-100: #121218; /* AdHUB bg-secondary */
+    --bf-surface-200: #1a1a24; /* AdHUB bg-tertiary */
+    --bf-surface-300: #161620; /* AdHUB bg-card */
+    --bf-text-100: #3a3a4a;
+    --bf-text-300: #4a4a5a;
+    --bf-text-500: #6b6b7d; /* AdHUB text-muted */
+    --bf-text-700: #a0a0b0; /* AdHUB text-secondary */
+    --bf-text-900: #ffffff; /* AdHUB text-primary */
 }
 
 /* Dark theme - Blue variant */
@@ -563,11 +577,29 @@
 body {
     font-family: var(--bf-font-family-sans);
     font-size: var(--bf-font-size-base);
-    background-color: var(--bf-bg);
+    /* Gradient pozadí jako v AdHUB */
+    background: linear-gradient(135deg, #0a0a0f 0%, #121218 50%, #0a0a0f 100%);
+    background-attachment: fixed;
     color: var(--bf-text-900);
     line-height: 1.5;
+    min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+/* Gradient overlay pro hloubku - jako v AdHUB */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
 }
 
 #root {
@@ -575,6 +607,7 @@ body {
     display: flex;
     flex-direction: column;
     position: relative;
+    z-index: 1;
 }
 
 /* Zajištění, že #root pseudo-elementy jsou viditelné */
@@ -610,26 +643,31 @@ h4 { font-size: var(--bf-font-size-lg); }
     outline: none;
 }
 
+/* Tlačítka - styl sjednocen s AdHUB */
 .btn-primary {
-    background: linear-gradient(135deg, var(--bf-primary-500), var(--bf-accent-500));
+    background: linear-gradient(135deg, var(--bf-primary-500), var(--bf-primary-600));
     color: white;
-    box-shadow: 0 2px 4px rgba(147, 51, 234, 0.3);
+    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+    border-radius: 10px;
 }
 
 .btn-primary:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--bf-primary-600), var(--bf-accent-600));
-    box-shadow: 0 4px 8px rgba(147, 51, 234, 0.4);
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, var(--bf-primary-600), var(--bf-primary-700));
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+    transform: translateY(-2px);
 }
 
 .btn-secondary {
-    background-color: var(--bf-surface-100);
+    background: #1a1a24; /* AdHUB bg-tertiary */
     color: var(--bf-text-900);
-    border: 1px solid var(--bf-surface-200);
+    border: 1.5px solid #2a2a3a; /* AdHUB border-color */
+    border-radius: 10px;
 }
 
 .btn-secondary:hover:not(:disabled) {
-    background-color: var(--bf-surface-200);
+    background: #1e1e2e; /* AdHUB bg-hover */
+    border-color: var(--bf-primary-500);
+    color: var(--bf-primary-500);
 }
 
 .btn:disabled {
@@ -649,39 +687,66 @@ h4 { font-size: var(--bf-font-size-lg); }
     background-color: var(--bf-surface-100);
 }
 
-/* Inputs */
+/* Inputs - styl sjednocen s AdHUB */
 .input {
     width: 100%;
-    padding: var(--bf-spacing-sm) var(--bf-spacing-md);
-    border: 1px solid var(--bf-surface-200);
-    border-radius: var(--bf-radius-md);
-    background-color: var(--bf-surface-100);
+    padding: 12px 16px;
+    border: 1.5px solid #2a2a3a; /* AdHUB border-color */
+    border-radius: 12px;
+    background: #1a1a24; /* AdHUB bg-tertiary */
     color: var(--bf-text-900);
     font-size: var(--bf-font-size-base);
     font-family: inherit;
     outline: none;
-    transition: border-color var(--bf-transition-base);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
 }
 
 .input:focus {
     border-color: var(--bf-primary-500);
-    box-shadow: 0 0 0 3px rgba(147, 51, 234, 0.2);
+    background: #161620; /* AdHUB bg-card */
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15), 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
-/* Cards */
+.input::placeholder {
+    color: #6b6b7d; /* AdHUB text-muted */
+}
+
+/* Cards - styl sjednocen s AdHUB */
 .card {
-    background-color: var(--bf-surface-100);
-    border: 1px solid var(--bf-surface-200);
-    border-radius: var(--bf-radius-md);
-    padding: var(--bf-spacing-md);
-    transition: all var(--bf-transition-base);
+    background: var(--bf-surface-300);
+    border: 1.5px solid #2a2a3a; /* AdHUB border-color */
+    border-radius: 16px;
+    padding: var(--bf-spacing-lg);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Horní proužek jako v AdHUB */
+.card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--bf-primary-500), var(--bf-accent-500));
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card:hover {
     border-color: var(--bf-primary-500);
-    box-shadow: 0 4px 12px rgba(147, 51, 234, 0.2);
-    transform: translateY(-2px);
-    transition: all var(--bf-transition-base);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 20px rgba(139, 92, 246, 0.3);
+    transform: translateY(-4px);
+    background: #1e1e2e; /* AdHUB bg-hover */
+}
+
+.card:hover::before {
+    transform: scaleX(1);
 }
 
 /* Checkbox */
@@ -1097,31 +1162,53 @@ function useTheme() {
 }
 
 const AuthContext = createContext();
+/**
+ * AuthProvider - Automatické lokální přihlášení bez potřeby registrace
+ * Data jsou ukládána pouze lokálně v localStorage
+ */
 function AuthProvider({ children }) {
-    const [user, setUser] = useState(() => StorageService.getCurrentUser());
-    const [isLoading, setIsLoading] = useState(false);
-    const login = async (email, name) => {
-        setIsLoading(true);
-        await new Promise(resolve => setTimeout(resolve, 100));
-        const userData = {
+    // Automaticky vytvoří lokálního uživatele, pokud neexistuje
+    const [user, setUser] = useState(() => {
+        const existingUser = StorageService.getCurrentUser();
+        if (existingUser) return existingUser;
+
+        // Automaticky vytvořit lokálního uživatele
+        const localUser = {
             id: StorageService.generateId(),
-            email,
-            name: name || email.split('@')[0],
+            email: 'local@mindhub.local',
+            name: 'Lokální uživatel',
             timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             prefs: {},
             created_at: new Date().toISOString(),
+            isLocal: true // Označení, že se jedná o lokální účet
         };
-        StorageService.setCurrentUser(userData);
-        setUser(userData);
-        setIsLoading(false);
-        return userData;
+        StorageService.setCurrentUser(localUser);
+        return localUser;
+    });
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Funkce pro aktualizaci profilu lokálního uživatele
+    const updateProfile = (updates) => {
+        const updatedUser = { ...user, ...updates };
+        StorageService.setCurrentUser(updatedUser);
+        setUser(updatedUser);
+        return updatedUser;
     };
-    const register = async (email, name) => login(email, name);
-    const logout = () => {
-        StorageService.setCurrentUser(null);
-        setUser(null);
+
+    // Vymazání všech dat a reset na výchozí stav
+    const resetData = () => {
+        localStorage.removeItem('mindhub_user');
+        localStorage.removeItem('mindhub_tasks');
+        localStorage.removeItem('mindhub_projects');
+        localStorage.removeItem('mindhub_tags');
+        localStorage.removeItem('mindhub_task_tags');
+        localStorage.removeItem('mindhub_settings');
+        localStorage.removeItem('mindhub_mindmap_positions');
+        localStorage.removeItem('mindhub_mindmap_sizes');
+        window.location.reload();
     };
-    return <AuthContext.Provider value={{ user, login, register, logout, isLoading }}>{children}</AuthContext.Provider>;
+
+    return <AuthContext.Provider value={{ user, updateProfile, resetData, isLoading }}>{children}</AuthContext.Provider>;
 }
 function useAuth() {
     const context = useContext(AuthContext);
@@ -4393,7 +4480,8 @@ function HabitsPage() {
 
 function SettingsPage() {
     const { theme, setTheme } = useTheme();
-    const { logout } = useAuth();
+    const { user, updateProfile, resetData } = useAuth();
+    const [userName, setUserName] = useState(user?.name || 'Lokální uživatel');
     const [fontSize, setFontSize] = useState(StorageService.getSettings().fontSize || 16);
     const availableSections = [
         { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -4483,70 +4571,48 @@ function SettingsPage() {
                 </div>
             </div>
             <div className="card">
-                <h3 style={{ marginBottom: '12px' }}>Account</h3>
-                <button className="btn btn-secondary" onClick={logout}>Logout</button>
+                <h3 style={{ marginBottom: '12px' }}>Profil</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div>
+                        <label style={{ display: 'block', marginBottom: '4px', fontSize: 'var(--bf-font-size-sm)', color: 'var(--bf-text-500)' }}>
+                            Jméno
+                        </label>
+                        <input
+                            type="text"
+                            className="input"
+                            value={userName}
+                            onChange={(e) => setUserName(e.target.value)}
+                            onBlur={() => updateProfile({ name: userName })}
+                            placeholder="Vaše jméno"
+                        />
+                    </div>
+                    <p style={{ fontSize: 'var(--bf-font-size-sm)', color: 'var(--bf-text-500)' }}>
+                        Všechna data jsou ukládána lokálně v prohlížeči.
+                    </p>
+                </div>
+            </div>
+            <div className="card">
+                <h3 style={{ marginBottom: '12px', color: 'var(--bf-danger-500)' }}>Nebezpečná zóna</h3>
+                <p style={{ fontSize: 'var(--bf-font-size-sm)', color: 'var(--bf-text-500)', marginBottom: '12px' }}>
+                    Vymazání všech dat nelze vrátit zpět.
+                </p>
+                <button
+                    className="btn"
+                    style={{ backgroundColor: 'var(--bf-danger-500)', color: 'white' }}
+                    onClick={() => {
+                        if (window.confirm('Opravdu chcete vymazat všechna data? Tuto akci nelze vrátit zpět.')) {
+                            resetData();
+                        }
+                    }}
+                >
+                    Vymazat všechna data
+                </button>
             </div>
         </div>
     );
 }
 
-function LoginPage() {
-    const [email, setEmail] = useState('');
-    const [name, setName] = useState('');
-    const [isRegistering, setIsRegistering] = useState(false);
-    const { login, register, isLoading } = useAuth();
-    const { lang, setLang, t } = useLanguage();
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        if (isRegistering) await register(email, name);
-        else await login(email);
-        window.location.hash = 'dashboard';
-    };
-    return (
-        <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, var(--bf-primary-500) 0%, var(--bf-success-500) 100%)' }}>
-            <div className="card" style={{ width: '100%', maxWidth: '400px', padding: '32px' }}>
-                {/* Language Selector */}
-                <div style={{ display: 'flex', justifyContent: 'center', gap: '6px', marginBottom: '24px' }}>
-                    <button
-                        onClick={() => setLang('cs')}
-                        style={{
-                            padding: '6px 12px',
-                            borderRadius: 'var(--bf-radius-sm)',
-                            color: lang === 'cs' ? 'white' : 'var(--bf-text-500)',
-                            backgroundColor: lang === 'cs' ? 'var(--bf-primary-500)' : 'var(--bf-surface-100)',
-                            border: lang === 'cs' ? 'none' : '1px solid var(--bf-surface-200)',
-                            cursor: 'pointer',
-                            fontSize: 'var(--bf-font-size-sm)',
-                            fontWeight: 600,
-                            transition: 'all 0.2s ease'
-                        }}
-                    >CZ</button>
-                    <button
-                        onClick={() => setLang('en')}
-                        style={{
-                            padding: '6px 12px',
-                            borderRadius: 'var(--bf-radius-sm)',
-                            color: lang === 'en' ? 'white' : 'var(--bf-text-500)',
-                            backgroundColor: lang === 'en' ? 'var(--bf-primary-500)' : 'var(--bf-surface-100)',
-                            border: lang === 'en' ? 'none' : '1px solid var(--bf-surface-200)',
-                            cursor: 'pointer',
-                            fontSize: 'var(--bf-font-size-sm)',
-                            fontWeight: 600,
-                            transition: 'all 0.2s ease'
-                        }}
-                    >EN</button>
-                </div>
-                <h1 style={{ fontSize: 'var(--bf-font-size-3xl)', fontWeight: 700, background: 'linear-gradient(135deg, var(--bf-primary-500), var(--bf-success-500))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', textAlign: 'center', marginBottom: '8px' }}>⚡ MindHub</h1>
-                <p style={{ textAlign: 'center', color: 'var(--bf-text-700)', marginBottom: '24px' }}>{t('subtitle')}</p>
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    {isRegistering && <input type="text" className="input" placeholder={t('name')} value={name} onChange={(e) => setName(e.target.value)} />}
-                    <input type="email" className="input" placeholder={t('email')} value={email} onChange={(e) => setEmail(e.target.value)} required />
-                    <button type="submit" className="btn btn-primary" disabled={isLoading}>{isLoading ? t('logging_in') : t('login')}</button>
-                </form>
-            </div>
-        </div>
-    );
-}
+/* LoginPage byla odstraněna - aplikace nyní používá automatické lokální přihlášení */
     </script>
 
     <script type="text/babel">
@@ -4728,9 +4794,13 @@ function Layout({ currentPage, setCurrentPage }) {
     );
 }
 
+/**
+ * App - Hlavní komponenta aplikace
+ * Automaticky přihlášený uživatel - bez potřeby login obrazovky
+ */
 function App() {
     const [currentPage, setCurrentPage] = useState('dashboard');
-    const { user } = useAuth();
+
     useEffect(() => {
         const hash = window.location.hash.slice(1) || 'dashboard';
         setCurrentPage(hash);
@@ -4741,7 +4811,8 @@ function App() {
         window.addEventListener('hashchange', handleHashChange);
         return () => window.removeEventListener('hashchange', handleHashChange);
     }, []);
-    if (!user) return <LoginPage />;
+
+    // Vždy zobrazit Layout - uživatel je automaticky přihlášen
     return (
         <RefreshProvider>
             <Layout currentPage={currentPage} setCurrentPage={setCurrentPage} />
