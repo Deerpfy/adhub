@@ -1161,15 +1161,16 @@ const PDFEditor = {
      * Enable text editing mode - extracts and overlays existing text AND images
      * @param {Object} pdfPage - PDF.js page object
      * @param {number} scale - Current view scale
+     * @param {HTMLCanvasElement} renderedCanvas - Already rendered PDF canvas (for image extraction)
      */
-    async enableTextEditing(pdfPage, scale = 1) {
+    async enableTextEditing(pdfPage, scale = 1, renderedCanvas = null) {
         // Extrahovat text
         const textItems = await this.extractTextWithPositions(pdfPage, scale);
         this.createTextOverlays(textItems);
 
-        // Extrahovat obrázky
+        // Extrahovat obrázky (potřebujeme renderovaný canvas)
         try {
-            const imageItems = await this.extractImagesWithPositions(pdfPage, scale);
+            const imageItems = await this.extractImagesWithPositions(pdfPage, scale, renderedCanvas);
             if (imageItems.length > 0) {
                 await this.createImageOverlays(imageItems);
                 console.log(`Created ${imageItems.length} image overlays`);
@@ -1182,25 +1183,39 @@ const PDFEditor = {
     },
 
     /**
-     * Extract images from PDF page using operatorList
+     * Extract images from PDF page using operatorList and rendered canvas
      * @param {Object} pdfPage - PDF.js page object
      * @param {number} scale - Current view scale
+     * @param {HTMLCanvasElement} renderedCanvas - Already rendered PDF canvas
      * @returns {Promise<Array>} - Array of image items with positions
      */
-    async extractImagesWithPositions(pdfPage, scale = 1) {
+    async extractImagesWithPositions(pdfPage, scale = 1, renderedCanvas = null) {
         const operatorList = await pdfPage.getOperatorList();
         const viewport = pdfPage.getViewport({ scale: scale });
         const imageItems = [];
 
         // OPS konstanty pro obrázky
         const OPS = pdfjsLib.OPS;
-        const paintImageXObject = OPS.paintImageXObject;
-        const paintJpegXObject = OPS.paintJpegXObject;
-        const paintImageMaskXObject = OPS.paintImageMaskXObject;
+        const imageOps = [
+            OPS.paintImageXObject,
+            OPS.paintJpegXObject,
+            OPS.paintImageMaskXObject,
+            OPS.paintInlineImageXObject,
+            OPS.paintInlineImageXObjectGroup
+        ].filter(op => op !== undefined);
+
+        console.log('PDF.js OPS for images:', imageOps);
+
+        // Debug: zobrazit všechny operátory v PDF (pouze unikátní)
+        const uniqueOps = [...new Set(operatorList.fnArray)];
+        console.log('Unique operators in PDF:', uniqueOps.length, 'Total ops:', operatorList.fnArray.length);
 
         // Sledovat transformační matici
         let currentTransform = [1, 0, 0, 1, 0, 0];
         const transformStack = [];
+
+        // Sbírat image regiony pro extrakci z renderovaného canvasu
+        const imageRegions = [];
 
         for (let i = 0; i < operatorList.fnArray.length; i++) {
             const fn = operatorList.fnArray[i];
@@ -1228,85 +1243,83 @@ const PDFEditor = {
             }
 
             // Detekovat obrázky
-            if (fn === paintImageXObject || fn === paintJpegXObject || fn === paintImageMaskXObject) {
-                const imageName = args[0];
+            if (imageOps.includes(fn)) {
+                const imageName = args[0] || `inline_${i}`;
+                const transform = [...currentTransform];
+
+                // Vypočítat pozici a velikost v canvas koordinátech
+                const width = Math.abs(transform[0]) * scale;
+                const height = Math.abs(transform[3]) * scale;
+
+                // Přeskočit příliš malé obrázky (ikony, čáry, atd.)
+                if (width < 20 || height < 20) {
+                    continue;
+                }
+
+                // Transformovat pozici
+                let x, y;
+                if (pdfjsLib.Util && pdfjsLib.Util.transform) {
+                    const combined = pdfjsLib.Util.transform(viewport.transform, transform);
+                    x = combined[4];
+                    y = combined[5] - height;
+                } else {
+                    x = transform[4] * scale;
+                    y = viewport.height - (transform[5] * scale) - height;
+                }
+
+                imageRegions.push({
+                    imageName,
+                    x: Math.round(x),
+                    y: Math.round(y),
+                    width: Math.round(width),
+                    height: Math.round(height)
+                });
+            }
+        }
+
+        console.log(`Found ${imageRegions.length} image regions in PDF`, imageRegions);
+
+        // Extrahovat obrázky z renderovaného canvasu
+        if (!renderedCanvas) {
+            console.warn('No rendered canvas provided for image extraction');
+            return imageItems;
+        }
+
+        if (imageRegions.length > 0) {
+            const sourceCtx = renderedCanvas.getContext('2d');
+
+            for (let index = 0; index < imageRegions.length; index++) {
+                const region = imageRegions[index];
 
                 try {
-                    // Získat obrázek z resources
-                    const objs = pdfPage.objs;
-                    const imgData = objs.get(imageName);
+                    // Vytvořit canvas pro extrakci regionu
+                    const imgCanvas = document.createElement('canvas');
+                    imgCanvas.width = region.width;
+                    imgCanvas.height = region.height;
+                    const ctx = imgCanvas.getContext('2d');
 
-                    if (imgData && imgData.data) {
-                        // Transformovat pozici pomocí viewport
-                        const transform = currentTransform;
+                    // Extrahovat region z renderovaného PDF
+                    ctx.drawImage(
+                        renderedCanvas,
+                        region.x, region.y, region.width, region.height,
+                        0, 0, region.width, region.height
+                    );
 
-                        // Vypočítat pozici a velikost v canvas koordinátech
-                        const width = Math.abs(transform[0]) * scale;
-                        const height = Math.abs(transform[3]) * scale;
+                    // Převést na data URL
+                    const dataUrl = imgCanvas.toDataURL('image/png');
 
-                        // Transformovat pozici
-                        let x, y;
-                        if (pdfjsLib.Util && pdfjsLib.Util.transform) {
-                            const combined = pdfjsLib.Util.transform(viewport.transform, transform);
-                            x = combined[4];
-                            y = combined[5] - height; // Posunout nahoru
-                        } else {
-                            x = transform[4] * scale;
-                            y = viewport.height - (transform[5] * scale) - height;
-                        }
-
-                        // Vytvořit canvas s obrázkem
-                        const imgCanvas = document.createElement('canvas');
-                        imgCanvas.width = imgData.width;
-                        imgCanvas.height = imgData.height;
-                        const ctx = imgCanvas.getContext('2d');
-
-                        // Vytvořit ImageData
-                        const imageData = ctx.createImageData(imgData.width, imgData.height);
-
-                        // Kopírovat data (PDF.js může mít různé formáty)
-                        if (imgData.data.length === imgData.width * imgData.height * 4) {
-                            // RGBA formát
-                            imageData.data.set(imgData.data);
-                        } else if (imgData.data.length === imgData.width * imgData.height * 3) {
-                            // RGB formát - převést na RGBA
-                            for (let j = 0, k = 0; j < imgData.data.length; j += 3, k += 4) {
-                                imageData.data[k] = imgData.data[j];
-                                imageData.data[k + 1] = imgData.data[j + 1];
-                                imageData.data[k + 2] = imgData.data[j + 2];
-                                imageData.data[k + 3] = 255;
-                            }
-                        } else {
-                            // Grayscale nebo jiný formát
-                            const bytesPerPixel = imgData.data.length / (imgData.width * imgData.height);
-                            if (bytesPerPixel === 1) {
-                                for (let j = 0, k = 0; j < imgData.data.length; j++, k += 4) {
-                                    imageData.data[k] = imgData.data[j];
-                                    imageData.data[k + 1] = imgData.data[j];
-                                    imageData.data[k + 2] = imgData.data[j];
-                                    imageData.data[k + 3] = 255;
-                                }
-                            }
-                        }
-
-                        ctx.putImageData(imageData, 0, 0);
-
-                        // Převést na data URL
-                        const dataUrl = imgCanvas.toDataURL('image/png');
-
-                        imageItems.push({
-                            dataUrl: dataUrl,
-                            x: x,
-                            y: y,
-                            width: width,
-                            height: height,
-                            originalWidth: imgData.width,
-                            originalHeight: imgData.height,
-                            imageName: imageName
-                        });
-                    }
+                    imageItems.push({
+                        dataUrl: dataUrl,
+                        x: region.x,
+                        y: region.y,
+                        width: region.width,
+                        height: region.height,
+                        originalWidth: region.width,
+                        originalHeight: region.height,
+                        imageName: region.imageName
+                    });
                 } catch (error) {
-                    console.warn(`Could not extract image ${imageName}:`, error);
+                    console.warn(`Could not extract image region ${index}:`, error);
                 }
             }
         }
