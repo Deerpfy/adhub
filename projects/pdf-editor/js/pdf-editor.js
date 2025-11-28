@@ -968,8 +968,8 @@ const PDFEditor = {
                 width: item.width + 4,
                 height: item.height + 4,
                 fill: 'rgba(255, 255, 255, 0.9)', // Bílé pozadí pro zakrytí originálu
-                stroke: 'rgba(139, 92, 246, 0.5)', // Fialový okraj pro viditelnost
-                strokeWidth: 1,
+                stroke: null, // Bez viditelného okraje
+                strokeWidth: 0,
                 selectable: false,
                 evented: false,
                 _isTextBackground: true,

@@ -588,24 +588,54 @@ const PDFEditorApp = {
      * Page navigation
      */
     async _prevPage() {
-        this._resetTextEditingState();
+        const wasTextEditingEnabled = this.isTextEditingEnabled;
+        // Pouze odebrat text overlays, neměnit stav editace
+        PDFEditor.disableTextEditing();
         PDFEditor.savePageAnnotations(PDFViewer.currentPage);
         await PDFViewer.prevPage();
         PDFEditor.loadPageAnnotations(PDFViewer.currentPage);
+        // Pokud byla editace zapnutá, znovu ji načíst pro novou stránku
+        if (wasTextEditingEnabled) {
+            await this._reloadTextEditing();
+        }
     },
 
     async _nextPage() {
-        this._resetTextEditingState();
+        const wasTextEditingEnabled = this.isTextEditingEnabled;
+        // Pouze odebrat text overlays, neměnit stav editace
+        PDFEditor.disableTextEditing();
         PDFEditor.savePageAnnotations(PDFViewer.currentPage);
         await PDFViewer.nextPage();
         PDFEditor.loadPageAnnotations(PDFViewer.currentPage);
+        // Pokud byla editace zapnutá, znovu ji načíst pro novou stránku
+        if (wasTextEditingEnabled) {
+            await this._reloadTextEditing();
+        }
     },
 
     async _goToPage(pageNum) {
-        this._resetTextEditingState();
+        const wasTextEditingEnabled = this.isTextEditingEnabled;
+        // Pouze odebrat text overlays, neměnit stav editace
+        PDFEditor.disableTextEditing();
         PDFEditor.savePageAnnotations(PDFViewer.currentPage);
         await PDFViewer.goToPage(pageNum);
         PDFEditor.loadPageAnnotations(PDFViewer.currentPage);
+        // Pokud byla editace zapnutá, znovu ji načíst pro novou stránku
+        if (wasTextEditingEnabled) {
+            await this._reloadTextEditing();
+        }
+    },
+
+    /**
+     * Reload text editing for current page (without toggle)
+     */
+    async _reloadTextEditing() {
+        try {
+            const page = await PDFViewer.pdfDoc.getPage(PDFViewer.currentPage);
+            await PDFEditor.enableTextEditing(page, PDFViewer.scale);
+        } catch (error) {
+            console.error('Error reloading text editing:', error);
+        }
     },
 
     /**
