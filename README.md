@@ -23,15 +23,61 @@ Browser extension for Chrome/Edge/Brave enabling download of YouTube videos and 
 - Download videos in various qualities (360p - 4K)
 - Download audio (M4A, WebM)
 - Button directly on YouTube page
+- Auto-update extension loader
 - No external server required
+
+**Status:** ✅ Complete
 
 ### Multistream Chat Panel
 Unified chat for streamers - displays chat from Twitch, Kick and YouTube in one place.
 
 **Features:**
-- Multi-platform support
-- Overlay mode for OBS
+- Multi-platform support (Twitch, Kick, YouTube)
+- Streamlabs-style rendering with animations
+- Iframe fallback mode
+- Backend WebSocket server for real-time chat
 - Customizable appearance
+- OBS overlay support
+
+**Status:** ✅ Complete
+
+### PDF Editor
+Full-featured PDF editor running 100% client-side in browser.
+
+**Features:**
+- Text and annotation editing
+- Digital signatures (draw, type, upload)
+- PDF compression
+- Page management (reorder, rotate, delete)
+- Multi-language support (CZ/EN)
+
+**Status:** ✅ Complete
+
+### PDF Merge
+Simple web tool to merge multiple PDF files into one.
+
+**Features:**
+- Drag & drop upload
+- Reorder files by dragging
+- PDF preview with page navigation
+- Works 100% offline
+- No server needed
+
+**Status:** ✅ Complete
+
+### MindHub
+Personal task and project coordination platform.
+
+**Features:**
+- Task management with projects and tags
+- Quick capture with keyboard shortcuts
+- Today view and inbox
+- Command palette (Cmd/Ctrl+K)
+- Light/Dark/High-contrast themes
+- AI agent suggestions (simulated)
+- 100% local storage
+
+**Status:** ✅ Complete (Calendar & Habits placeholders)
 
 ### Spinning Wheel Giveaway
 Interactive spinning wheel for drawing winners on streams and giveaway events.
@@ -42,13 +88,19 @@ Interactive spinning wheel for drawing winners on streams and giveaway events.
 - Winner history
 - OBS overlay support
 
+**Status:** ✅ Complete
+
 ### Resignation Bets
 Fun casino-style app for betting on who will resign from work first.
 
 **Features:**
-- Roulette-style gameplay
-- Offline storage
-- Multiplayer support
+- Roulette-style design with animations
+- IndexedDB offline storage
+- Leaderboard and history
+- Export/Import data
+- Multi-language (CZ/EN)
+
+**Status:** ✅ Complete
 
 ### AI Prompting
 Professional prompt formatter for AI assistants.
@@ -59,8 +111,12 @@ Professional prompt formatter for AI assistants.
 - Local storage for saved prompts
 - Share prompts via URL
 
+**Status:** ✅ Complete
+
 ### KomoPizza Demo
 Sample ordering application demonstrating modern UI/UX principles.
+
+**Status:** ✅ Complete (Demo)
 
 ---
 
@@ -72,29 +128,42 @@ adhub/
 ├── script.js               # Logic, configuration and translations
 ├── styles.css              # Styles
 ├── README.md               # This file
+├── server/                 # AdHUB backend server (optional)
 └── projects/
-    ├── youtube-downloader/
+    ├── youtube-downloader/ # YouTube video/audio downloader
     │   ├── index.html
     │   ├── script.js
     │   ├── styles.css
-    │   └── extension/
-    ├── chat-panel/
+    │   ├── extension/      # Browser extension source
+    │   └── extension-loader/ # Auto-update extension loader
+    ├── chat-panel/         # Multistream chat for Twitch/Kick/YouTube
     │   ├── index.html
     │   ├── script.js
-    │   └── styles.css
+    │   ├── styles.css
+    │   └── server/         # WebSocket backend
+    ├── pdf-editor/         # PDF editing, signing, compression
+    │   ├── index.html
+    │   ├── css/
+    │   └── js/
+    ├── pdf-merge/          # PDF file merger
+    │   ├── index.html
+    │   └── js/
+    ├── mindhub/            # Task & project management
+    │   ├── index.html
+    │   ├── css/
+    │   └── js/
     ├── spinning-wheel-giveaway/
+    │   └── index.html
+    ├── resignation-bets/   # Casino-style betting game
     │   ├── index.html
-    │   ├── script.js
-    │   └── styles.css
-    ├── resignation-bets/
-    │   ├── index.html
-    │   ├── script.js
-    │   └── styles.css
-    ├── ai-prompting/
-    │   ├── index.html
-    │   ├── script.js
-    │   └── styles.css
-    └── komopizza/
+    │   ├── app.js
+    │   ├── db.js
+    │   ├── lang.js
+    │   ├── styles.css
+    │   └── locales/
+    ├── ai-prompting/       # AI prompt formatter
+    │   └── index.html
+    └── komopizza/          # Pizza ordering demo
         ├── index.html
         ├── script.js
         └── styles.css

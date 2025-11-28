@@ -6,10 +6,30 @@ Tato složka obsahuje všechny projekty spravované přes AdHUB.
 
 ```
 projects/
-├── chat-panel/          # Multistream chat pro Twitch, Kick, YouTube
-├── youtube-downloader/  # Stahování videí a audia z YouTube
-└── komopizza/           # Pizza ordering app
+├── youtube-downloader/      # 🎥 Stahování videí a audia z YouTube
+├── chat-panel/              # 💬 Multistream chat pro Twitch, Kick, YouTube
+├── pdf-editor/              # ✏️ PDF editor, podpisy, komprese
+├── pdf-merge/               # 📄 Sloučení PDF souborů
+├── mindhub/                 # 🧠 Správa úkolů a projektů
+├── spinning-wheel-giveaway/ # 🎡 Losovací kolo pro streamy
+├── resignation-bets/        # 🎰 Casino sázková hra
+├── ai-prompting/            # 🤖 AI prompt formátovač
+└── komopizza/               # 🍕 Demo objednávkové aplikace
 ```
+
+## 📊 Stav projektů
+
+| Projekt | Stav | Popis |
+|---------|------|-------|
+| youtube-downloader | ✅ Hotovo | Browser extension + auto-update loader |
+| chat-panel | ✅ Hotovo | Frontend + WebSocket backend server |
+| pdf-editor | ✅ Hotovo | Editor, podpisy, komprese, správa stránek |
+| pdf-merge | ✅ Hotovo | Sloučení více PDF do jednoho |
+| mindhub | ✅ Hotovo | Task management s localStorage |
+| spinning-wheel-giveaway | ✅ Hotovo | Losovací kolo pro giveaway |
+| resignation-bets | ✅ Hotovo | Casino hra s IndexedDB |
+| ai-prompting | ✅ Hotovo | Prompt formatter pro AI |
+| komopizza | ✅ Hotovo | UI/UX demo aplikace |
 
 ## ➕ Jak přidat nový projekt
 
@@ -78,8 +98,18 @@ Po přidání nového projektu restartujte AdHUB server, aby se změny projevily
 ## 🔗 Propojení s AdHUB
 
 AdHUB automaticky zobrazí všechny projekty zadané v konfiguraci:
-- V `server/tools.json` (používá se když server běží)
-- V `script.js` jako `DEFAULT_CONFIG` (používá se v offline režimu)
+- V `../script.js` funkce `getLocalizedConfig()` - hlavní konfigurace projektů
+- Projekty jsou automaticky dostupné z hlavního hubu
+
+## 📚 Dokumentace projektů
+
+Každý projekt má vlastní README s podrobnou dokumentací:
+- [YouTube Downloader](youtube-downloader/README.md)
+- [Chat Panel](chat-panel/README.md)
+- [PDF Editor](pdf-editor/README.md)
+- [PDF Merge](pdf-merge/README.md)
+- [MindHub](mindhub/README.md)
+- [Resignation Bets](resignation-bets/README.md)
 
 
 

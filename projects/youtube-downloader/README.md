@@ -1,5 +1,7 @@
 # 🎥 AdHUB YouTube Downloader
 
+![Status](https://img.shields.io/badge/status-complete-success) ![Version](https://img.shields.io/badge/version-1.1.1-purple) ![License](https://img.shields.io/badge/license-MIT-blue)
+
 Stahujte YouTube videa přímo z prohlížeče **bez potřeby serveru**! Ideální pro hostování na GitHub Pages.
 
 **Aktuální verze: 1.1.1** | [Changelog](#-changelog)
@@ -11,6 +13,7 @@ Stahujte YouTube videa přímo z prohlížeče **bez potřeby serveru**! Ideáln
 - ✅ **Více formátů** - MP4, M4A, WebM
 - ✅ **Různé kvality** - Od 144p až po 4K (podle dostupnosti)
 - ✅ **YouTube integrace** - Tlačítko přímo na YouTube stránce
+- ✅ **Auto-Update Loader** - Automatické aktualizace z GitHubu
 - ✅ **Open source** - Zdarma a volně dostupné
 
 ## 🚀 Jak používat
@@ -131,6 +134,11 @@ MIT License - Volně k použití a modifikaci.
 
 Tento nástroj je určen pouze pro stahování videí, ke kterým máte právo. Respektujte autorská práva a podmínky použití YouTube.
 
+## 📂 Další komponenty
+
+- **[extension/](extension/)** - Zdrojový kód browser extension
+- **[extension-loader/](extension-loader/)** - Auto-update loader pro extension
+
 ---
 
-Vytvořeno s ❤️ pro AdHUB
+**Součást projektu [AdHUB](../../index.html)** | Vytvořeno s ❤️
