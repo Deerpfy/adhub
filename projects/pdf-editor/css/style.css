@@ -519,6 +519,58 @@ header {
     border-color: var(--primary-color);
 }
 
+/* Text Formatting Buttons */
+.format-group {
+    min-width: auto;
+}
+
+.format-buttons {
+    display: flex;
+    gap: 4px;
+}
+
+.format-btn {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.format-btn:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--primary-color);
+}
+
+.format-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.font-select {
+    min-width: 140px;
+    padding: 8px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.font-select option {
+    background: var(--bg-card);
+    color: var(--text-primary);
+}
+
 /* =====================================================
    Signature Panel
    ===================================================== */

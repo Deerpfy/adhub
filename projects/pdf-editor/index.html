@@ -246,20 +246,46 @@
 
                     <!-- Tool Options -->
                     <div class="tool-options" id="toolOptions">
+                        <!-- Text Formatting Group -->
+                        <div class="option-group format-group">
+                            <label>Formátování</label>
+                            <div class="format-buttons">
+                                <button class="format-btn" id="boldBtn" title="Tučné (Ctrl+B)">
+                                    <strong>B</strong>
+                                </button>
+                                <button class="format-btn" id="italicBtn" title="Kurzíva (Ctrl+I)">
+                                    <em>I</em>
+                                </button>
+                                <button class="format-btn" id="underlineBtn" title="Podtržené (Ctrl+U)">
+                                    <u>U</u>
+                                </button>
+                            </div>
+                        </div>
                         <div class="option-group">
-                            <label>Text Color</label>
+                            <label>Font</label>
+                            <select id="fontFamily" class="font-select">
+                                <option value="Helvetica">Helvetica</option>
+                                <option value="Times New Roman">Times New Roman</option>
+                                <option value="Courier New">Courier New</option>
+                                <option value="Arial">Arial</option>
+                                <option value="Georgia">Georgia</option>
+                                <option value="Verdana">Verdana</option>
+                            </select>
+                        </div>
+                        <div class="option-group">
+                            <label>Velikost</label>
+                            <input type="number" id="textSize" value="16" min="8" max="200">
+                        </div>
+                        <div class="option-group">
+                            <label>Barva textu</label>
                             <input type="color" id="textColor" value="#000000">
                         </div>
                         <div class="option-group">
-                            <label>Text Size</label>
-                            <input type="number" id="textSize" value="16" min="8" max="72">
-                        </div>
-                        <div class="option-group">
-                            <label>Stroke Color</label>
+                            <label>Barva tahu</label>
                             <input type="color" id="strokeColor" value="#ff0000">
                         </div>
                         <div class="option-group">
-                            <label>Stroke Width</label>
+                            <label>Šířka tahu</label>
                             <input type="number" id="strokeWidth" value="2" min="1" max="20">
                         </div>
                     </div>

@@ -233,6 +233,12 @@ const PDFEditorApp = {
             strokeColor: document.getElementById('strokeColor'),
             strokeWidth: document.getElementById('strokeWidth'),
 
+            // Text formatting
+            boldBtn: document.getElementById('boldBtn'),
+            italicBtn: document.getElementById('italicBtn'),
+            underlineBtn: document.getElementById('underlineBtn'),
+            fontFamily: document.getElementById('fontFamily'),
+
             // Signature elements
             signatureCanvas: document.getElementById('signatureCanvas'),
             sigTabs: document.querySelectorAll('.sig-tab-btn'),
@@ -369,6 +375,39 @@ const PDFEditorApp = {
             PDFEditor.updateSettings({ strokeWidth: parseInt(e.target.value) });
         });
 
+        // Text formatting buttons
+        this.elements.boldBtn?.addEventListener('click', () => this._toggleTextFormat('bold'));
+        this.elements.italicBtn?.addEventListener('click', () => this._toggleTextFormat('italic'));
+        this.elements.underlineBtn?.addEventListener('click', () => this._toggleTextFormat('underline'));
+
+        this.elements.fontFamily?.addEventListener('change', (e) => {
+            this._applyTextFormat('fontFamily', e.target.value);
+        });
+
+        this.elements.textSize?.addEventListener('change', (e) => {
+            this._applyTextFormat('fontSize', parseInt(e.target.value));
+        });
+
+        // Keyboard shortcuts for formatting
+        document.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && !e.shiftKey) {
+                switch (e.key.toLowerCase()) {
+                    case 'b':
+                        e.preventDefault();
+                        this._toggleTextFormat('bold');
+                        break;
+                    case 'i':
+                        e.preventDefault();
+                        this._toggleTextFormat('italic');
+                        break;
+                    case 'u':
+                        e.preventDefault();
+                        this._toggleTextFormat('underline');
+                        break;
+                }
+            }
+        });
+
         // Signature tabs
         this.elements.sigTabs.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -477,6 +516,11 @@ const PDFEditorApp = {
             if (this.elements.fabricCanvas) {
                 PDFEditor.init('fabricCanvas', dims.width, dims.height);
                 PDFEditor.onHistoryChange = (state) => this._updateHistoryButtons(state);
+
+                // Listen for selection changes to update format buttons
+                PDFEditor.fabricCanvas.on('selection:created', () => this._updateFormatButtonsState());
+                PDFEditor.fabricCanvas.on('selection:updated', () => this._updateFormatButtonsState());
+                PDFEditor.fabricCanvas.on('selection:cleared', () => this._updateFormatButtonsState());
             }
 
             // Initialize pages module
@@ -657,6 +701,92 @@ const PDFEditorApp = {
         }
         if (this.elements.redoBtn) {
             this.elements.redoBtn.disabled = !state.canRedo;
+        }
+    },
+
+    /**
+     * Toggle text formatting (bold, italic, underline)
+     * @param {string} format - Format type ('bold', 'italic', 'underline')
+     */
+    _toggleTextFormat(format) {
+        const activeObject = PDFEditor.fabricCanvas?.getActiveObject();
+
+        if (!activeObject || (activeObject.type !== 'i-text' && activeObject.type !== 'textbox')) {
+            this._showStatus('Vyberte text pro formátování', 'warning');
+            return;
+        }
+
+        let newValue;
+        switch (format) {
+            case 'bold':
+                newValue = activeObject.fontWeight === 'bold' ? 'normal' : 'bold';
+                activeObject.set('fontWeight', newValue);
+                this.elements.boldBtn?.classList.toggle('active', newValue === 'bold');
+                break;
+            case 'italic':
+                newValue = activeObject.fontStyle === 'italic' ? 'normal' : 'italic';
+                activeObject.set('fontStyle', newValue);
+                this.elements.italicBtn?.classList.toggle('active', newValue === 'italic');
+                break;
+            case 'underline':
+                newValue = !activeObject.underline;
+                activeObject.set('underline', newValue);
+                this.elements.underlineBtn?.classList.toggle('active', newValue);
+                break;
+        }
+
+        PDFEditor.fabricCanvas.renderAll();
+        PDFEditor._saveToHistory();
+    },
+
+    /**
+     * Apply text format property
+     * @param {string} property - Property name ('fontFamily', 'fontSize')
+     * @param {any} value - Value to set
+     */
+    _applyTextFormat(property, value) {
+        const activeObject = PDFEditor.fabricCanvas?.getActiveObject();
+
+        if (!activeObject || (activeObject.type !== 'i-text' && activeObject.type !== 'textbox')) {
+            // Aktualizovat default nastavení pro nový text
+            PDFEditor.updateSettings({
+                [property === 'fontFamily' ? 'fontFamily' : 'textSize']: value
+            });
+            return;
+        }
+
+        activeObject.set(property, value);
+        PDFEditor.fabricCanvas.renderAll();
+        PDFEditor._saveToHistory();
+    },
+
+    /**
+     * Update format buttons state based on selected object
+     */
+    _updateFormatButtonsState() {
+        const activeObject = PDFEditor.fabricCanvas?.getActiveObject();
+
+        if (!activeObject || (activeObject.type !== 'i-text' && activeObject.type !== 'textbox')) {
+            // Reset all buttons
+            this.elements.boldBtn?.classList.remove('active');
+            this.elements.italicBtn?.classList.remove('active');
+            this.elements.underlineBtn?.classList.remove('active');
+            return;
+        }
+
+        // Update button states
+        this.elements.boldBtn?.classList.toggle('active', activeObject.fontWeight === 'bold');
+        this.elements.italicBtn?.classList.toggle('active', activeObject.fontStyle === 'italic');
+        this.elements.underlineBtn?.classList.toggle('active', activeObject.underline === true);
+
+        // Update font family select
+        if (this.elements.fontFamily && activeObject.fontFamily) {
+            this.elements.fontFamily.value = activeObject.fontFamily;
+        }
+
+        // Update font size
+        if (this.elements.textSize && activeObject.fontSize) {
+            this.elements.textSize.value = activeObject.fontSize;
         }
     },
 
@@ -1050,13 +1180,30 @@ const PDFEditorApp = {
                 switch (obj.type) {
                     case 'i-text':
                     case 'textbox':
-                        const font = await pdfDoc.embedFont('Helvetica');
-                        page.drawText(obj.text, {
+                    case 'text':
+                        // Vybrat font na základě stylu
+                        let fontName = 'Helvetica';
+                        const isBold = obj.fontWeight === 'bold' || obj.fontWeight >= 700;
+                        const isItalic = obj.fontStyle === 'italic';
+
+                        // Použít správný font podle bold/italic
+                        if (isBold && isItalic) {
+                            fontName = 'Helvetica-BoldOblique';
+                        } else if (isBold) {
+                            fontName = 'Helvetica-Bold';
+                        } else if (isItalic) {
+                            fontName = 'Helvetica-Oblique';
+                        }
+
+                        const font = await pdfDoc.embedFont(fontName);
+
+                        // OPRAVENO: Y pozice je nyní správně z toPDFCoordinates
+                        page.drawText(obj.text || '', {
                             x: coords.x,
-                            y: coords.y + coords.height,
-                            size: obj.fontSize / scale,
+                            y: coords.y,
+                            size: (obj.fontSize * obj.scaleY) / scale,
                             font: font,
-                            color: this._hexToRgb(obj.fill)
+                            color: this._hexToRgb(obj.fill || '#000000')
                         });
                         break;
 

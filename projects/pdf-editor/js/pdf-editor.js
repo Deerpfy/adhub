@@ -668,9 +668,33 @@ const PDFEditor = {
 
     /**
      * Load state from history
+     * OPRAVENO: Zachovat pozice wrapper elementu
      */
     _loadState(state) {
+        // Uložit aktuální rozměry před načtením
+        const currentWidth = this.fabricCanvas.getWidth();
+        const currentHeight = this.fabricCanvas.getHeight();
+
         this.fabricCanvas.loadFromJSON(state, () => {
+            // OPRAVENO: Obnovit rozměry a pozici wrapper elementu
+            this.fabricCanvas.setWidth(currentWidth);
+            this.fabricCanvas.setHeight(currentHeight);
+
+            // Zajistit správnou pozici wrapperu
+            const wrapper = this.fabricCanvas.wrapperEl;
+            if (wrapper) {
+                wrapper.style.position = 'absolute';
+                wrapper.style.top = '0';
+                wrapper.style.left = '0';
+                wrapper.style.width = currentWidth + 'px';
+                wrapper.style.height = currentHeight + 'px';
+            }
+
+            // Aktualizovat souřadnice všech objektů
+            this.fabricCanvas.getObjects().forEach(obj => {
+                obj.setCoords();
+            });
+
             this.fabricCanvas.renderAll();
 
             if (this.onHistoryChange) {
@@ -745,6 +769,7 @@ const PDFEditor = {
 
     /**
      * Convert fabric object to pdf-lib coordinates
+     * OPRAVENO: Správná konverze pro různé typy objektů
      * Note: Canvas origin is top-left, PDF origin is bottom-left
      * @param {fabric.Object} obj - Fabric object
      * @param {number} pdfHeight - PDF page height
@@ -752,12 +777,36 @@ const PDFEditor = {
      * @returns {Object}
      */
     toPDFCoordinates(obj, pdfHeight, scale = 1) {
+        // Pro text - pozice je baseline, ne top
+        const isText = obj.type === 'i-text' || obj.type === 'textbox' || obj.type === 'text';
+
+        // Výška objektu
+        const objHeight = (obj.height * obj.scaleY) / scale;
+        const objWidth = (obj.width * obj.scaleX) / scale;
+
+        // X pozice je jednoduchá
+        const x = obj.left / scale;
+
+        // Y pozice - PDF má origin vlevo dole
+        // Fabric má origin vlevo nahoře
+        let y;
+        if (isText) {
+            // Pro text: y je pozice baseline, ne top
+            // V Fabric.js je obj.top pozice horní hrany textu
+            // V PDF je y pozice baseline (spodní hrana textu)
+            y = pdfHeight - (obj.top / scale) - objHeight;
+        } else {
+            // Pro ostatní objekty
+            y = pdfHeight - (obj.top / scale) - objHeight;
+        }
+
         return {
-            x: obj.left / scale,
-            y: pdfHeight - (obj.top + obj.height * obj.scaleY) / scale,
-            width: (obj.width * obj.scaleX) / scale,
-            height: (obj.height * obj.scaleY) / scale,
-            rotation: -obj.angle // PDF rotation is counter-clockwise
+            x: x,
+            y: y,
+            width: objWidth,
+            height: objHeight,
+            rotation: -obj.angle, // PDF rotation is counter-clockwise
+            isText: isText
         };
     },
 
@@ -775,6 +824,55 @@ const PDFEditor = {
         this.historyIndex = -1;
         this.lastWidth = 0;
         this.lastHeight = 0;
+    },
+
+    /**
+     * Map PDF font name to web-safe font
+     * @param {string} pdfFontName - Original PDF font name
+     * @returns {Object} - { family, weight, style }
+     */
+    _mapPDFFont(pdfFontName) {
+        if (!pdfFontName) {
+            return { family: 'Helvetica', weight: 'normal', style: 'normal' };
+        }
+
+        const fontLower = pdfFontName.toLowerCase();
+
+        // Detekce bold/italic z názvu fontu
+        let weight = 'normal';
+        let style = 'normal';
+
+        if (fontLower.includes('bold') || fontLower.includes('black') || fontLower.includes('heavy')) {
+            weight = 'bold';
+        }
+        if (fontLower.includes('italic') || fontLower.includes('oblique')) {
+            style = 'italic';
+        }
+
+        // Mapování fontů
+        let family = 'Helvetica';
+
+        if (fontLower.includes('times') || fontLower.includes('serif')) {
+            family = 'Times New Roman';
+        } else if (fontLower.includes('courier') || fontLower.includes('mono')) {
+            family = 'Courier New';
+        } else if (fontLower.includes('arial')) {
+            family = 'Arial';
+        } else if (fontLower.includes('helvetica')) {
+            family = 'Helvetica';
+        } else if (fontLower.includes('georgia')) {
+            family = 'Georgia';
+        } else if (fontLower.includes('verdana')) {
+            family = 'Verdana';
+        } else if (fontLower.includes('trebuchet')) {
+            family = 'Trebuchet MS';
+        } else if (fontLower.includes('impact')) {
+            family = 'Impact';
+        } else if (fontLower.includes('comic')) {
+            family = 'Comic Sans MS';
+        }
+
+        return { family, weight, style };
     },
 
     /**
@@ -827,6 +925,9 @@ const PDFEditor = {
             const width = (item.width || item.str.length * fontSize * 0.6) * scale;
             const height = fontSize * 1.2;
 
+            // Mapovat PDF font na dostupný webový font
+            const mappedFont = this._mapPDFFont(item.fontName);
+
             textItems.push({
                 text: item.str,
                 x: x,
@@ -834,7 +935,10 @@ const PDFEditor = {
                 width: Math.max(width, 20), // Minimální šířka
                 height: height,
                 fontSize: Math.max(fontSize, 8), // Minimální velikost fontu
-                fontFamily: item.fontName || 'Helvetica',
+                fontFamily: mappedFont.family,
+                fontWeight: mappedFont.weight,
+                fontStyle: mappedFont.style,
+                originalFont: item.fontName,
                 transform: transform
             });
         }
@@ -872,12 +976,14 @@ const PDFEditor = {
                 _textIndex: index
             });
 
-            // Create editable text
+            // Create editable text with matched font properties
             const text = new fabric.IText(item.text, {
                 left: item.x,
                 top: item.y,
                 fontSize: item.fontSize,
                 fontFamily: item.fontFamily,
+                fontWeight: item.fontWeight || 'normal',
+                fontStyle: item.fontStyle || 'normal',
                 fill: '#000000',
                 editable: true,
                 selectable: true,
@@ -888,6 +994,7 @@ const PDFEditor = {
                 _isExtractedText: true,
                 _textIndex: index,
                 _originalText: item.text,
+                _originalFont: item.originalFont,
                 _background: bg
             });
 
