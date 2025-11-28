@@ -225,6 +225,8 @@ const PDFEditorApp = {
             toolBtns: document.querySelectorAll('.tool-btn[data-tool]'),
             undoBtn: document.getElementById('undoBtn'),
             redoBtn: document.getElementById('redoBtn'),
+            bringToFrontBtn: document.getElementById('bringToFrontBtn'),
+            sendToBackBtn: document.getElementById('sendToBackBtn'),
 
             // Tool options
             toolOptions: document.getElementById('toolOptions'),
@@ -393,6 +395,10 @@ const PDFEditorApp = {
         // Undo/Redo
         this.elements.undoBtn?.addEventListener('click', () => this._undo());
         this.elements.redoBtn?.addEventListener('click', () => this._redo());
+
+        // Layer controls - přesun objektu navrch/na spodek
+        this.elements.bringToFrontBtn?.addEventListener('click', () => this._bringToFront());
+        this.elements.sendToBackBtn?.addEventListener('click', () => this._sendToBack());
 
         // Edit existing text button
         const editTextBtn = document.getElementById('editTextBtn');
@@ -597,6 +603,7 @@ const PDFEditorApp = {
             if (this.elements.fabricCanvas) {
                 PDFEditor.init('fabricCanvas', dims.width, dims.height);
                 PDFEditor.onHistoryChange = (state) => this._updateHistoryButtons(state);
+                PDFEditor.onToolChange = (tool) => this._updateToolUI(tool);
 
                 // Listen for selection changes to update format buttons
                 PDFEditor.fabricCanvas.on('selection:created', () => this._updateFormatButtonsState());
@@ -816,8 +823,14 @@ const PDFEditorApp = {
      */
     _setTool(tool) {
         PDFEditor.setTool(tool);
+        // UI update se provede přes callback onToolChange
+    },
 
-        // Update UI
+    /**
+     * Aktualizovat UI při změně nástroje (voláno z PDFEditor.onToolChange)
+     */
+    _updateToolUI(tool) {
+        // Update toolbar buttons
         this.elements.toolBtns.forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tool === tool);
         });
@@ -838,6 +851,38 @@ const PDFEditorApp = {
 
     _redo() {
         PDFEditor.redo();
+    },
+
+    /**
+     * Přesunout vybraný objekt navrch (na vrchní vrstvu)
+     */
+    _bringToFront() {
+        const activeObject = PDFEditor.fabricCanvas?.getActiveObject();
+        if (!activeObject) {
+            this._showStatus('Nejdřív vyberte objekt', 'warning');
+            return;
+        }
+
+        activeObject.bringToFront();
+        PDFEditor.fabricCanvas.renderAll();
+        PDFEditor._saveToHistory();
+        this._showStatus('Objekt přesunut navrch', 'success');
+    },
+
+    /**
+     * Přesunout vybraný objekt na spodek (na spodní vrstvu)
+     */
+    _sendToBack() {
+        const activeObject = PDFEditor.fabricCanvas?.getActiveObject();
+        if (!activeObject) {
+            this._showStatus('Nejdřív vyberte objekt', 'warning');
+            return;
+        }
+
+        activeObject.sendToBack();
+        PDFEditor.fabricCanvas.renderAll();
+        PDFEditor._saveToHistory();
+        this._showStatus('Objekt přesunut na spodek', 'success');
     },
 
     _updateHistoryButtons(state) {

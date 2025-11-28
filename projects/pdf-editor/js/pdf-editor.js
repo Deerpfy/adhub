@@ -40,6 +40,7 @@ const PDFEditor = {
     onObjectAdded: null,
     onObjectModified: null,
     onHistoryChange: null,
+    onToolChange: null,
 
     /**
      * Initialize the editor with a canvas element
@@ -240,6 +241,11 @@ const PDFEditor = {
         }
 
         this.fabricCanvas.renderAll();
+
+        // Zavolat callback pro aktualizaci UI
+        if (this.onToolChange) {
+            this.onToolChange(tool);
+        }
     },
 
     /**
@@ -526,6 +532,15 @@ const PDFEditor = {
         // Enter editing mode
         text.enterEditing();
         text.selectAll();
+
+        // Po ukončení editace textu přepnout na select nástroj
+        const self = this;
+        text.on('editing:exited', function() {
+            // Uložit do historie
+            self._saveToHistory();
+            // Přepnout na select nástroj
+            self.setTool('select');
+        });
 
         this.fabricCanvas.renderAll();
     },
