@@ -1246,13 +1246,20 @@ const PDFEditorApp = {
 
         // Aplikovat filtr
         const filter = this.elements.pagesFilter?.value || 'all';
-        pageInfo = this._applyPageFilter(pageInfo, filter);
+        const filteredPageInfo = this._applyPageFilter(pageInfo, filter);
 
-        for (const page of pageInfo) {
+        // DŮLEŽITÉ: Při aktivním filtru (kromě 'all') zakázat drag-drop
+        // protože přesouvání v přefiltrovaném pohledu je matoucí
+        const isDragEnabled = filter === 'all';
+
+        // Použít visualIndex pro správné drag-drop
+        filteredPageInfo.forEach((page, visualIndex) => {
             const thumb = document.createElement('div');
             thumb.className = 'page-thumb';
-            thumb.dataset.index = page.displayIndex;
-            thumb.draggable = true;
+            // Uložit OBĚ hodnoty - visualIndex pro drag-drop, displayIndex pro operace
+            thumb.dataset.visualIndex = visualIndex;
+            thumb.dataset.displayIndex = page.displayIndex;
+            thumb.draggable = isDragEnabled;
 
             thumb.innerHTML = `
                 <span class="page-thumb-number">${page.displayIndex + 1}</span>
@@ -1265,7 +1272,7 @@ const PDFEditorApp = {
 
             // Render thumbnail
             const canvas = thumb.querySelector('canvas');
-            await PDFPages.renderThumbnail(page.originalIndex, canvas);
+            PDFPages.renderThumbnail(page.originalIndex, canvas);
 
             // Selection
             thumb.addEventListener('click', (e) => {
@@ -1276,111 +1283,116 @@ const PDFEditorApp = {
             // Rotate button
             thumb.querySelector('.rotate').addEventListener('click', () => {
                 PDFPages.rotatePage(page.displayIndex);
-                // Callback onPageOrderChange se postará o _renderPageGrid
             });
 
             // Delete button
             thumb.querySelector('.delete').addEventListener('click', () => {
                 PDFPages.deletePage(page.displayIndex);
-                // Callback onPageOrderChange se postará o _renderPageGrid
             });
 
-            // Drag start
-            thumb.addEventListener('dragstart', (e) => {
-                this._dragState.draggingIndex = page.displayIndex;
-                thumb.classList.add('dragging');
-                e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/plain', page.displayIndex.toString());
-            });
+            // Drag-drop pouze pokud je povolen
+            if (isDragEnabled) {
+                // Drag start - použít displayIndex pro přesun
+                thumb.addEventListener('dragstart', (e) => {
+                    this._dragState.draggingIndex = page.displayIndex;
+                    this._dragState.draggingVisualIndex = visualIndex;
+                    thumb.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', page.displayIndex.toString());
+                });
 
-            // Drag end - vyčistit stav
-            thumb.addEventListener('dragend', () => {
-                this._dragState.draggingIndex = null;
-                this._clearDropIndicators();
-                thumb.classList.remove('dragging');
-            });
-
-            // Drag over - určit pozici (před/za) podle pozice myši
-            thumb.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-
-                const draggingIndex = this._dragState.draggingIndex;
-                const targetIndex = page.displayIndex;
-
-                // Nepřesouvat na sebe
-                if (draggingIndex === targetIndex) {
+                // Drag end
+                thumb.addEventListener('dragend', () => {
+                    this._dragState.draggingIndex = null;
+                    this._dragState.draggingVisualIndex = null;
                     this._clearDropIndicators();
-                    return;
-                }
+                    thumb.classList.remove('dragging');
+                });
 
-                // Určit zda myš je v levé nebo pravé polovině elementu
-                const rect = thumb.getBoundingClientRect();
-                const mouseX = e.clientX;
-                const midPoint = rect.left + rect.width / 2;
-                const dropPosition = mouseX < midPoint ? 'before' : 'after';
+                // Drag over
+                thumb.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
 
-                // Aktualizovat vizuální indikátor
-                this._updateDropIndicator(thumb, dropPosition, draggingIndex, targetIndex);
-            });
+                    const draggingDisplayIndex = this._dragState.draggingIndex;
 
-            // Drag leave - odstranit indikátor
-            thumb.addEventListener('dragleave', (e) => {
-                // Jen pokud opouštíme element (ne jeho děti)
-                if (!thumb.contains(e.relatedTarget)) {
-                    thumb.classList.remove('drag-over-left', 'drag-over-right');
-                }
-            });
+                    if (draggingDisplayIndex === page.displayIndex) {
+                        this._clearDropIndicators();
+                        return;
+                    }
 
-            // Drop - provést přesun
-            thumb.addEventListener('drop', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
+                    const rect = thumb.getBoundingClientRect();
+                    const mouseX = e.clientX;
+                    const midPoint = rect.left + rect.width / 2;
+                    const dropPosition = mouseX < midPoint ? 'before' : 'after';
 
-                const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
-                const targetIndex = page.displayIndex;
+                    this._updateDropIndicator(thumb, dropPosition);
+                });
 
-                if (fromIndex === targetIndex) {
+                // Drag leave
+                thumb.addEventListener('dragleave', (e) => {
+                    if (!thumb.contains(e.relatedTarget)) {
+                        thumb.classList.remove('drag-over-left', 'drag-over-right');
+                    }
+                });
+
+                // Drop - OPRAVENO: použít displayIndex přímo
+                thumb.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const fromDisplayIndex = parseInt(e.dataTransfer.getData('text/plain'));
+                    const toDisplayIndex = page.displayIndex;
+
+                    if (fromDisplayIndex === toDisplayIndex) {
+                        this._clearDropIndicators();
+                        return;
+                    }
+
+                    // Určit pozici (před/za) podle myši
+                    const rect = thumb.getBoundingClientRect();
+                    const mouseX = e.clientX;
+                    const midPoint = rect.left + rect.width / 2;
+                    const insertAfter = mouseX >= midPoint;
+
+                    // OPRAVENO: Jednoduchá logika pro cílový index
+                    let toIndex;
+                    if (insertAfter) {
+                        // Vložit ZA cílovou stránku
+                        toIndex = toDisplayIndex + 1;
+                        if (fromDisplayIndex < toDisplayIndex) {
+                            toIndex = toDisplayIndex; // Kompenzace za odstranění
+                        }
+                    } else {
+                        // Vložit PŘED cílovou stránku
+                        toIndex = toDisplayIndex;
+                        if (fromDisplayIndex < toDisplayIndex) {
+                            toIndex = toDisplayIndex - 1; // Kompenzace za odstranění
+                        }
+                    }
+
+                    // Zajistit platný rozsah
+                    const pageCount = pageInfo.length;
+                    toIndex = Math.max(0, Math.min(toIndex, pageCount - 1));
+
                     this._clearDropIndicators();
-                    return;
-                }
 
-                // Určit finální pozici
-                const rect = thumb.getBoundingClientRect();
-                const mouseX = e.clientX;
-                const midPoint = rect.left + rect.width / 2;
-                const insertAfter = mouseX >= midPoint;
+                    console.log(`Drop: from ${fromDisplayIndex} to ${toIndex} (insertAfter: ${insertAfter})`);
 
-                // Vypočítat cílový index
-                let toIndex;
-                if (insertAfter) {
-                    toIndex = fromIndex < targetIndex ? targetIndex : targetIndex + 1;
-                } else {
-                    toIndex = fromIndex < targetIndex ? targetIndex - 1 : targetIndex;
-                }
-
-                // Zajistit platný rozsah
-                const pageCount = pageInfo.length;
-                toIndex = Math.max(0, Math.min(toIndex, pageCount - 1));
-
-                // Vyčistit indikátory
-                this._clearDropIndicators();
-
-                // Provést přesun pouze pokud se pozice změnila
-                if (fromIndex !== toIndex) {
-                    PDFPages.movePage(fromIndex, toIndex);
-                    // OPRAVENO: Nevolat _renderPageGrid přímo - volá se přes callback onPageOrderChange
-                }
-            });
+                    if (fromDisplayIndex !== toIndex) {
+                        PDFPages.movePage(fromDisplayIndex, toIndex);
+                    }
+                });
+            }
 
             this.elements.pageGrid.appendChild(thumb);
-        }
+        });
     },
 
     /**
      * Aktualizovat drop indikátor
      */
-    _updateDropIndicator(thumb, position, draggingIndex, targetIndex) {
+    _updateDropIndicator(thumb, position) {
         // Nejdřív vyčistit všechny indikátory
         this._clearDropIndicators();
 
