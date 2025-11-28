@@ -1161,10 +1161,32 @@ const PDFEditorApp = {
 
     /**
      * Apply Fabric.js annotations to PDF
+     * OPRAVENO: Podpora Unicode znaků a filtrování background bloků
      */
     async _applyAnnotationsToPDF(pdfData, annotations) {
         const { PDFDocument, rgb } = PDFLib;
         const pdfDoc = await PDFDocument.load(pdfData);
+
+        // Načíst Unicode font pro podporu českých znaků
+        let unicodeFont = null;
+        let unicodeFontBold = null;
+
+        try {
+            // Načíst Roboto font z Google Fonts CDN (podporuje Unicode)
+            const fontUrl = 'https://fonts.gstatic.com/s/roboto/v30/KFOmCnqEu92Fr1Mu4mxP.ttf';
+            const fontBoldUrl = 'https://fonts.gstatic.com/s/roboto/v30/KFOlCnqEu92Fr1MmWUlfBBc9.ttf';
+
+            const [fontBytes, fontBoldBytes] = await Promise.all([
+                fetch(fontUrl).then(r => r.arrayBuffer()),
+                fetch(fontBoldUrl).then(r => r.arrayBuffer())
+            ]);
+
+            unicodeFont = await pdfDoc.embedFont(fontBytes);
+            unicodeFontBold = await pdfDoc.embedFont(fontBoldBytes);
+            console.log('Unicode fonts loaded successfully');
+        } catch (e) {
+            console.warn('Could not load Unicode font, falling back to Helvetica:', e);
+        }
 
         for (const [pageNum, pageAnnotations] of Object.entries(annotations)) {
             if (!pageAnnotations || !pageAnnotations.objects) continue;
@@ -1174,6 +1196,11 @@ const PDFEditorApp = {
             const scale = PDFViewer.scale;
 
             for (const obj of pageAnnotations.objects) {
+                // OPRAVENO: Přeskočit background bloky z text editingu
+                if (obj._isTextBackground) {
+                    continue;
+                }
+
                 // Convert coordinates (Fabric -> PDF)
                 const coords = PDFEditor.toPDFCoordinates(obj, pageHeight, scale);
 
@@ -1181,33 +1208,53 @@ const PDFEditorApp = {
                     case 'i-text':
                     case 'textbox':
                     case 'text':
-                        // Vybrat font na základě stylu
-                        let fontName = 'Helvetica';
-                        const isBold = obj.fontWeight === 'bold' || obj.fontWeight >= 700;
-                        const isItalic = obj.fontStyle === 'italic';
+                        const textContent = obj.text || '';
+                        if (!textContent.trim()) break;
 
-                        // Použít správný font podle bold/italic
-                        if (isBold && isItalic) {
-                            fontName = 'Helvetica-BoldOblique';
-                        } else if (isBold) {
-                            fontName = 'Helvetica-Bold';
-                        } else if (isItalic) {
-                            fontName = 'Helvetica-Oblique';
+                        const isBold = obj.fontWeight === 'bold' || obj.fontWeight >= 700;
+                        const fontSize = (obj.fontSize * obj.scaleY) / scale;
+
+                        // Použít Unicode font pokud je dostupný, jinak fallback
+                        let font;
+                        if (unicodeFont) {
+                            font = isBold && unicodeFontBold ? unicodeFontBold : unicodeFont;
+                        } else {
+                            // Fallback na Helvetica - odstranit problematické znaky
+                            let fontName = 'Helvetica';
+                            if (isBold) {
+                                fontName = 'Helvetica-Bold';
+                            }
+                            font = await pdfDoc.embedFont(fontName);
                         }
 
-                        const font = await pdfDoc.embedFont(fontName);
-
-                        // OPRAVENO: Y pozice je nyní správně z toPDFCoordinates
-                        page.drawText(obj.text || '', {
-                            x: coords.x,
-                            y: coords.y,
-                            size: (obj.fontSize * obj.scaleY) / scale,
-                            font: font,
-                            color: this._hexToRgb(obj.fill || '#000000')
-                        });
+                        try {
+                            page.drawText(textContent, {
+                                x: coords.x,
+                                y: coords.y,
+                                size: fontSize,
+                                font: font,
+                                color: this._hexToRgb(obj.fill || '#000000')
+                            });
+                        } catch (encodeError) {
+                            // Pokud stále selže, zkusit odstranit problematické znaky
+                            console.warn('Text encoding error, trying fallback:', encodeError);
+                            const safeText = this._sanitizeTextForPDF(textContent);
+                            const fallbackFont = await pdfDoc.embedFont('Helvetica');
+                            page.drawText(safeText, {
+                                x: coords.x,
+                                y: coords.y,
+                                size: fontSize,
+                                font: fallbackFont,
+                                color: this._hexToRgb(obj.fill || '#000000')
+                            });
+                        }
                         break;
 
                     case 'rect':
+                        // OPRAVENO: Přeskočit bílé pozadí bloky
+                        if (obj.fill === 'rgba(255, 255, 255, 0.9)' || obj._isTextBackground) {
+                            continue;
+                        }
                         page.drawRectangle({
                             x: coords.x,
                             y: coords.y,
@@ -1220,7 +1267,6 @@ const PDFEditorApp = {
                         break;
 
                     case 'circle':
-                        // PDF-lib doesn't have drawCircle, use ellipse
                         page.drawEllipse({
                             x: coords.x + coords.width / 2,
                             y: coords.y + coords.height / 2,
@@ -1241,14 +1287,21 @@ const PDFEditorApp = {
                         });
                         break;
 
+                    case 'path':
+                        // Freehand drawing - export as SVG path
+                        if (obj.path) {
+                            // Pro kreslení od ruky - exportovat jako obrázek
+                            // nebo přeskočit pokud je to příliš složité
+                        }
+                        break;
+
                     case 'image':
-                        // Embed image
                         if (obj.src) {
                             try {
                                 const imgBytes = await fetch(obj.src).then(r => r.arrayBuffer());
                                 let pdfImage;
 
-                                if (obj.src.includes('png')) {
+                                if (obj.src.includes('png') || obj.src.startsWith('data:image/png')) {
                                     pdfImage = await pdfDoc.embedPng(imgBytes);
                                 } else {
                                     pdfImage = await pdfDoc.embedJpg(imgBytes);
@@ -1270,6 +1323,25 @@ const PDFEditorApp = {
         }
 
         return await pdfDoc.save();
+    },
+
+    /**
+     * Sanitize text for PDF export (remove unsupported Unicode characters)
+     * @param {string} text - Original text
+     * @returns {string} - Sanitized text
+     */
+    _sanitizeTextForPDF(text) {
+        // Mapování českých znaků na ASCII ekvivalenty
+        const charMap = {
+            'á': 'a', 'č': 'c', 'ď': 'd', 'é': 'e', 'ě': 'e', 'í': 'i',
+            'ň': 'n', 'ó': 'o', 'ř': 'r', 'š': 's', 'ť': 't', 'ú': 'u',
+            'ů': 'u', 'ý': 'y', 'ž': 'z',
+            'Á': 'A', 'Č': 'C', 'Ď': 'D', 'É': 'E', 'Ě': 'E', 'Í': 'I',
+            'Ň': 'N', 'Ó': 'O', 'Ř': 'R', 'Š': 'S', 'Ť': 'T', 'Ú': 'U',
+            'Ů': 'U', 'Ý': 'Y', 'Ž': 'Z'
+        };
+
+        return text.split('').map(char => charMap[char] || char).join('');
     },
 
     /**
