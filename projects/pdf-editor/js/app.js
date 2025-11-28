@@ -1228,6 +1228,13 @@ const PDFEditorApp = {
     /**
      * Page management
      */
+    // Drag state pro animované přesouvání
+    _dragState: {
+        draggingIndex: null,
+        dropTarget: null,
+        dropPosition: null // 'before' nebo 'after'
+    },
+
     async _renderPageGrid() {
         if (!this.elements.pageGrid) return;
 
@@ -1272,30 +1279,121 @@ const PDFEditorApp = {
                 this._renderPageGrid();
             });
 
-            // Drag and drop
+            // Drag start
             thumb.addEventListener('dragstart', (e) => {
+                this._dragState.draggingIndex = page.displayIndex;
                 thumb.classList.add('dragging');
-                e.dataTransfer.setData('text/plain', page.displayIndex);
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', page.displayIndex.toString());
             });
 
+            // Drag end - vyčistit stav
             thumb.addEventListener('dragend', () => {
+                this._dragState.draggingIndex = null;
+                this._clearDropIndicators();
                 thumb.classList.remove('dragging');
             });
 
+            // Drag over - určit pozici (před/za) podle pozice myši
             thumb.addEventListener('dragover', (e) => {
                 e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+
+                const draggingIndex = this._dragState.draggingIndex;
+                const targetIndex = page.displayIndex;
+
+                // Nepřesouvat na sebe
+                if (draggingIndex === targetIndex) {
+                    this._clearDropIndicators();
+                    return;
+                }
+
+                // Určit zda myš je v levé nebo pravé polovině elementu
+                const rect = thumb.getBoundingClientRect();
+                const mouseX = e.clientX;
+                const midPoint = rect.left + rect.width / 2;
+                const dropPosition = mouseX < midPoint ? 'before' : 'after';
+
+                // Aktualizovat vizuální indikátor
+                this._updateDropIndicator(thumb, dropPosition, draggingIndex, targetIndex);
             });
 
+            // Drag leave - odstranit indikátor
+            thumb.addEventListener('dragleave', (e) => {
+                // Jen pokud opouštíme element (ne jeho děti)
+                if (!thumb.contains(e.relatedTarget)) {
+                    thumb.classList.remove('drag-over-left', 'drag-over-right');
+                }
+            });
+
+            // Drop - provést přesun
             thumb.addEventListener('drop', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
+
                 const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
-                const toIndex = page.displayIndex;
-                PDFPages.movePage(fromIndex, toIndex);
-                this._renderPageGrid();
+                const targetIndex = page.displayIndex;
+
+                if (fromIndex === targetIndex) {
+                    this._clearDropIndicators();
+                    return;
+                }
+
+                // Určit finální pozici
+                const rect = thumb.getBoundingClientRect();
+                const mouseX = e.clientX;
+                const midPoint = rect.left + rect.width / 2;
+                const insertAfter = mouseX >= midPoint;
+
+                // Vypočítat cílový index
+                let toIndex;
+                if (insertAfter) {
+                    toIndex = fromIndex < targetIndex ? targetIndex : targetIndex + 1;
+                } else {
+                    toIndex = fromIndex < targetIndex ? targetIndex - 1 : targetIndex;
+                }
+
+                // Zajistit platný rozsah
+                const pageCount = pageInfo.length;
+                toIndex = Math.max(0, Math.min(toIndex, pageCount - 1));
+
+                // Vyčistit indikátory
+                this._clearDropIndicators();
+
+                // Provést přesun pouze pokud se pozice změnila
+                if (fromIndex !== toIndex) {
+                    PDFPages.movePage(fromIndex, toIndex);
+                    this._renderPageGrid();
+                }
             });
 
             this.elements.pageGrid.appendChild(thumb);
         }
+    },
+
+    /**
+     * Aktualizovat drop indikátor
+     */
+    _updateDropIndicator(thumb, position, draggingIndex, targetIndex) {
+        // Nejdřív vyčistit všechny indikátory
+        this._clearDropIndicators();
+
+        // Přidat indikátor na správnou stranu
+        if (position === 'before') {
+            thumb.classList.add('drag-over-left');
+        } else {
+            thumb.classList.add('drag-over-right');
+        }
+    },
+
+    /**
+     * Vyčistit všechny drop indikátory
+     */
+    _clearDropIndicators() {
+        const thumbs = this.elements.pageGrid?.querySelectorAll('.page-thumb');
+        thumbs?.forEach(t => {
+            t.classList.remove('drag-over-left', 'drag-over-right');
+        });
     },
 
     _deleteSelectedPages() {

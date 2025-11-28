@@ -110,26 +110,47 @@ const PDFPages = {
 
     /**
      * Move page from one position to another
-     * @param {number} fromIndex - Current display index
-     * @param {number} toIndex - Target display index
+     * @param {number} fromIndex - Current display index (0-based)
+     * @param {number} toIndex - Target display index (0-based)
      */
     movePage(fromIndex, toIndex) {
         if (fromIndex === toIndex) return;
 
-        // Get active pages (excluding deleted)
+        // Získat aktivní stránky (bez smazaných)
         const activePages = this.pageOrder.filter(i => !this.deletedPages.has(i));
 
-        // Get original indices
-        const fromOriginal = activePages[fromIndex];
-        const toOriginal = activePages[toIndex];
+        // Kontrola platnosti indexů
+        if (fromIndex < 0 || fromIndex >= activePages.length) return;
+        if (toIndex < 0 || toIndex >= activePages.length) return;
 
-        // Find positions in full array
-        const fromPos = this.pageOrder.indexOf(fromOriginal);
-        const toPos = this.pageOrder.indexOf(toOriginal);
+        // Získat originální index přesouvané stránky
+        const movingPageOriginal = activePages[fromIndex];
 
-        // Move in array
-        const [removed] = this.pageOrder.splice(fromPos, 1);
-        this.pageOrder.splice(toPos, 0, removed);
+        // Vytvořit nové pořadí aktivních stránek
+        const newActiveOrder = [...activePages];
+        newActiveOrder.splice(fromIndex, 1); // Odstranit z původní pozice
+        newActiveOrder.splice(toIndex, 0, movingPageOriginal); // Vložit na novou pozici
+
+        // Rekonstruovat celé pageOrder pole (včetně smazaných)
+        // Smazané stránky zůstávají na svých pozicích
+        const newPageOrder = [];
+        let activeIndex = 0;
+
+        for (let i = 0; i < this.pageOrder.length; i++) {
+            const originalIndex = this.pageOrder[i];
+            if (this.deletedPages.has(originalIndex)) {
+                // Smazaná stránka - zachovat
+                newPageOrder.push(originalIndex);
+            } else {
+                // Aktivní stránka - použít nové pořadí
+                newPageOrder.push(newActiveOrder[activeIndex]);
+                activeIndex++;
+            }
+        }
+
+        this.pageOrder = newPageOrder;
+
+        console.log(`Page moved: ${fromIndex} → ${toIndex}`, this.pageOrder);
 
         this._notifyChange();
     },
