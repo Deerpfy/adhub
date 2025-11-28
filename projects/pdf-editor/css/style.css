@@ -607,10 +607,19 @@ header {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    color: var(--text-primary);
+    color: #ffffff;
     font-size: 1.5rem;
     text-align: center;
     margin-bottom: 12px;
+}
+
+.signature-text-input::placeholder {
+    color: var(--text-muted);
+}
+
+.signature-text-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
 }
 
 .font-selector {
@@ -627,6 +636,8 @@ header {
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
+    color: #ffffff;
+    font-size: 1rem;
 }
 
 .font-option:hover {
