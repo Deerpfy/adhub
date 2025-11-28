@@ -231,7 +231,11 @@ const PDFEditorApp = {
             textColor: document.getElementById('textColor'),
             textSize: document.getElementById('textSize'),
             strokeColor: document.getElementById('strokeColor'),
+            fillColor: document.getElementById('fillColor'),
+            fillTransparent: document.getElementById('fillTransparent'),
             strokeWidth: document.getElementById('strokeWidth'),
+            imageImport: document.getElementById('imageImport'),
+            imageImportBtn: document.getElementById('imageImportBtn'),
 
             // Text formatting
             boldBtn: document.getElementById('boldBtn'),
@@ -321,6 +325,41 @@ const PDFEditorApp = {
             }
         });
 
+        // Drag & drop pro obrázky na canvas
+        const canvasContainer = document.querySelector('.pdf-canvas-container');
+        if (canvasContainer) {
+            canvasContainer.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                canvasContainer.style.outline = '2px dashed var(--primary-color)';
+                canvasContainer.style.outlineOffset = '-4px';
+            });
+
+            canvasContainer.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                canvasContainer.style.outline = 'none';
+            });
+
+            canvasContainer.addEventListener('drop', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                canvasContainer.style.outline = 'none';
+
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    // Pokud je to obrázek, importovat na canvas
+                    if (file.type.startsWith('image/')) {
+                        this._importImageToCanvas(file);
+                    }
+                    // Pokud je to PDF a není načten žádný, načíst ho
+                    else if (file.type === 'application/pdf' && !this.currentFile) {
+                        this._handleFileSelect(file);
+                    }
+                }
+            });
+        }
+
         // Tab navigation
         this.elements.tabBtns.forEach(btn => {
             btn.addEventListener('click', () => {
@@ -380,6 +419,36 @@ const PDFEditorApp = {
         });
         this.elements.strokeWidth?.addEventListener('input', (e) => {
             PDFEditor.updateSettings({ strokeWidth: parseInt(e.target.value) });
+        });
+
+        // Fill color pro tvary (obdélník, kruh)
+        this.elements.fillColor?.addEventListener('input', (e) => {
+            // Pokud není průhledná, použít vybranou barvu
+            if (!this.elements.fillTransparent?.checked) {
+                PDFEditor.updateSettings({ fillColor: e.target.value });
+            }
+        });
+
+        this.elements.fillTransparent?.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                PDFEditor.updateSettings({ fillColor: 'transparent' });
+            } else {
+                PDFEditor.updateSettings({ fillColor: this.elements.fillColor?.value || '#ffffff' });
+            }
+        });
+
+        // Import obrázku
+        this.elements.imageImportBtn?.addEventListener('click', () => {
+            this.elements.imageImport?.click();
+        });
+
+        this.elements.imageImport?.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                this._importImageToCanvas(file);
+            }
+            // Reset input pro možnost nahrát stejný soubor znovu
+            e.target.value = '';
         });
 
         // Text formatting buttons
@@ -1574,6 +1643,67 @@ const PDFEditorApp = {
         }
 
         return undefined;
+    },
+
+    /**
+     * Import image to Fabric.js canvas
+     * @param {File} file - Image file to import
+     */
+    _importImageToCanvas(file) {
+        if (!PDFEditor.fabricCanvas) {
+            this._showStatus('Nejdřív načtěte PDF soubor', 'error');
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            fabric.Image.fromURL(e.target.result, (img) => {
+                if (!img) {
+                    this._showStatus('Nepodařilo se načíst obrázek', 'error');
+                    return;
+                }
+
+                // Získat rozměry canvasu
+                const canvasWidth = PDFEditor.fabricCanvas.getWidth();
+                const canvasHeight = PDFEditor.fabricCanvas.getHeight();
+
+                // Škálovat obrázek, aby se vešel na canvas (max 50% šířky/výšky)
+                const maxWidth = canvasWidth * 0.5;
+                const maxHeight = canvasHeight * 0.5;
+
+                let scale = 1;
+                if (img.width > maxWidth || img.height > maxHeight) {
+                    scale = Math.min(maxWidth / img.width, maxHeight / img.height);
+                }
+
+                img.set({
+                    left: canvasWidth / 2,
+                    top: canvasHeight / 2,
+                    originX: 'center',
+                    originY: 'center',
+                    scaleX: scale,
+                    scaleY: scale,
+                    selectable: true,
+                    hasControls: true,
+                    hasBorders: true,
+                    // Flag pro import obrázku (ne extrahovaný z PDF)
+                    _isImportedImage: true
+                });
+
+                PDFEditor.fabricCanvas.add(img);
+                PDFEditor.fabricCanvas.setActiveObject(img);
+                PDFEditor.fabricCanvas.renderAll();
+                PDFEditor._saveToHistory();
+
+                this._showStatus('Obrázek přidán - můžete ho přesunout a změnit velikost', 'success');
+            });
+        };
+
+        reader.onerror = () => {
+            this._showStatus('Chyba při čtení souboru', 'error');
+        };
+
+        reader.readAsDataURL(file);
     },
 
     /**

@@ -295,8 +295,30 @@
                             <input type="color" id="strokeColor" value="#ff0000">
                         </div>
                         <div class="option-group">
+                            <label>Barva výplně</label>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <input type="color" id="fillColor" value="#ffffff">
+                                <label style="font-size: 0.85rem; display: flex; align-items: center; gap: 4px;">
+                                    <input type="checkbox" id="fillTransparent" checked>
+                                    Průhledná
+                                </label>
+                            </div>
+                        </div>
+                        <div class="option-group">
                             <label>Šířka tahu</label>
                             <input type="number" id="strokeWidth" value="2" min="1" max="20">
+                        </div>
+                        <div class="option-group">
+                            <label>Import obrázku</label>
+                            <input type="file" id="imageImport" accept="image/*" style="display: none;">
+                            <button class="btn btn-secondary" id="imageImportBtn" style="width: 100%;">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 16px; height: 16px; margin-right: 6px;">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5"/>
+                                    <polyline points="21 15 16 10 5 21"/>
+                                </svg>
+                                Vybrat obrázek
+                            </button>
                         </div>
                     </div>
 
