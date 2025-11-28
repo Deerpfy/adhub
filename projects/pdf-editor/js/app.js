@@ -1244,6 +1244,20 @@ const PDFEditorApp = {
                         const isBold = obj.fontWeight === 'bold' || obj.fontWeight >= 700;
                         const fontSize = (obj.fontSize * obj.scaleY) / scale;
 
+                        // Pro extrahovaný text nakreslit bílé pozadí, aby zakrylo originál
+                        if (obj._isExtractedText) {
+                            const textWidth = (obj.width * obj.scaleX) / scale;
+                            const textHeight = (obj.height * obj.scaleY) / scale;
+                            page.drawRectangle({
+                                x: coords.x - 2,
+                                y: coords.y - 2,
+                                width: textWidth + 4,
+                                height: textHeight + 4,
+                                color: PDFLib.rgb(1, 1, 1), // Bílá barva
+                                borderWidth: 0
+                            });
+                        }
+
                         // Použít Unicode font pokud je dostupný, jinak fallback
                         let font;
                         if (unicodeFont) {
