@@ -1327,10 +1327,26 @@ const PDFEditorApp = {
                         const textContent = obj.text || '';
                         if (!textContent.trim()) break;
 
+                        // DŮLEŽITÉ: Pro extrahovaný text zkontrolovat, zda byl SKUTEČNĚ změněn
+                        // Pokud nebyl změněn, přeskočit - originální text v PDF zůstane
+                        if (obj._isExtractedText || obj._savedTextEdit) {
+                            const originalText = obj._originalText || '';
+                            const wasTextChanged = textContent !== originalText;
+
+                            // Pokud text nebyl změněn, přeskočit export tohoto objektu
+                            // Originální text v PDF zůstane nezměněn
+                            if (!wasTextChanged) {
+                                console.log(`Skipping unchanged text: "${textContent.substring(0, 30)}..."`);
+                                break;
+                            }
+
+                            console.log(`Exporting changed text: "${originalText.substring(0, 20)}" → "${textContent.substring(0, 20)}"`);
+                        }
+
                         const isBold = obj.fontWeight === 'bold' || obj.fontWeight >= 700;
                         const fontSize = (obj.fontSize * obj.scaleY) / scale;
 
-                        // Pro extrahovaný/uložený text nakreslit bílé pozadí, aby zakrylo originál
+                        // Pro ZMĚNĚNÝ extrahovaný/uložený text nakreslit bílé pozadí, aby zakrylo originál
                         if (obj._isExtractedText || obj._savedTextEdit) {
                             const textWidth = (obj.width * obj.scaleX) / scale;
                             const textHeight = (obj.height * obj.scaleY) / scale;
