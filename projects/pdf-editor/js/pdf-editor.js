@@ -627,8 +627,15 @@ const PDFEditor = {
         // Remove any future states
         this.history = this.history.slice(0, this.historyIndex + 1);
 
-        // Add current state
-        const state = JSON.stringify(this.fabricCanvas.toJSON());
+        // Add current state - včetně vlastních vlastností
+        const state = JSON.stringify(this.fabricCanvas.toJSON([
+            '_isTextBackground',
+            '_isExtractedText',
+            '_textIndex',
+            '_originalText',
+            '_originalFont',
+            '_savedTextEdit'
+        ]));
         this.history.push(state);
 
         // Limit history size
@@ -711,7 +718,15 @@ const PDFEditor = {
      * @param {number} pageNum - Page number
      */
     savePageAnnotations(pageNum) {
-        const state = this.fabricCanvas.toJSON();
+        // Důležité: Přidat vlastní vlastnosti do serializace
+        const state = this.fabricCanvas.toJSON([
+            '_isTextBackground',
+            '_isExtractedText',
+            '_textIndex',
+            '_originalText',
+            '_originalFont',
+            '_savedTextEdit'
+        ]);
         this.pageAnnotations[pageNum] = state;
     },
 
@@ -1060,6 +1075,41 @@ const PDFEditor = {
 
         toRemove.forEach(obj => this.fabricCanvas.remove(obj));
         this.fabricCanvas.renderAll();
+    },
+
+    /**
+     * Save text editing changes - converts extracted text to saved edits
+     * Removes backgrounds and keeps only modified text
+     */
+    saveTextEditing() {
+        if (!this.fabricCanvas) return;
+
+        const objects = this.fabricCanvas.getObjects();
+        const textObjects = objects.filter(obj => obj._isExtractedText);
+        const bgObjects = objects.filter(obj => obj._isTextBackground);
+
+        // Odstranit všechny background objekty
+        bgObjects.forEach(obj => this.fabricCanvas.remove(obj));
+
+        // Převést extracted text na saved text (bez background)
+        textObjects.forEach(textObj => {
+            // Označit jako uložený edit (ne extracted)
+            textObj._isExtractedText = false;
+            textObj._savedTextEdit = true;
+            textObj._background = null;
+
+            // Zrušit event listenery pro update background
+            textObj.off('changed');
+            textObj.off('moving');
+            textObj.off('scaling');
+            textObj.off('modified');
+        });
+
+        this.fabricCanvas.renderAll();
+        this._saveToHistory();
+
+        console.log(`Saved ${textObjects.length} text edits`);
+        return textObjects.length;
     }
 };
 

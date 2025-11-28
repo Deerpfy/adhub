@@ -360,6 +360,12 @@ const PDFEditorApp = {
             editTextBtn.addEventListener('click', () => this._toggleTextEditing());
         }
 
+        // Save text edits button
+        const saveTextBtn = document.getElementById('saveTextBtn');
+        if (saveTextBtn) {
+            saveTextBtn.addEventListener('click', () => this._saveTextEditing());
+        }
+
         // Tool options
         this.elements.textColor?.addEventListener('input', (e) => {
             PDFEditor.updateSettings({ textColor: e.target.value });
@@ -833,13 +839,17 @@ const PDFEditorApp = {
         }
 
         const editTextBtn = document.getElementById('editTextBtn');
+        const saveTextBtn = document.getElementById('saveTextBtn');
 
         if (this.isTextEditingEnabled) {
-            // Disable text editing
+            // Disable text editing (bez uložení - zahazuje změny)
             PDFEditor.disableTextEditing();
             this.isTextEditingEnabled = false;
             if (editTextBtn) {
                 editTextBtn.classList.remove('active');
+            }
+            if (saveTextBtn) {
+                saveTextBtn.style.display = 'none';
             }
             this._showStatus('Text editing disabled', 'success');
         } else {
@@ -854,8 +864,11 @@ const PDFEditorApp = {
                 if (editTextBtn) {
                     editTextBtn.classList.add('active');
                 }
+                if (saveTextBtn) {
+                    saveTextBtn.style.display = 'inline-flex';
+                }
 
-                this._showStatus('Text editing enabled - click text to edit', 'success');
+                this._showStatus('Text editing enabled - click text to edit, then Save to keep changes', 'success');
             } catch (error) {
                 console.error('Error enabling text editing:', error);
                 this._showStatus('Error extracting text', 'error');
@@ -863,6 +876,32 @@ const PDFEditorApp = {
 
             this._hideLoading();
         }
+    },
+
+    /**
+     * Save text editing changes
+     */
+    _saveTextEditing() {
+        const editTextBtn = document.getElementById('editTextBtn');
+        const saveTextBtn = document.getElementById('saveTextBtn');
+
+        // Uložit změny textu
+        const savedCount = PDFEditor.saveTextEditing();
+
+        // Ukončit režim editace
+        this.isTextEditingEnabled = false;
+
+        if (editTextBtn) {
+            editTextBtn.classList.remove('active');
+        }
+        if (saveTextBtn) {
+            saveTextBtn.style.display = 'none';
+        }
+
+        // Uložit anotace pro tuto stránku
+        PDFEditor.savePageAnnotations(PDFViewer.currentPage);
+
+        this._showStatus(`Text changes saved (${savedCount} items)`, 'success');
     },
 
     /**
@@ -1244,16 +1283,17 @@ const PDFEditorApp = {
                         const isBold = obj.fontWeight === 'bold' || obj.fontWeight >= 700;
                         const fontSize = (obj.fontSize * obj.scaleY) / scale;
 
-                        // Pro extrahovaný text nakreslit bílé pozadí, aby zakrylo originál
-                        if (obj._isExtractedText) {
+                        // Pro extrahovaný/uložený text nakreslit bílé pozadí, aby zakrylo originál
+                        if (obj._isExtractedText || obj._savedTextEdit) {
                             const textWidth = (obj.width * obj.scaleX) / scale;
                             const textHeight = (obj.height * obj.scaleY) / scale;
+                            // Pozice Y je baseline textu, pozadí musí být trochu větší
                             page.drawRectangle({
-                                x: coords.x - 2,
-                                y: coords.y - 2,
-                                width: textWidth + 4,
-                                height: textHeight + 4,
-                                color: PDFLib.rgb(1, 1, 1), // Bílá barva
+                                x: coords.x - 3,
+                                y: coords.y - 3,
+                                width: textWidth + 6,
+                                height: textHeight + 6,
+                                color: PDFLib.rgb(1, 1, 1), // Bílá barva - zakryje originál
                                 borderWidth: 0
                             });
                         }
