@@ -241,6 +241,7 @@ const PDFEditorApp = {
 
             // Signature elements
             signatureCanvas: document.getElementById('signatureCanvas'),
+            signatureColor: document.getElementById('signatureColor'),
             sigTabs: document.querySelectorAll('.sig-tab-btn'),
             sigContents: document.querySelectorAll('.sig-tab-content'),
             sigClearBtn: document.getElementById('sigClearBtn'),
@@ -419,6 +420,11 @@ const PDFEditorApp = {
             btn.addEventListener('click', () => {
                 this._switchSignatureTab(btn.dataset.sigTab);
             });
+        });
+
+        // Signature color
+        this.elements.signatureColor?.addEventListener('input', (e) => {
+            PDFSigner.setPenColor(e.target.value);
         });
 
         // Signature actions
