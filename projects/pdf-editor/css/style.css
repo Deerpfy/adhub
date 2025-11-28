@@ -828,6 +828,68 @@ header {
     background: var(--error);
 }
 
+/* Page Grid Drag & Drop */
+.page-grid {
+    position: relative;
+}
+
+.page-thumb {
+    transition: all 0.3s ease;
+}
+
+.page-thumb.dragging {
+    opacity: 0.4;
+    transform: scale(0.9);
+    z-index: 1;
+}
+
+.page-thumb.drag-over-left::before {
+    content: '';
+    position: absolute;
+    left: -10px;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+    border-radius: 2px;
+    animation: dropIndicatorPulse 0.8s ease-in-out infinite;
+}
+
+.page-thumb.drag-over-right::after {
+    content: '';
+    position: absolute;
+    right: -10px;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(180deg, var(--primary-color), var(--secondary-color));
+    border-radius: 2px;
+    animation: dropIndicatorPulse 0.8s ease-in-out infinite;
+}
+
+@keyframes dropIndicatorPulse {
+    0%, 100% {
+        opacity: 1;
+        box-shadow: 0 0 8px var(--primary-color);
+    }
+    50% {
+        opacity: 0.6;
+        box-shadow: 0 0 16px var(--primary-color);
+    }
+}
+
+/* Drop position label */
+.page-thumb.drag-over-left .page-thumb-number,
+.page-thumb.drag-over-right .page-thumb-number {
+    transform: scale(1.1);
+    box-shadow: 0 0 12px var(--primary-color);
+}
+
+/* Smooth reorder animation */
+.page-grid.reordering .page-thumb {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
 /* =====================================================
    Compression Options
    ===================================================== */
