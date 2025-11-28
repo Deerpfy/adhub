@@ -25,6 +25,9 @@ const PDFEditor = {
     // Page annotations storage (per page)
     pageAnnotations: {},
 
+    // Text editing cache per page (for persisting changes during Edit PDF mode)
+    textEditingCache: {},
+
     // Current page
     currentPage: 1,
 
@@ -1110,6 +1113,128 @@ const PDFEditor = {
 
         console.log(`Saved ${textObjects.length} text edits`);
         return textObjects.length;
+    },
+
+    /**
+     * Save current text editing state to cache for page persistence
+     * @param {number} pageNum - Page number
+     */
+    saveTextEditingToCache(pageNum) {
+        if (!this.fabricCanvas) return;
+
+        // Najít všechny text editing objekty (extracted nebo jejich background)
+        const textEditObjects = this.fabricCanvas.getObjects().filter(
+            obj => obj._isExtractedText || obj._isTextBackground
+        );
+
+        if (textEditObjects.length === 0) {
+            // Žádné text edity - vymazat cache pro tuto stránku
+            delete this.textEditingCache[pageNum];
+            return;
+        }
+
+        // Serializovat text editing objekty
+        const cacheData = textEditObjects.map(obj => {
+            return obj.toJSON([
+                '_isTextBackground',
+                '_isExtractedText',
+                '_textIndex',
+                '_originalText',
+                '_originalFont',
+                '_savedTextEdit'
+            ]);
+        });
+
+        this.textEditingCache[pageNum] = cacheData;
+        console.log(`Cached ${cacheData.length} text editing objects for page ${pageNum}`);
+    },
+
+    /**
+     * Load text editing state from cache
+     * @param {number} pageNum - Page number
+     * @returns {boolean} - True if cache was loaded, false if no cache exists
+     */
+    loadTextEditingFromCache(pageNum) {
+        const cacheData = this.textEditingCache[pageNum];
+
+        if (!cacheData || cacheData.length === 0) {
+            return false;
+        }
+
+        console.log(`Loading ${cacheData.length} cached text editing objects for page ${pageNum}`);
+
+        // Načíst objekty z cache
+        return new Promise((resolve) => {
+            fabric.util.enlivenObjects(cacheData, (objects) => {
+                // Přidat objekty na canvas
+                objects.forEach((obj, index) => {
+                    // Obnovit vztah background-text
+                    if (obj._isExtractedText) {
+                        const bgObj = objects.find(o => o._isTextBackground && o._textIndex === obj._textIndex);
+                        if (bgObj) {
+                            obj._background = bgObj;
+                            // Přidat event listenery pro update background
+                            this._setupTextBackgroundListeners(obj, bgObj);
+                        }
+                    }
+                    this.fabricCanvas.add(obj);
+                });
+
+                this.fabricCanvas.renderAll();
+                resolve(true);
+            });
+        });
+    },
+
+    /**
+     * Setup event listeners for text-background relationship
+     * @param {fabric.IText} textObj - Text object
+     * @param {fabric.Rect} bgObj - Background rectangle
+     */
+    _setupTextBackgroundListeners(textObj, bgObj) {
+        const updateBackground = () => {
+            if (textObj._background) {
+                textObj._background.set({
+                    left: textObj.left - 2,
+                    top: textObj.top - 2,
+                    width: (textObj.width * textObj.scaleX) + 4,
+                    height: (textObj.height * textObj.scaleY) + 4
+                });
+                textObj._background.setCoords();
+            }
+        };
+
+        textObj.on('changed', () => {
+            updateBackground();
+            this.fabricCanvas.renderAll();
+        });
+        textObj.on('moving', updateBackground);
+        textObj.on('scaling', updateBackground);
+        textObj.on('modified', () => {
+            updateBackground();
+            this.fabricCanvas.renderAll();
+        });
+    },
+
+    /**
+     * Check if cache exists for page
+     * @param {number} pageNum - Page number
+     * @returns {boolean}
+     */
+    hasTextEditingCache(pageNum) {
+        return this.textEditingCache[pageNum] && this.textEditingCache[pageNum].length > 0;
+    },
+
+    /**
+     * Clear text editing cache
+     * @param {number} pageNum - Optional page number, clears all if not specified
+     */
+    clearTextEditingCache(pageNum = null) {
+        if (pageNum !== null) {
+            delete this.textEditingCache[pageNum];
+        } else {
+            this.textEditingCache = {};
+        }
     }
 };
 
