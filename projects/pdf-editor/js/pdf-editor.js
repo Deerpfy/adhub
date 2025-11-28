@@ -961,18 +961,20 @@ const PDFEditor = {
         console.log(`Creating ${textItems.length} text overlays`);
 
         textItems.forEach((item, index) => {
-            // Create a semi-transparent background to show editable area
+            // Create background with dashed border to show editable area
+            // Ohraničení je viditelné POUZE během editace, ne v exportovaném PDF
             const bg = new fabric.Rect({
                 left: item.x - 2,
                 top: item.y - 2,
                 width: item.width + 4,
                 height: item.height + 4,
-                fill: 'rgba(255, 255, 255, 0.9)', // Bílé pozadí pro zakrytí originálu
-                stroke: null, // Bez viditelného okraje
-                strokeWidth: 0,
+                fill: 'rgba(255, 255, 255, 1)', // Neprůhledné bílé pozadí pro zakrytí originálu
+                stroke: 'rgba(139, 92, 246, 0.7)', // Fialové ohraničení pro editaci
+                strokeWidth: 1,
+                strokeDashArray: [4, 2], // Čárkované - signalizuje že je to editovatelná oblast
                 selectable: false,
                 evented: false,
-                _isTextBackground: true,
+                _isTextBackground: true, // Tento flag zajistí, že se NEEXPORTUJE do PDF
                 _textIndex: index
             });
 
