@@ -1276,13 +1276,13 @@ const PDFEditorApp = {
             // Rotate button
             thumb.querySelector('.rotate').addEventListener('click', () => {
                 PDFPages.rotatePage(page.displayIndex);
-                this._renderPageGrid();
+                // Callback onPageOrderChange se postará o _renderPageGrid
             });
 
             // Delete button
             thumb.querySelector('.delete').addEventListener('click', () => {
                 PDFPages.deletePage(page.displayIndex);
-                this._renderPageGrid();
+                // Callback onPageOrderChange se postará o _renderPageGrid
             });
 
             // Drag start
@@ -1369,7 +1369,7 @@ const PDFEditorApp = {
                 // Provést přesun pouze pokud se pozice změnila
                 if (fromIndex !== toIndex) {
                     PDFPages.movePage(fromIndex, toIndex);
-                    this._renderPageGrid();
+                    // OPRAVENO: Nevolat _renderPageGrid přímo - volá se přes callback onPageOrderChange
                 }
             });
 
@@ -1448,7 +1448,7 @@ const PDFEditorApp = {
 
         const indices = Array.from(selected).map(el => parseInt(el.dataset.index));
         PDFPages.deletePages(indices);
-        this._renderPageGrid();
+        // Callback onPageOrderChange se postará o _renderPageGrid
     },
 
     _rotateSelectedPages() {
@@ -1461,12 +1461,12 @@ const PDFEditorApp = {
                 PDFPages.rotatePage(parseInt(el.dataset.index));
             });
         }
-        this._renderPageGrid();
+        // Callback onPageOrderChange se postará o _renderPageGrid
     },
 
     _resetPages() {
         PDFPages.reset();
-        this._renderPageGrid();
+        // Callback onPageOrderChange se postará o _renderPageGrid
     },
 
     async _applyPageChanges() {
