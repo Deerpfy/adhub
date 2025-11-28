@@ -677,7 +677,7 @@ const PDFEditorApp = {
                 // Není v cache - extrahovat z PDF
                 console.log(`Extracting text from PDF for page ${currentPage}`);
                 const page = await PDFViewer.pdfDoc.getPage(currentPage);
-                await PDFEditor.enableTextEditing(page, PDFViewer.scale);
+                await PDFEditor.enableTextEditing(page, PDFViewer.scale, this.elements.pdfCanvas);
             }
         } catch (error) {
             console.error('Error reloading text editing:', error);
@@ -906,7 +906,7 @@ const PDFEditorApp = {
                     await PDFEditor.loadTextEditingFromCache(currentPage);
                 } else {
                     const page = await PDFViewer.pdfDoc.getPage(currentPage);
-                    await PDFEditor.enableTextEditing(page, PDFViewer.scale);
+                    await PDFEditor.enableTextEditing(page, PDFViewer.scale, this.elements.pdfCanvas);
                 }
 
                 this.isTextEditingEnabled = true;
