@@ -1458,7 +1458,7 @@ const PDFEditorApp = {
         const selected = this.elements.pageGrid?.querySelectorAll('.page-thumb.selected');
         if (!selected || selected.length === 0) return;
 
-        const indices = Array.from(selected).map(el => parseInt(el.dataset.index));
+        const indices = Array.from(selected).map(el => parseInt(el.dataset.displayIndex));
         PDFPages.deletePages(indices);
         // Callback onPageOrderChange se postará o _renderPageGrid
     },
@@ -1470,7 +1470,7 @@ const PDFEditorApp = {
             PDFPages.rotateAllPages();
         } else {
             selected.forEach(el => {
-                PDFPages.rotatePage(parseInt(el.dataset.index));
+                PDFPages.rotatePage(parseInt(el.dataset.displayIndex));
             });
         }
         // Callback onPageOrderChange se postará o _renderPageGrid
