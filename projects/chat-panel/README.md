@@ -1,5 +1,7 @@
 # Chat Panel - Unified Streaming Chat
 
+![Status](https://img.shields.io/badge/status-complete-success) ![License](https://img.shields.io/badge/license-MIT-blue)
+
 Lokálně hostovaná webová aplikace pro zobrazení a správu chatů z různých streamovacích platforem (Twitch, YouTube, Kick) v jednom panelovém rozhraní.
 
 ## Funkce
@@ -212,4 +214,8 @@ chat-panel/
 - Použití localStorage pro perzistenci dat
 - Responzivní design podporující mobilní zařízení
 - Moderní CSS Grid layout pro flexibilní zobrazení panelů
+
+---
+
+**Součást projektu [AdHUB](../../index.html)** | [Zpět na hub](../../index.html)
 

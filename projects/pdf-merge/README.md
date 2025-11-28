@@ -1,5 +1,7 @@
 # PDF Merger
 
+![Status](https://img.shields.io/badge/status-complete-success) ![License](https://img.shields.io/badge/license-MIT-blue)
+
 A simple web tool to merge multiple PDF files into one. Works offline!
 
 ## Quick Start (Online)
@@ -49,3 +51,13 @@ No backend required - everything runs in the browser!
 
 - [pdf-lib](https://pdf-lib.js.org/) v1.17.1 - PDF merging
 - [PDF.js](https://mozilla.github.io/pdf.js/) v3.11.174 - PDF viewing
+
+## Privacy
+
+- 100% client-side processing
+- No files uploaded to any server
+- All data stays in your browser
+
+---
+
+**Součást projektu [AdHUB](../../index.html)** | [Zpět na hub](../../index.html)

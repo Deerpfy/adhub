@@ -1,5 +1,7 @@
 # MindHub - Personal Coordination Platform
 
+![Status](https://img.shields.io/badge/status-complete-success) ![License](https://img.shields.io/badge/license-MIT-blue)
+
 ## 🚀 Quick Start
 
 **Simply double-click `index.html`** to open the application in your browser!
@@ -152,4 +154,4 @@ MIT
 
 ---
 
-**Created according to the MindHub Technical Specification**
+**Součást projektu [AdHUB](../../index.html)** | [Zpět na hub](../../index.html)

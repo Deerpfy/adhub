@@ -1,5 +1,7 @@
 # 🎰 Sázky na výpověď / Resignation Bets
 
+![Status](https://img.shields.io/badge/status-complete-success) ![License](https://img.shields.io/badge/license-MIT-blue)
+
 Casino-style webová aplikace pro sázení na to, kdo dá dřív výpověď z práce.
 
 A casino-style web application for betting on who will resign from work first.
@@ -197,3 +199,7 @@ Created for fun and educational purposes. Use responsibly!
 Tato aplikace je určena pouze pro zábavu mezi kolegy. Nejedná se o skutečné hazardní hry.
 
 This application is intended for fun among colleagues only. It is not real gambling.
+
+---
+
+**Součást projektu [AdHUB](../../index.html)** | [Zpět na hub](../../index.html)
