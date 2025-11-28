@@ -62,7 +62,7 @@ const PDFPages = {
             const viewport = page.getViewport({ scale: 1.0 });
 
             pages.push({
-                displayIndex: i,
+                displayIndex: pages.length, // OPRAVENO: použít skutečný sekvenční index
                 originalIndex: originalIndex,
                 pageNumber: originalIndex + 1,
                 width: viewport.width,

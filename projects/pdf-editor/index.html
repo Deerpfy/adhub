@@ -450,20 +450,20 @@
 
                 <!-- Pages Tab -->
                 <div class="tab-content" id="tab-pages">
-                    <div class="toolbar" style="justify-content: center;">
+                    <div class="toolbar" style="justify-content: center; flex-wrap: wrap; gap: 8px;">
                         <button class="tool-btn" id="pagesRotateBtn">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <path d="M23 4v6h-6"/>
                                 <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
                             </svg>
-                            <span data-i18n="pages_rotate">Otocit</span>
+                            <span data-i18n="pages_rotate">Otočit</span>
                         </button>
                         <button class="tool-btn danger" id="pagesDeleteBtn">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                 <polyline points="3 6 5 6 21 6"/>
                                 <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
                             </svg>
-                            <span data-i18n="pages_delete">Smazat vybrane</span>
+                            <span data-i18n="pages_delete">Smazat vybrané</span>
                         </button>
                         <button class="tool-btn" id="pagesResetBtn">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -472,6 +472,16 @@
                             </svg>
                             <span data-i18n="pages_reset">Obnovit</span>
                         </button>
+                        <div style="width: 1px; height: 24px; background: var(--border-color); margin: 0 8px;"></div>
+                        <!-- Filter dropdown -->
+                        <select id="pagesFilter" style="padding: 8px 12px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); cursor: pointer; font-size: 0.9rem;">
+                            <option value="all">Všechny stránky</option>
+                            <option value="odd">Pouze liché (1, 3, 5...)</option>
+                            <option value="even">Pouze sudé (2, 4, 6...)</option>
+                            <option value="reverse">Od konce</option>
+                            <option value="first-half">První polovina</option>
+                            <option value="second-half">Druhá polovina</option>
+                        </select>
                     </div>
 
                     <div class="page-grid" id="pageGrid">

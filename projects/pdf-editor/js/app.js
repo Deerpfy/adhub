@@ -274,6 +274,7 @@ const PDFEditorApp = {
             pagesRotateBtn: document.getElementById('pagesRotateBtn'),
             pagesResetBtn: document.getElementById('pagesResetBtn'),
             pagesApplyBtn: document.getElementById('pagesApplyBtn'),
+            pagesFilter: document.getElementById('pagesFilter'),
 
             // Actions
             downloadBtn: document.getElementById('downloadBtn'),
@@ -542,6 +543,7 @@ const PDFEditorApp = {
         this.elements.pagesRotateBtn?.addEventListener('click', () => this._rotateSelectedPages());
         this.elements.pagesResetBtn?.addEventListener('click', () => this._resetPages());
         this.elements.pagesApplyBtn?.addEventListener('click', () => this._applyPageChanges());
+        this.elements.pagesFilter?.addEventListener('change', () => this._renderPageGrid());
 
         // Main actions
         this.elements.downloadBtn?.addEventListener('click', () => this._downloadPDF());
@@ -1240,7 +1242,11 @@ const PDFEditorApp = {
 
         this.elements.pageGrid.innerHTML = '';
 
-        const pageInfo = await PDFPages.getPageInfo();
+        let pageInfo = await PDFPages.getPageInfo();
+
+        // Aplikovat filtr
+        const filter = this.elements.pagesFilter?.value || 'all';
+        pageInfo = this._applyPageFilter(pageInfo, filter);
 
         for (const page of pageInfo) {
             const thumb = document.createElement('div');
@@ -1394,6 +1400,46 @@ const PDFEditorApp = {
         thumbs?.forEach(t => {
             t.classList.remove('drag-over-left', 'drag-over-right');
         });
+    },
+
+    /**
+     * Aplikovat filtr na stránky
+     * @param {Array} pages - Pole stránek
+     * @param {string} filter - Typ filtru
+     * @returns {Array} - Filtrované pole
+     */
+    _applyPageFilter(pages, filter) {
+        if (!pages || pages.length === 0) return pages;
+
+        const total = pages.length;
+
+        switch (filter) {
+            case 'odd':
+                // Liché stránky (1, 3, 5...) - displayIndex je 0-based, takže 0, 2, 4...
+                return pages.filter(p => (p.displayIndex + 1) % 2 === 1);
+
+            case 'even':
+                // Sudé stránky (2, 4, 6...) - displayIndex je 0-based, takže 1, 3, 5...
+                return pages.filter(p => (p.displayIndex + 1) % 2 === 0);
+
+            case 'reverse':
+                // Od konce - obrátit pořadí
+                return [...pages].reverse();
+
+            case 'first-half':
+                // První polovina
+                const firstHalfEnd = Math.ceil(total / 2);
+                return pages.slice(0, firstHalfEnd);
+
+            case 'second-half':
+                // Druhá polovina
+                const secondHalfStart = Math.ceil(total / 2);
+                return pages.slice(secondHalfStart);
+
+            case 'all':
+            default:
+                return pages;
+        }
     },
 
     _deleteSelectedPages() {
