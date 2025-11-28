@@ -1283,6 +1283,14 @@ const PDFEditorApp = {
         const { PDFDocument, rgb } = PDFLib;
         const pdfDoc = await PDFDocument.load(pdfData);
 
+        // Zaregistrovat fontkit pro podporu vlastních fontů (Unicode)
+        if (typeof fontkit !== 'undefined') {
+            pdfDoc.registerFontkit(fontkit);
+            console.log('Fontkit registered for Unicode support');
+        } else {
+            console.warn('Fontkit not available, Unicode fonts may not work');
+        }
+
         // Načíst Unicode font pro podporu českých znaků
         let unicodeFont = null;
         let unicodeFontBold = null;

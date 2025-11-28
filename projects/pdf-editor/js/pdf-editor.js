@@ -741,7 +741,19 @@ const PDFEditor = {
         this.currentPage = pageNum;
 
         if (this.pageAnnotations[pageNum]) {
-            this.fabricCanvas.loadFromJSON(this.pageAnnotations[pageNum], () => {
+            // Sanitizovat data před načtením - opravit neplatné hodnoty
+            const annotations = this.pageAnnotations[pageNum];
+            if (annotations.objects) {
+                annotations.objects = annotations.objects.map(obj => {
+                    // Opravit neplatnou hodnotu textBaseline ('alphabetical' -> 'alphabetic')
+                    if (obj.textBaseline === 'alphabetical') {
+                        obj.textBaseline = 'alphabetic';
+                    }
+                    return obj;
+                });
+            }
+
+            this.fabricCanvas.loadFromJSON(annotations, () => {
                 this.fabricCanvas.renderAll();
             });
         } else {
@@ -1005,6 +1017,7 @@ const PDFEditor = {
                 fontWeight: item.fontWeight || 'normal',
                 fontStyle: item.fontStyle || 'normal',
                 fill: '#000000',
+                textBaseline: 'alphabetic', // Oprava: použít platnou hodnotu (ne 'alphabetical')
                 editable: true,
                 selectable: true,
                 hasControls: true,
@@ -1163,9 +1176,18 @@ const PDFEditor = {
 
         console.log(`Loading ${cacheData.length} cached text editing objects for page ${pageNum}`);
 
+        // Sanitizovat cache data - opravit neplatné hodnoty
+        const sanitizedData = cacheData.map(obj => {
+            // Opravit neplatnou hodnotu textBaseline ('alphabetical' -> 'alphabetic')
+            if (obj.textBaseline === 'alphabetical') {
+                obj.textBaseline = 'alphabetic';
+            }
+            return obj;
+        });
+
         // Načíst objekty z cache
         return new Promise((resolve) => {
-            fabric.util.enlivenObjects(cacheData, (objects) => {
+            fabric.util.enlivenObjects(sanitizedData, (objects) => {
                 // Přidat objekty na canvas
                 objects.forEach((obj, index) => {
                     // Obnovit vztah background-text
