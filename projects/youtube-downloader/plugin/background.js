@@ -1,11 +1,48 @@
 /**
- * AdHub YouTube Downloader v5.3 - Background Script
+ * AdHub YouTube Downloader v5.4 - Background Script
  *
- * Jednoduchý background script pro stahování přes chrome.downloads API.
- * Žádné další závislosti - funguje ihned po instalaci extension.
+ * Hybridni rezim:
+ * - Zakladni: Prime stahovani pres chrome.downloads (max 720p)
+ * - Rozsireny: Native Messaging s yt-dlp/ffmpeg (vse)
  */
 
-console.log('[AdHub BG] YouTube Downloader v5.3 loaded');
+console.log('[AdHub BG] YouTube Downloader v5.4 (Hybrid) loaded');
+
+// ============================================================================
+// KONFIGURACE
+// ============================================================================
+
+const NATIVE_HOST = 'com.adhub.ytdownloader';
+const STORAGE_KEY = 'adhub_yt_settings';
+
+// ============================================================================
+// STAV
+// ============================================================================
+
+const state = {
+  settings: {
+    ytdlpPath: '',
+    ffmpegPath: '',
+    nativeHostInstalled: false
+  },
+  nativePort: null
+};
+
+// ============================================================================
+// INIT - Nacti nastaveni pri startu
+// ============================================================================
+
+(async function init() {
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEY);
+    if (result[STORAGE_KEY]) {
+      state.settings = { ...state.settings, ...result[STORAGE_KEY] };
+      console.log('[AdHub BG] Nastaveni nacteno:', state.settings);
+    }
+  } catch (e) {
+    console.log('[AdHub BG] Chyba pri nacitani nastaveni:', e);
+  }
+})();
 
 // ============================================================================
 // MESSAGE HANDLER
@@ -14,24 +51,53 @@ console.log('[AdHub BG] YouTube Downloader v5.3 loaded');
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log('[AdHub BG] Message:', request.action);
 
-  if (request.action === 'download') {
-    handleDownload(request.data)
-      .then(result => sendResponse(result))
-      .catch(error => sendResponse({ success: false, error: error.message }));
-    return true; // Async response
-  }
+  switch (request.action) {
+    case 'ping':
+      sendResponse({ success: true, version: '5.4', mode: 'hybrid' });
+      return false;
 
-  if (request.action === 'ping') {
-    sendResponse({ success: true, version: '5.3' });
-    return false;
-  }
+    case 'download':
+      handleDownload(request.data)
+        .then(result => sendResponse(result))
+        .catch(error => sendResponse({ success: false, error: error.message }));
+      return true;
 
-  sendResponse({ success: false, error: 'Unknown action' });
-  return false;
+    case 'downloadAdvanced':
+      handleAdvancedDownload(request.data)
+        .then(result => sendResponse(result))
+        .catch(error => sendResponse({ success: false, error: error.message }));
+      return true;
+
+    case 'checkNativeHost':
+      checkNativeHost()
+        .then(result => sendResponse(result))
+        .catch(error => sendResponse({ nativeHostAvailable: false, error: error.message }));
+      return true;
+
+    case 'testTool':
+      testTool(request.tool, request.path)
+        .then(result => sendResponse(result))
+        .catch(error => sendResponse({ success: false, error: error.message }));
+      return true;
+
+    case 'updateSettings':
+      state.settings = { ...state.settings, ...request.settings };
+      console.log('[AdHub BG] Nastaveni aktualizovano:', state.settings);
+      sendResponse({ success: true });
+      return false;
+
+    case 'getSettings':
+      sendResponse({ success: true, settings: state.settings });
+      return false;
+
+    default:
+      sendResponse({ success: false, error: 'Unknown action' });
+      return false;
+  }
 });
 
 // ============================================================================
-// STAHOVÁNÍ
+// ZAKLADNI STAHOVANI (Prime URL pres chrome.downloads)
 // ============================================================================
 
 async function handleDownload(data) {
@@ -41,7 +107,7 @@ async function handleDownload(data) {
     throw new Error('URL is required');
   }
 
-  console.log('[AdHub BG] Starting download:', filename);
+  console.log('[AdHub BG] Starting basic download:', filename);
 
   return new Promise((resolve, reject) => {
     chrome.downloads.download({
@@ -61,6 +127,123 @@ async function handleDownload(data) {
       }
     });
   });
+}
+
+// ============================================================================
+// ROZSIRENE STAHOVANI (pres Native Host s yt-dlp)
+// ============================================================================
+
+async function handleAdvancedDownload(data) {
+  const { videoUrl, format, quality, audioFormat } = data;
+
+  if (!videoUrl) {
+    throw new Error('Video URL is required');
+  }
+
+  console.log('[AdHub BG] Starting advanced download via native host');
+
+  return sendNativeMessage({
+    action: 'download',
+    url: videoUrl,
+    format: format || 'mp4',
+    quality: quality || 'best',
+    audioFormat: audioFormat,
+    ytdlpPath: state.settings.ytdlpPath,
+    ffmpegPath: state.settings.ffmpegPath
+  });
+}
+
+// ============================================================================
+// NATIVE MESSAGING
+// ============================================================================
+
+function connectNativeHost() {
+  if (state.nativePort) {
+    return state.nativePort;
+  }
+
+  try {
+    state.nativePort = chrome.runtime.connectNative(NATIVE_HOST);
+
+    state.nativePort.onDisconnect.addListener(() => {
+      console.log('[AdHub BG] Native host disconnected');
+      state.nativePort = null;
+    });
+
+    console.log('[AdHub BG] Connected to native host');
+    return state.nativePort;
+
+  } catch (e) {
+    console.error('[AdHub BG] Failed to connect native host:', e);
+    state.nativePort = null;
+    throw e;
+  }
+}
+
+async function sendNativeMessage(message) {
+  return new Promise((resolve, reject) => {
+    try {
+      chrome.runtime.sendNativeMessage(NATIVE_HOST, message, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('[AdHub BG] Native message error:', chrome.runtime.lastError.message);
+          reject(new Error(chrome.runtime.lastError.message));
+        } else if (response?.error) {
+          reject(new Error(response.error));
+        } else {
+          resolve(response);
+        }
+      });
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
+
+async function checkNativeHost() {
+  try {
+    const response = await sendNativeMessage({
+      action: 'check',
+      ytdlpPath: state.settings.ytdlpPath,
+      ffmpegPath: state.settings.ffmpegPath
+    });
+
+    return {
+      nativeHostAvailable: true,
+      ytdlpAvailable: response.ytdlp?.available || false,
+      ytdlpVersion: response.ytdlp?.version || null,
+      ffmpegAvailable: response.ffmpeg?.available || false,
+      ffmpegVersion: response.ffmpeg?.version || null
+    };
+
+  } catch (e) {
+    console.log('[AdHub BG] Native host check failed:', e.message);
+    return {
+      nativeHostAvailable: false,
+      error: e.message
+    };
+  }
+}
+
+async function testTool(tool, path) {
+  try {
+    const response = await sendNativeMessage({
+      action: 'test',
+      tool: tool,
+      path: path
+    });
+
+    return {
+      success: response.available || false,
+      version: response.version || null,
+      error: response.error || null
+    };
+
+  } catch (e) {
+    return {
+      success: false,
+      error: e.message
+    };
+  }
 }
 
 // ============================================================================

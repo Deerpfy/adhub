@@ -1,217 +1,260 @@
 /**
- * AdHub YouTube Downloader v4.0 - Popup Script
+ * AdHub YouTube Downloader v5.4 - Popup Script
+ * Hybridni rezim: zakladni stahovani + volitelne rozsirene funkce
  */
 
 (function() {
   'use strict';
 
   // ============================================================================
-  // DOM ELEMENTS
+  // KONFIGURACE
   // ============================================================================
 
-  const elements = {
-    version: document.getElementById('version'),
-    statusSection: document.getElementById('statusSection'),
-    videoInput: document.getElementById('videoInput'),
-    goBtn: document.getElementById('goBtn'),
-    loading: document.getElementById('loading'),
-    error: document.getElementById('error'),
-    videoCard: document.getElementById('videoCard'),
-    thumbnail: document.getElementById('thumbnail'),
-    videoTitle: document.getElementById('videoTitle'),
-    videoAuthor: document.getElementById('videoAuthor')
+  const NATIVE_HOST = 'com.adhub.ytdownloader';
+  const STORAGE_KEY = 'adhub_yt_settings';
+
+  // ============================================================================
+  // STAV
+  // ============================================================================
+
+  const state = {
+    settings: {
+      ytdlpPath: '',
+      ffmpegPath: '',
+      nativeHostInstalled: false
+    }
   };
+
+  // ============================================================================
+  // DOM PRVKY
+  // ============================================================================
+
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => document.querySelectorAll(sel);
 
   // ============================================================================
   // INIT
   // ============================================================================
 
   async function init() {
-    console.log('[Popup] Inicializace');
+    console.log('[Popup] Inicializace v5.4');
 
-    // Nastavení verze
-    const manifest = chrome.runtime.getManifest();
-    if (elements.version) {
-      elements.version.textContent = `v${manifest.version}`;
-    }
+    // Nacti nastaveni
+    await loadSettings();
 
-    // Event listeners
-    if (elements.goBtn) {
-      elements.goBtn.addEventListener('click', handleGo);
-    }
+    // Nastav tab switching
+    setupTabs();
 
-    if (elements.videoInput) {
-      elements.videoInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') handleGo();
-      });
-    }
+    // Nastav event listenery
+    setupEventListeners();
 
-    // Kontrola stavu
-    await checkStatus();
-
-    // Zkontrolovat aktuální tab
-    checkCurrentTab();
+    // Zkontroluj status nastroju
+    await checkToolsStatus();
   }
 
   // ============================================================================
-  // CHECK STATUS
+  // NASTAVENI - LOAD / SAVE
   // ============================================================================
 
-  async function checkStatus() {
+  async function loadSettings() {
     try {
-      const response = await chrome.runtime.sendMessage({ action: 'ping' });
-
-      if (response?.success) {
-        updateStatus(true, 'Plugin aktivní - Přímé stahování povoleno');
-      } else {
-        updateStatus(false, 'Plugin není aktivní');
+      const result = await chrome.storage.local.get(STORAGE_KEY);
+      if (result[STORAGE_KEY]) {
+        state.settings = { ...state.settings, ...result[STORAGE_KEY] };
+        console.log('[Popup] Nastaveni nacteno:', state.settings);
       }
-    } catch (error) {
-      console.error('[Popup] Chyba při kontrole stavu:', error);
-      updateStatus(false, 'Chyba komunikace s pluginem');
-    }
-  }
 
-  function updateStatus(isActive, text) {
-    if (!elements.statusSection) return;
+      // Vyplnit inputy
+      const ytdlpInput = $('#ytdlp-path');
+      const ffmpegInput = $('#ffmpeg-path');
 
-    const statusText = elements.statusSection.querySelector('.status-text');
-    if (statusText) {
-      statusText.innerHTML = `<strong>${text}</strong>`;
-    }
-
-    if (isActive) {
-      elements.statusSection.classList.remove('error');
-    } else {
-      elements.statusSection.classList.add('error');
-    }
-  }
-
-  // ============================================================================
-  // CHECK CURRENT TAB
-  // ============================================================================
-
-  async function checkCurrentTab() {
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
-      if (tab?.url && isYouTubeUrl(tab.url)) {
-        const videoId = extractVideoId(tab.url);
-        if (videoId) {
-          elements.videoInput.value = tab.url;
-          loadVideoInfo(videoId);
-        }
+      if (ytdlpInput && state.settings.ytdlpPath) {
+        ytdlpInput.value = state.settings.ytdlpPath;
+      }
+      if (ffmpegInput && state.settings.ffmpegPath) {
+        ffmpegInput.value = state.settings.ffmpegPath;
       }
     } catch (e) {
-      console.log('[Popup] Nelze zkontrolovat aktuální tab:', e);
+      console.error('[Popup] Chyba pri nacitani nastaveni:', e);
+    }
+  }
+
+  async function saveSettings() {
+    try {
+      const ytdlpPath = $('#ytdlp-path')?.value?.trim() || '';
+      const ffmpegPath = $('#ffmpeg-path')?.value?.trim() || '';
+
+      state.settings.ytdlpPath = ytdlpPath;
+      state.settings.ffmpegPath = ffmpegPath;
+
+      await chrome.storage.local.set({
+        [STORAGE_KEY]: state.settings
+      });
+
+      console.log('[Popup] Nastaveni ulozeno:', state.settings);
+      showToast('Nastaveni ulozeno!');
+
+      // Posli nastaveni do background scriptu
+      await chrome.runtime.sendMessage({
+        action: 'updateSettings',
+        settings: state.settings
+      });
+
+      // Aktualizuj status
+      await checkToolsStatus();
+
+    } catch (e) {
+      console.error('[Popup] Chyba pri ukladani:', e);
+      showToast('Chyba pri ukladani!', true);
     }
   }
 
   // ============================================================================
-  // HANDLE GO BUTTON
+  // STATUS KONTROLA
   // ============================================================================
 
-  async function handleGo() {
-    const input = elements.videoInput.value.trim();
+  async function checkToolsStatus() {
+    // Zkontroluj native host
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'checkNativeHost'
+      });
 
-    if (!input) {
-      showError('Zadejte YouTube URL');
-      return;
+      if (response?.nativeHostAvailable) {
+        state.settings.nativeHostInstalled = true;
+        updateToolStatus('ytdlp', response.ytdlpAvailable, response.ytdlpVersion);
+        updateToolStatus('ffmpeg', response.ffmpegAvailable, response.ffmpegVersion);
+      } else {
+        state.settings.nativeHostInstalled = false;
+        updateToolStatus('ytdlp', false);
+        updateToolStatus('ffmpeg', false);
+      }
+    } catch (e) {
+      console.log('[Popup] Native host neni dostupny:', e.message);
+      updateToolStatus('ytdlp', false);
+      updateToolStatus('ffmpeg', false);
     }
+  }
 
-    hideError();
+  function updateToolStatus(tool, available, version = null) {
+    const statusEl = $(`#status-${tool}`);
+    if (!statusEl) return;
 
-    // Pokud je to YouTube URL, otevřít stránku
-    if (isYouTubeUrl(input)) {
-      chrome.tabs.create({ url: input });
-      window.close();
-      return;
+    if (available) {
+      statusEl.className = 'feature-status ok';
+      statusEl.textContent = version ? `v${version}` : 'Aktivni';
+    } else {
+      statusEl.className = 'feature-status missing';
+      statusEl.textContent = tool === 'ytdlp' ? 'Chybi yt-dlp' : 'Chybi ffmpeg';
     }
-
-    // Pokud je to video ID, vytvořit URL
-    if (isVideoId(input)) {
-      chrome.tabs.create({ url: `https://www.youtube.com/watch?v=${input}` });
-      window.close();
-      return;
-    }
-
-    showError('Neplatná YouTube URL nebo Video ID');
   }
 
   // ============================================================================
-  // LOAD VIDEO INFO
+  // TEST NASTROJU
   // ============================================================================
 
-  async function loadVideoInfo(videoId) {
-    elements.loading.classList.add('visible');
-    elements.videoCard.classList.remove('visible');
+  async function testTool(tool) {
+    const pathInput = $(`#${tool}-path`);
+    const statusEl = $(`#${tool}-status`);
+
+    if (!pathInput || !statusEl) return;
+
+    const path = pathInput.value.trim();
+    if (!path) {
+      statusEl.className = 'path-status invalid';
+      statusEl.textContent = 'Zadejte cestu k nastroji';
+      return;
+    }
+
+    statusEl.className = 'path-status';
+    statusEl.textContent = 'Testuji...';
 
     try {
       const response = await chrome.runtime.sendMessage({
-        action: 'getVideoInfo',
-        videoId: videoId
+        action: 'testTool',
+        tool: tool,
+        path: path
       });
 
       if (response?.success) {
-        elements.thumbnail.src = response.thumbnail;
-        elements.thumbnail.onerror = () => {
-          elements.thumbnail.src = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
-        };
-        elements.videoTitle.textContent = response.title || 'Neznámý název';
-        elements.videoAuthor.textContent = response.author || '';
-
-        elements.videoCard.classList.add('visible');
+        pathInput.classList.remove('invalid');
+        pathInput.classList.add('valid');
+        statusEl.className = 'path-status valid';
+        statusEl.textContent = `OK - ${response.version || 'nalezeno'}`;
+      } else {
+        pathInput.classList.remove('valid');
+        pathInput.classList.add('invalid');
+        statusEl.className = 'path-status invalid';
+        statusEl.textContent = response?.error || 'Nastroj nenalezen';
       }
-    } catch (error) {
-      console.error('[Popup] Chyba při načítání info:', error);
-    } finally {
-      elements.loading.classList.remove('visible');
-    }
-  }
-
-  // ============================================================================
-  // HELPERS
-  // ============================================================================
-
-  function isYouTubeUrl(url) {
-    try {
-      const urlObj = new URL(url);
-      return urlObj.hostname.includes('youtube.com') || urlObj.hostname === 'youtu.be';
     } catch (e) {
-      return false;
+      pathInput.classList.remove('valid');
+      pathInput.classList.add('invalid');
+      statusEl.className = 'path-status invalid';
+      statusEl.textContent = 'Native host neni nainstalovan';
     }
   }
 
-  function isVideoId(str) {
-    return /^[a-zA-Z0-9_-]{11}$/.test(str);
+  // ============================================================================
+  // TAB SWITCHING
+  // ============================================================================
+
+  function setupTabs() {
+    $$('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+
+        // Aktivni tab
+        $$('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+
+        // Aktivni content
+        $$('.tab-content').forEach(c => c.classList.remove('active'));
+        $(`#tab-${tabName}`)?.classList.add('active');
+      });
+    });
   }
 
-  function extractVideoId(url) {
-    try {
-      const urlObj = new URL(url);
+  // ============================================================================
+  // EVENT LISTENERY
+  // ============================================================================
 
-      if (urlObj.searchParams.has('v')) {
-        return urlObj.searchParams.get('v');
-      }
+  function setupEventListeners() {
+    // Test tlacitka
+    $('#test-ytdlp')?.addEventListener('click', () => testTool('ytdlp'));
+    $('#test-ffmpeg')?.addEventListener('click', () => testTool('ffmpeg'));
 
-      if (urlObj.hostname === 'youtu.be') {
-        return urlObj.pathname.substring(1);
-      }
+    // Ulozit nastaveni
+    $('#save-settings')?.addEventListener('click', saveSettings);
 
-      const shortsMatch = urlObj.pathname.match(/\/shorts\/([a-zA-Z0-9_-]+)/);
-      if (shortsMatch) return shortsMatch[1];
+    // Enter v inputech
+    $('#ytdlp-path')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') testTool('ytdlp');
+    });
 
-    } catch (e) {}
-    return null;
+    $('#ffmpeg-path')?.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') testTool('ffmpeg');
+    });
   }
 
-  function showError(message) {
-    elements.error.textContent = message;
-    elements.error.classList.add('visible');
-  }
+  // ============================================================================
+  // TOAST NOTIFIKACE
+  // ============================================================================
 
-  function hideError() {
-    elements.error.classList.remove('visible');
+  function showToast(message, isError = false) {
+    const toast = $('#toast');
+    if (!toast) return;
+
+    toast.textContent = message;
+    toast.className = isError ? 'toast error' : 'toast';
+
+    // Trigger reflow
+    toast.offsetHeight;
+    toast.classList.add('visible');
+
+    setTimeout(() => {
+      toast.classList.remove('visible');
+    }, 3000);
   }
 
   // ============================================================================

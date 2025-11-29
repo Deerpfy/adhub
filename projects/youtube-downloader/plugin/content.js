@@ -1,22 +1,19 @@
 /**
- * AdHub YouTube Downloader v5.3 - Zero Install
+ * AdHub YouTube Downloader v5.4 - Content Script
  *
- * Funguje IHNED po instalaci extension - žádná další konfigurace!
- *
- * Jak to funguje:
- * 1. Extrahuje video data přímo z YouTube stránky
- * 2. Stahuje přes chrome.downloads API
- * 3. Omezení: pouze formáty s přímým URL (max 720p, žádná konverze)
+ * Hybridni rezim:
+ * - Zakladni: Formaty s primym URL (max 720p)
+ * - Rozsireny: Vsechny formaty pres native host (4K, MP3, atd.)
  */
 
 (function() {
   'use strict';
 
   if (window.top !== window.self) return;
-  if (window.__ADHUB_YT_DL_V53__) return;
-  window.__ADHUB_YT_DL_V53__ = true;
+  if (window.__ADHUB_YT_DL_V54__) return;
+  window.__ADHUB_YT_DL_V54__ = true;
 
-  console.log('[AdHub] YouTube Downloader v5.3 (Zero Install)');
+  console.log('[AdHub] YouTube Downloader v5.4 (Hybrid)');
 
   // ============================================================================
   // STAV
@@ -25,10 +22,28 @@
   const state = {
     currentVideoId: null,
     videoTitle: '',
+    videoUrl: '',
     formats: [],
     bestFormat: null,
     isDownloading: false,
+    advancedMode: false,
   };
+
+  // ============================================================================
+  // INIT - DETEKCE REZIMU
+  // ============================================================================
+
+  async function checkAdvancedMode() {
+    try {
+      const response = await chrome.runtime.sendMessage({ action: 'checkNativeHost' });
+      state.advancedMode = response?.nativeHostAvailable && response?.ytdlpAvailable;
+      console.log('[AdHub] Advanced mode:', state.advancedMode);
+      return state.advancedMode;
+    } catch (e) {
+      state.advancedMode = false;
+      return false;
+    }
+  }
 
   // ============================================================================
   // EXTRAKCE VIDEO DAT
@@ -42,12 +57,10 @@
   }
 
   function extractPlayerResponse() {
-    // Metoda 1: Globální proměnná
     if (window.ytInitialPlayerResponse) {
       return window.ytInitialPlayerResponse;
     }
 
-    // Metoda 2: Z HTML
     const scripts = document.querySelectorAll('script');
     for (const script of scripts) {
       const text = script.textContent || '';
@@ -70,10 +83,11 @@
     const allFormats = [];
 
     state.videoTitle = videoDetails.title || document.title.replace(' - YouTube', '');
+    state.videoUrl = `https://www.youtube.com/watch?v=${videoDetails.videoId || getVideoId()}`;
 
-    // Progressive formáty (video + audio) - TYTO MAJÍ PŘÍMÉ URL!
+    // Progressive formaty (video + audio)
     for (const f of formats) {
-      if (f.url) { // Pouze pokud má přímé URL (není šifrované)
+      if (f.url) {
         allFormats.push({
           itag: f.itag,
           quality: f.qualityLabel || f.quality || 'unknown',
@@ -86,13 +100,14 @@
           type: 'video+audio',
           hasVideo: true,
           hasAudio: true,
+          requiresNative: false,
         });
       }
     }
 
-    // Adaptive formáty (odděleně video/audio)
+    // Adaptive formaty (oddelene video/audio)
     for (const f of adaptiveFormats) {
-      if (f.url) { // Pouze nešifrované
+      if (f.url) {
         const isVideo = f.mimeType?.startsWith('video/');
         const isAudio = f.mimeType?.startsWith('audio/');
 
@@ -108,11 +123,12 @@
           hasVideo: isVideo,
           hasAudio: isAudio,
           bitrate: f.bitrate,
+          requiresNative: false,
         });
       }
     }
 
-    // Seřadit: video+audio první, pak podle kvality
+    // Seradit
     allFormats.sort((a, b) => {
       if (a.type === 'video+audio' && b.type !== 'video+audio') return -1;
       if (b.type === 'video+audio' && a.type !== 'video+audio') return 1;
@@ -137,62 +153,105 @@
     state.bestFormat = formats.find(f => f.type === 'video+audio') || formats[0];
     state.currentVideoId = videoId;
 
-    console.log('[AdHub] Nalezeno formátů:', formats.length);
+    console.log('[AdHub] Nalezeno formatu:', formats.length, 'Advanced:', state.advancedMode);
     return formats;
   }
 
   // ============================================================================
-  // STAHOVÁNÍ
+  // ROZSIRENE FORMATY (pro advanced mode)
+  // ============================================================================
+
+  function getAdvancedFormats() {
+    return [
+      { id: 'best', label: 'Nejlepsi kvalita', type: 'video', quality: 'best', requiresNative: true },
+      { id: '4k', label: '4K (2160p)', type: 'video', quality: '2160', requiresNative: true },
+      { id: '1440p', label: '2K (1440p)', type: 'video', quality: '1440', requiresNative: true },
+      { id: '1080p', label: 'Full HD (1080p)', type: 'video', quality: '1080', requiresNative: true },
+      { id: 'mp3', label: 'MP3 Audio', type: 'audio', audioFormat: 'mp3', requiresNative: true },
+      { id: 'wav', label: 'WAV Audio', type: 'audio', audioFormat: 'wav', requiresNative: true },
+      { id: 'flac', label: 'FLAC Audio', type: 'audio', audioFormat: 'flac', requiresNative: true },
+    ];
+  }
+
+  // ============================================================================
+  // STAHOVANI
   // ============================================================================
 
   async function downloadFormat(format) {
     if (state.isDownloading) {
-      showNotification('Stahování již probíhá...', 'warning');
-      return;
-    }
-
-    if (!format?.url) {
-      showNotification('Tento formát není dostupný', 'error');
+      showNotification('Stahovani jiz probiha...', 'warning');
       return;
     }
 
     state.isDownloading = true;
     showProgressOverlay();
-    updateProgress(10, 'Připravuji stahování...');
+    updateProgress(10, 'Pripravuji stahovani...');
 
     try {
-      // Vytvořit název souboru
-      const title = sanitizeFilename(state.videoTitle || 'video');
-      const quality = format.quality || '';
-      const filename = `${title} [${quality}].${format.ext}`;
-
-      updateProgress(30, 'Zahajuji stahování...');
-
-      // Poslat požadavek na background script
-      const response = await chrome.runtime.sendMessage({
-        action: 'download',
-        data: {
-          url: format.url,
-          filename: filename,
-        }
-      });
-
-      if (response.success) {
-        updateProgress(100, 'Stahování zahájeno!');
-        setTimeout(() => {
-          hideProgressOverlay();
-          showDownloadComplete(filename);
-        }, 1500);
+      if (format.requiresNative) {
+        await downloadAdvanced(format);
+      } else if (format.url) {
+        await downloadBasic(format);
       } else {
-        throw new Error(response.error || 'Stahování selhalo');
+        throw new Error('Tento format neni dostupny');
       }
-
     } catch (e) {
       console.error('[AdHub] Download error:', e);
       hideProgressOverlay();
       showNotification(`Chyba: ${e.message}`, 'error');
     } finally {
       state.isDownloading = false;
+    }
+  }
+
+  async function downloadBasic(format) {
+    const title = sanitizeFilename(state.videoTitle || 'video');
+    const quality = format.quality || '';
+    const filename = `${title} [${quality}].${format.ext}`;
+
+    updateProgress(30, 'Zahajuji stahovani...');
+
+    const response = await chrome.runtime.sendMessage({
+      action: 'download',
+      data: {
+        url: format.url,
+        filename: filename,
+      }
+    });
+
+    if (response.success) {
+      updateProgress(100, 'Stahovani zahajeno!');
+      setTimeout(() => {
+        hideProgressOverlay();
+        showDownloadComplete(filename);
+      }, 1500);
+    } else {
+      throw new Error(response.error || 'Stahovani selhalo');
+    }
+  }
+
+  async function downloadAdvanced(format) {
+    updateProgress(20, 'Pripojuji k native host...');
+
+    const response = await chrome.runtime.sendMessage({
+      action: 'downloadAdvanced',
+      data: {
+        videoUrl: state.videoUrl,
+        format: format.type === 'audio' ? 'audio' : 'video',
+        quality: format.quality || 'best',
+        audioFormat: format.audioFormat,
+      }
+    });
+
+    if (response.success) {
+      updateProgress(100, 'Stahovani zahajeno!');
+      const filename = response.filename || `${state.videoTitle}.${format.audioFormat || 'mp4'}`;
+      setTimeout(() => {
+        hideProgressOverlay();
+        showDownloadComplete(filename);
+      }, 1500);
+    } else {
+      throw new Error(response.error || 'Stahovani selhalo');
     }
   }
 
@@ -210,7 +269,7 @@
   }
 
   // ============================================================================
-  // UI - TLAČÍTKO
+  // UI - TLACITKO
   // ============================================================================
 
   function createDownloadButton() {
@@ -218,13 +277,14 @@
     container.id = 'adhub-yt-downloader';
     container.innerHTML = `
       <div class="adhub-btn-group">
-        <button id="adhub-download-main" class="adhub-btn-main" title="Stáhnout video v nejlepší kvalitě">
+        <button id="adhub-download-main" class="adhub-btn-main" title="Stahnout video">
           <svg class="adhub-icon" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 16l-5-5h3V4h4v7h3l-5 5zm-7 2h14v2H5v-2z"/>
           </svg>
-          <span class="adhub-btn-label">Stáhnout</span>
+          <span class="adhub-btn-label">Stahnout</span>
+          <span class="adhub-mode-badge" id="adhub-mode-badge" style="display:none">HD</span>
         </button>
-        <button id="adhub-dropdown-toggle" class="adhub-btn-arrow" title="Více možností">
+        <button id="adhub-dropdown-toggle" class="adhub-btn-arrow" title="Vice moznosti">
           <svg viewBox="0 0 24 24" fill="currentColor">
             <path d="M7 10l5 5 5-5z"/>
           </svg>
@@ -234,16 +294,17 @@
       <div id="adhub-dropdown-menu" class="adhub-dropdown hidden">
         <div class="adhub-dropdown-header">
           <span>Vyberte kvalitu</span>
+          <span class="adhub-mode-label" id="adhub-mode-label">Zakladni</span>
         </div>
         <div id="adhub-formats-list" class="adhub-formats-list">
-          <div class="adhub-loading">Načítám...</div>
+          <div class="adhub-loading">Nacitam...</div>
         </div>
       </div>
     `;
     return container;
   }
 
-  function injectButton() {
+  async function injectButton() {
     if (document.getElementById('adhub-yt-downloader')) return true;
 
     const selectors = [
@@ -261,7 +322,6 @@
 
     const button = createDownloadButton();
 
-    // Vložit za like/dislike
     const likeBtn = target.querySelector('ytd-segmented-like-dislike-button-renderer, ytd-toggle-button-renderer');
     if (likeBtn?.nextSibling) {
       target.insertBefore(button, likeBtn.nextSibling);
@@ -270,32 +330,59 @@
     }
 
     setupEventListeners();
-    console.log('[AdHub] Tlačítko injektováno');
+
+    // Zkontroluj advanced mode
+    await checkAdvancedMode();
+    updateModeIndicator();
+
+    console.log('[AdHub] Tlacitko injektovano');
     return true;
   }
 
+  function updateModeIndicator() {
+    const badge = document.getElementById('adhub-mode-badge');
+    const label = document.getElementById('adhub-mode-label');
+
+    if (state.advancedMode) {
+      if (badge) {
+        badge.style.display = 'inline-block';
+        badge.textContent = 'HD';
+      }
+      if (label) {
+        label.textContent = 'Rozsireny';
+        label.style.color = '#4ade80';
+      }
+    } else {
+      if (badge) badge.style.display = 'none';
+      if (label) {
+        label.textContent = 'Zakladni';
+        label.style.color = '#888';
+      }
+    }
+  }
+
   function setupEventListeners() {
-    // Hlavní tlačítko - stáhne nejlepší dostupný formát
     document.getElementById('adhub-download-main')?.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
 
       loadVideoFormats();
-      if (state.bestFormat) {
+
+      if (state.advancedMode) {
+        downloadFormat({ id: 'best', type: 'video', quality: 'best', requiresNative: true });
+      } else if (state.bestFormat) {
         downloadFormat(state.bestFormat);
       } else {
-        showNotification('Žádné formáty k dispozici. Zkuste obnovit stránku.', 'error');
+        showNotification('Zadne formaty k dispozici. Zkuste obnovit stranku.', 'error');
       }
     });
 
-    // Dropdown toggle
     document.getElementById('adhub-dropdown-toggle')?.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
       toggleDropdown();
     });
 
-    // Zavřít dropdown při kliknutí mimo
     document.addEventListener('click', (e) => {
       const container = document.getElementById('adhub-yt-downloader');
       if (container && !container.contains(e.target)) {
@@ -324,23 +411,40 @@
     if (!list) return;
 
     loadVideoFormats();
-
-    if (state.formats.length === 0) {
-      list.innerHTML = `
-        <div class="adhub-error">
-          Žádné formáty k dispozici.<br>
-          <small>Zkuste obnovit stránku (F5)</small>
-        </div>
-      `;
-      return;
-    }
-
     let html = '';
 
-    // Video + Audio formáty
+    // V advanced mode pridej rozsirene formaty
+    if (state.advancedMode) {
+      html += '<div class="adhub-format-group"><div class="adhub-format-group-title">HD Video (yt-dlp)</div>';
+
+      const advFormats = getAdvancedFormats().filter(f => f.type === 'video');
+      for (const f of advFormats) {
+        html += `
+          <button class="adhub-format-btn adhub-format-advanced" data-advanced="${f.id}" data-quality="${f.quality}">
+            <span class="adhub-format-quality">${f.label}</span>
+            <span class="adhub-format-info">MP4</span>
+          </button>
+        `;
+      }
+      html += '</div>';
+
+      html += '<div class="adhub-format-group"><div class="adhub-format-group-title">Audio (yt-dlp)</div>';
+      const audioFormats = getAdvancedFormats().filter(f => f.type === 'audio');
+      for (const f of audioFormats) {
+        html += `
+          <button class="adhub-format-btn adhub-format-advanced" data-advanced="${f.id}" data-audio="${f.audioFormat}">
+            <span class="adhub-format-quality">${f.label}</span>
+            <span class="adhub-format-info">${f.audioFormat.toUpperCase()}</span>
+          </button>
+        `;
+      }
+      html += '</div>';
+    }
+
+    // Zakladni formaty
     const videoAudio = state.formats.filter(f => f.type === 'video+audio');
     if (videoAudio.length > 0) {
-      html += '<div class="adhub-format-group"><div class="adhub-format-group-title">Video + Audio</div>';
+      html += `<div class="adhub-format-group"><div class="adhub-format-group-title">Video + Audio${state.advancedMode ? ' (prime)' : ''}</div>`;
       for (const f of videoAudio) {
         const size = f.filesize ? formatBytes(f.filesize) : '';
         html += `
@@ -353,9 +457,9 @@
       html += '</div>';
     }
 
-    // Audio formáty
+    // Audio formaty
     const audio = state.formats.filter(f => f.type === 'audio');
-    if (audio.length > 0) {
+    if (audio.length > 0 && !state.advancedMode) {
       html += '<div class="adhub-format-group"><div class="adhub-format-group-title">Pouze Audio</div>';
       for (const f of audio.slice(0, 5)) {
         const size = f.filesize ? formatBytes(f.filesize) : '';
@@ -370,30 +474,14 @@
       html += '</div>';
     }
 
-    // Video-only formáty
-    const videoOnly = state.formats.filter(f => f.type === 'video-only');
-    if (videoOnly.length > 0) {
-      html += '<div class="adhub-format-group"><div class="adhub-format-group-title">Pouze Video (bez zvuku)</div>';
-      for (const f of videoOnly.slice(0, 5)) {
-        const size = f.filesize ? formatBytes(f.filesize) : '';
-        html += `
-          <button class="adhub-format-btn" data-itag="${f.itag}">
-            <span class="adhub-format-quality">${f.quality}</span>
-            <span class="adhub-format-info">${f.ext.toUpperCase()} ${size}</span>
-          </button>
-        `;
-      }
-      html += '</div>';
-    }
-
     if (!html) {
-      html = '<div class="adhub-error">Žádné dostupné formáty</div>';
+      html = '<div class="adhub-error">Zadne dostupne formaty</div>';
     }
 
     list.innerHTML = html;
 
-    // Event listenery pro formáty
-    list.querySelectorAll('.adhub-format-btn').forEach(btn => {
+    // Event listenery pro zakladni formaty
+    list.querySelectorAll('.adhub-format-btn:not(.adhub-format-advanced)').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -403,6 +491,26 @@
           closeDropdown();
           downloadFormat(format);
         }
+      });
+    });
+
+    // Event listenery pro advanced formaty
+    list.querySelectorAll('.adhub-format-advanced').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const id = btn.dataset.advanced;
+        const quality = btn.dataset.quality;
+        const audioFormat = btn.dataset.audio;
+
+        closeDropdown();
+        downloadFormat({
+          id: id,
+          type: audioFormat ? 'audio' : 'video',
+          quality: quality || 'best',
+          audioFormat: audioFormat,
+          requiresNative: true
+        });
       });
     });
   }
@@ -422,12 +530,12 @@
             <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
               <path d="M12 16l-5-5h3V4h4v7h3l-5 5zm-7 2h14v2H5v-2z"/>
             </svg>
-            <span>Stahování</span>
+            <span>Stahovani</span>
           </div>
           <div class="adhub-progress-bar-bg">
             <div id="adhub-progress-bar" class="adhub-progress-bar"></div>
           </div>
-          <div id="adhub-progress-text" class="adhub-progress-text">Připravuji...</div>
+          <div id="adhub-progress-text" class="adhub-progress-text">Pripravuji...</div>
         </div>
       `;
       document.body.appendChild(overlay);
@@ -465,9 +573,9 @@
     const toast = document.createElement('div');
     toast.className = 'adhub-complete-toast';
     toast.innerHTML = `
-      <div class="adhub-complete-icon">✓</div>
+      <div class="adhub-complete-icon">OK</div>
       <div class="adhub-complete-content">
-        <div class="adhub-complete-title">Stahování zahájeno!</div>
+        <div class="adhub-complete-title">Stahovani zahajeno!</div>
         <div class="adhub-complete-file">${filename}</div>
       </div>
       <button class="adhub-complete-close">&times;</button>
@@ -511,12 +619,12 @@
   // INIT
   // ============================================================================
 
-  function init() {
+  async function init() {
     if (!getVideoId()) return;
 
     let attempts = 0;
-    const tryInject = () => {
-      if (injectButton()) return;
+    const tryInject = async () => {
+      if (await injectButton()) return;
       if (++attempts < 30) setTimeout(tryInject, 1000);
     };
     tryInject();

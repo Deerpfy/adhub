@@ -1,15 +1,14 @@
 #!/usr/bin/env python3
 """
-AdHub YouTube Downloader - Native Host
-=======================================
-Tento script je spouštěn prohlížečem přes Native Messaging API.
-Nepotřebuje běžet jako server - spustí se pouze když uživatel klikne na stažení.
+AdHub YouTube Downloader - Native Host v5.4
+============================================
+Native Messaging host pro browser extension.
+Umoznuje HD/4K stahovani a audio konverzi.
 
-Jak to funguje:
-1. Uživatel klikne na "Stáhnout" v extension
-2. Chrome spustí tento script
-3. Script stáhne video přes yt-dlp
-4. Script se ukončí
+Akce:
+- check: Zkontroluje dostupnost yt-dlp a ffmpeg
+- test: Otestuje konkretni nastroj
+- download: Stahne video/audio
 """
 
 import sys
@@ -17,25 +16,36 @@ import os
 import json
 import struct
 import subprocess
-import tempfile
-import threading
+import shutil
 
-# Přidat cestu pro yt-dlp pokud je nainstalován uživatelsky
-sys.path.insert(0, os.path.expanduser('~/.local/lib/python3/site-packages'))
+# ============================================================================
+# KONFIGURACE
+# ============================================================================
 
-try:
-    import yt_dlp
-    YT_DLP_AVAILABLE = True
-except ImportError:
-    YT_DLP_AVAILABLE = False
+VERSION = '5.4'
+
+# Defaultni cesty k nastrojum
+DEFAULT_YTDLP_PATHS = [
+    'yt-dlp',
+    '/usr/local/bin/yt-dlp',
+    '/usr/bin/yt-dlp',
+    os.path.expanduser('~/.local/bin/yt-dlp'),
+    os.path.expanduser('~/bin/yt-dlp'),
+]
+
+DEFAULT_FFMPEG_PATHS = [
+    'ffmpeg',
+    '/usr/local/bin/ffmpeg',
+    '/usr/bin/ffmpeg',
+    '/opt/homebrew/bin/ffmpeg',
+]
 
 # ============================================================================
 # NATIVE MESSAGING PROTOKOL
 # ============================================================================
 
 def read_message():
-    """Přečte zprávu z stdin (Chrome Native Messaging protokol)."""
-    # Prvních 4 bytů = délka zprávy (little-endian)
+    """Precte zpravu z stdin (Chrome Native Messaging protokol)."""
     raw_length = sys.stdin.buffer.read(4)
     if not raw_length:
         return None
@@ -45,191 +55,261 @@ def read_message():
     return json.loads(message)
 
 def send_message(message):
-    """Odešle zprávu na stdout (Chrome Native Messaging protokol)."""
+    """Odesle zpravu na stdout (Chrome Native Messaging protokol)."""
     encoded = json.dumps(message).encode('utf-8')
     sys.stdout.buffer.write(struct.pack('I', len(encoded)))
     sys.stdout.buffer.write(encoded)
     sys.stdout.buffer.flush()
 
-def log_to_file(msg):
-    """Debug log do souboru."""
-    log_path = os.path.expanduser('~/adhub_yt_download.log')
-    with open(log_path, 'a') as f:
-        f.write(f"{msg}\n")
+# ============================================================================
+# DETEKCE NASTROJU
+# ============================================================================
 
-# ============================================================================
-# STAHOVÁNÍ
-# ============================================================================
+def find_tool(tool_name, custom_path=None, default_paths=None):
+    """Najde nastroj a vrati jeho cestu a verzi."""
+    paths_to_check = []
+
+    # Custom path ma prioritu
+    if custom_path and custom_path.strip():
+        paths_to_check.append(custom_path.strip())
+
+    # Pak zkusit shutil.which
+    which_path = shutil.which(tool_name)
+    if which_path:
+        paths_to_check.append(which_path)
+
+    # Pak defaultni cesty
+    if default_paths:
+        paths_to_check.extend(default_paths)
+
+    for path in paths_to_check:
+        result = check_tool_at_path(path)
+        if result['available']:
+            return result
+
+    return {'available': False, 'path': None, 'version': None}
+
+def check_tool_at_path(path):
+    """Zkontroluje nastroj na konkretni ceste."""
+    try:
+        # Zkusit spustit s --version
+        result = subprocess.run(
+            [path, '--version'],
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
+
+        if result.returncode == 0:
+            # Extrahovat verzi z vystupu
+            output = result.stdout.strip()
+            version = output.split('\n')[0] if output else 'unknown'
+
+            # Zjednodusit verzi
+            if 'yt-dlp' in version.lower():
+                parts = version.split()
+                version = parts[1] if len(parts) > 1 else parts[0]
+            elif 'ffmpeg' in version.lower():
+                parts = version.split()
+                for i, p in enumerate(parts):
+                    if p == 'version' and i + 1 < len(parts):
+                        version = parts[i + 1]
+                        break
+
+            return {
+                'available': True,
+                'path': path,
+                'version': version[:20]  # Max 20 znaku
+            }
+
+    except (subprocess.TimeoutExpired, FileNotFoundError, PermissionError):
+        pass
+
+    return {'available': False, 'path': path, 'version': None}
 
 def get_download_dir():
-    """Získá složku pro stahování."""
-    # Zkusit standardní Downloads složku
+    """Ziska slozku pro stahovani."""
     downloads = os.path.expanduser('~/Downloads')
     if os.path.exists(downloads):
         return downloads
-
-    # Fallback na home
     return os.path.expanduser('~')
 
-def download_video(url, format_type='video', quality=None, audio_format=None, output_dir=None):
-    """Stáhne video/audio z YouTube."""
+# ============================================================================
+# AKCE: CHECK
+# ============================================================================
 
-    if not YT_DLP_AVAILABLE:
-        return {
-            'success': False,
-            'error': 'yt-dlp není nainstalován. Spusťte: pip install yt-dlp'
-        }
+def handle_check(message):
+    """Zkontroluje dostupnost yt-dlp a ffmpeg."""
+    ytdlp_path = message.get('ytdlpPath', '')
+    ffmpeg_path = message.get('ffmpegPath', '')
 
-    output_dir = output_dir or get_download_dir()
+    ytdlp_result = find_tool('yt-dlp', ytdlp_path, DEFAULT_YTDLP_PATHS)
+    ffmpeg_result = find_tool('ffmpeg', ffmpeg_path, DEFAULT_FFMPEG_PATHS)
 
-    ydl_opts = {
-        'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
-        'quiet': True,
-        'no_warnings': True,
+    return {
+        'success': True,
+        'version': VERSION,
+        'ytdlp': ytdlp_result,
+        'ffmpeg': ffmpeg_result,
+        'download_dir': get_download_dir(),
     }
-
-    # Nastavení formátu
-    if format_type == 'audio' or audio_format:
-        ydl_opts['format'] = 'bestaudio/best'
-
-        if audio_format == 'mp3':
-            ydl_opts['postprocessors'] = [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '320',
-            }]
-        elif audio_format == 'wav':
-            ydl_opts['postprocessors'] = [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'wav',
-            }]
-        elif audio_format == 'm4a':
-            ydl_opts['format'] = 'bestaudio[ext=m4a]/bestaudio/best'
-        elif audio_format == 'flac':
-            ydl_opts['postprocessors'] = [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'flac',
-            }]
-    else:
-        # Video
-        if quality:
-            ydl_opts['format'] = f'bestvideo[height<={quality}]+bestaudio/best[height<={quality}]/best'
-        else:
-            ydl_opts['format'] = 'bestvideo+bestaudio/best'
-        ydl_opts['merge_output_format'] = 'mp4'
-
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-
-            # Získat název staženého souboru
-            if 'requested_downloads' in info and info['requested_downloads']:
-                filepath = info['requested_downloads'][0].get('filepath', '')
-            else:
-                title = info.get('title', 'video')
-                ext = audio_format or 'mp4'
-                filepath = os.path.join(output_dir, f'{title}.{ext}')
-
-            return {
-                'success': True,
-                'title': info.get('title'),
-                'filename': os.path.basename(filepath),
-                'filepath': filepath,
-                'duration': info.get('duration'),
-            }
-
-    except Exception as e:
-        return {
-            'success': False,
-            'error': str(e)
-        }
-
-def get_video_info(url):
-    """Získá informace o videu."""
-
-    if not YT_DLP_AVAILABLE:
-        return {
-            'success': False,
-            'error': 'yt-dlp není nainstalován'
-        }
-
-    ydl_opts = {
-        'quiet': True,
-        'no_warnings': True,
-    }
-
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-
-            # Extrahovat kvality
-            qualities = set()
-            for f in info.get('formats', []):
-                if f.get('height'):
-                    qualities.add(f['height'])
-
-            return {
-                'success': True,
-                'title': info.get('title'),
-                'duration': info.get('duration'),
-                'thumbnail': info.get('thumbnail'),
-                'qualities': sorted(qualities, reverse=True),
-                'best_quality': max(qualities) if qualities else 1080,
-            }
-
-    except Exception as e:
-        return {
-            'success': False,
-            'error': str(e)
-        }
 
 # ============================================================================
-# HLAVNÍ LOOP
+# AKCE: TEST
+# ============================================================================
+
+def handle_test(message):
+    """Otestuje konkretni nastroj na konkretni ceste."""
+    tool = message.get('tool')
+    path = message.get('path', '')
+
+    if not path:
+        return {'available': False, 'error': 'Cesta neni zadana'}
+
+    result = check_tool_at_path(path)
+    return result
+
+# ============================================================================
+# AKCE: DOWNLOAD
+# ============================================================================
+
+def handle_download(message):
+    """Stahne video/audio z YouTube."""
+    url = message.get('url')
+    format_type = message.get('format', 'video')  # video nebo audio
+    quality = message.get('quality', 'best')
+    audio_format = message.get('audioFormat')
+    ytdlp_path = message.get('ytdlpPath', '')
+    ffmpeg_path = message.get('ffmpegPath', '')
+
+    if not url:
+        return {'success': False, 'error': 'URL neni zadana'}
+
+    # Najit yt-dlp
+    ytdlp = find_tool('yt-dlp', ytdlp_path, DEFAULT_YTDLP_PATHS)
+    if not ytdlp['available']:
+        return {'success': False, 'error': 'yt-dlp neni dostupny'}
+
+    # Pripravit argumenty
+    output_dir = get_download_dir()
+    output_template = os.path.join(output_dir, '%(title)s.%(ext)s')
+
+    cmd = [ytdlp['path']]
+
+    # Format
+    if format_type == 'audio' or audio_format:
+        cmd.extend(['-f', 'bestaudio/best'])
+
+        if audio_format in ['mp3', 'wav', 'flac', 'ogg']:
+            cmd.extend(['-x', '--audio-format', audio_format])
+
+            # Najit ffmpeg pro konverzi
+            ffmpeg = find_tool('ffmpeg', ffmpeg_path, DEFAULT_FFMPEG_PATHS)
+            if ffmpeg['available']:
+                cmd.extend(['--ffmpeg-location', os.path.dirname(ffmpeg['path'])])
+    else:
+        # Video
+        if quality and quality != 'best':
+            cmd.extend(['-f', f'bestvideo[height<={quality}]+bestaudio/best[height<={quality}]/best'])
+        else:
+            cmd.extend(['-f', 'bestvideo+bestaudio/best'])
+
+        cmd.extend(['--merge-output-format', 'mp4'])
+
+        # FFmpeg pro merge
+        ffmpeg = find_tool('ffmpeg', ffmpeg_path, DEFAULT_FFMPEG_PATHS)
+        if ffmpeg['available']:
+            cmd.extend(['--ffmpeg-location', os.path.dirname(ffmpeg['path'])])
+
+    cmd.extend(['-o', output_template])
+    cmd.append(url)
+
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=600  # 10 minut timeout
+        )
+
+        if result.returncode == 0:
+            # Pokusit se zjistit nazev souboru
+            # yt-dlp vypisuje "Destination: filename" nebo "[download] filename has already been downloaded"
+            filename = None
+            for line in result.stdout.split('\n') + result.stderr.split('\n'):
+                if 'Destination:' in line:
+                    filename = line.split('Destination:')[-1].strip()
+                    break
+                elif 'has already been downloaded' in line:
+                    filename = line.split('[download]')[-1].split('has already')[0].strip()
+                    break
+                elif '[Merger]' in line and 'Merging formats into' in line:
+                    filename = line.split('Merging formats into')[-1].strip().strip('"')
+                    break
+
+            return {
+                'success': True,
+                'filename': os.path.basename(filename) if filename else 'video.mp4',
+                'filepath': filename or output_dir,
+            }
+        else:
+            error_msg = result.stderr or result.stdout or 'Neznama chyba'
+            return {
+                'success': False,
+                'error': error_msg[:200]  # Max 200 znaku
+            }
+
+    except subprocess.TimeoutExpired:
+        return {'success': False, 'error': 'Stahovani trvalo prilis dlouho (timeout)'}
+    except Exception as e:
+        return {'success': False, 'error': str(e)[:200]}
+
+# ============================================================================
+# HLAVNI LOOP
 # ============================================================================
 
 def main():
-    """Hlavní funkce - zpracovává zprávy od extension."""
+    """Hlavni funkce - zpracovava zpravy od extension."""
 
     while True:
-        message = read_message()
+        try:
+            message = read_message()
+        except Exception:
+            break
 
         if message is None:
             break
 
         action = message.get('action')
 
-        if action == 'ping':
-            send_message({
-                'success': True,
-                'yt_dlp_available': YT_DLP_AVAILABLE,
-                'download_dir': get_download_dir(),
-            })
+        try:
+            if action == 'check':
+                result = handle_check(message)
+            elif action == 'test':
+                result = handle_test(message)
+            elif action == 'download':
+                result = handle_download(message)
+            elif action == 'ping':
+                result = {
+                    'success': True,
+                    'version': VERSION,
+                }
+            else:
+                result = {
+                    'success': False,
+                    'error': f'Neznama akce: {action}'
+                }
 
-        elif action == 'getInfo':
-            url = message.get('url')
-            result = get_video_info(url)
             send_message(result)
 
-        elif action == 'download':
-            url = message.get('url')
-            format_type = message.get('format_type', 'video')
-            quality = message.get('quality')
-            audio_format = message.get('audio_format')
+            # Po stazeni ukoncit
+            if action == 'download':
+                break
 
-            # Poslat "starting" zprávu
-            send_message({'status': 'starting'})
-
-            # Stáhnout
-            result = download_video(url, format_type, quality, audio_format)
-            send_message(result)
-
-            # Ukončit po stažení
-            break
-
-        else:
+        except Exception as e:
             send_message({
                 'success': False,
-                'error': f'Neznámá akce: {action}'
+                'error': str(e)[:200]
             })
 
 if __name__ == '__main__':
