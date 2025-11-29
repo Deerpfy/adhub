@@ -362,6 +362,85 @@
       margin-bottom: 12px;
       opacity: 0.5;
     }
+
+    .method-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(139, 92, 246, 0.1);
+      border-radius: 6px;
+      margin-bottom: 12px;
+    }
+
+    .method-label {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .method-badge {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: #8b5cf6;
+      color: white;
+    }
+
+    .method-badge.cobalt { background: #22c55e; }
+    .method-badge.invidious { background: #3b82f6; }
+    .method-badge.direct { background: #f59e0b; }
+    .method-badge.error { background: #ef4444; }
+
+    .method-details-btn {
+      margin-left: auto;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.2);
+      background: none;
+      color: #888;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .method-details-btn:hover {
+      background: rgba(255,255,255,0.1);
+      color: white;
+    }
+
+    .method-errors {
+      display: none;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 6px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      font-size: 11px;
+      color: #f87171;
+      max-height: 100px;
+      overflow-y: auto;
+    }
+
+    .method-errors.visible {
+      display: block;
+    }
+
+    .method-errors-title {
+      font-weight: 600;
+      color: #ef4444;
+      margin-bottom: 4px;
+    }
+
+    .method-error-item {
+      padding: 2px 0;
+      border-bottom: 1px solid rgba(239, 68, 68, 0.1);
+    }
+
+    .method-error-item:last-child {
+      border-bottom: none;
+    }
   </style>
 </head>
 <body>
@@ -396,6 +475,14 @@
           <div class="video-author" id="videoAuthor">-</div>
         </div>
       </div>
+
+      <!-- Method info badge -->
+      <div class="method-info" id="methodInfo">
+        <span class="method-label">Zdroj:</span>
+        <span class="method-badge" id="methodBadge">-</span>
+        <button class="method-details-btn" id="methodDetailsBtn" title="Zobrazit detaily">?</button>
+      </div>
+      <div class="method-errors" id="methodErrors"></div>
 
       <div class="tabs">
         <button class="tab active" data-tab="combined">Video+Audio</button>
