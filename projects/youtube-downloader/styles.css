@@ -1303,44 +1303,177 @@ header h1 {
     body {
         padding: 12px;
     }
-    
+
     header {
         flex-direction: column;
         align-items: flex-start;
         padding: 16px 20px;
     }
-    
+
     header h1 {
         font-size: 22px;
     }
-    
+
     .main-content {
         padding: 16px;
         gap: 16px;
     }
-    
+
     .controls {
         width: 100%;
         justify-content: space-between;
     }
-    
+
     .format-item {
         flex-direction: column;
         align-items: flex-start;
         gap: 12px;
     }
-    
+
     .btn-download-format {
         width: 100%;
     }
-    
+
     .modal-content {
         margin: 10% auto;
         width: 95%;
     }
-    
+
     .install-step {
         flex-direction: column;
         gap: 12px;
     }
+}
+
+/* ============================================================================
+   Plugin Info Bar - Zobrazeni stavu pluginu
+   ============================================================================ */
+
+.plugin-info-bar {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05));
+    border-bottom: 1px solid rgba(34, 197, 94, 0.2);
+    padding: 12px 28px;
+}
+
+.plugin-info-content {
+    display: flex;
+    justify-content: center;
+    gap: 32px;
+    flex-wrap: wrap;
+}
+
+.plugin-info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+}
+
+.plugin-info-label {
+    color: var(--adhub-muted);
+}
+
+.plugin-info-value {
+    color: var(--adhub-success);
+    font-weight: 600;
+    font-family: 'Consolas', 'Monaco', monospace;
+}
+
+/* ============================================================================
+   Commit Info - Informace o poslednim commitu
+   ============================================================================ */
+
+.commit-info {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    margin: 16px 0;
+}
+
+.commit-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--adhub-muted);
+    font-size: 13px;
+}
+
+.spinner-small {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(139, 92, 246, 0.3);
+    border-top-color: var(--adhub-primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.commit-details {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.commit-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+}
+
+.commit-label {
+    color: var(--adhub-muted);
+    min-width: 120px;
+}
+
+.commit-id {
+    font-family: 'Consolas', 'Monaco', monospace;
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--adhub-primary);
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.commit-message {
+    color: var(--adhub-text);
+    font-style: italic;
+}
+
+/* ============================================================================
+   Download Progress - Progress bar pro stahovani
+   ============================================================================ */
+
+.download-progress {
+    margin-top: 16px;
+}
+
+#downloadProgressText {
+    display: block;
+    text-align: center;
+    color: var(--adhub-muted);
+    font-size: 13px;
+    margin-top: 8px;
+}
+
+/* ============================================================================
+   Success Icon SVG
+   ============================================================================ */
+
+.success-icon svg {
+    color: var(--adhub-success);
+}
+
+/* ============================================================================
+   Hero Icon SVG
+   ============================================================================ */
+
+.hero-icon svg {
+    filter: drop-shadow(0 10px 25px rgba(139, 92, 246, 0.4));
 }
