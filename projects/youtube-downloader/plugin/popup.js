@@ -236,6 +236,49 @@
     $('#ffmpeg-path')?.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') testTool('ffmpeg');
     });
+
+    // Stahnout instalator
+    $('#download-installer-win')?.addEventListener('click', () => downloadInstaller('windows'));
+    $('#download-installer-unix')?.addEventListener('click', () => downloadInstaller('unix'));
+  }
+
+  // ============================================================================
+  // INSTALATOR - STAZENI
+  // ============================================================================
+
+  async function downloadInstaller(platform) {
+    showToast('Generuji instalator...');
+
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'generateInstaller',
+        platform: platform
+      });
+
+      if (response?.success && response?.content) {
+        // Stahnout soubor
+        const filename = platform === 'windows' ? 'install-all.ps1' : 'install-all.sh';
+        const mimeType = 'text/plain';
+
+        const blob = new Blob([response.content], { type: mimeType });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast(`${filename} stazen!`);
+      } else {
+        showToast(response?.error || 'Chyba pri generovani', true);
+      }
+    } catch (e) {
+      console.error('[Popup] Chyba pri stahovani instalatoru:', e);
+      showToast('Chyba: ' + e.message, true);
+    }
   }
 
   // ============================================================================
