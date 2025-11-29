@@ -785,13 +785,8 @@
         btn.disabled = true;
 
         try {
-          const result = await sendMessage({
-            action: 'downloadVideo',
-            url: url,
-            filename: filename,
-            videoId: state.currentVideoId,
-            itag: itag
-          });
+          // Stazeni primo z content scriptu - mame pristup k YouTube cookies
+          const result = await downloadVideoDirectly(url, filename, state.currentVideoId);
 
           if (result.success) {
             btn.textContent = 'Stazeno!';
@@ -803,9 +798,120 @@
           logError('DOWNLOAD', 'Chyba pri stahovani', error);
           btn.textContent = 'Chyba!';
           btn.style.background = 'rgba(239, 68, 68, 0.2)';
+
+          // Zkusime fallback pres background script
+          log('DOWNLOAD', 'Zkousim fallback pres background...');
+          try {
+            const fallbackResult = await sendMessage({
+              action: 'downloadVideo',
+              url: url,
+              filename: filename,
+              videoId: state.currentVideoId,
+              itag: itag
+            });
+
+            if (fallbackResult.success) {
+              btn.textContent = 'Stazeno!';
+              btn.style.background = 'rgba(34, 197, 94, 0.2)';
+            }
+          } catch (fallbackError) {
+            logError('DOWNLOAD', 'Fallback take selhal', fallbackError);
+          }
         }
       });
     });
+  }
+
+  // ============================================================================
+  // DOWNLOAD VIDEO DIRECTLY - Stazeni videa primo z content scriptu
+  // ============================================================================
+
+  async function downloadVideoDirectly(url, filename, videoId) {
+    log('DIRECT_DOWNLOAD', 'Zacinam prime stahovani', { filename, videoId });
+
+    try {
+      // Krok 1: Fetch video s YouTube kontextem (cookies, session)
+      log('DIRECT_DOWNLOAD', 'Krok 1: Stahuji video data...');
+
+      const response = await fetch(url, {
+        method: 'GET',
+        credentials: 'include', // Zahrnout YouTube cookies
+        headers: {
+          'Accept': '*/*',
+          'Accept-Language': 'cs,en;q=0.9',
+          'Range': 'bytes=0-' // Dulezite pro streaming video
+        }
+      });
+
+      log('DIRECT_DOWNLOAD', `Krok 2: Response status: ${response.status}`);
+
+      if (!response.ok && response.status !== 206) {
+        throw new Error(`HTTP error: ${response.status}`);
+      }
+
+      // Krok 2: Cist data jako blob
+      log('DIRECT_DOWNLOAD', 'Krok 3: Ctu response jako blob...');
+      const blob = await response.blob();
+      log('DIRECT_DOWNLOAD', `Krok 4: Blob vytvoren (${blob.size} bytes, typ: ${blob.type})`);
+
+      if (blob.size === 0) {
+        throw new Error('Stazeny soubor je prazdny');
+      }
+
+      // Krok 3: Vytvorit object URL a stahnout
+      log('DIRECT_DOWNLOAD', 'Krok 5: Vytvaram download link...');
+      const objectUrl = URL.createObjectURL(blob);
+
+      // Pouzit chrome.downloads pres background script
+      const downloadResult = await sendMessage({
+        action: 'saveBlob',
+        blobUrl: objectUrl,
+        filename: filename
+      });
+
+      // Cleanup
+      setTimeout(() => {
+        URL.revokeObjectURL(objectUrl);
+        log('DIRECT_DOWNLOAD', 'Object URL uvolneno');
+      }, 60000); // Drzet URL 60 sekund pro stahovani
+
+      if (!downloadResult.success) {
+        // Fallback: stahnout pres <a> element
+        log('DIRECT_DOWNLOAD', 'Background download selhal, zkousim <a> tag fallback');
+        return await downloadViaAnchor(objectUrl, filename);
+      }
+
+      log('DIRECT_DOWNLOAD', 'Stahovani uspesne spusteno');
+      return { success: true };
+
+    } catch (error) {
+      logError('DIRECT_DOWNLOAD', 'Chyba', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  // ============================================================================
+  // DOWNLOAD VIA ANCHOR - Fallback stahovani pres <a> tag
+  // ============================================================================
+
+  async function downloadViaAnchor(blobUrl, filename) {
+    log('ANCHOR_DOWNLOAD', 'Stahuji pres <a> element');
+
+    try {
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      log('ANCHOR_DOWNLOAD', 'Download spusten');
+      return { success: true };
+    } catch (error) {
+      logError('ANCHOR_DOWNLOAD', 'Chyba', error);
+      return { success: false, error: error.message };
+    }
   }
 
   // ============================================================================

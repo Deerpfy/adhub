@@ -63,6 +63,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       handleDownloadVideo(request, sendResponse);
       return true;
 
+    case 'saveBlob':
+      handleSaveBlob(request, sendResponse, sender);
+      return true;
+
     case 'checkStatus':
       handleCheckStatus(sendResponse);
       return true;
@@ -522,6 +526,49 @@ async function handleDownloadVideo(request, sendResponse) {
 
   } catch (error) {
     logError('DOWNLOAD', 'Chyba pri stahovani', error);
+    sendResponse({
+      success: false,
+      error: error.message
+    });
+  }
+}
+
+// ============================================================================
+// HANDLER: Save Blob - Ulozeni blobu z content scriptu
+// ============================================================================
+
+async function handleSaveBlob(request, sendResponse, sender) {
+  const { blobUrl, filename } = request;
+  log('SAVE_BLOB', 'Ukladam blob z content scriptu', { filename });
+
+  try {
+    // Stahnout pres chrome.downloads API
+    const downloadId = await chrome.downloads.download({
+      url: blobUrl,
+      filename: filename,
+      saveAs: false,
+      conflictAction: 'uniquify'
+    });
+
+    log('SAVE_BLOB', `Stahovani spusteno, ID: ${downloadId}`);
+
+    // Listener pro cleanup
+    chrome.downloads.onChanged.addListener(function cleanup(delta) {
+      if (delta.id === downloadId && delta.state) {
+        if (delta.state.current === 'complete' || delta.state.current === 'interrupted') {
+          log('SAVE_BLOB', `Stahovani dokonceno`);
+          chrome.downloads.onChanged.removeListener(cleanup);
+        }
+      }
+    });
+
+    sendResponse({
+      success: true,
+      downloadId: downloadId
+    });
+
+  } catch (error) {
+    logError('SAVE_BLOB', 'Chyba pri ukladani', error);
     sendResponse({
       success: false,
       error: error.message
