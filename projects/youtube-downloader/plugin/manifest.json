@@ -57,6 +57,10 @@
     {
       "resources": ["icons/*"],
       "matches": ["https://www.youtube.com/*", "https://youtube.com/*"]
+    },
+    {
+      "resources": ["page-downloader.js"],
+      "matches": ["https://www.youtube.com/*", "https://youtube.com/*"]
     }
   ]
 }
