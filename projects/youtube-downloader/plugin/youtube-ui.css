@@ -1,6 +1,7 @@
 /**
- * AdHub YouTube Downloader v4.0 - YouTube UI Styles
+ * AdHub YouTube Downloader v5.0 - YouTube UI Styles
  * Styly pro injektované UI přímo na YouTube stránce
+ * Obsahuje server indikátor a podporu pro více formátů
  */
 
 /* ============================================================================
@@ -391,4 +392,87 @@ ytd-menu-renderer #adhub-download-container {
 #actions.ytd-watch-metadata,
 #top-level-buttons-computed {
   overflow: visible !important;
+}
+
+/* ============================================================================
+   SERVER INDICATOR
+   ============================================================================ */
+
+.adhub-server-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 4px;
+}
+
+.adhub-server-on {
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+  animation: adhub-pulse-green 2s infinite;
+}
+
+.adhub-server-off {
+  background: #6b7280;
+}
+
+@keyframes adhub-pulse-green {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
+/* ============================================================================
+   AUDIO FORMAT BUTTONS
+   ============================================================================ */
+
+.adhub-format-audio {
+  background: linear-gradient(135deg, #3f3f3f 0%, #2a4a3a 100%);
+}
+
+.adhub-format-audio:hover {
+  background: linear-gradient(135deg, #4f4f4f 0%, #3a5a4a 100%);
+}
+
+.adhub-format-direct {
+  background: linear-gradient(135deg, #3f3f3f 0%, #3a3a4a 100%);
+}
+
+.adhub-format-direct:hover {
+  background: linear-gradient(135deg, #4f4f4f 0%, #4a4a5a 100%);
+}
+
+/* ============================================================================
+   SERVER NOTICE
+   ============================================================================ */
+
+.adhub-server-notice {
+  margin-top: 12px;
+  padding: 12px;
+  background: #1f1f1f;
+  border-radius: 8px;
+  border-left: 3px solid #f59e0b;
+}
+
+.adhub-server-notice p {
+  margin: 0 0 8px 0;
+  font-size: 12px;
+  color: #fcd34d;
+}
+
+.adhub-server-notice code {
+  display: block;
+  background: #0f0f0f;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 12px;
+  color: #22c55e;
+}
+
+/* ============================================================================
+   NOTIFICATION WARNING
+   ============================================================================ */
+
+.adhub-notification-warning {
+  border-left: 4px solid #f59e0b;
 }

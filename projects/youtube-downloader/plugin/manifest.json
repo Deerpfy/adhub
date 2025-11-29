@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AdHub YouTube Downloader",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "description": "Stahujte YouTube videa přímo v prohlížeči jedním kliknutím. Tlačítko přímo pod videem.",
   "author": "AdHub",
   "icons": {
@@ -32,7 +32,9 @@
     "https://m.youtube.com/*",
     "https://*.googlevideo.com/*",
     "https://*.ytimg.com/*",
-    "https://*.youtube.com/*"
+    "https://*.youtube.com/*",
+    "http://127.0.0.1:8765/*",
+    "http://localhost:8765/*"
   ],
   "content_scripts": [
     {
