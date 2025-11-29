@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "AdHub Youtube Downloader",
-  "version": "3.0.0",
-  "description": "Rychlý přístup ke stažení YouTube videí přes Cobalt.tools. Zobrazí info o videu a otevře stahování.",
+  "name": "AdHub YouTube Downloader",
+  "version": "4.0.0",
+  "description": "Stahujte YouTube videa přímo v prohlížeči jedním kliknutím. Tlačítko přímo pod videem.",
   "author": "AdHub",
   "icons": {
     "16": "icons/icon16.png",
@@ -18,17 +18,42 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "YouTube Downloader - Stáhnout video"
+    "default_title": "YouTube Downloader"
   },
   "permissions": [
-    "activeTab"
+    "activeTab",
+    "storage",
+    "downloads",
+    "scripting"
   ],
   "host_permissions": [
     "https://www.youtube.com/*",
     "https://youtube.com/*",
-    "https://*.ytimg.com/*"
+    "https://m.youtube.com/*",
+    "https://*.googlevideo.com/*",
+    "https://*.ytimg.com/*",
+    "https://*.youtube.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://youtube.com/*",
+        "https://m.youtube.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["youtube-ui.css"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
   ],
   "background": {
     "service_worker": "background.js"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["youtube-ui.css", "icons/*"],
+      "matches": ["https://www.youtube.com/*", "https://youtube.com/*"]
+    }
+  ]
 }

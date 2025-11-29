@@ -1,10 +1,5 @@
 /**
- * AdHub Youtube Downloader - Popup Script v3.0
- *
- * Jednoduchý a upřímný popup:
- * 1. Načte info o videu (metadata)
- * 2. Nabídne stažení přes Cobalt.tools
- * 3. Vysvětlí proč přímé stahování nefunguje
+ * AdHub YouTube Downloader v4.0 - Popup Script
  */
 
 (function() {
@@ -16,52 +11,80 @@
 
   const elements = {
     version: document.getElementById('version'),
+    statusSection: document.getElementById('statusSection'),
     videoInput: document.getElementById('videoInput'),
-    fetchBtn: document.getElementById('fetchBtn'),
+    goBtn: document.getElementById('goBtn'),
     loading: document.getElementById('loading'),
     error: document.getElementById('error'),
     videoCard: document.getElementById('videoCard'),
     thumbnail: document.getElementById('thumbnail'),
     videoTitle: document.getElementById('videoTitle'),
-    videoAuthor: document.getElementById('videoAuthor'),
-    cobaltBtn: document.getElementById('cobaltBtn'),
-    copyUrlBtn: document.getElementById('copyUrlBtn'),
-    techToggle: document.getElementById('techToggle'),
-    techContent: document.getElementById('techContent')
-  };
-
-  // ============================================================================
-  // STATE
-  // ============================================================================
-
-  const state = {
-    currentVideoId: null,
-    videoTitle: ''
+    videoAuthor: document.getElementById('videoAuthor')
   };
 
   // ============================================================================
   // INIT
   // ============================================================================
 
-  function init() {
+  async function init() {
     console.log('[Popup] Inicializace');
 
     // Nastavení verze
     const manifest = chrome.runtime.getManifest();
-    elements.version.textContent = `v${manifest.version}`;
+    if (elements.version) {
+      elements.version.textContent = `v${manifest.version}`;
+    }
 
     // Event listeners
-    elements.fetchBtn.addEventListener('click', handleFetch);
-    elements.videoInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') handleFetch();
-    });
+    if (elements.goBtn) {
+      elements.goBtn.addEventListener('click', handleGo);
+    }
 
-    elements.cobaltBtn.addEventListener('click', handleCobaltClick);
-    elements.copyUrlBtn.addEventListener('click', handleCopyUrl);
-    elements.techToggle.addEventListener('click', toggleTechInfo);
+    if (elements.videoInput) {
+      elements.videoInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleGo();
+      });
+    }
 
-    // Automaticky načíst pokud jsme na YouTube
+    // Kontrola stavu
+    await checkStatus();
+
+    // Zkontrolovat aktuální tab
     checkCurrentTab();
+  }
+
+  // ============================================================================
+  // CHECK STATUS
+  // ============================================================================
+
+  async function checkStatus() {
+    try {
+      const response = await chrome.runtime.sendMessage({ action: 'ping' });
+
+      if (response?.success) {
+        updateStatus(true, 'Plugin aktivní - Přímé stahování povoleno');
+      } else {
+        updateStatus(false, 'Plugin není aktivní');
+      }
+    } catch (error) {
+      console.error('[Popup] Chyba při kontrole stavu:', error);
+      updateStatus(false, 'Chyba komunikace s pluginem');
+    }
+  }
+
+  function updateStatus(isActive, text) {
+    if (!elements.statusSection) return;
+
+    const statusText = elements.statusSection.querySelector('.status-text');
+    if (statusText) {
+      statusText.innerHTML = `<strong>${text}</strong>`;
+    }
+
+    if (isActive) {
+      elements.statusSection.classList.remove('error');
+    } else {
+      elements.statusSection.classList.add('error');
+    }
   }
 
   // ============================================================================
@@ -71,11 +94,12 @@
   async function checkCurrentTab() {
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (tab?.url) {
+
+      if (tab?.url && isYouTubeUrl(tab.url)) {
         const videoId = extractVideoId(tab.url);
         if (videoId) {
-          elements.videoInput.value = videoId;
-          handleFetch();
+          elements.videoInput.value = tab.url;
+          loadVideoInfo(videoId);
         }
       }
     } catch (e) {
@@ -84,172 +108,102 @@
   }
 
   // ============================================================================
-  // EXTRACT VIDEO ID
+  // HANDLE GO BUTTON
   // ============================================================================
 
-  function extractVideoId(input) {
-    if (!input) return null;
-
-    // Přímo Video ID (11 znaků)
-    if (/^[a-zA-Z0-9_-]{11}$/.test(input.trim())) {
-      return input.trim();
-    }
-
-    try {
-      const url = new URL(input);
-
-      // youtube.com/watch?v=XXX
-      if (url.hostname.includes('youtube.com') && url.pathname === '/watch') {
-        return url.searchParams.get('v');
-      }
-
-      // youtu.be/XXX
-      if (url.hostname === 'youtu.be') {
-        return url.pathname.substring(1);
-      }
-
-      // youtube.com/shorts/XXX
-      const shortsMatch = url.pathname.match(/\/shorts\/([a-zA-Z0-9_-]+)/);
-      if (shortsMatch) return shortsMatch[1];
-
-      // youtube.com/embed/XXX
-      const embedMatch = url.pathname.match(/\/embed\/([a-zA-Z0-9_-]+)/);
-      if (embedMatch) return embedMatch[1];
-
-    } catch (e) {}
-
-    return null;
-  }
-
-  // ============================================================================
-  // HANDLE FETCH
-  // ============================================================================
-
-  async function handleFetch() {
+  async function handleGo() {
     const input = elements.videoInput.value.trim();
 
     if (!input) {
-      showError('Zadejte YouTube URL nebo Video ID');
+      showError('Zadejte YouTube URL');
       return;
     }
-
-    const videoId = extractVideoId(input);
-    if (!videoId) {
-      showError('Neplatná YouTube URL nebo Video ID');
-      return;
-    }
-
-    console.log('[Popup] Načítám video:', videoId);
 
     hideError();
-    elements.videoCard.classList.remove('visible');
+
+    // Pokud je to YouTube URL, otevřít stránku
+    if (isYouTubeUrl(input)) {
+      chrome.tabs.create({ url: input });
+      window.close();
+      return;
+    }
+
+    // Pokud je to video ID, vytvořit URL
+    if (isVideoId(input)) {
+      chrome.tabs.create({ url: `https://www.youtube.com/watch?v=${input}` });
+      window.close();
+      return;
+    }
+
+    showError('Neplatná YouTube URL nebo Video ID');
+  }
+
+  // ============================================================================
+  // LOAD VIDEO INFO
+  // ============================================================================
+
+  async function loadVideoInfo(videoId) {
     elements.loading.classList.add('visible');
-    elements.fetchBtn.disabled = true;
+    elements.videoCard.classList.remove('visible');
 
     try {
-      // Získat info o videu přes background script
-      const response = await sendMessage({
+      const response = await chrome.runtime.sendMessage({
         action: 'getVideoInfo',
         videoId: videoId
       });
 
-      if (!response.success) {
-        throw new Error(response.error || 'Nelze získat informace o videu');
+      if (response?.success) {
+        elements.thumbnail.src = response.thumbnail;
+        elements.thumbnail.onerror = () => {
+          elements.thumbnail.src = `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg`;
+        };
+        elements.videoTitle.textContent = response.title || 'Neznámý název';
+        elements.videoAuthor.textContent = response.author || '';
+
+        elements.videoCard.classList.add('visible');
+      }
+    } catch (error) {
+      console.error('[Popup] Chyba při načítání info:', error);
+    } finally {
+      elements.loading.classList.remove('visible');
+    }
+  }
+
+  // ============================================================================
+  // HELPERS
+  // ============================================================================
+
+  function isYouTubeUrl(url) {
+    try {
+      const urlObj = new URL(url);
+      return urlObj.hostname.includes('youtube.com') || urlObj.hostname === 'youtu.be';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function isVideoId(str) {
+    return /^[a-zA-Z0-9_-]{11}$/.test(str);
+  }
+
+  function extractVideoId(url) {
+    try {
+      const urlObj = new URL(url);
+
+      if (urlObj.searchParams.has('v')) {
+        return urlObj.searchParams.get('v');
       }
 
-      // Uložit stav
-      state.currentVideoId = videoId;
-      state.videoTitle = response.title;
+      if (urlObj.hostname === 'youtu.be') {
+        return urlObj.pathname.substring(1);
+      }
 
-      // Zobrazit info
-      elements.thumbnail.src = response.thumbnail;
-      elements.thumbnail.onerror = () => {
-        elements.thumbnail.src = response.thumbnailMedium || `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-      };
-      elements.videoTitle.textContent = response.title;
-      elements.videoAuthor.textContent = response.author;
+      const shortsMatch = urlObj.pathname.match(/\/shorts\/([a-zA-Z0-9_-]+)/);
+      if (shortsMatch) return shortsMatch[1];
 
-      elements.loading.classList.remove('visible');
-      elements.videoCard.classList.add('visible');
-
-    } catch (error) {
-      console.error('[Popup] Chyba:', error);
-      showError(error.message);
-      elements.loading.classList.remove('visible');
-    } finally {
-      elements.fetchBtn.disabled = false;
-    }
+    } catch (e) {}
+    return null;
   }
-
-  // ============================================================================
-  // HANDLE COBALT CLICK
-  // ============================================================================
-
-  function handleCobaltClick() {
-    if (!state.currentVideoId) return;
-
-    const youtubeUrl = `https://www.youtube.com/watch?v=${state.currentVideoId}`;
-    const cobaltUrl = `https://cobalt.tools/?url=${encodeURIComponent(youtubeUrl)}`;
-
-    console.log('[Popup] Otevírám Cobalt:', cobaltUrl);
-    chrome.tabs.create({ url: cobaltUrl });
-  }
-
-  // ============================================================================
-  // HANDLE COPY URL
-  // ============================================================================
-
-  async function handleCopyUrl() {
-    if (!state.currentVideoId) return;
-
-    const url = `https://www.youtube.com/watch?v=${state.currentVideoId}`;
-
-    try {
-      await navigator.clipboard.writeText(url);
-
-      // Změnit text tlačítka
-      const btnText = elements.copyUrlBtn.querySelector('span:last-child');
-      const originalText = btnText.textContent;
-      btnText.textContent = '✓ Zkopírováno!';
-
-      setTimeout(() => {
-        btnText.textContent = originalText;
-      }, 2000);
-
-    } catch (e) {
-      console.error('[Popup] Chyba při kopírování:', e);
-    }
-  }
-
-  // ============================================================================
-  // TOGGLE TECH INFO
-  // ============================================================================
-
-  function toggleTechInfo() {
-    const isVisible = elements.techContent.classList.toggle('visible');
-    const arrow = elements.techToggle.querySelector('span');
-    arrow.textContent = isVisible ? '▼' : '▶';
-  }
-
-  // ============================================================================
-  // SEND MESSAGE TO BACKGROUND
-  // ============================================================================
-
-  function sendMessage(message) {
-    return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage(message, (response) => {
-        if (chrome.runtime.lastError) {
-          reject(new Error(chrome.runtime.lastError.message));
-        } else {
-          resolve(response);
-        }
-      });
-    });
-  }
-
-  // ============================================================================
-  // ERROR HANDLING
-  // ============================================================================
 
   function showError(message) {
     elements.error.textContent = message;
