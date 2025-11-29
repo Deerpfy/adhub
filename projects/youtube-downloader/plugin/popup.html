@@ -497,55 +497,56 @@
 
     <!-- HELP TAB -->
     <div class="tab-content" id="tab-help">
-      <div class="instructions">
-        <div class="instructions-title">Instalace yt-dlp:</div>
-        <div class="instruction-step">
-          <div class="step-number">1</div>
-          <div class="step-text">
-            <strong>Windows:</strong> Stahnete z <a href="https://github.com/yt-dlp/yt-dlp/releases" target="_blank">github.com/yt-dlp</a>
-          </div>
+      <!-- AUTOMATICKA INSTALACE -->
+      <div class="settings-group" style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05)); border: 1px solid rgba(34, 197, 94, 0.3);">
+        <div class="settings-title" style="color: #4ade80;">
+          <span class="icon">🚀</span>
+          Automaticka instalace (doporuceno)
         </div>
-        <div class="instruction-step">
-          <div class="step-number">2</div>
-          <div class="step-text">
-            <strong>macOS:</strong> <code>brew install yt-dlp</code>
-          </div>
+        <p style="font-size: 12px; color: #a0a0a0; margin-bottom: 12px; line-height: 1.5;">
+          Stahne a nainstaluje yt-dlp, ffmpeg a Native Host automaticky. Staci spustit skript a restartovat prohlizec.
+        </p>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" id="download-installer-win" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span>🪟</span> Windows
+          </button>
+          <button class="btn btn-primary" id="download-installer-unix" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span>🐧</span> Linux/Mac
+          </button>
         </div>
-        <div class="instruction-step">
-          <div class="step-number">3</div>
-          <div class="step-text">
-            <strong>Linux:</strong> <code>pip install yt-dlp</code>
-          </div>
-        </div>
+        <p style="font-size: 11px; color: #666; margin-top: 8px;">
+          Windows: Spustte PowerShell jako admin, pak: <code style="color: #4ade80;">.\install-all.ps1</code><br>
+          Linux/Mac: <code style="color: #4ade80;">chmod +x install-all.sh && ./install-all.sh</code>
+        </p>
       </div>
 
       <div class="instructions">
-        <div class="instructions-title">Instalace FFmpeg:</div>
+        <div class="instructions-title">Manualni instalace:</div>
         <div class="instruction-step">
           <div class="step-number">1</div>
           <div class="step-text">
-            <strong>Windows:</strong> Stahnete z <a href="https://ffmpeg.org/download.html" target="_blank">ffmpeg.org</a>
+            <strong>yt-dlp:</strong> <a href="https://github.com/yt-dlp/yt-dlp/releases" target="_blank">github.com/yt-dlp</a>
           </div>
         </div>
         <div class="instruction-step">
           <div class="step-number">2</div>
           <div class="step-text">
-            <strong>macOS:</strong> <code>brew install ffmpeg</code>
+            <strong>ffmpeg:</strong> <a href="https://ffmpeg.org/download.html" target="_blank">ffmpeg.org</a>
           </div>
         </div>
         <div class="instruction-step">
           <div class="step-number">3</div>
           <div class="step-text">
-            <strong>Linux:</strong> <code>sudo apt install ffmpeg</code>
+            Spustte install skript z native-host slozky
           </div>
         </div>
       </div>
 
       <div class="info-box">
         <strong>Po instalaci:</strong><br>
-        1. Spustte instalacni skript z native-host slozky<br>
-        2. Zadejte cesty v Nastaveni<br>
-        3. Restartujte prohlizec
+        1. Restartujte prohlizec<br>
+        2. Cesty by mely byt detekovany automaticky<br>
+        3. Pokud ne, zadejte je rucne v Nastaveni
       </div>
     </div>
   </div>
