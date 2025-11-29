@@ -489,58 +489,39 @@
 
     log('BUTTON', 'Hledam misto pro tlacitko');
 
-    // Najdeme tlacitko Sdilet (Share) - vlozime nas button pred nej
-    const shareButtonSelectors = [
-      'ytd-watch-metadata button[aria-label*="Sdílet"]',
-      'ytd-watch-metadata button[aria-label*="Share"]',
-      'ytd-watch-metadata ytd-button-renderer:has(button[aria-label*="Sdílet"])',
-      'ytd-watch-metadata ytd-button-renderer:has(button[aria-label*="Share"])',
-      '#top-level-buttons-computed ytd-button-renderer:nth-child(1)', // Fallback - prvni tlacitko
-      'ytd-menu-renderer ytd-button-renderer:nth-child(1)'
+    // Primarni kontejner pro tlacitka - YTD akce
+    const containerSelectors = [
+      '#top-level-buttons-computed',
+      'ytd-watch-metadata #actions #top-level-buttons-computed',
+      'ytd-watch-metadata #actions-inner #top-level-buttons-computed',
+      '#actions #top-level-buttons-computed',
+      'ytd-menu-renderer #top-level-buttons-computed',
+      '#info #menu-container #top-level-buttons-computed',
+      // Fallback pro starsi layout
+      'ytd-video-primary-info-renderer #top-level-buttons-computed',
+      '#menu-container ytd-menu-renderer'
     ];
 
-    let shareButton = null;
-    for (const selector of shareButtonSelectors) {
-      shareButton = document.querySelector(selector);
-      if (shareButton) {
-        log('BUTTON', `Share tlacitko nalezeno: ${selector}`);
+    let container = null;
+    for (const selector of containerSelectors) {
+      container = document.querySelector(selector);
+      if (container && container.children.length > 0) {
+        log('BUTTON', `Kontejner nalezen: ${selector}`);
         break;
       }
     }
 
-    if (!shareButton) {
-      // Fallback - najdeme kontejner a vlozime na zacatek
-      const containerSelectors = [
-        'ytd-watch-metadata #actions-inner',
-        'ytd-watch-metadata #top-level-buttons-computed',
-        '#top-level-buttons-computed'
-      ];
-
-      let container = null;
-      for (const selector of containerSelectors) {
-        container = document.querySelector(selector);
-        if (container) {
-          log('BUTTON', `Fallback kontejner nalezen: ${selector}`);
-          break;
+    if (!container) {
+      log('BUTTON', 'Kontejner nenalezen, cekam na DOM...');
+      waitForElement(containerSelectors, (foundContainer) => {
+        if (foundContainer && !state.buttonInserted) {
+          insertButtonIntoContainer(foundContainer);
         }
-      }
-
-      if (!container) {
-        log('BUTTON', 'Kontejner nenalezen, zkousim znovu za chvili');
-        waitForElement(containerSelectors, (foundContainer) => {
-          if (foundContainer && !state.buttonInserted) {
-            insertButtonIntoContainer(foundContainer, null);
-          }
-        });
-        return;
-      }
-
-      insertButtonIntoContainer(container, null);
+      });
       return;
     }
 
-    // Vlozime pred Share tlacitko
-    insertButtonIntoContainer(shareButton.parentElement, shareButton);
+    insertButtonIntoContainer(container);
   }
 
   // ============================================================================
@@ -581,7 +562,7 @@
   // INSERT BUTTON INTO CONTAINER - Vlozeni tlacitka do kontejneru
   // ============================================================================
 
-  function insertButtonIntoContainer(container, insertBefore = null) {
+  function insertButtonIntoContainer(container) {
     // Kontrola, ze tlacitko uz neexistuje
     if (document.querySelector('.adhub-download-btn')) {
       log('BUTTON', 'Tlacitko uz existuje na strance');
@@ -605,14 +586,9 @@
       openDownloadModal();
     });
 
-    if (insertBefore && insertBefore.parentElement === container) {
-      container.insertBefore(button, insertBefore);
-      log('BUTTON', 'Tlacitko vlozeno pred Share');
-    } else {
-      // Vlozit na zacatek kontejneru
-      container.insertBefore(button, container.firstChild);
-      log('BUTTON', 'Tlacitko vlozeno na zacatek kontejneru');
-    }
+    // Vlozit na zacatek kontejneru (pred ostatni tlacitka)
+    container.insertBefore(button, container.firstChild);
+    log('BUTTON', 'Tlacitko vlozeno na zacatek kontejneru');
 
     state.buttonInserted = true;
     log('BUTTON', 'Tlacitko uspesne vlozeno');
