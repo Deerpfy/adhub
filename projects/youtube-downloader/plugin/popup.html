@@ -441,6 +441,49 @@
     .method-error-item:last-child {
       border-bottom: none;
     }
+
+    .fallback-section {
+      display: none;
+      margin-top: 16px;
+      padding: 16px;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .fallback-section.visible {
+      display: block;
+    }
+
+    .fallback-title {
+      font-size: 13px;
+      color: #3b82f6;
+      margin-bottom: 12px;
+      font-weight: 500;
+    }
+
+    .fallback-btn {
+      display: block;
+      width: 100%;
+      margin-bottom: 8px;
+      font-size: 13px;
+      padding: 10px 16px;
+    }
+
+    .cobalt-btn {
+      background: linear-gradient(135deg, #3b82f6, #2563eb);
+    }
+
+    .copy-url-btn {
+      background: linear-gradient(135deg, #6366f1, #4f46e5);
+    }
+
+    .fallback-note {
+      font-size: 11px;
+      color: #666;
+      margin-top: 8px;
+    }
   </style>
 </head>
 <body>
@@ -499,6 +542,20 @@
         </div>
         <div class="tab-content" id="tab-audio">
           <div class="formats-grid" id="formats-audio"></div>
+        </div>
+      </div>
+
+      <!-- Fallback options when downloads fail -->
+      <div class="fallback-section" id="fallbackSection">
+        <div class="fallback-title">Alternativní možnosti stažení:</div>
+        <button class="btn fallback-btn cobalt-btn" id="openCobaltBtn">
+          🌐 Otevřít v Cobalt.tools
+        </button>
+        <button class="btn fallback-btn copy-url-btn" id="copyUrlBtn">
+          📋 Kopírovat YouTube URL
+        </button>
+        <div class="fallback-note">
+          Cobalt.tools je webová aplikace pro stahování videí
         </div>
       </div>
     </div>

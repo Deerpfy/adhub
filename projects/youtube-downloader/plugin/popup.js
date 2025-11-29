@@ -60,7 +60,11 @@
     methodInfo: document.getElementById('methodInfo'),
     methodBadge: document.getElementById('methodBadge'),
     methodDetailsBtn: document.getElementById('methodDetailsBtn'),
-    methodErrors: document.getElementById('methodErrors')
+    methodErrors: document.getElementById('methodErrors'),
+    // Fallback elements
+    fallbackSection: document.getElementById('fallbackSection'),
+    openCobaltBtn: document.getElementById('openCobaltBtn'),
+    copyUrlBtn: document.getElementById('copyUrlBtn')
   };
 
   // ============================================================================
@@ -298,7 +302,7 @@
     const methodNames = {
       'cobalt': 'Cobalt API',
       'invidious': 'Invidious',
-      'direct': 'Primá extrakce',
+      'direct': 'Přímá extrakce',
       'unknown': 'Neznámá'
     };
 
@@ -308,7 +312,7 @@
 
     // Zobrazit varovani pro direct metodu
     if (method === 'direct') {
-      badge.title = 'Varovani: Primá extrakce nemusí fungovat spolehlivě';
+      badge.title = 'Varovani: Přímá extrakce nemusí fungovat spolehlivě';
     } else {
       badge.title = '';
     }
@@ -327,6 +331,44 @@
     // Nastavit event listener pro details button
     elements.methodDetailsBtn.onclick = () => {
       elements.methodErrors.classList.toggle('visible');
+    };
+
+    // Zobrazit fallback sekci pokud metoda je 'direct' (nespolehlivá) nebo došlo k chybám
+    if (method === 'direct' || (errors && errors.length > 0)) {
+      elements.fallbackSection.classList.add('visible');
+      setupFallbackButtons();
+    } else {
+      elements.fallbackSection.classList.remove('visible');
+    }
+  }
+
+  // ============================================================================
+  // SETUP FALLBACK BUTTONS - Nastavení tlačítek pro alternativní stažení
+  // ============================================================================
+
+  function setupFallbackButtons() {
+    const videoId = state.currentVideoId;
+    if (!videoId) return;
+
+    const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    const cobaltUrl = `https://cobalt.tools/?url=${encodeURIComponent(youtubeUrl)}`;
+
+    // Open in Cobalt button
+    elements.openCobaltBtn.onclick = () => {
+      chrome.tabs.create({ url: cobaltUrl });
+    };
+
+    // Copy URL button
+    elements.copyUrlBtn.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(youtubeUrl);
+        elements.copyUrlBtn.textContent = '✓ URL zkopírována!';
+        setTimeout(() => {
+          elements.copyUrlBtn.textContent = '📋 Kopírovat YouTube URL';
+        }, 2000);
+      } catch (e) {
+        elements.copyUrlBtn.textContent = '✗ Chyba';
+      }
     };
   }
 

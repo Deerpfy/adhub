@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AdHub Youtube Downloader",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "description": "Stahujte YouTube videa ve vsech formatech a kvalitach - MP4, MP3, WAV a dalsi. Pouziva Cobalt, Invidious a primou extrakci.",
   "author": "AdHub",
   "icons": {
