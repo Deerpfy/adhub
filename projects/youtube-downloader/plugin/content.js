@@ -285,23 +285,9 @@
       <span class="adhub-btn-text">Stáhnout</span>
     `;
 
-    // Přidat více event handlerů pro jistotu
-    const handleClick = function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      e.stopImmediatePropagation();
-      console.log('[AdHub YT] *** BUTTON CLICKED ***');
-      toggleDropdown();
-      return false;
-    };
-
-    // Použít mousedown (spustí se dříve než click)
-    btn.addEventListener('mousedown', handleClick, true);
-    btn.addEventListener('click', handleClick, true);
-    btn.onclick = handleClick;
-
-    // Debug - ověřit že tlačítko existuje
-    console.log('[AdHub YT] Tlačítko vytvořeno, handler přidán');
+    // Event handler je na document úrovni (globální)
+    // Zde nepřidáváme žádný - vše řeší globální handler
+    console.log('[AdHub YT] Tlačítko vytvořeno');
 
     const dropdown = document.createElement('div');
     dropdown.id = 'adhub-dropdown';
@@ -366,71 +352,71 @@
       return;
     }
 
-    // Filtrovat pouze progressive formáty (video + audio) pro jednoduchost
-    const downloadableFormats = formats.filter(f => f.type === 'progressive' && f.url);
-
-    // Přidat i nejlepší adaptive video + audio pro vyšší kvality
-    const bestVideo = formats.find(f => f.type === 'adaptive' && f.hasVideo && f.url);
-    const bestAudio = formats.find(f => f.type === 'adaptive' && f.hasAudio && f.url);
-
     let html = '';
 
-    // Progressive formáty (jednoduché stažení)
-    if (downloadableFormats.length > 0) {
-      html += '<div class="adhub-format-group"><div class="adhub-format-group-title">Video + Audio</div>';
-
-      for (const format of downloadableFormats) {
-        const size = format.contentLength ? formatBytes(parseInt(format.contentLength)) : 'neznámá velikost';
+    // 1. Progressive formáty (video + audio v jednom) - nejlepší pro stažení
+    const progressiveFormats = formats.filter(f => f.type === 'progressive' && f.url);
+    if (progressiveFormats.length > 0) {
+      html += '<div class="adhub-format-group"><div class="adhub-format-group-title">Video + Audio (doporučeno)</div>';
+      for (const format of progressiveFormats) {
+        const size = format.contentLength ? formatBytes(parseInt(format.contentLength)) : '';
         const fps = format.fps ? ` ${format.fps}fps` : '';
-
         html += `
           <button class="adhub-format-btn" data-itag="${format.itag}" data-type="progressive">
-            <span class="adhub-format-quality">${format.quality}${fps}</span>
-            <span class="adhub-format-info">${getFormatExtension(format.mimeType)} • ${size}</span>
+            <span class="adhub-format-quality">${format.quality || 'Video'}${fps}</span>
+            <span class="adhub-format-info">${getFormatExtension(format.mimeType)} ${size}</span>
           </button>
         `;
       }
       html += '</div>';
     }
 
-    // Pokud máme adaptive formáty pro vyšší kvality
-    const highQualityVideo = formats.filter(f =>
-      f.type === 'adaptive' && f.hasVideo && f.url && (f.height >= 1080)
-    );
-
-    if (highQualityVideo.length > 0) {
-      html += '<div class="adhub-format-group"><div class="adhub-format-group-title">Vysoká kvalita (pouze video)</div>';
-
-      for (const format of highQualityVideo.slice(0, 3)) {
+    // 2. VŠECHNA adaptive videa (bez omezení na 1080p+)
+    const videoFormats = formats.filter(f => f.type === 'adaptive' && f.hasVideo && f.url);
+    if (videoFormats.length > 0) {
+      html += '<div class="adhub-format-group"><div class="adhub-format-group-title">Pouze video (všechny kvality)</div>';
+      for (const format of videoFormats) {
         const size = format.contentLength ? formatBytes(parseInt(format.contentLength)) : '';
         const fps = format.fps ? ` ${format.fps}fps` : '';
-
+        const codec = format.mimeType?.includes('vp9') ? 'VP9' : format.mimeType?.includes('av01') ? 'AV1' : 'H.264';
         html += `
           <button class="adhub-format-btn" data-itag="${format.itag}" data-type="adaptive-video">
-            <span class="adhub-format-quality">${format.quality}${fps}</span>
-            <span class="adhub-format-info">${getFormatExtension(format.mimeType)} • ${size} • bez zvuku</span>
+            <span class="adhub-format-quality">${format.quality || format.height + 'p'}${fps}</span>
+            <span class="adhub-format-info">${getFormatExtension(format.mimeType)} • ${codec} ${size}</span>
           </button>
         `;
       }
       html += '</div>';
     }
 
-    // Audio only
-    const audioFormats = formats.filter(f =>
-      f.type === 'adaptive' && f.hasAudio && f.url
-    ).slice(0, 2);
-
+    // 3. VŠECHNA audio
+    const audioFormats = formats.filter(f => f.type === 'adaptive' && f.hasAudio && f.url);
     if (audioFormats.length > 0) {
-      html += '<div class="adhub-format-group"><div class="adhub-format-group-title">Pouze audio</div>';
-
+      html += '<div class="adhub-format-group"><div class="adhub-format-group-title">Pouze audio (všechny kvality)</div>';
       for (const format of audioFormats) {
         const size = format.contentLength ? formatBytes(parseInt(format.contentLength)) : '';
-        const quality = format.audioQuality || 'audio';
-
+        const bitrate = format.bitrate ? Math.round(format.bitrate / 1000) + 'kbps' : '';
+        const quality = format.audioQuality || bitrate || 'audio';
         html += `
           <button class="adhub-format-btn" data-itag="${format.itag}" data-type="adaptive-audio">
             <span class="adhub-format-quality">${quality}</span>
-            <span class="adhub-format-info">${getFormatExtension(format.mimeType)} • ${size}</span>
+            <span class="adhub-format-info">${getFormatExtension(format.mimeType)} ${size}</span>
+          </button>
+        `;
+      }
+      html += '</div>';
+    }
+
+    // 4. Šifrované formáty (signatureCipher) - zobrazit ale označit
+    const encryptedFormats = formats.filter(f => !f.url && f.signatureCipher);
+    if (encryptedFormats.length > 0) {
+      html += '<div class="adhub-format-group"><div class="adhub-format-group-title">Šifrované (vyžaduje dešifrování)</div>';
+      for (const format of encryptedFormats.slice(0, 5)) {
+        const quality = format.quality || (format.height ? format.height + 'p' : 'unknown');
+        html += `
+          <button class="adhub-format-btn adhub-format-disabled" data-itag="${format.itag}" data-type="encrypted" disabled>
+            <span class="adhub-format-quality">${quality}</span>
+            <span class="adhub-format-info">🔒 Šifrováno</span>
           </button>
         `;
       }
@@ -438,14 +424,18 @@
     }
 
     if (html === '') {
-      html = '<div class="adhub-error">Žádné dostupné formáty pro přímé stažení.<br>Video může být chráněno.</div>';
+      html = '<div class="adhub-error">Žádné dostupné formáty.<br>Video může být chráněno.</div>';
     }
 
     list.innerHTML = html;
 
-    // Přidat event listenery
-    list.querySelectorAll('.adhub-format-btn').forEach(btn => {
-      btn.addEventListener('click', () => handleFormatClick(btn));
+    // Přidat event listenery na aktivní tlačítka
+    list.querySelectorAll('.adhub-format-btn:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleFormatClick(btn);
+      });
     });
   }
 
@@ -798,26 +788,28 @@
   // GLOBÁLNÍ CLICK HANDLER (záloha)
   // ============================================================================
 
-  // Zachytit kliknutí na document úrovni
+  // Jediný globální handler - pouze click
   document.addEventListener('click', function(e) {
     const target = e.target;
     const btn = target.closest('#adhub-download-btn');
     if (btn) {
-      console.log('[AdHub YT] Globální handler zachytil klik na tlačítko');
+      console.log('[AdHub YT] === CLICK NA TLAČÍTKO ===');
       e.preventDefault();
       e.stopPropagation();
-      toggleDropdown();
-    }
-  }, true);
+      e.stopImmediatePropagation();
 
-  document.addEventListener('mousedown', function(e) {
-    const target = e.target;
-    const btn = target.closest('#adhub-download-btn');
-    if (btn) {
-      console.log('[AdHub YT] Globální mousedown handler');
-      e.preventDefault();
-      e.stopPropagation();
-      toggleDropdown();
+      const dropdown = document.getElementById('adhub-dropdown');
+      if (dropdown) {
+        const isHidden = dropdown.classList.contains('hidden');
+        console.log('[AdHub YT] Dropdown je:', isHidden ? 'skrytý' : 'viditelný');
+
+        if (isHidden) {
+          dropdown.classList.remove('hidden');
+          loadFormatsToDropdown();
+        } else {
+          dropdown.classList.add('hidden');
+        }
+      }
     }
   }, true);
 

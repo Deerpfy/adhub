@@ -215,6 +215,19 @@
   background: #5f5f5f;
 }
 
+.adhub-format-btn.adhub-format-disabled,
+.adhub-format-btn[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #2a2a2a;
+}
+
+.adhub-format-btn.adhub-format-disabled:hover,
+.adhub-format-btn[disabled]:hover {
+  background: #2a2a2a;
+  transform: none;
+}
+
 .adhub-format-quality {
   font-size: 14px;
   font-weight: 500;
