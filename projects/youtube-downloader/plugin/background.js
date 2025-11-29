@@ -105,11 +105,12 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 async function getYouTubeCookies() {
   try {
-    // Ziskat vsechny YouTube cookies
+    // Ziskat vsechny YouTube cookies (vcetne YouTube Music)
     const cookies = await chrome.cookies.getAll({ domain: '.youtube.com' });
+    const musicCookies = await chrome.cookies.getAll({ domain: 'music.youtube.com' });
     const googleCookies = await chrome.cookies.getAll({ domain: '.google.com' });
 
-    const allCookies = [...cookies, ...googleCookies];
+    const allCookies = [...cookies, ...musicCookies, ...googleCookies];
 
     if (allCookies.length === 0) {
       console.log('[AdHub BG] Zadne YouTube cookies nenalezeny');

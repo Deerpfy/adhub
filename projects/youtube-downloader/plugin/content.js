@@ -9,6 +9,7 @@
  * - Bezna videa, Shorts, Embedovana videa
  * - Vekove omezena (s cookies)
  * - Zive prenosy (pouze pres yt-dlp)
+ * - YouTube Music
  */
 
 (function() {
@@ -39,8 +40,9 @@
     bestFormat: null,
     isDownloading: false,
     advancedMode: false,
-    videoType: 'regular', // regular, shorts, live, premiere, unavailable
+    videoType: 'regular', // regular, shorts, live, premiere, music, unavailable
     videoStatus: null,    // playable, age_restricted, private, unavailable
+    isYouTubeMusic: window.location.hostname === 'music.youtube.com',
   };
 
   // ============================================================================
@@ -72,6 +74,7 @@
 
   function detectVideoType() {
     const url = window.location.href;
+    if (state.isYouTubeMusic) return 'music';
     if (url.includes('/shorts/')) return 'shorts';
     if (url.includes('/embed/')) return 'embed';
     if (url.includes('/live/')) return 'live';
@@ -467,26 +470,51 @@
   async function injectButton() {
     if (document.getElementById('adhub-yt-downloader')) return true;
 
-    const selectors = [
-      '#top-level-buttons-computed',
-      'ytd-menu-renderer #top-level-buttons',
-      '#actions ytd-menu-renderer',
-    ];
-
     let target = null;
-    for (const sel of selectors) {
-      target = document.querySelector(sel);
-      if (target) break;
+    let insertMethod = 'append'; // append nebo before
+
+    if (state.isYouTubeMusic) {
+      // YouTube Music selektory
+      const musicSelectors = [
+        'ytmusic-player-bar .middle-controls-buttons',
+        'ytmusic-player-bar .right-controls-buttons',
+        '.ytmusic-player-bar .middle-controls',
+        '.player-controls-container',
+        'ytmusic-player-bar',
+      ];
+
+      for (const sel of musicSelectors) {
+        target = document.querySelector(sel);
+        if (target) break;
+      }
+    } else {
+      // Standardni YouTube selektory
+      const selectors = [
+        '#top-level-buttons-computed',
+        'ytd-menu-renderer #top-level-buttons',
+        '#actions ytd-menu-renderer',
+      ];
+
+      for (const sel of selectors) {
+        target = document.querySelector(sel);
+        if (target) break;
+      }
     }
+
     if (!target) return false;
 
     const button = createDownloadButton();
 
-    const likeBtn = target.querySelector('ytd-segmented-like-dislike-button-renderer, ytd-toggle-button-renderer');
-    if (likeBtn?.nextSibling) {
-      target.insertBefore(button, likeBtn.nextSibling);
-    } else {
+    if (state.isYouTubeMusic) {
+      // Pro YouTube Music vlozit na zacatek nebo konec podle typu targetu
       target.appendChild(button);
+    } else {
+      const likeBtn = target.querySelector('ytd-segmented-like-dislike-button-renderer, ytd-toggle-button-renderer');
+      if (likeBtn?.nextSibling) {
+        target.insertBefore(button, likeBtn.nextSibling);
+      } else {
+        target.appendChild(button);
+      }
     }
 
     setupEventListeners();
@@ -495,7 +523,7 @@
     await checkAdvancedMode();
     updateModeIndicator();
 
-    console.log('[AdHub] Tlacitko injektovano');
+    console.log('[AdHub] Tlacitko injektovano', state.isYouTubeMusic ? '(YouTube Music)' : '');
     return true;
   }
 
@@ -761,7 +789,30 @@
       }
     }, 500);
 
+    // YouTube eventy
     window.addEventListener('yt-navigate-finish', () => setTimeout(handlePageChange, 500));
+
+    // YouTube Music pouziva jine eventy
+    if (state.isYouTubeMusic) {
+      window.addEventListener('yt-page-data-updated', () => setTimeout(handlePageChange, 500));
+
+      // Observer pro zmeny v prehravaci (nova skladba)
+      const observer = new MutationObserver((mutations) => {
+        const newVideoId = getVideoId();
+        if (newVideoId && newVideoId !== state.currentVideoId) {
+          handlePageChange();
+        }
+      });
+
+      // Pozoruj title element pro zmeny skladby
+      const titleObserver = setInterval(() => {
+        const playerBar = document.querySelector('ytmusic-player-bar');
+        if (playerBar) {
+          observer.observe(playerBar, { subtree: true, childList: true, characterData: true });
+          clearInterval(titleObserver);
+        }
+      }, 1000);
+    }
   }
 
   function handlePageChange() {

@@ -616,3 +616,49 @@ ytd-menu-renderer #top-level-buttons,
   color: #aaa;
   word-break: break-word;
 }
+
+/* ============================================================================
+   YOUTUBE MUSIC SPECIFIC STYLES
+   ============================================================================ */
+
+/* YouTube Music ma tmavsi theme */
+:host-context(ytmusic-app) #adhub-yt-downloader,
+ytmusic-app #adhub-yt-downloader {
+  margin-left: 12px;
+  margin-right: 12px;
+}
+
+/* Mensi tlacitko pro player bar */
+ytmusic-player-bar #adhub-yt-downloader .adhub-btn-main {
+  height: 32px;
+  padding: 0 12px 0 10px;
+  font-size: 13px;
+}
+
+ytmusic-player-bar #adhub-yt-downloader .adhub-btn-arrow {
+  height: 32px;
+  width: 24px;
+}
+
+ytmusic-player-bar #adhub-yt-downloader .adhub-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Dropdown pozice pro YouTube Music */
+ytmusic-player-bar .adhub-dropdown {
+  bottom: calc(100% + 8px);
+  top: auto;
+  right: 0;
+}
+
+/* Skryt label na mensich obrazovkach v YT Music */
+ytmusic-player-bar .adhub-btn-label {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  ytmusic-player-bar .adhub-btn-label {
+    display: inline;
+  }
+}
