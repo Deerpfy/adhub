@@ -185,73 +185,72 @@ const DownloadService = {
       instanceErrors: []
     };
 
-    // Cobalt API instance - aktuální verze API
-    // Poznámka: cobalt.tools oficiální API vyžaduje API klíč, používáme veřejné instance
+    // POZNÁMKA: Od listopadu 2024 Cobalt vyžaduje autentizaci (turnstile/API klíč)
+    // Veřejné instance jsou buď vypnuté nebo chráněné
+    // Viz: https://github.com/imputnet/cobalt/discussions/860
+
+    // Zkusíme několik instancí které mohou ještě fungovat bez autentizace
     const cobaltInstances = [
-      { url: 'https://cobalt-api.kwiatekmiki.com/api/json', version: 7 },
-      { url: 'https://cobalt.canine.tools/api/json', version: 7 },
-      { url: 'https://co.wuk.sh/api/json', version: 7 }
+      { url: 'https://api.cobalt.tools', version: 10 },
+      { url: 'https://cobalt.wukko.me/api/json', version: 7 }
     ];
 
     for (const instance of cobaltInstances) {
       try {
         this.log('COBALT', `Zkouším instanci: ${instance.url}`);
 
-        // Cobalt API požadavek - v7 formát (kompatibilní s veřejnými instancemi)
-        const requestBody = {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        // API v10 formát
+        const requestBody = instance.version === 10 ? {
+          url: `https://www.youtube.com/watch?v=${videoId}`,
+          videoQuality: '1080',
+          youtubeVideoCodec: 'h264'
+        } : {
           url: `https://www.youtube.com/watch?v=${videoId}`,
           vCodec: 'h264',
           vQuality: '1080',
-          aFormat: 'mp3',
-          filenamePattern: 'pretty',
-          isAudioOnly: false,
-          isNoTTWatermark: true,
-          isTTFullAudio: false,
-          disableMetadata: false
+          isAudioOnly: false
         };
 
         const response = await fetch(instance.url, {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131.0.0.0'
           },
-          body: JSON.stringify(requestBody)
+          body: JSON.stringify(requestBody),
+          signal: controller.signal
         });
+
+        clearTimeout(timeoutId);
 
         this.log('COBALT', `Response status: ${response.status}`);
 
-        const responseText = await response.text();
-        this.log('COBALT', `Response body: ${responseText.substring(0, 500)}`);
+        if (response.status === 403 || response.status === 401) {
+          result.instanceErrors.push(`${instance.url}: Vyžaduje autentizaci (API klíč/turnstile)`);
+          continue;
+        }
 
         if (!response.ok) {
-          const errMsg = `HTTP ${response.status}: ${responseText.substring(0, 100)}`;
-          result.instanceErrors.push(`${instance.url}: ${errMsg}`);
-          this.log('COBALT', `Instance ${instance.url} selhala: ${errMsg}`);
+          const errorText = await response.text().catch(() => '');
+          result.instanceErrors.push(`${instance.url}: HTTP ${response.status}`);
           continue;
         }
 
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (e) {
-          result.instanceErrors.push(`${instance.url}: Invalid JSON response`);
-          continue;
-        }
-
+        const data = await response.json();
         this.log('COBALT', 'Response data:', data);
 
-        // Cobalt vrací různé statusy
         if (data.status === 'error' || data.error) {
-          const errText = data.error?.code || data.text || JSON.stringify(data.error);
+          const errText = data.error?.code || data.text || 'Unknown error';
           result.instanceErrors.push(`${instance.url}: ${errText}`);
-          this.log('COBALT', `Instance ${instance.url} vrátila error: ${errText}`);
           continue;
         }
 
-        // Úspěšné statusy - v10+ používá jiné názvy
-        if (data.status === 'redirect' || data.status === 'tunnel' ||
-            data.status === 'stream' || data.status === 'success' || data.url) {
+        // Úspěch!
+        if (data.url || data.status === 'redirect' || data.status === 'tunnel' || data.status === 'stream') {
           result.success = true;
           result.formats = {
             combined: {
@@ -262,36 +261,27 @@ const DownloadService = {
                 container: 'mp4',
                 codec: 'h264/aac',
                 type: 'combined',
-                source: 'cobalt',
-                filename: data.filename || `${videoId}.mp4`
+                source: 'cobalt'
               }],
               webm: []
             },
             video: { mp4: [], webm: [] },
             audio: { m4a: [], webm: [] }
           };
-
-          // Pokud Cobalt vrací picker (více možností)
-          if (data.status === 'picker' && data.picker) {
-            result.formats = this.parseCobaltPicker(data.picker, videoId);
-          }
-
-          this.log('COBALT', `Úspěch s instancí ${instance.url}`);
+          this.log('COBALT', `Úspěch!`);
           return result;
         }
 
-        result.instanceErrors.push(`${instance.url}: Unknown status "${data.status}"`);
-        this.log('COBALT', `Instance ${instance.url}: neznámý status ${data.status}`);
+        result.instanceErrors.push(`${instance.url}: Neznámý status "${data.status}"`);
 
       } catch (error) {
-        result.instanceErrors.push(`${instance.url}: ${error.message}`);
-        this.logError('COBALT', `Instance ${instance.url} exception: ${error.message}`);
+        const errMsg = error.name === 'AbortError' ? 'Timeout' : error.message;
+        result.instanceErrors.push(`${instance.url}: ${errMsg}`);
+        this.logError('COBALT', `Instance ${instance.url}: ${errMsg}`);
       }
     }
 
-    result.error = result.instanceErrors.length > 0
-      ? result.instanceErrors.join(' | ')
-      : 'Všechny Cobalt instance selhaly';
+    result.error = 'Cobalt API není dostupné (vyžaduje autentizaci od 11/2024)';
     return result;
   },
 
