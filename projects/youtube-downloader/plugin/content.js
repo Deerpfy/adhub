@@ -1,55 +1,83 @@
 /**
- * AdHub YouTube Downloader v5.0 - Content Script
+ * AdHub YouTube Downloader v5.1 - Content Script
  *
- * Běží přímo na YouTube stránce:
- * - Detekuje lokální server (yt_server.py)
- * - Pokud server běží, používá ho pro všechny formáty a kvality
- * - Fallback na přímé stahování (omezené formáty)
+ * Funkce:
+ * - Tlačítko "Stáhnout" vedle like/dislike
+ * - Dropdown šipka s preferencemi formátu
+ * - Automatická detekce nejvyšší kvality
+ * - Neviditelné stahování na pozadí
+ * - Status bar průběhu
  */
 
 (function() {
   'use strict';
 
-  // Spustit pouze v hlavním okně
   if (window.top !== window.self) return;
+  if (window.__ADHUB_YT_DL_V51__) return;
+  window.__ADHUB_YT_DL_V51__ = true;
 
-  // Prevence dvojité inicializace
-  if (window.__ADHUB_YT_DOWNLOADER_V5__) return;
-  window.__ADHUB_YT_DOWNLOADER_V5__ = true;
-
-  console.log('[AdHub YT] Content script v5.0 načten');
+  console.log('[AdHub] YouTube Downloader v5.1 loaded');
 
   // ============================================================================
   // KONFIGURACE
   // ============================================================================
 
   const CONFIG = {
-    DEBUG: true,
     SERVER_URL: 'http://127.0.0.1:8765',
-    SERVER_CHECK_INTERVAL: 30000,
-    BUTTON_RETRY_INTERVAL: 1000,
-    MAX_BUTTON_RETRIES: 30,
+    BUTTON_SELECTORS: [
+      '#top-level-buttons-computed',
+      'ytd-menu-renderer #top-level-buttons',
+      '#actions ytd-menu-renderer',
+      '#info #menu-container',
+    ],
+    DEFAULT_FORMAT: 'mp4',
+    DEFAULT_QUALITY: 'best', // 'best' = nejvyšší dostupná
   };
 
   // ============================================================================
-  // STAV
+  // STAV APLIKACE
   // ============================================================================
 
   const state = {
-    serverAvailable: false,
+    serverOnline: false,
     currentVideoId: null,
-    videoData: null,
-    formats: null,
-    buttonInjected: false,
-    downloadInProgress: false,
+    videoInfo: null,
+    bestQuality: null,
+    availableQualities: [],
+    preferences: {
+      format: 'mp4',
+      quality: 'best',
+      audioFormat: 'mp3',
+    },
+    isDownloading: false,
+    downloadProgress: 0,
   };
 
   // ============================================================================
-  // LOGGING
+  // UTILITY FUNKCE
   // ============================================================================
 
-  const log = (...args) => CONFIG.DEBUG && console.log('[AdHub YT]', ...args);
-  const logError = (...args) => console.error('[AdHub YT ERROR]', ...args);
+  const log = (...args) => console.log('[AdHub]', ...args);
+  const logError = (...args) => console.error('[AdHub ERROR]', ...args);
+
+  function getVideoId() {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has('v')) return url.searchParams.get('v');
+    const match = url.pathname.match(/\/(shorts|embed)\/([a-zA-Z0-9_-]+)/);
+    return match ? match[2] : null;
+  }
+
+  function formatBytes(bytes) {
+    if (!bytes) return '';
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let i = 0;
+    while (bytes >= 1024 && i < units.length - 1) { bytes /= 1024; i++; }
+    return `${bytes.toFixed(1)} ${units[i]}`;
+  }
+
+  function sanitizeFilename(name) {
+    return name.replace(/[<>:"/\\|?*]/g, '').trim().substring(0, 150);
+  }
 
   // ============================================================================
   // SERVER KOMUNIKACE
@@ -57,169 +85,133 @@
 
   async function checkServer() {
     try {
-      const response = await fetch(`${CONFIG.SERVER_URL}/api/status`, {
-        method: 'GET',
-        mode: 'cors',
-      });
-      const data = await response.json();
-      state.serverAvailable = data.status === 'running' && data.yt_dlp_available;
-      log('Server status:', state.serverAvailable ? 'DOSTUPNÝ' : 'NEDOSTUPNÝ');
-      return state.serverAvailable;
+      const res = await fetch(`${CONFIG.SERVER_URL}/api/status`, { mode: 'cors' });
+      const data = await res.json();
+      state.serverOnline = data.status === 'running' && data.yt_dlp_available;
+      updateServerIndicator();
+      return state.serverOnline;
     } catch (e) {
-      state.serverAvailable = false;
-      log('Server nedostupný:', e.message);
+      state.serverOnline = false;
+      updateServerIndicator();
       return false;
     }
   }
 
-  async function getVideoInfoFromServer(videoId) {
-    if (!state.serverAvailable) return null;
+  async function getVideoInfo(videoId) {
+    if (!state.serverOnline) return null;
 
     try {
-      const url = `${CONFIG.SERVER_URL}/api/info?url=https://www.youtube.com/watch?v=${videoId}`;
-      const response = await fetch(url);
-      const data = await response.json();
+      const res = await fetch(`${CONFIG.SERVER_URL}/api/info?url=https://www.youtube.com/watch?v=${videoId}`);
+      const data = await res.json();
 
       if (data.error) {
         logError('Server error:', data.error);
         return null;
       }
 
-      return data;
-    } catch (e) {
-      logError('Chyba při komunikaci se serverem:', e);
-      return null;
-    }
-  }
-
-  async function downloadFromServer(videoId, formatType, quality, audioFormat) {
-    if (!state.serverAvailable) {
-      showNotification('Server není dostupný. Spusťte yt_server.py', 'error');
-      return null;
-    }
-
-    try {
-      const response = await fetch(`${CONFIG.SERVER_URL}/api/download`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          url: `https://www.youtube.com/watch?v=${videoId}`,
-          format_type: formatType,
-          quality: quality,
-          audio_format: audioFormat,
-        }),
+      // Extrahovat dostupné kvality
+      const qualities = new Set();
+      ['video', 'video_only'].forEach(type => {
+        (data.formats?.[type] || []).forEach(f => {
+          if (f.height) qualities.add(f.height);
+        });
       });
 
-      const data = await response.json();
+      state.availableQualities = Array.from(qualities).sort((a, b) => b - a);
+      state.bestQuality = state.availableQualities[0] || 1080;
+      state.videoInfo = data;
 
-      if (data.error) {
-        logError('Download error:', data.error);
-        return null;
-      }
-
+      log('Video info loaded:', data.title, 'Best quality:', state.bestQuality);
       return data;
     } catch (e) {
-      logError('Chyba při stahování:', e);
+      logError('Failed to get video info:', e);
       return null;
     }
   }
 
-  async function checkDownloadProgress(taskId) {
+  async function startDownload(videoId, format, quality, audioFormat = null) {
+    if (!state.serverOnline) {
+      showNotification('Server není spuštěn! Spusťte: python yt_server.py', 'error');
+      return false;
+    }
+
+    state.isDownloading = true;
+    showProgressOverlay();
+    updateProgress(0, 'Připravuji stahování...');
+
     try {
-      const response = await fetch(`${CONFIG.SERVER_URL}/api/progress/${taskId}`);
-      return await response.json();
+      const body = {
+        url: `https://www.youtube.com/watch?v=${videoId}`,
+        format_type: audioFormat ? 'audio' : 'video',
+        quality: quality === 'best' ? null : quality,
+        audio_format: audioFormat,
+      };
+
+      const res = await fetch(`${CONFIG.SERVER_URL}/api/download`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      if (data.task_id) {
+        await pollProgress(data.task_id);
+      }
+
+      return true;
     } catch (e) {
-      return null;
+      logError('Download failed:', e);
+      showNotification(`Chyba: ${e.message}`, 'error');
+      hideProgressOverlay();
+      return false;
+    } finally {
+      state.isDownloading = false;
     }
   }
 
-  // ============================================================================
-  // VIDEO ID EXTRAKCE
-  // ============================================================================
+  async function pollProgress(taskId) {
+    const maxAttempts = 600; // 10 minut max
+    let attempts = 0;
 
-  function getVideoIdFromUrl(url = window.location.href) {
-    try {
-      const urlObj = new URL(url);
+    while (attempts < maxAttempts) {
+      try {
+        const res = await fetch(`${CONFIG.SERVER_URL}/api/progress/${taskId}`);
+        const data = await res.json();
 
-      if (urlObj.searchParams.has('v')) {
-        return urlObj.searchParams.get('v');
+        if (data.status === 'downloading') {
+          updateProgress(data.progress || 0, `Stahování: ${data.progress || 0}%`);
+        } else if (data.status === 'processing') {
+          updateProgress(90, 'Zpracovávám a konvertuji...');
+        } else if (data.status === 'completed') {
+          updateProgress(100, 'Dokončeno!');
+
+          const filename = data.filename || 'video';
+          const filepath = data.filepath || '~/Downloads';
+
+          setTimeout(() => {
+            hideProgressOverlay();
+            showNotification(`✓ Staženo: ${filename}`, 'success', 5000);
+            showDownloadComplete(filename, filepath);
+          }, 1000);
+
+          return;
+        } else if (data.status === 'error') {
+          throw new Error(data.error || 'Stahování selhalo');
+        }
+      } catch (e) {
+        logError('Progress poll error:', e);
       }
 
-      const match = urlObj.pathname.match(/\/(shorts|embed|v)\/([a-zA-Z0-9_-]+)/);
-      if (match) return match[2];
-
-    } catch (e) {}
-    return null;
-  }
-
-  // ============================================================================
-  // FALLBACK - PŘÍMÁ EXTRAKCE Z YOUTUBE
-  // ============================================================================
-
-  function extractPlayerResponse() {
-    if (window.ytInitialPlayerResponse) {
-      return window.ytInitialPlayerResponse;
+      await new Promise(r => setTimeout(r, 1000));
+      attempts++;
     }
 
-    const scripts = document.querySelectorAll('script');
-    for (const script of scripts) {
-      const text = script.textContent || '';
-      const match = text.match(/ytInitialPlayerResponse\s*=\s*({.+?});/s);
-      if (match) {
-        try {
-          return JSON.parse(match[1]);
-        } catch (e) {}
-      }
-    }
-
-    return null;
-  }
-
-  function parseLocalFormats(playerResponse) {
-    if (!playerResponse?.streamingData) return [];
-
-    const { formats = [], adaptiveFormats = [] } = playerResponse.streamingData;
-    const allFormats = [];
-
-    // Progressive formáty (mají přímé URL)
-    for (const f of formats) {
-      if (f.url) {
-        allFormats.push({
-          format_id: f.itag,
-          quality: f.qualityLabel || f.quality,
-          ext: f.mimeType?.includes('webm') ? 'webm' : 'mp4',
-          height: f.height,
-          type: 'progressive',
-          hasAudio: true,
-          hasVideo: true,
-          url: f.url,
-          filesize: f.contentLength,
-        });
-      }
-    }
-
-    // Adaptive formáty (většina vyžaduje dešifrování)
-    for (const f of adaptiveFormats) {
-      if (f.url) {
-        const isVideo = f.mimeType?.startsWith('video/');
-        const isAudio = f.mimeType?.startsWith('audio/');
-
-        allFormats.push({
-          format_id: f.itag,
-          quality: f.qualityLabel || (isAudio ? `${Math.round((f.bitrate || 0) / 1000)}kbps` : 'unknown'),
-          ext: f.mimeType?.includes('webm') ? 'webm' : (isAudio ? 'm4a' : 'mp4'),
-          height: f.height,
-          type: isAudio ? 'audio' : 'video_only',
-          hasAudio: isAudio,
-          hasVideo: isVideo,
-          url: f.url,
-          filesize: f.contentLength,
-          abr: f.bitrate ? Math.round(f.bitrate / 1000) : null,
-        });
-      }
-    }
-
-    return allFormats;
+    throw new Error('Timeout - stahování trvá příliš dlouho');
   }
 
   // ============================================================================
@@ -228,38 +220,58 @@
 
   function createDownloadButton() {
     const container = document.createElement('div');
-    container.id = 'adhub-download-container';
-
-    const serverIndicator = state.serverAvailable
-      ? '<span class="adhub-server-indicator adhub-server-on" title="Server aktivní"></span>'
-      : '<span class="adhub-server-indicator adhub-server-off" title="Server offline - omezené formáty"></span>';
-
+    container.id = 'adhub-yt-downloader';
     container.innerHTML = `
-      <div class="adhub-download-wrapper">
-        <button id="adhub-download-btn" class="adhub-btn adhub-btn-primary" type="button">
-          ${serverIndicator}
+      <div class="adhub-btn-group">
+        <button id="adhub-download-main" class="adhub-btn-main" title="Stáhnout video">
           <svg class="adhub-icon" viewBox="0 0 24 24" fill="currentColor">
             <path d="M12 16l-5-5h3V4h4v7h3l-5 5zm-7 2h14v2H5v-2z"/>
           </svg>
-          <span class="adhub-btn-text">Stáhnout</span>
+          <span class="adhub-btn-label">Stáhnout</span>
         </button>
-        <div id="adhub-dropdown" class="adhub-dropdown hidden">
-          <div class="adhub-dropdown-header">
-            <span>Vyberte formát a kvalitu</span>
-            <button id="adhub-dropdown-close" class="adhub-dropdown-close" type="button">&times;</button>
+        <button id="adhub-dropdown-toggle" class="adhub-btn-arrow" title="Možnosti stahování">
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M7 10l5 5 5-5z"/>
+          </svg>
+        </button>
+        <span id="adhub-server-dot" class="adhub-server-dot offline" title="Server offline"></span>
+      </div>
+
+      <div id="adhub-dropdown-menu" class="adhub-dropdown hidden">
+        <div class="adhub-dropdown-header">
+          <span class="adhub-dropdown-title">Preference stahování</span>
+        </div>
+
+        <div class="adhub-dropdown-section">
+          <label class="adhub-label">Formát videa</label>
+          <div class="adhub-format-options" id="adhub-video-formats">
+            <button class="adhub-format-btn active" data-format="mp4">MP4</button>
+            <button class="adhub-format-btn" data-format="webm">WebM</button>
+            <button class="adhub-format-btn" data-format="mkv">MKV</button>
           </div>
-          <div id="adhub-formats-list" class="adhub-formats-list">
-            <div class="adhub-loading">Načítám formáty...</div>
+        </div>
+
+        <div class="adhub-dropdown-section">
+          <label class="adhub-label">Kvalita</label>
+          <div class="adhub-quality-options" id="adhub-quality-options">
+            <button class="adhub-quality-btn active" data-quality="best">Nejlepší</button>
           </div>
-          <div id="adhub-progress-container" class="adhub-progress-container hidden">
-            <div class="adhub-progress-text">
-              <span id="adhub-progress-status">Stahování</span>:
-              <span id="adhub-progress-percent">0%</span>
-            </div>
-            <div class="adhub-progress-bar">
-              <div id="adhub-progress-fill" class="adhub-progress-fill"></div>
-            </div>
+        </div>
+
+        <div class="adhub-dropdown-divider"></div>
+
+        <div class="adhub-dropdown-section">
+          <label class="adhub-label">Pouze audio</label>
+          <div class="adhub-format-options" id="adhub-audio-formats">
+            <button class="adhub-audio-btn" data-audio="mp3">MP3</button>
+            <button class="adhub-audio-btn" data-audio="wav">WAV</button>
+            <button class="adhub-audio-btn" data-audio="m4a">M4A</button>
+            <button class="adhub-audio-btn" data-audio="flac">FLAC</button>
           </div>
+        </div>
+
+        <div class="adhub-dropdown-footer">
+          <span id="adhub-video-info" class="adhub-video-info"></span>
         </div>
       </div>
     `;
@@ -267,370 +279,307 @@
     return container;
   }
 
-  // ============================================================================
-  // UI - FORMÁTY DROPDOWN
-  // ============================================================================
-
-  async function loadFormats() {
-    const list = document.getElementById('adhub-formats-list');
-    if (!list) return;
-
-    list.innerHTML = '<div class="adhub-loading">Načítám formáty...</div>';
-
-    const videoId = getVideoIdFromUrl();
-    if (!videoId) {
-      list.innerHTML = '<div class="adhub-error">Video nenalezeno</div>';
-      return;
-    }
-
-    let formats = null;
-    let videoTitle = document.title.replace(' - YouTube', '');
-
-    // Zkusit server
-    if (state.serverAvailable) {
-      const serverData = await getVideoInfoFromServer(videoId);
-      if (serverData && serverData.formats) {
-        formats = serverData.formats;
-        videoTitle = serverData.title || videoTitle;
-        state.videoData = serverData;
-        log('Formáty ze serveru:', formats);
-      }
-    }
-
-    // Fallback na lokální extrakci
-    if (!formats) {
-      log('Používám fallback - lokální extrakce');
-      const playerResponse = extractPlayerResponse();
-      if (playerResponse) {
-        const localFormats = parseLocalFormats(playerResponse);
-        formats = {
-          video: localFormats.filter(f => f.type === 'progressive'),
-          video_only: localFormats.filter(f => f.type === 'video_only'),
-          audio: localFormats.filter(f => f.type === 'audio'),
-        };
-        state.formats = localFormats;
-      }
-    }
-
-    if (!formats) {
-      list.innerHTML = '<div class="adhub-error">Nelze načíst formáty. Zkuste obnovit stránku.</div>';
-      return;
-    }
-
-    renderFormats(formats, videoId, videoTitle);
-  }
-
-  function renderFormats(formats, videoId, videoTitle) {
-    const list = document.getElementById('adhub-formats-list');
-    if (!list) return;
-
-    let html = '';
-
-    // Pokud máme server, přidat konverzní formáty
-    if (state.serverAvailable) {
-      html += `
-        <div class="adhub-format-group">
-          <div class="adhub-format-group-title">🎵 Audio (konverze přes server)</div>
-          <button class="adhub-format-btn adhub-format-audio" data-type="audio" data-format="mp3">
-            <span class="adhub-format-quality">MP3 320kbps</span>
-            <span class="adhub-format-info">Nejlepší kvalita</span>
-          </button>
-          <button class="adhub-format-btn adhub-format-audio" data-type="audio" data-format="wav">
-            <span class="adhub-format-quality">WAV</span>
-            <span class="adhub-format-info">Bezztrátový</span>
-          </button>
-          <button class="adhub-format-btn adhub-format-audio" data-type="audio" data-format="m4a">
-            <span class="adhub-format-quality">M4A 256kbps</span>
-            <span class="adhub-format-info">AAC kodek</span>
-          </button>
-          <button class="adhub-format-btn adhub-format-audio" data-type="audio" data-format="flac">
-            <span class="adhub-format-quality">FLAC</span>
-            <span class="adhub-format-info">Bezztrátový</span>
-          </button>
-          <button class="adhub-format-btn adhub-format-audio" data-type="audio" data-format="ogg">
-            <span class="adhub-format-quality">OGG Vorbis</span>
-            <span class="adhub-format-info">Open-source</span>
-          </button>
-        </div>
-      `;
-
-      // Video kvality přes server (všechny dostupné)
-      const qualities = [2160, 1440, 1080, 720, 480, 360, 240, 144];
-      html += `
-        <div class="adhub-format-group">
-          <div class="adhub-format-group-title">🎬 Video MP4 (přes server - všechny kvality)</div>
-      `;
-      for (const q of qualities) {
-        const label = q === 2160 ? '4K' : q === 1440 ? '2K' : `${q}p`;
-        html += `
-          <button class="adhub-format-btn" data-type="video" data-quality="${q}">
-            <span class="adhub-format-quality">${label}</span>
-            <span class="adhub-format-info">MP4 • Video + Audio</span>
-          </button>
-        `;
-      }
-      html += '</div>';
-    }
-
-    // Progressive formáty (přímé URL - funguje vždy)
-    if (formats.video && formats.video.length > 0) {
-      html += `
-        <div class="adhub-format-group">
-          <div class="adhub-format-group-title">📥 Přímé stažení (bez serveru)</div>
-      `;
-      for (const f of formats.video) {
-        const size = f.filesize ? formatBytes(parseInt(f.filesize)) : '';
-        html += `
-          <button class="adhub-format-btn adhub-format-direct" data-type="direct" data-url="${encodeURIComponent(f.url)}" data-ext="${f.ext}">
-            <span class="adhub-format-quality">${f.quality || f.height + 'p'}</span>
-            <span class="adhub-format-info">${f.ext?.toUpperCase()} ${size}</span>
-          </button>
-        `;
-      }
-      html += '</div>';
-    }
-
-    // Audio přímé (pokud není server)
-    if (!state.serverAvailable && formats.audio && formats.audio.length > 0) {
-      html += `
-        <div class="adhub-format-group">
-          <div class="adhub-format-group-title">🔊 Audio (přímé)</div>
-      `;
-      for (const f of formats.audio.slice(0, 3)) {
-        const size = f.filesize ? formatBytes(parseInt(f.filesize)) : '';
-        html += `
-          <button class="adhub-format-btn adhub-format-direct" data-type="direct" data-url="${encodeURIComponent(f.url)}" data-ext="${f.ext}">
-            <span class="adhub-format-quality">${f.quality || f.abr + 'kbps'}</span>
-            <span class="adhub-format-info">${f.ext?.toUpperCase()} ${size}</span>
-          </button>
-        `;
-      }
-      html += '</div>';
-    }
-
-    if (!html) {
-      html = '<div class="adhub-error">Žádné formáty k dispozici</div>';
-    }
-
-    // Pokud není server, přidat info
-    if (!state.serverAvailable) {
-      html += `
-        <div class="adhub-server-notice">
-          <p>⚠️ Pro více formátů (MP3, WAV, 4K) spusťte lokální server:</p>
-          <code>python yt_server.py</code>
-        </div>
-      `;
-    }
-
-    list.innerHTML = html;
-
-    // Event listenery
-    list.querySelectorAll('.adhub-format-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        handleDownload(btn, videoId, videoTitle);
-      });
-    });
-  }
-
-  // ============================================================================
-  // STAHOVÁNÍ
-  // ============================================================================
-
-  async function handleDownload(button, videoId, videoTitle) {
-    const type = button.dataset.type;
-
-    if (state.downloadInProgress) {
-      showNotification('Stahování již probíhá', 'warning');
-      return;
-    }
-
-    state.downloadInProgress = true;
-    showProgress(true);
-    updateProgress(0, 'Připravuji...');
-
-    try {
-      if (type === 'direct') {
-        // Přímé stažení (fallback)
-        const url = decodeURIComponent(button.dataset.url);
-        const ext = button.dataset.ext || 'mp4';
-        const filename = `${sanitizeFilename(videoTitle)}.${ext}`;
-
-        updateProgress(50, 'Zahajuji stahování...');
-
-        await chrome.runtime.sendMessage({
-          action: 'downloadVideo',
-          data: { url, filename, videoId }
-        });
-
-        updateProgress(100, 'Stahování zahájeno!');
-
-      } else if (type === 'video') {
-        // Video přes server
-        const quality = parseInt(button.dataset.quality);
-        const result = await downloadFromServer(videoId, 'video', quality, null);
-
-        if (result && result.task_id) {
-          await trackProgress(result.task_id);
-        } else {
-          throw new Error('Server neodpověděl');
-        }
-
-      } else if (type === 'audio') {
-        // Audio přes server
-        const format = button.dataset.format;
-        const result = await downloadFromServer(videoId, 'audio', null, format);
-
-        if (result && result.task_id) {
-          await trackProgress(result.task_id);
-        } else {
-          throw new Error('Server neodpověděl');
-        }
-      }
-
-      showNotification('Stahování úspěšně zahájeno!', 'success');
-
-    } catch (error) {
-      logError('Download error:', error);
-      showNotification(`Chyba: ${error.message}`, 'error');
-    } finally {
-      state.downloadInProgress = false;
-      setTimeout(() => showProgress(false), 3000);
-    }
-  }
-
-  async function trackProgress(taskId) {
-    const maxAttempts = 300; // 5 minut
-    let attempts = 0;
-
-    while (attempts < maxAttempts) {
-      const progress = await checkDownloadProgress(taskId);
-
-      if (!progress) break;
-
-      if (progress.status === 'downloading') {
-        updateProgress(progress.progress || 0, `Stahování: ${progress.progress || 0}%`);
-      } else if (progress.status === 'processing') {
-        updateProgress(95, 'Zpracovávám...');
-      } else if (progress.status === 'completed') {
-        updateProgress(100, 'Hotovo!');
-        if (progress.filename) {
-          showNotification(`Staženo: ${progress.filename}`, 'success');
-        }
-        break;
-      } else if (progress.status === 'error') {
-        throw new Error(progress.error || 'Stahování selhalo');
-      }
-
-      await new Promise(r => setTimeout(r, 1000));
-      attempts++;
-    }
-  }
-
-  // ============================================================================
-  // UI HELPERS
-  // ============================================================================
-
-  function showDropdown() {
-    const dropdown = document.getElementById('adhub-dropdown');
-    if (dropdown) {
-      dropdown.classList.remove('hidden');
-      loadFormats();
-    }
-  }
-
-  function hideDropdown() {
-    const dropdown = document.getElementById('adhub-dropdown');
-    if (dropdown) {
-      dropdown.classList.add('hidden');
-    }
-  }
-
-  function showProgress(show) {
-    const container = document.getElementById('adhub-progress-container');
-    if (container) {
-      container.classList.toggle('hidden', !show);
-    }
-  }
-
-  function updateProgress(percent, text) {
-    const percentEl = document.getElementById('adhub-progress-percent');
-    const fillEl = document.getElementById('adhub-progress-fill');
-    const statusEl = document.getElementById('adhub-progress-status');
-
-    if (percentEl) percentEl.textContent = `${percent}%`;
-    if (fillEl) fillEl.style.width = `${percent}%`;
-    if (statusEl && text) statusEl.textContent = text;
-  }
-
-  function showNotification(message, type = 'info') {
-    const existing = document.querySelector('.adhub-notification');
-    if (existing) existing.remove();
-
-    const notification = document.createElement('div');
-    notification.className = `adhub-notification adhub-notification-${type}`;
-    notification.textContent = message;
-    document.body.appendChild(notification);
-
-    setTimeout(() => notification.classList.add('show'), 10);
-    setTimeout(() => {
-      notification.classList.remove('show');
-      setTimeout(() => notification.remove(), 300);
-    }, 4000);
-  }
-
-  function formatBytes(bytes) {
-    if (!bytes) return '';
-    const sizes = ['B', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(1024));
-    return Math.round(bytes / Math.pow(1024, i) * 10) / 10 + ' ' + sizes[i];
-  }
-
-  function sanitizeFilename(name) {
-    return name.replace(/[<>:"/\\|?*]/g, '').trim().substring(0, 200);
-  }
-
-  // ============================================================================
-  // INJEKCE TLAČÍTKA
-  // ============================================================================
-
   function injectButton() {
-    if (document.getElementById('adhub-download-container')) return true;
-
-    const selectors = [
-      '#top-level-buttons-computed',
-      'ytd-menu-renderer #top-level-buttons',
-      '#info-contents #menu',
-      '#actions',
-    ];
+    if (document.getElementById('adhub-yt-downloader')) return true;
 
     let target = null;
-    for (const sel of selectors) {
-      target = document.querySelector(sel);
+    for (const selector of CONFIG.BUTTON_SELECTORS) {
+      target = document.querySelector(selector);
       if (target) break;
     }
 
     if (!target) return false;
 
     const button = createDownloadButton();
-    target.insertBefore(button, target.firstChild);
 
-    // Event handlers
-    setTimeout(() => {
-      const closeBtn = document.getElementById('adhub-dropdown-close');
-      if (closeBtn) {
-        closeBtn.onclick = (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          hideDropdown();
-        };
-      }
-    }, 50);
+    // Vložit za like/dislike tlačítka
+    const likeBtn = target.querySelector('ytd-toggle-button-renderer, ytd-segmented-like-dislike-button-renderer');
+    if (likeBtn && likeBtn.nextSibling) {
+      target.insertBefore(button, likeBtn.nextSibling);
+    } else {
+      target.appendChild(button);
+    }
 
-    log('Tlačítko injektováno');
-    state.buttonInjected = true;
+    setupEventListeners();
+    loadVideoInfo();
+
+    log('Button injected');
     return true;
+  }
+
+  // ============================================================================
+  // EVENT LISTENERY
+  // ============================================================================
+
+  function setupEventListeners() {
+    // Hlavní tlačítko - stáhnout s aktuálními preferencemi
+    const mainBtn = document.getElementById('adhub-download-main');
+    if (mainBtn) {
+      mainBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleDownload();
+      });
+    }
+
+    // Dropdown toggle
+    const toggleBtn = document.getElementById('adhub-dropdown-toggle');
+    if (toggleBtn) {
+      toggleBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggleDropdown();
+      });
+    }
+
+    // Video formát tlačítka
+    document.querySelectorAll('#adhub-video-formats .adhub-format-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        document.querySelectorAll('#adhub-video-formats .adhub-format-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.preferences.format = btn.dataset.format;
+      });
+    });
+
+    // Audio formát tlačítka
+    document.querySelectorAll('#adhub-audio-formats .adhub-audio-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        handleAudioDownload(btn.dataset.audio);
+      });
+    });
+
+    // Zavřít dropdown při kliknutí mimo
+    document.addEventListener('click', (e) => {
+      const container = document.getElementById('adhub-yt-downloader');
+      if (container && !container.contains(e.target)) {
+        closeDropdown();
+      }
+    });
+  }
+
+  function toggleDropdown() {
+    const dropdown = document.getElementById('adhub-dropdown-menu');
+    if (dropdown) {
+      dropdown.classList.toggle('hidden');
+      if (!dropdown.classList.contains('hidden')) {
+        loadVideoInfo();
+      }
+    }
+  }
+
+  function closeDropdown() {
+    const dropdown = document.getElementById('adhub-dropdown-menu');
+    if (dropdown) dropdown.classList.add('hidden');
+  }
+
+  // ============================================================================
+  // STAHOVÁNÍ
+  // ============================================================================
+
+  async function handleDownload() {
+    if (state.isDownloading) {
+      showNotification('Stahování již probíhá...', 'warning');
+      return;
+    }
+
+    const videoId = getVideoId();
+    if (!videoId) {
+      showNotification('Video nenalezeno', 'error');
+      return;
+    }
+
+    closeDropdown();
+
+    const quality = state.preferences.quality === 'best' ? state.bestQuality : state.preferences.quality;
+    const format = state.preferences.format;
+
+    log(`Starting download: ${videoId}, ${format}, ${quality}p`);
+    await startDownload(videoId, format, quality);
+  }
+
+  async function handleAudioDownload(audioFormat) {
+    if (state.isDownloading) {
+      showNotification('Stahování již probíhá...', 'warning');
+      return;
+    }
+
+    const videoId = getVideoId();
+    if (!videoId) {
+      showNotification('Video nenalezeno', 'error');
+      return;
+    }
+
+    closeDropdown();
+
+    log(`Starting audio download: ${videoId}, ${audioFormat}`);
+    await startDownload(videoId, null, null, audioFormat);
+  }
+
+  // ============================================================================
+  // UI AKTUALIZACE
+  // ============================================================================
+
+  async function loadVideoInfo() {
+    const videoId = getVideoId();
+    if (!videoId || videoId === state.currentVideoId) return;
+
+    state.currentVideoId = videoId;
+
+    if (state.serverOnline) {
+      await getVideoInfo(videoId);
+      updateQualityOptions();
+      updateVideoInfoDisplay();
+    }
+  }
+
+  function updateQualityOptions() {
+    const container = document.getElementById('adhub-quality-options');
+    if (!container) return;
+
+    let html = '<button class="adhub-quality-btn active" data-quality="best">Nejlepší</button>';
+
+    state.availableQualities.forEach(q => {
+      const label = q >= 2160 ? '4K' : q >= 1440 ? '2K' : `${q}p`;
+      html += `<button class="adhub-quality-btn" data-quality="${q}">${label}</button>`;
+    });
+
+    container.innerHTML = html;
+
+    // Event listenery pro kvalitu
+    container.querySelectorAll('.adhub-quality-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        container.querySelectorAll('.adhub-quality-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.preferences.quality = btn.dataset.quality;
+      });
+    });
+  }
+
+  function updateVideoInfoDisplay() {
+    const infoEl = document.getElementById('adhub-video-info');
+    if (!infoEl || !state.videoInfo) return;
+
+    const duration = state.videoInfo.duration_str || '';
+    const best = state.bestQuality ? `${state.bestQuality}p` : '';
+
+    infoEl.textContent = `${best} • ${duration}`;
+  }
+
+  function updateServerIndicator() {
+    const dot = document.getElementById('adhub-server-dot');
+    if (dot) {
+      dot.classList.toggle('online', state.serverOnline);
+      dot.classList.toggle('offline', !state.serverOnline);
+      dot.title = state.serverOnline ? 'Server aktivní' : 'Server offline - spusťte yt_server.py';
+    }
+  }
+
+  // ============================================================================
+  // PROGRESS OVERLAY
+  // ============================================================================
+
+  function showProgressOverlay() {
+    let overlay = document.getElementById('adhub-progress-overlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'adhub-progress-overlay';
+      overlay.innerHTML = `
+        <div class="adhub-progress-card">
+          <div class="adhub-progress-header">
+            <svg class="adhub-progress-icon" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 16l-5-5h3V4h4v7h3l-5 5zm-7 2h14v2H5v-2z"/>
+            </svg>
+            <span>Stahování</span>
+          </div>
+          <div class="adhub-progress-bar-container">
+            <div id="adhub-progress-bar" class="adhub-progress-bar"></div>
+          </div>
+          <div id="adhub-progress-text" class="adhub-progress-text">Připravuji...</div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+    }
+    overlay.classList.add('visible');
+  }
+
+  function hideProgressOverlay() {
+    const overlay = document.getElementById('adhub-progress-overlay');
+    if (overlay) overlay.classList.remove('visible');
+  }
+
+  function updateProgress(percent, text) {
+    const bar = document.getElementById('adhub-progress-bar');
+    const textEl = document.getElementById('adhub-progress-text');
+
+    if (bar) bar.style.width = `${percent}%`;
+    if (textEl) textEl.textContent = text;
+  }
+
+  // ============================================================================
+  // NOTIFIKACE
+  // ============================================================================
+
+  function showNotification(message, type = 'info', duration = 4000) {
+    const existing = document.querySelector('.adhub-notification');
+    if (existing) existing.remove();
+
+    const notification = document.createElement('div');
+    notification.className = `adhub-notification adhub-notification-${type}`;
+    notification.innerHTML = `
+      <span class="adhub-notification-text">${message}</span>
+      <button class="adhub-notification-close">&times;</button>
+    `;
+
+    document.body.appendChild(notification);
+
+    notification.querySelector('.adhub-notification-close').addEventListener('click', () => {
+      notification.classList.remove('visible');
+      setTimeout(() => notification.remove(), 300);
+    });
+
+    requestAnimationFrame(() => notification.classList.add('visible'));
+
+    if (duration > 0) {
+      setTimeout(() => {
+        notification.classList.remove('visible');
+        setTimeout(() => notification.remove(), 300);
+      }, duration);
+    }
+  }
+
+  function showDownloadComplete(filename, filepath) {
+    const existing = document.querySelector('.adhub-complete-toast');
+    if (existing) existing.remove();
+
+    const toast = document.createElement('div');
+    toast.className = 'adhub-complete-toast';
+    toast.innerHTML = `
+      <div class="adhub-complete-icon">✓</div>
+      <div class="adhub-complete-content">
+        <div class="adhub-complete-title">Stahování dokončeno</div>
+        <div class="adhub-complete-filename">${filename}</div>
+        <div class="adhub-complete-path">Uloženo: ${filepath}</div>
+      </div>
+      <button class="adhub-complete-close">&times;</button>
+    `;
+
+    document.body.appendChild(toast);
+
+    toast.querySelector('.adhub-complete-close').addEventListener('click', () => {
+      toast.classList.remove('visible');
+      setTimeout(() => toast.remove(), 300);
+    });
+
+    requestAnimationFrame(() => toast.classList.add('visible'));
+
+    setTimeout(() => {
+      toast.classList.remove('visible');
+      setTimeout(() => toast.remove(), 300);
+    }, 8000);
   }
 
   // ============================================================================
@@ -648,23 +597,20 @@
     };
 
     setInterval(checkUrl, 500);
-
-    window.addEventListener('yt-navigate-finish', () => {
-      setTimeout(handlePageChange, 500);
-    });
+    window.addEventListener('yt-navigate-finish', () => setTimeout(handlePageChange, 500));
   }
 
   function handlePageChange() {
     state.currentVideoId = null;
-    state.videoData = null;
-    state.formats = null;
-    state.buttonInjected = false;
+    state.videoInfo = null;
+    state.bestQuality = null;
+    state.availableQualities = [];
 
-    const old = document.getElementById('adhub-download-container');
+    const old = document.getElementById('adhub-yt-downloader');
     if (old) old.remove();
 
-    if (getVideoIdFromUrl()) {
-      setTimeout(initForVideoPage, 500);
+    if (getVideoId()) {
+      setTimeout(init, 500);
     }
   }
 
@@ -672,12 +618,8 @@
   // INICIALIZACE
   // ============================================================================
 
-  async function initForVideoPage() {
-    const videoId = getVideoIdFromUrl();
-    if (!videoId) return;
-
-    log('Inicializace pro video:', videoId);
-    state.currentVideoId = videoId;
+  async function init() {
+    if (!getVideoId()) return;
 
     // Zkontrolovat server
     await checkServer();
@@ -687,59 +629,21 @@
     const tryInject = () => {
       if (injectButton()) return;
       attempts++;
-      if (attempts < CONFIG.MAX_BUTTON_RETRIES) {
-        setTimeout(tryInject, CONFIG.BUTTON_RETRY_INTERVAL);
-      }
+      if (attempts < 30) setTimeout(tryInject, 1000);
     };
     tryInject();
+
+    // Periodická kontrola serveru
+    setInterval(checkServer, 30000);
   }
 
-  // Globální click handler pro tlačítko
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('#adhub-download-btn');
-    if (btn) {
-      e.preventDefault();
-      e.stopPropagation();
+  // Start
+  setupNavigationObserver();
 
-      const dropdown = document.getElementById('adhub-dropdown');
-      if (dropdown) {
-        if (dropdown.classList.contains('hidden')) {
-          showDropdown();
-        } else {
-          hideDropdown();
-        }
-      }
-    }
-  }, true);
-
-  // Zavřít dropdown při kliknutí mimo
-  document.addEventListener('click', (e) => {
-    const container = document.getElementById('adhub-download-container');
-    if (container && !container.contains(e.target)) {
-      hideDropdown();
-    }
-  });
-
-  // ============================================================================
-  // START
-  // ============================================================================
-
-  function init() {
-    log('Inicializace...');
-    setupNavigationObserver();
-
-    if (getVideoIdFromUrl()) {
-      if (document.readyState === 'complete') {
-        setTimeout(initForVideoPage, 500);
-      } else {
-        window.addEventListener('load', () => setTimeout(initForVideoPage, 500));
-      }
-    }
-
-    // Periodicky kontrolovat server
-    setInterval(checkServer, CONFIG.SERVER_CHECK_INTERVAL);
+  if (document.readyState === 'complete') {
+    setTimeout(init, 500);
+  } else {
+    window.addEventListener('load', () => setTimeout(init, 500));
   }
-
-  init();
 
 })();
