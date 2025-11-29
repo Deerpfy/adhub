@@ -167,9 +167,12 @@
       { id: '4k', label: '4K (2160p)', type: 'video', quality: '2160', requiresNative: true },
       { id: '1440p', label: '2K (1440p)', type: 'video', quality: '1440', requiresNative: true },
       { id: '1080p', label: 'Full HD (1080p)', type: 'video', quality: '1080', requiresNative: true },
+      { id: '720p', label: 'HD (720p)', type: 'video', quality: '720', requiresNative: true },
+      { id: '480p', label: 'SD (480p)', type: 'video', quality: '480', requiresNative: true },
       { id: 'mp3', label: 'MP3 Audio', type: 'audio', audioFormat: 'mp3', requiresNative: true },
       { id: 'wav', label: 'WAV Audio', type: 'audio', audioFormat: 'wav', requiresNative: true },
       { id: 'flac', label: 'FLAC Audio', type: 'audio', audioFormat: 'flac', requiresNative: true },
+      { id: 'ogg', label: 'OGG Audio', type: 'audio', audioFormat: 'ogg', requiresNative: true },
     ];
   }
 
@@ -219,6 +222,10 @@
       }
     });
 
+    if (!response) {
+      throw new Error('Zadna odpoved od extension');
+    }
+
     if (response.success) {
       updateProgress(100, 'Stahovani zahajeno!');
       setTimeout(() => {
@@ -242,6 +249,10 @@
         audioFormat: format.audioFormat,
       }
     });
+
+    if (!response) {
+      throw new Error('Zadna odpoved od extension');
+    }
 
     if (response.success) {
       updateProgress(100, 'Stahovani zahajeno!');

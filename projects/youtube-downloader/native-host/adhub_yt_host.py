@@ -31,6 +31,10 @@ DEFAULT_YTDLP_PATHS = [
     '/usr/bin/yt-dlp',
     os.path.expanduser('~/.local/bin/yt-dlp'),
     os.path.expanduser('~/bin/yt-dlp'),
+    # Windows cesty
+    os.path.expanduser('~/yt-dlp.exe'),
+    'C:\\yt-dlp\\yt-dlp.exe',
+    os.path.join(os.environ.get('LOCALAPPDATA', ''), 'yt-dlp', 'yt-dlp.exe'),
 ]
 
 DEFAULT_FFMPEG_PATHS = [
@@ -38,6 +42,10 @@ DEFAULT_FFMPEG_PATHS = [
     '/usr/local/bin/ffmpeg',
     '/usr/bin/ffmpeg',
     '/opt/homebrew/bin/ffmpeg',
+    # Windows cesty
+    'C:\\ffmpeg\\bin\\ffmpeg.exe',
+    'C:\\ffmpeg\\ffmpeg.exe',
+    os.path.join(os.environ.get('LOCALAPPDATA', ''), 'ffmpeg', 'bin', 'ffmpeg.exe'),
 ]
 
 # ============================================================================
@@ -206,7 +214,9 @@ def handle_download(message):
             # Najit ffmpeg pro konverzi
             ffmpeg = find_tool('ffmpeg', ffmpeg_path, DEFAULT_FFMPEG_PATHS)
             if ffmpeg['available']:
-                cmd.extend(['--ffmpeg-location', os.path.dirname(ffmpeg['path'])])
+                ffmpeg_dir = os.path.dirname(ffmpeg['path'])
+                if ffmpeg_dir:  # Pouze pokud neni prazdny
+                    cmd.extend(['--ffmpeg-location', ffmpeg_dir])
     else:
         # Video
         if quality and quality != 'best':
@@ -219,7 +229,9 @@ def handle_download(message):
         # FFmpeg pro merge
         ffmpeg = find_tool('ffmpeg', ffmpeg_path, DEFAULT_FFMPEG_PATHS)
         if ffmpeg['available']:
-            cmd.extend(['--ffmpeg-location', os.path.dirname(ffmpeg['path'])])
+            ffmpeg_dir = os.path.dirname(ffmpeg['path'])
+            if ffmpeg_dir:  # Pouze pokud neni prazdny
+                cmd.extend(['--ffmpeg-location', ffmpeg_dir])
 
     cmd.extend(['-o', output_template])
     cmd.append(url)
