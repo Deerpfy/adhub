@@ -172,9 +172,35 @@
   }
 
   // ============================================================================
+  // SETUP CHECK LISTENER - Odpoved na pozadavek o kontrolu pluginu
+  // ============================================================================
+
+  function setupCheckListener() {
+    window.addEventListener('adhub-extension-check', () => {
+      log('CHECK', 'Prijat pozadavek na kontrolu pluginu');
+
+      const manifest = chrome.runtime.getManifest();
+
+      // Odpoved na kontrolu
+      const event = new CustomEvent('adhub-extension-response', {
+        detail: {
+          id: chrome.runtime.id,
+          version: manifest.version,
+          name: manifest.name,
+          active: true
+        }
+      });
+
+      window.dispatchEvent(event);
+      log('CHECK', 'Odpoved odeslana');
+    });
+  }
+
+  // ============================================================================
   // START
   // ============================================================================
 
   init();
+  setupCheckListener();
 
 })();
