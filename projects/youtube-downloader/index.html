@@ -311,6 +311,27 @@
                 </div>
 
                 <div class="info-sidebar">
+                    <!-- Stazeni pluginu -->
+                    <div class="plugin-download-card">
+                        <h2>Stahnout plugin</h2>
+                        <p>Stahni si plugin pro prohlizec a pouzivej tlacitko "Stahnout" primo na YouTube.</p>
+                        <div class="commit-info-small" id="commitInfoSmall">
+                            <span>Verze: <code id="commitIdSmall">-</code></span>
+                        </div>
+                        <button class="btn btn-primary btn-full" id="downloadPluginBtnSmall">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
+                            </svg>
+                            Stahnout (.zip)
+                        </button>
+                        <div class="download-progress" id="downloadProgressSmall" style="display: none;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="downloadProgressFillSmall"></div>
+                            </div>
+                            <span id="downloadProgressTextSmall">Generuji ZIP...</span>
+                        </div>
+                    </div>
+
                     <div class="downloads-history">
                         <h2>Historie</h2>
                         <p class="history-notice">Historie se automaticky smaze po 48 hodinach</p>

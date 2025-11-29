@@ -1477,3 +1477,55 @@ header h1 {
 .hero-icon svg {
     filter: drop-shadow(0 10px 25px rgba(139, 92, 246, 0.4));
 }
+
+/* ============================================================================
+   Plugin Download Card - Karta pro stazeni pluginu v sidebaru
+   ============================================================================ */
+
+.plugin-download-card {
+    background: var(--adhub-card-strong);
+    border: 1px solid var(--adhub-card-border);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.plugin-download-card h2 {
+    color: var(--adhub-text);
+    font-size: 16px;
+    margin-bottom: 10px;
+}
+
+.plugin-download-card p {
+    color: var(--adhub-muted);
+    font-size: 13px;
+    margin-bottom: 14px;
+    line-height: 1.5;
+}
+
+.commit-info-small {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 14px;
+    font-size: 12px;
+    color: var(--adhub-muted);
+}
+
+.commit-info-small code {
+    font-family: 'Consolas', 'Monaco', monospace;
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--adhub-primary);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.btn-full {
+    width: 100%;
+    justify-content: center;
+}
+
+.plugin-download-card .download-progress {
+    margin-top: 12px;
+}

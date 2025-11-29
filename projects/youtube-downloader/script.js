@@ -115,14 +115,26 @@ function initializeDOMElements() {
         downloadsList: document.getElementById('downloadsList'),
 
         // Toast
-        toastContainer: document.getElementById('toastContainer')
+        toastContainer: document.getElementById('toastContainer'),
+
+        // Download plugin small (v sidebaru)
+        downloadPluginBtnSmall: document.getElementById('downloadPluginBtnSmall'),
+        downloadProgressSmall: document.getElementById('downloadProgressSmall'),
+        downloadProgressFillSmall: document.getElementById('downloadProgressFillSmall'),
+        downloadProgressTextSmall: document.getElementById('downloadProgressTextSmall'),
+        commitIdSmall: document.getElementById('commitIdSmall')
     };
 }
 
 function setupEventListeners() {
-    // Download plugin button
+    // Download plugin button (hlavni)
     if (elements.downloadPluginBtn) {
-        elements.downloadPluginBtn.addEventListener('click', handleDownloadPlugin);
+        elements.downloadPluginBtn.addEventListener('click', () => handleDownloadPlugin('main'));
+    }
+
+    // Download plugin button (v sidebaru)
+    if (elements.downloadPluginBtnSmall) {
+        elements.downloadPluginBtnSmall.addEventListener('click', () => handleDownloadPlugin('small'));
     }
 
     // Go to YouTube button
@@ -321,6 +333,11 @@ async function loadLatestCommitInfo() {
             elements.pluginCommit.textContent = commit.sha.substring(0, 7);
         }
 
+        // Aktualizace commit ID v male karte v sidebaru
+        if (elements.commitIdSmall) {
+            elements.commitIdSmall.textContent = commit.sha.substring(0, 7);
+        }
+
     } catch (error) {
         console.error('[AdHub] Chyba pri nacitani commitu:', error);
 
@@ -334,19 +351,27 @@ async function loadLatestCommitInfo() {
 // STAHOVANI PLUGINU
 // ============================================================================
 
-async function handleDownloadPlugin() {
-    console.log('[AdHub] Zacinam stahovani pluginu...');
+async function handleDownloadPlugin(type = 'main') {
+    console.log('[AdHub] Zacinam stahovani pluginu...', type);
 
-    const btn = elements.downloadPluginBtn;
-    const progress = elements.downloadProgress;
-    const progressFill = elements.downloadProgressFill;
-    const progressText = elements.downloadProgressText;
+    // Vyber spravnych elementu podle typu
+    const isSmall = type === 'small';
+    const btn = isSmall ? elements.downloadPluginBtnSmall : elements.downloadPluginBtn;
+    const progress = isSmall ? elements.downloadProgressSmall : elements.downloadProgress;
+    const progressFill = isSmall ? elements.downloadProgressFillSmall : elements.downloadProgressFill;
+    const progressText = isSmall ? elements.downloadProgressTextSmall : elements.downloadProgressText;
 
+    if (!btn) {
+        console.error('[AdHub] Tlacitko nenalezeno');
+        return;
+    }
+
+    const originalBtnHtml = btn.innerHTML;
     btn.disabled = true;
     btn.innerHTML = 'Stahuji...';
-    progress.style.display = 'block';
-    progressText.textContent = 'Nacitam soubory z GitHubu...';
-    progressFill.style.width = '10%';
+    if (progress) progress.style.display = 'block';
+    if (progressText) progressText.textContent = 'Nacitam soubory z GitHubu...';
+    if (progressFill) progressFill.style.width = '10%';
 
     try {
         // Krok 1: Ziskani seznamu souboru
@@ -359,8 +384,8 @@ async function handleDownloadPlugin() {
         }
 
         const files = await filesResponse.json();
-        progressFill.style.width = '20%';
-        progressText.textContent = `Nalezeno ${files.length} souboru...`;
+        if (progressFill) progressFill.style.width = '20%';
+        if (progressText) progressText.textContent = `Nalezeno ${files.length} souboru...`;
 
         // Krok 2: Stazeni vsech souboru
         console.log('[AdHub] Krok 2: Stahuji soubory');
@@ -373,8 +398,8 @@ async function handleDownloadPlugin() {
                 const content = await fetchFileContent(file.download_url);
                 pluginFolder.file(file.name, content);
                 downloadedCount++;
-                progressFill.style.width = `${20 + (downloadedCount / files.length) * 50}%`;
-                progressText.textContent = `Stahuji: ${file.name}`;
+                if (progressFill) progressFill.style.width = `${20 + (downloadedCount / files.length) * 50}%`;
+                if (progressText) progressText.textContent = `Stahuji: ${file.name}`;
             } else if (file.type === 'dir' && file.name === 'icons') {
                 // Zpracovani slozky icons
                 const iconsFolder = pluginFolder.folder('icons');
@@ -391,8 +416,8 @@ async function handleDownloadPlugin() {
             }
         }
 
-        progressFill.style.width = '80%';
-        progressText.textContent = 'Generuji ZIP soubor...';
+        if (progressFill) progressFill.style.width = '80%';
+        if (progressText) progressText.textContent = 'Generuji ZIP soubor...';
 
         // Krok 3: Generovani ZIP
         console.log('[AdHub] Krok 3: Generuji ZIP');
@@ -402,8 +427,8 @@ async function handleDownloadPlugin() {
             compressionOptions: { level: 9 }
         });
 
-        progressFill.style.width = '90%';
-        progressText.textContent = 'Pripravuji ke stazeni...';
+        if (progressFill) progressFill.style.width = '90%';
+        if (progressText) progressText.textContent = 'Pripravuji ke stazeni...';
 
         // Krok 4: Stahovani
         console.log('[AdHub] Krok 4: Spoustim stahovani');
@@ -420,22 +445,17 @@ async function handleDownloadPlugin() {
         document.body.removeChild(a);
         URL.revokeObjectURL(downloadUrl);
 
-        progressFill.style.width = '100%';
-        progressText.textContent = 'Stahovani dokonceno!';
+        if (progressFill) progressFill.style.width = '100%';
+        if (progressText) progressText.textContent = 'Stahovani dokonceno!';
 
         showToast('Plugin uspesne stazen! Rozbalte ZIP a nainstalujte podle navodu.', 'success');
 
         btn.innerHTML = 'Stazeno!';
         setTimeout(() => {
             btn.disabled = false;
-            btn.innerHTML = `
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-                </svg>
-                Stahnout plugin (.zip)
-            `;
-            progress.style.display = 'none';
-            progressFill.style.width = '0%';
+            btn.innerHTML = originalBtnHtml;
+            if (progress) progress.style.display = 'none';
+            if (progressFill) progressFill.style.width = '0%';
         }, 2000);
 
     } catch (error) {
@@ -443,13 +463,8 @@ async function handleDownloadPlugin() {
         showToast('Chyba pri stahovani: ' + error.message, 'error');
 
         btn.disabled = false;
-        btn.innerHTML = `
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3"/>
-            </svg>
-            Stahnout plugin (.zip)
-        `;
-        progress.style.display = 'none';
+        btn.innerHTML = originalBtnHtml;
+        if (progress) progress.style.display = 'none';
     }
 }
 
