@@ -15,48 +15,48 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
       color: white;
-      width: 400px;
-      min-height: 300px;
-      overflow-x: hidden;
+      width: 380px;
+      min-height: 200px;
     }
 
     .header {
-      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-      padding: 16px 20px;
+      background: linear-gradient(135deg, #FF0000, #CC0000);
+      padding: 14px 18px;
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
     }
 
     .header-icon {
-      width: 32px;
-      height: 32px;
+      width: 28px;
+      height: 28px;
     }
 
     .header-title {
-      font-size: 18px;
+      font-size: 16px;
       font-weight: 600;
     }
 
     .header-version {
-      font-size: 12px;
+      font-size: 11px;
       opacity: 0.8;
       margin-left: auto;
     }
 
     .content {
-      padding: 20px;
+      padding: 16px;
     }
 
+    /* Input section */
     .input-group {
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
 
     .input-label {
       display: block;
-      font-size: 13px;
-      color: #a0a0a0;
-      margin-bottom: 8px;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 6px;
     }
 
     .input-row {
@@ -66,18 +66,18 @@
 
     .input-field {
       flex: 1;
-      padding: 12px 16px;
-      background: rgba(255, 255, 255, 0.05);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 8px;
       color: white;
-      font-size: 14px;
+      font-size: 13px;
       outline: none;
       transition: border-color 0.2s;
     }
 
     .input-field:focus {
-      border-color: #8b5cf6;
+      border-color: #FF0000;
     }
 
     .input-field::placeholder {
@@ -85,48 +85,92 @@
     }
 
     .btn {
-      padding: 12px 20px;
-      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      padding: 10px 16px;
       border: none;
       border-radius: 8px;
       color: white;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
     }
 
-    .btn:hover {
-      background: linear-gradient(135deg, #7c3aed, #6d28d9);
-      transform: translateY(-1px);
+    .btn-primary {
+      background: linear-gradient(135deg, #FF0000, #CC0000);
     }
 
-    .btn:active {
-      transform: translateY(0);
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #CC0000, #990000);
     }
 
     .btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-      transform: none;
     }
 
-    .video-info {
+    /* Loading */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 24px;
+    }
+
+    .loading.visible {
+      display: block;
+    }
+
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(255, 0, 0, 0.2);
+      border-top-color: #FF0000;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      color: #888;
+      font-size: 12px;
+    }
+
+    /* Error */
+    .error-message {
+      display: none;
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: #f87171;
+      font-size: 12px;
+      margin-bottom: 14px;
+    }
+
+    .error-message.visible {
+      display: block;
+    }
+
+    /* Video info card */
+    .video-card {
       display: none;
       background: rgba(255, 255, 255, 0.05);
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
     }
 
-    .video-info.visible {
+    .video-card.visible {
       display: block;
     }
 
     .video-preview {
       display: flex;
       gap: 12px;
-      margin-bottom: 12px;
+      margin-bottom: 14px;
     }
 
     .video-thumbnail {
@@ -143,9 +187,9 @@
     }
 
     .video-title {
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 500;
-      line-height: 1.4;
+      line-height: 1.3;
       margin-bottom: 4px;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -155,139 +199,129 @@
     }
 
     .video-author {
-      font-size: 12px;
-      color: #888;
-    }
-
-    .formats-section {
-      margin-top: 16px;
-    }
-
-    .formats-title {
-      font-size: 12px;
-      color: #888;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 12px;
-    }
-
-    .formats-grid {
-      display: grid;
-      gap: 8px;
-    }
-
-    .format-btn {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 10px 14px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 6px;
-      color: white;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-align: left;
-    }
-
-    .format-btn:hover {
-      background: rgba(139, 92, 246, 0.15);
-      border-color: rgba(139, 92, 246, 0.3);
-    }
-
-    .format-btn.video { border-left: 3px solid #22c55e; }
-    .format-btn.audio { border-left: 3px solid #3b82f6; }
-    .format-btn.combined { border-left: 3px solid #8b5cf6; }
-
-    .format-btn.downloading {
-      opacity: 0.7;
-      cursor: wait;
-    }
-
-    .format-btn.success {
-      background: rgba(34, 197, 94, 0.15);
-      border-color: rgba(34, 197, 94, 0.3);
-    }
-
-    .format-btn.error {
-      background: rgba(239, 68, 68, 0.15);
-      border-color: rgba(239, 68, 68, 0.3);
-    }
-
-    .format-info {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .format-quality {
-      font-weight: 500;
-      font-size: 13px;
-    }
-
-    .format-codec {
       font-size: 11px;
       color: #888;
     }
 
-    .format-size {
-      font-size: 12px;
-      color: #888;
+    /* Download buttons */
+    .download-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
     }
 
-    .loading {
-      display: none;
-      text-align: center;
-      padding: 30px;
-    }
-
-    .loading.visible {
-      display: block;
-    }
-
-    .spinner {
-      width: 36px;
-      height: 36px;
-      border: 3px solid rgba(139, 92, 246, 0.2);
-      border-top-color: #8b5cf6;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 12px;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .loading-text {
-      color: #888;
-      font-size: 13px;
-    }
-
-    .error-message {
-      display: none;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      border-radius: 8px;
+    .download-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       padding: 12px 16px;
-      color: #ef4444;
+      border-radius: 8px;
       font-size: 13px;
-      margin-bottom: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      color: white;
     }
 
-    .error-message.visible {
+    .download-btn.primary {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+    }
+
+    .download-btn.primary:hover {
+      background: linear-gradient(135deg, #16a34a, #15803d);
+      transform: translateY(-1px);
+    }
+
+    .download-btn.secondary {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .download-btn.secondary:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    .download-btn-icon {
+      font-size: 16px;
+    }
+
+    /* Info box */
+    .info-box {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-top: 12px;
+    }
+
+    .info-box-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #60a5fa;
+      margin-bottom: 4px;
+    }
+
+    .info-box-text {
+      font-size: 11px;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    /* Technical info (collapsible) */
+    .tech-info {
+      margin-top: 12px;
+    }
+
+    .tech-info-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: none;
+      color: #666;
+      font-size: 11px;
+      cursor: pointer;
+      padding: 4px 0;
+    }
+
+    .tech-info-toggle:hover {
+      color: #888;
+    }
+
+    .tech-info-content {
+      display: none;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 6px;
+      padding: 10px;
+      margin-top: 8px;
+      font-size: 10px;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .tech-info-content.visible {
       display: block;
     }
 
+    .tech-info-content code {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-family: monospace;
+    }
+
+    /* Status bar */
     .status-bar {
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 8px 20px;
-      background: rgba(34, 197, 94, 0.1);
-      border-top: 1px solid rgba(34, 197, 94, 0.2);
-      font-size: 12px;
-      color: #22c55e;
+      padding: 8px 16px;
+      background: rgba(0, 0, 0, 0.2);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 11px;
+      color: #666;
     }
 
     .status-dot {
@@ -296,201 +330,13 @@
       background: #22c55e;
       border-radius: 50%;
     }
-
-    .tabs {
-      display: flex;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-      margin-bottom: 16px;
-    }
-
-    .tab {
-      flex: 1;
-      padding: 10px;
-      background: none;
-      border: none;
-      color: #888;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s;
-      border-bottom: 2px solid transparent;
-    }
-
-    .tab:hover {
-      color: white;
-    }
-
-    .tab.active {
-      color: #8b5cf6;
-      border-bottom-color: #8b5cf6;
-    }
-
-    .tab-content {
-      display: none;
-    }
-
-    .tab-content.active {
-      display: block;
-    }
-
-    .formats-container {
-      max-height: 280px;
-      overflow-y: auto;
-    }
-
-    .formats-container::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .formats-container::-webkit-scrollbar-track {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 3px;
-    }
-
-    .formats-container::-webkit-scrollbar-thumb {
-      background: rgba(139, 92, 246, 0.5);
-      border-radius: 3px;
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 40px 20px;
-      color: #666;
-    }
-
-    .empty-state-icon {
-      font-size: 40px;
-      margin-bottom: 12px;
-      opacity: 0.5;
-    }
-
-    .method-info {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px;
-      background: rgba(139, 92, 246, 0.1);
-      border-radius: 6px;
-      margin-bottom: 12px;
-    }
-
-    .method-label {
-      font-size: 12px;
-      color: #888;
-    }
-
-    .method-badge {
-      font-size: 12px;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 4px;
-      background: #8b5cf6;
-      color: white;
-    }
-
-    .method-badge.cobalt { background: #22c55e; }
-    .method-badge.invidious { background: #3b82f6; }
-    .method-badge.direct { background: #f59e0b; }
-    .method-badge.error { background: #ef4444; }
-
-    .method-details-btn {
-      margin-left: auto;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      border: 1px solid rgba(255,255,255,0.2);
-      background: none;
-      color: #888;
-      font-size: 11px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-
-    .method-details-btn:hover {
-      background: rgba(255,255,255,0.1);
-      color: white;
-    }
-
-    .method-errors {
-      display: none;
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid rgba(239, 68, 68, 0.2);
-      border-radius: 6px;
-      padding: 10px 12px;
-      margin-bottom: 12px;
-      font-size: 11px;
-      color: #f87171;
-      max-height: 100px;
-      overflow-y: auto;
-    }
-
-    .method-errors.visible {
-      display: block;
-    }
-
-    .method-errors-title {
-      font-weight: 600;
-      color: #ef4444;
-      margin-bottom: 4px;
-    }
-
-    .method-error-item {
-      padding: 2px 0;
-      border-bottom: 1px solid rgba(239, 68, 68, 0.1);
-    }
-
-    .method-error-item:last-child {
-      border-bottom: none;
-    }
-
-    .fallback-section {
-      display: none;
-      margin-top: 16px;
-      padding: 16px;
-      background: rgba(59, 130, 246, 0.1);
-      border: 1px solid rgba(59, 130, 246, 0.2);
-      border-radius: 8px;
-      text-align: center;
-    }
-
-    .fallback-section.visible {
-      display: block;
-    }
-
-    .fallback-title {
-      font-size: 13px;
-      color: #3b82f6;
-      margin-bottom: 12px;
-      font-weight: 500;
-    }
-
-    .fallback-btn {
-      display: block;
-      width: 100%;
-      margin-bottom: 8px;
-      font-size: 13px;
-      padding: 10px 16px;
-    }
-
-    .cobalt-btn {
-      background: linear-gradient(135deg, #3b82f6, #2563eb);
-    }
-
-    .copy-url-btn {
-      background: linear-gradient(135deg, #6366f1, #4f46e5);
-    }
-
-    .fallback-note {
-      font-size: 11px;
-      color: #666;
-      margin-top: 8px;
-    }
   </style>
 </head>
 <body>
   <div class="header">
     <img src="icons/icon32.png" alt="Logo" class="header-icon">
-    <span class="header-title">AdHub Youtube Downloader</span>
-    <span class="header-version" id="version">v2.0.0</span>
+    <span class="header-title">YouTube Downloader</span>
+    <span class="header-version" id="version">v3.0.0</span>
   </div>
 
   <div class="content">
@@ -500,17 +346,17 @@
       <label class="input-label">YouTube URL nebo Video ID</label>
       <div class="input-row">
         <input type="text" class="input-field" id="videoInput"
-               placeholder="https://youtube.com/watch?v=... nebo VIDEO_ID">
-        <button class="btn" id="fetchBtn">Nacist</button>
+               placeholder="Vložte YouTube URL...">
+        <button class="btn btn-primary" id="fetchBtn">Načíst</button>
       </div>
     </div>
 
     <div class="loading" id="loading">
       <div class="spinner"></div>
-      <div class="loading-text">Nacitam informace o videu...</div>
+      <div class="loading-text">Načítám informace o videu...</div>
     </div>
 
-    <div class="video-info" id="videoInfo">
+    <div class="video-card" id="videoCard">
       <div class="video-preview">
         <img class="video-thumbnail" id="thumbnail" src="" alt="Thumbnail">
         <div class="video-details">
@@ -519,43 +365,36 @@
         </div>
       </div>
 
-      <!-- Method info badge -->
-      <div class="method-info" id="methodInfo">
-        <span class="method-label">Zdroj:</span>
-        <span class="method-badge" id="methodBadge">-</span>
-        <button class="method-details-btn" id="methodDetailsBtn" title="Zobrazit detaily">?</button>
-      </div>
-      <div class="method-errors" id="methodErrors"></div>
-
-      <div class="tabs">
-        <button class="tab active" data-tab="combined">Video+Audio</button>
-        <button class="tab" data-tab="video">Video</button>
-        <button class="tab" data-tab="audio">Audio</button>
-      </div>
-
-      <div class="formats-container">
-        <div class="tab-content active" id="tab-combined">
-          <div class="formats-grid" id="formats-combined"></div>
-        </div>
-        <div class="tab-content" id="tab-video">
-          <div class="formats-grid" id="formats-video"></div>
-        </div>
-        <div class="tab-content" id="tab-audio">
-          <div class="formats-grid" id="formats-audio"></div>
-        </div>
-      </div>
-
-      <!-- Fallback options when downloads fail -->
-      <div class="fallback-section" id="fallbackSection">
-        <div class="fallback-title">Alternativní možnosti stažení:</div>
-        <button class="btn fallback-btn cobalt-btn" id="openCobaltBtn">
-          🌐 Otevřít v Cobalt.tools
+      <div class="download-section">
+        <button class="download-btn primary" id="cobaltBtn">
+          <span class="download-btn-icon">🌐</span>
+          <span>Stáhnout přes Cobalt.tools</span>
         </button>
-        <button class="btn fallback-btn copy-url-btn" id="copyUrlBtn">
-          📋 Kopírovat YouTube URL
+
+        <button class="download-btn secondary" id="copyUrlBtn">
+          <span class="download-btn-icon">📋</span>
+          <span>Kopírovat URL</span>
         </button>
-        <div class="fallback-note">
-          Cobalt.tools je webová aplikace pro stahování videí
+      </div>
+
+      <div class="info-box">
+        <div class="info-box-title">ℹ️ Jak to funguje</div>
+        <div class="info-box-text">
+          Kliknutím na tlačítko se otevře Cobalt.tools, kde si můžete vybrat kvalitu a stáhnout video. YouTube blokuje přímé stahování z prohlížeče.
+        </div>
+      </div>
+
+      <div class="tech-info">
+        <button class="tech-info-toggle" id="techToggle">
+          <span>▶</span> Proč nefunguje přímé stahování?
+        </button>
+        <div class="tech-info-content" id="techContent">
+          YouTube používá několik ochran:<br>
+          • <code>CORS</code> - servery neposílají Access-Control-Allow-Origin<br>
+          • <code>Signature Cipher</code> - šifrované URL, mění se týdně<br>
+          • <code>N-parameter</code> - bez něj rychlost pouze ~100KB/s<br>
+          • <code>PoToken</code> - BotGuard ochrana od 2024<br><br>
+          Cobalt.tools tyto ochrany obchází na svém serveru.
         </div>
       </div>
     </div>
@@ -563,108 +402,8 @@
 
   <div class="status-bar">
     <span class="status-dot"></span>
-    <span>Plugin aktivni</span>
-    <button class="debug-btn" id="debugBtn" title="Debug info">🔧</button>
+    <span>Plugin aktivní</span>
   </div>
-
-  <!-- Debug Panel -->
-  <div class="debug-panel" id="debugPanel">
-    <div class="debug-header">
-      <span>Debug Info</span>
-      <button class="debug-close" id="debugClose">×</button>
-    </div>
-    <div class="debug-content" id="debugContent">
-      Loading...
-    </div>
-    <div class="debug-actions">
-      <button class="btn debug-copy" id="debugCopy">📋 Kopírovat do schránky</button>
-      <button class="btn debug-refresh" id="debugRefresh">🔄 Obnovit</button>
-    </div>
-  </div>
-
-  <style>
-    .debug-btn {
-      margin-left: auto;
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 14px;
-      opacity: 0.6;
-      transition: opacity 0.2s;
-    }
-    .debug-btn:hover { opacity: 1; }
-
-    .debug-panel {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: #1a1a2e;
-      z-index: 1000;
-      flex-direction: column;
-    }
-    .debug-panel.visible { display: flex; }
-
-    .debug-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px;
-      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-      font-weight: 600;
-    }
-    .debug-close {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 24px;
-      cursor: pointer;
-      line-height: 1;
-    }
-
-    .debug-content {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px;
-      font-family: 'Consolas', 'Monaco', monospace;
-      font-size: 11px;
-      line-height: 1.5;
-      white-space: pre-wrap;
-      word-break: break-all;
-      background: #0d0d1a;
-      color: #a0ffa0;
-    }
-
-    .debug-actions {
-      display: flex;
-      gap: 8px;
-      padding: 12px;
-      background: rgba(0,0,0,0.3);
-    }
-    .debug-actions .btn {
-      flex: 1;
-      font-size: 12px;
-      padding: 10px;
-    }
-    .debug-copy { background: linear-gradient(135deg, #22c55e, #16a34a); }
-    .debug-refresh { background: linear-gradient(135deg, #3b82f6, #2563eb); }
-
-    .debug-section {
-      margin-bottom: 12px;
-      padding-bottom: 8px;
-      border-bottom: 1px solid #333;
-    }
-    .debug-section-title {
-      color: #8b5cf6;
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-    .debug-ok { color: #22c55e; }
-    .debug-err { color: #ef4444; }
-    .debug-warn { color: #f59e0b; }
-  </style>
 
   <script src="popup.js"></script>
 </body>

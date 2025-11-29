@@ -1,12 +1,18 @@
 /**
- * AdHub YouTube Downloader - Download Service
+ * AdHub YouTube Downloader - Download Service v3.0
  *
- * Hybridní služba pro stahování s více metodami a fallbacky.
+ * DŮLEŽITÉ: Čistě client-side YouTube stahování NENÍ MOŽNÉ v 2024-2025.
  *
- * Metody (v pořadí priority):
- * 1. Cobalt API - nejspolehlivější
- * 2. Invidious API - fallback
- * 3. Přímá extrakce - poslední možnost
+ * Důvody:
+ * 1. CORS - YouTube servery neposílají Access-Control-Allow-Origin
+ * 2. Signature cipher - Šifrování se mění týdně
+ * 3. N-parameter throttling - Bez správného n-param je rychlost ~100KB/s
+ * 4. PoToken - Nová ochrana vyžadující BotGuard attestation
+ *
+ * Tato služba proto poskytuje:
+ * 1. Metadata o videu (title, thumbnail, délka) přes oEmbed API
+ * 2. Přesměrování na cobalt.tools pro skutečné stažení
+ * 3. Možnost spuštění lokálního yt-dlp přes Native Messaging
  */
 
 const DownloadService = {
@@ -15,25 +21,19 @@ const DownloadService = {
   // ============================================================================
 
   config: {
-    // Cobalt API
+    // Cobalt web interface (jediná spolehlivá metoda pro běžné uživatele)
     cobalt: {
-      apiUrl: 'https://api.cobalt.tools/',
-      timeout: 30000
+      webUrl: 'https://cobalt.tools',
+      // API vyžaduje autentizaci od 11/2024, web interface stále funguje
+      apiDisabled: true
     },
 
-    // Invidious instance - používáme ty které nepřesměrovávají a mají CORS
-    invidious: {
-      instances: [
-        'https://inv.nadeko.net',
-        'https://invidious.lunar.icu',
-        'https://yt.artemislena.eu',
-        'https://invidious.perennialte.ch',
-        'https://invidious.drgns.space'
-      ],
-      timeout: 10000
+    // Native messaging pro lokální yt-dlp
+    nativeMessaging: {
+      hostName: 'com.adhub.ytdownloader',
+      enabled: false // Vyžaduje instalaci companion app
     },
 
-    // Debug mode
     debug: true
   },
 
@@ -63,619 +63,272 @@ const DownloadService = {
   },
 
   // ============================================================================
-  // HLAVNÍ METODA - getDownloadLinks
+  // HLAVNÍ METODA - getVideoInfo (pouze metadata, ne stahování!)
+  // ============================================================================
+
+  async getVideoInfo(videoId) {
+    this.log('INFO', `Získávám info pro video: ${videoId}`);
+
+    const result = {
+      success: false,
+      videoId: videoId,
+      title: null,
+      author: null,
+      thumbnail: null,
+      duration: null,
+      error: null,
+      // Dostupné metody stažení
+      downloadMethods: {
+        cobaltWeb: true,        // Vždy dostupné - otevře web
+        ytdlpLocal: false,      // Vyžaduje companion app
+        directDownload: false   // NIKDY - CORS to blokuje
+      },
+      // Vysvětlení pro uživatele
+      explanation: {
+        cs: 'YouTube blokuje přímé stahování z prohlížeče. Použijte tlačítko "Otevřít v Cobalt" pro stažení.',
+        en: 'YouTube blocks direct browser downloads. Use "Open in Cobalt" button to download.'
+      }
+    };
+
+    try {
+      // Metoda 1: YouTube oEmbed API (vždy funguje, žádné CORS problémy)
+      const oEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
+
+      const response = await fetch(oEmbedUrl);
+      if (!response.ok) {
+        throw new Error(`oEmbed failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+
+      result.success = true;
+      result.title = data.title || 'Neznámý název';
+      result.author = data.author_name || 'Neznámý autor';
+      result.thumbnail = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+      result.thumbnailMedium = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+
+      // Zkontroluj dostupnost Native Messaging
+      result.downloadMethods.ytdlpLocal = await this.checkNativeMessaging();
+
+      this.log('INFO', 'Video info získáno', result);
+
+    } catch (error) {
+      this.logError('INFO', 'Chyba při získávání info', error);
+      result.error = error.message;
+
+      // Fallback - alespoň základní info
+      result.title = `Video ${videoId}`;
+      result.thumbnail = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+    }
+
+    return result;
+  },
+
+  // ============================================================================
+  // DOWNLOAD METHODS INFO - Co je dostupné
+  // ============================================================================
+
+  getAvailableMethods() {
+    return {
+      methods: [
+        {
+          id: 'cobalt_web',
+          name: 'Cobalt.tools (Web)',
+          description: 'Otevře cobalt.tools v novém tabu pro stažení',
+          available: true,
+          recommended: true,
+          icon: '🌐'
+        },
+        {
+          id: 'copy_url',
+          name: 'Kopírovat URL',
+          description: 'Zkopíruje YouTube URL pro použití v jiném nástroji',
+          available: true,
+          recommended: false,
+          icon: '📋'
+        },
+        {
+          id: 'ytdlp_local',
+          name: 'yt-dlp (Lokální)',
+          description: 'Použije lokálně nainstalovaný yt-dlp',
+          available: this.config.nativeMessaging.enabled,
+          recommended: false,
+          icon: '💻',
+          requiresSetup: true
+        }
+      ],
+      unavailable: [
+        {
+          id: 'direct_download',
+          name: 'Přímé stažení',
+          reason: 'YouTube CORS politika blokuje přímé stahování z prohlížeče',
+          technicalDetails: 'googlevideo.com neposílá Access-Control-Allow-Origin header'
+        },
+        {
+          id: 'cobalt_api',
+          name: 'Cobalt API',
+          reason: 'Od listopadu 2024 vyžaduje autentizaci (API klíč nebo turnstile)',
+          technicalDetails: 'https://github.com/imputnet/cobalt/discussions/860'
+        },
+        {
+          id: 'invidious_download',
+          name: 'Invidious stahování',
+          reason: 'Video URL z Invidious stále vedou na googlevideo.com (CORS blokováno)',
+          technicalDetails: 'Invidious poskytuje pouze metadata, ne CORS-kompatibilní streamy'
+        }
+      ]
+    };
+  },
+
+  // ============================================================================
+  // COBALT WEB - Otevření v novém tabu
+  // ============================================================================
+
+  openInCobalt(videoId) {
+    const youtubeUrl = `https://www.youtube.com/watch?v=${videoId}`;
+    const cobaltUrl = `${this.config.cobalt.webUrl}/?url=${encodeURIComponent(youtubeUrl)}`;
+
+    this.log('COBALT_WEB', `Otevírám Cobalt pro video: ${videoId}`);
+
+    // Otevřít v novém tabu
+    if (typeof chrome !== 'undefined' && chrome.tabs) {
+      chrome.tabs.create({ url: cobaltUrl });
+    } else {
+      window.open(cobaltUrl, '_blank');
+    }
+
+    return { success: true, url: cobaltUrl };
+  },
+
+  // ============================================================================
+  // COPY URL - Zkopírování URL do schránky
+  // ============================================================================
+
+  async copyUrl(videoId) {
+    const url = `https://www.youtube.com/watch?v=${videoId}`;
+
+    try {
+      await navigator.clipboard.writeText(url);
+      this.log('COPY', `URL zkopírována: ${url}`);
+      return { success: true, url: url };
+    } catch (error) {
+      this.logError('COPY', 'Chyba při kopírování', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  // ============================================================================
+  // NATIVE MESSAGING - Pro lokální yt-dlp
+  // ============================================================================
+
+  async checkNativeMessaging() {
+    // Zkontroluj, jestli je Native Messaging dostupné
+    if (typeof chrome === 'undefined' || !chrome.runtime || !chrome.runtime.sendNativeMessage) {
+      return false;
+    }
+
+    try {
+      // Pokus o ping companion app
+      return new Promise((resolve) => {
+        chrome.runtime.sendNativeMessage(
+          this.config.nativeMessaging.hostName,
+          { action: 'ping' },
+          (response) => {
+            if (chrome.runtime.lastError) {
+              this.log('NATIVE', 'Companion app není nainstalována');
+              resolve(false);
+            } else {
+              this.log('NATIVE', 'Companion app nalezena', response);
+              this.config.nativeMessaging.enabled = true;
+              resolve(true);
+            }
+          }
+        );
+      });
+    } catch (e) {
+      return false;
+    }
+  },
+
+  async downloadViaYtdlp(videoId, options = {}) {
+    if (!this.config.nativeMessaging.enabled) {
+      return {
+        success: false,
+        error: 'yt-dlp companion app není nainstalována',
+        setupUrl: 'https://github.com/AdhubYoutubeDownloader/companion-app'
+      };
+    }
+
+    return new Promise((resolve) => {
+      chrome.runtime.sendNativeMessage(
+        this.config.nativeMessaging.hostName,
+        {
+          action: 'download',
+          videoId: videoId,
+          url: `https://www.youtube.com/watch?v=${videoId}`,
+          format: options.format || 'best',
+          output: options.output || '%(title)s.%(ext)s'
+        },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            resolve({
+              success: false,
+              error: chrome.runtime.lastError.message
+            });
+          } else {
+            resolve(response);
+          }
+        }
+      );
+    });
+  },
+
+  // ============================================================================
+  // LEGACY COMPATIBILITY - Pro zpětnou kompatibilitu s popup.js
   // ============================================================================
 
   async getDownloadLinks(videoId) {
-    this.log('MAIN', `Začínám získávat odkazy pro video: ${videoId}`);
+    // Tato metoda existuje pro zpětnou kompatibilitu
+    // Vrací "formáty" ale s vysvětlením že přímé stahování nefunguje
 
-    const results = {
-      success: false,
+    this.log('LEGACY', 'getDownloadLinks voláno - vrací pouze info o metodách');
+
+    const videoInfo = await this.getVideoInfo(videoId);
+    const methods = this.getAvailableMethods();
+
+    return {
+      success: true,
       videoId: videoId,
-      method: null,
+      method: 'info_only',
       formats: {
+        // Prázdné - přímé stahování nefunguje
         combined: { mp4: [], webm: [] },
         video: { mp4: [], webm: [] },
         audio: { m4a: [], webm: [] }
       },
-      errors: [],
+      // Nové pole s dostupnými metodami
+      availableMethods: methods.methods,
+      unavailableMethods: methods.unavailable,
+      videoInfo: videoInfo,
+      errors: [
+        'Přímé stahování z prohlížeče není možné kvůli YouTube CORS politice',
+        'Použijte tlačítko "Otevřít v Cobalt" pro stažení videa'
+      ],
       debug: {
-        attempts: [],
-        totalTime: 0
+        reason: 'CORS_BLOCKED',
+        documentation: 'https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS',
+        youtubeProtection: [
+          'CORS (Access-Control-Allow-Origin)',
+          'Signature Cipher',
+          'N-parameter throttling',
+          'PoToken (BotGuard)'
+        ]
       }
     };
-
-    const startTime = Date.now();
-
-    // METODA 1: Cobalt API
-    try {
-      this.log('MAIN', 'Zkouším Cobalt API...');
-      results.debug.attempts.push({ method: 'cobalt', status: 'started' });
-
-      const cobaltResult = await this.tryCobalt(videoId);
-      if (cobaltResult.success && cobaltResult.formats) {
-        results.success = true;
-        results.method = 'cobalt';
-        results.formats = cobaltResult.formats;
-        results.videoInfo = cobaltResult.videoInfo;
-        results.debug.attempts[results.debug.attempts.length - 1].status = 'success';
-        results.debug.totalTime = Date.now() - startTime;
-
-        this.log('MAIN', 'Cobalt úspěšný!', { formatsCount: this.countFormats(results.formats) });
-        return results;
-      }
-
-      results.debug.attempts[results.debug.attempts.length - 1].status = 'failed';
-      results.debug.attempts[results.debug.attempts.length - 1].error = cobaltResult.error;
-      results.errors.push(`Cobalt: ${cobaltResult.error}`);
-    } catch (e) {
-      this.logError('MAIN', 'Cobalt selhal', e);
-      results.errors.push(`Cobalt exception: ${e.message}`);
-    }
-
-    // METODA 2: Invidious API
-    try {
-      this.log('MAIN', 'Zkouším Invidious API...');
-      results.debug.attempts.push({ method: 'invidious', status: 'started' });
-
-      const invidiousResult = await this.tryInvidious(videoId);
-      if (invidiousResult.success && invidiousResult.formats) {
-        results.success = true;
-        results.method = 'invidious';
-        results.formats = invidiousResult.formats;
-        results.videoInfo = invidiousResult.videoInfo;
-        results.debug.attempts[results.debug.attempts.length - 1].status = 'success';
-        results.debug.attempts[results.debug.attempts.length - 1].instance = invidiousResult.instance;
-        results.debug.totalTime = Date.now() - startTime;
-
-        this.log('MAIN', 'Invidious úspěšný!', { instance: invidiousResult.instance });
-        return results;
-      }
-
-      results.debug.attempts[results.debug.attempts.length - 1].status = 'failed';
-      results.errors.push(`Invidious: ${invidiousResult.error}`);
-    } catch (e) {
-      this.logError('MAIN', 'Invidious selhal', e);
-      results.errors.push(`Invidious exception: ${e.message}`);
-    }
-
-    // METODA 3: Přímá extrakce (fallback)
-    try {
-      this.log('MAIN', 'Zkouším přímou extrakci...');
-      results.debug.attempts.push({ method: 'direct', status: 'started' });
-
-      const directResult = await this.tryDirectExtraction(videoId);
-      if (directResult.success && this.countFormats(directResult.formats) > 0) {
-        results.success = true;
-        results.method = 'direct';
-        results.formats = directResult.formats;
-        results.videoInfo = directResult.videoInfo;
-        results.debug.attempts[results.debug.attempts.length - 1].status = 'success';
-        results.debug.totalTime = Date.now() - startTime;
-
-        this.log('MAIN', 'Přímá extrakce úspěšná!');
-        return results;
-      }
-
-      results.debug.attempts[results.debug.attempts.length - 1].status = 'failed';
-      results.errors.push(`Direct: ${directResult.error || 'Žádné formáty'}`);
-    } catch (e) {
-      this.logError('MAIN', 'Přímá extrakce selhala', e);
-      results.errors.push(`Direct exception: ${e.message}`);
-    }
-
-    results.debug.totalTime = Date.now() - startTime;
-    this.logError('MAIN', 'Všechny metody selhaly', results.errors);
-
-    return results;
   },
 
   // ============================================================================
-  // METODA 1: Cobalt API (aktualizováno pro novou verzi API)
-  // ============================================================================
-
-  async tryCobalt(videoId) {
-    this.log('COBALT', `Volám Cobalt API pro ${videoId}`);
-
-    const result = {
-      success: false,
-      error: null,
-      formats: null,
-      videoInfo: null,
-      instanceErrors: []
-    };
-
-    // POZNÁMKA: Od listopadu 2024 Cobalt vyžaduje autentizaci (turnstile/API klíč)
-    // Veřejné instance jsou buď vypnuté nebo chráněné
-    // Viz: https://github.com/imputnet/cobalt/discussions/860
-
-    // Zkusíme několik instancí které mohou ještě fungovat bez autentizace
-    const cobaltInstances = [
-      { url: 'https://api.cobalt.tools', version: 10 },
-      { url: 'https://cobalt.wukko.me/api/json', version: 7 }
-    ];
-
-    for (const instance of cobaltInstances) {
-      try {
-        this.log('COBALT', `Zkouším instanci: ${instance.url}`);
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-        // API v10 formát
-        const requestBody = instance.version === 10 ? {
-          url: `https://www.youtube.com/watch?v=${videoId}`,
-          videoQuality: '1080',
-          youtubeVideoCodec: 'h264'
-        } : {
-          url: `https://www.youtube.com/watch?v=${videoId}`,
-          vCodec: 'h264',
-          vQuality: '1080',
-          isAudioOnly: false
-        };
-
-        const response = await fetch(instance.url, {
-          method: 'POST',
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/131.0.0.0'
-          },
-          body: JSON.stringify(requestBody),
-          signal: controller.signal
-        });
-
-        clearTimeout(timeoutId);
-
-        this.log('COBALT', `Response status: ${response.status}`);
-
-        if (response.status === 403 || response.status === 401) {
-          result.instanceErrors.push(`${instance.url}: Vyžaduje autentizaci (API klíč/turnstile)`);
-          continue;
-        }
-
-        if (!response.ok) {
-          const errorText = await response.text().catch(() => '');
-          result.instanceErrors.push(`${instance.url}: HTTP ${response.status}`);
-          continue;
-        }
-
-        const data = await response.json();
-        this.log('COBALT', 'Response data:', data);
-
-        if (data.status === 'error' || data.error) {
-          const errText = data.error?.code || data.text || 'Unknown error';
-          result.instanceErrors.push(`${instance.url}: ${errText}`);
-          continue;
-        }
-
-        // Úspěch!
-        if (data.url || data.status === 'redirect' || data.status === 'tunnel' || data.status === 'stream') {
-          result.success = true;
-          result.formats = {
-            combined: {
-              mp4: [{
-                itag: 'cobalt',
-                url: data.url,
-                quality: 'Auto (nejlepší)',
-                container: 'mp4',
-                codec: 'h264/aac',
-                type: 'combined',
-                source: 'cobalt'
-              }],
-              webm: []
-            },
-            video: { mp4: [], webm: [] },
-            audio: { m4a: [], webm: [] }
-          };
-          this.log('COBALT', `Úspěch!`);
-          return result;
-        }
-
-        result.instanceErrors.push(`${instance.url}: Neznámý status "${data.status}"`);
-
-      } catch (error) {
-        const errMsg = error.name === 'AbortError' ? 'Timeout' : error.message;
-        result.instanceErrors.push(`${instance.url}: ${errMsg}`);
-        this.logError('COBALT', `Instance ${instance.url}: ${errMsg}`);
-      }
-    }
-
-    result.error = 'Cobalt API není dostupné (vyžaduje autentizaci od 11/2024)';
-    return result;
-  },
-
-  parseCobaltPicker(picker, videoId) {
-    const formats = {
-      combined: { mp4: [], webm: [] },
-      video: { mp4: [], webm: [] },
-      audio: { m4a: [], webm: [] }
-    };
-
-    for (const item of picker) {
-      const format = {
-        itag: `cobalt_${item.type || 'unknown'}`,
-        url: item.url,
-        quality: item.type || 'Unknown',
-        container: 'mp4',
-        codec: 'h264/aac',
-        source: 'cobalt'
-      };
-
-      if (item.type === 'video') {
-        format.type = 'combined';
-        formats.combined.mp4.push(format);
-      } else if (item.type === 'audio') {
-        format.type = 'audio';
-        formats.audio.m4a.push(format);
-      }
-    }
-
-    return formats;
-  },
-
-  // ============================================================================
-  // METODA 2: Invidious API
-  // ============================================================================
-
-  async tryInvidious(videoId) {
-    this.log('INVIDIOUS', `Zkouším Invidious instance pro ${videoId}`);
-
-    const result = {
-      success: false,
-      error: null,
-      formats: null,
-      videoInfo: null,
-      instance: null
-    };
-
-    const errors = [];
-
-    for (const instance of this.config.invidious.instances) {
-      try {
-        this.log('INVIDIOUS', `Zkouším instanci: ${instance}`);
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), this.config.invidious.timeout);
-
-        const response = await fetch(`${instance}/api/v1/videos/${videoId}`, {
-          signal: controller.signal,
-          headers: {
-            'Accept': 'application/json'
-          }
-        });
-
-        clearTimeout(timeoutId);
-
-        if (!response.ok) {
-          errors.push(`${instance}: HTTP ${response.status}`);
-          continue;
-        }
-
-        const data = await response.json();
-        this.log('INVIDIOUS', `Instance ${instance} odpověděla`, {
-          title: data.title,
-          formatsCount: data.formatStreams?.length || 0,
-          adaptiveCount: data.adaptiveFormats?.length || 0
-        });
-
-        // Parsování formátů
-        const formats = this.parseInvidiousFormats(data, instance);
-
-        if (this.countFormats(formats) === 0) {
-          errors.push(`${instance}: Žádné formáty`);
-          continue;
-        }
-
-        result.success = true;
-        result.formats = formats;
-        result.instance = instance;
-        result.videoInfo = {
-          title: data.title,
-          author: data.author,
-          lengthSeconds: data.lengthSeconds,
-          thumbnail: data.videoThumbnails?.[0]?.url
-        };
-
-        return result;
-
-      } catch (error) {
-        const errorMsg = error.name === 'AbortError' ? 'Timeout' : error.message;
-        errors.push(`${instance}: ${errorMsg}`);
-        this.log('INVIDIOUS', `Instance ${instance} selhala: ${errorMsg}`);
-      }
-    }
-
-    result.error = errors.join('; ');
-    return result;
-  },
-
-  parseInvidiousFormats(data, instance) {
-    const formats = {
-      combined: { mp4: [], webm: [] },
-      video: { mp4: [], webm: [] },
-      audio: { m4a: [], webm: [] }
-    };
-
-    // Kombinované formáty (formatStreams)
-    if (data.formatStreams) {
-      for (const f of data.formatStreams) {
-        const format = {
-          itag: f.itag,
-          url: f.url,
-          quality: f.qualityLabel || f.quality,
-          container: f.container || 'mp4',
-          codec: f.encoding || 'unknown',
-          type: 'combined',
-          source: 'invidious',
-          instance: instance,
-          resolution: f.resolution
-        };
-
-        if (format.container === 'mp4') {
-          formats.combined.mp4.push(format);
-        } else if (format.container === 'webm') {
-          formats.combined.webm.push(format);
-        }
-      }
-    }
-
-    // Adaptivní formáty (adaptiveFormats)
-    if (data.adaptiveFormats) {
-      for (const f of data.adaptiveFormats) {
-        const isAudio = f.type?.startsWith('audio/');
-        const isVideo = f.type?.startsWith('video/');
-
-        const format = {
-          itag: f.itag,
-          url: f.url,
-          quality: f.qualityLabel || f.audioQuality || f.bitrate,
-          container: f.container || (f.type?.includes('webm') ? 'webm' : 'mp4'),
-          codec: f.encoding || 'unknown',
-          source: 'invidious',
-          instance: instance,
-          bitrate: f.bitrate,
-          resolution: f.resolution
-        };
-
-        if (isAudio) {
-          format.type = 'audio';
-          format.audioQuality = f.audioQuality;
-          if (f.container === 'webm' || f.type?.includes('webm')) {
-            formats.audio.webm.push(format);
-          } else {
-            formats.audio.m4a.push(format);
-          }
-        } else if (isVideo) {
-          format.type = 'video';
-          if (f.container === 'webm' || f.type?.includes('webm')) {
-            formats.video.webm.push(format);
-          } else {
-            formats.video.mp4.push(format);
-          }
-        }
-      }
-    }
-
-    // Seřadit podle kvality
-    formats.combined.mp4.sort((a, b) => this.parseQuality(b.quality) - this.parseQuality(a.quality));
-    formats.combined.webm.sort((a, b) => this.parseQuality(b.quality) - this.parseQuality(a.quality));
-    formats.video.mp4.sort((a, b) => this.parseQuality(b.quality) - this.parseQuality(a.quality));
-    formats.video.webm.sort((a, b) => this.parseQuality(b.quality) - this.parseQuality(a.quality));
-    formats.audio.m4a.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0));
-    formats.audio.webm.sort((a, b) => (b.bitrate || 0) - (a.bitrate || 0));
-
-    return formats;
-  },
-
-  parseQuality(quality) {
-    if (!quality) return 0;
-    const match = String(quality).match(/(\d+)/);
-    return match ? parseInt(match[1]) : 0;
-  },
-
-  // ============================================================================
-  // METODA 3: Přímá extrakce (stávající metoda jako fallback)
-  // ============================================================================
-
-  async tryDirectExtraction(videoId) {
-    this.log('DIRECT', `Přímá extrakce pro ${videoId}`);
-
-    const result = {
-      success: false,
-      error: null,
-      formats: null,
-      videoInfo: null
-    };
-
-    try {
-      // Toto volá stávající implementaci v background.js
-      // Zde jen delegujeme na existující kód
-
-      const pageUrl = `https://www.youtube.com/watch?v=${videoId}`;
-      const response = await fetch(pageUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
-      });
-
-      if (!response.ok) {
-        result.error = `HTTP ${response.status}`;
-        return result;
-      }
-
-      const html = await response.text();
-      this.log('DIRECT', `Staženo ${html.length} znaků HTML`);
-
-      // Zkusíme najít ytInitialPlayerResponse
-      const playerMatch = html.match(/ytInitialPlayerResponse\s*=\s*(\{.+?\});\s*(?:var|let|const|<\/script>)/s);
-
-      if (!playerMatch) {
-        result.error = 'ytInitialPlayerResponse nenalezeno';
-        return result;
-      }
-
-      // Extrahovat JSON
-      const jsonStr = this.extractCompleteJson(html, playerMatch.index + playerMatch[0].indexOf('{'));
-      if (!jsonStr) {
-        result.error = 'Nelze extrahovat JSON';
-        return result;
-      }
-
-      const playerData = JSON.parse(jsonStr);
-      const streamingData = playerData.streamingData;
-
-      if (!streamingData) {
-        result.error = 'StreamingData nenalezeno';
-        return result;
-      }
-
-      this.log('DIRECT', 'StreamingData nalezeno', {
-        formatsCount: streamingData.formats?.length || 0,
-        adaptiveCount: streamingData.adaptiveFormats?.length || 0
-      });
-
-      // Parsování formátů
-      const formats = {
-        combined: { mp4: [], webm: [] },
-        video: { mp4: [], webm: [] },
-        audio: { m4a: [], webm: [] }
-      };
-
-      // Kombinované formáty
-      if (streamingData.formats) {
-        for (const f of streamingData.formats) {
-          const processed = this.processDirectFormat(f, true);
-          if (processed) {
-            if (processed.container === 'mp4') {
-              formats.combined.mp4.push(processed);
-            } else if (processed.container === 'webm') {
-              formats.combined.webm.push(processed);
-            }
-          }
-        }
-      }
-
-      // Adaptivní formáty
-      if (streamingData.adaptiveFormats) {
-        for (const f of streamingData.adaptiveFormats) {
-          const processed = this.processDirectFormat(f, false);
-          if (processed) {
-            if (processed.type === 'video') {
-              if (processed.container === 'mp4') {
-                formats.video.mp4.push(processed);
-              } else {
-                formats.video.webm.push(processed);
-              }
-            } else if (processed.type === 'audio') {
-              if (processed.container === 'webm') {
-                formats.audio.webm.push(processed);
-              } else {
-                formats.audio.m4a.push(processed);
-              }
-            }
-          }
-        }
-      }
-
-      result.success = true;
-      result.formats = formats;
-      result.videoInfo = {
-        title: playerData.videoDetails?.title,
-        author: playerData.videoDetails?.author,
-        lengthSeconds: playerData.videoDetails?.lengthSeconds
-      };
-
-      return result;
-
-    } catch (error) {
-      this.logError('DIRECT', 'Exception', error);
-      result.error = error.message;
-      return result;
-    }
-  },
-
-  processDirectFormat(format, isCombined) {
-    // Získání URL
-    let url = format.url;
-
-    // SignatureCipher
-    if (!url && format.signatureCipher) {
-      const params = new URLSearchParams(format.signatureCipher);
-      url = params.get('url');
-      // Bez správné signature to pravděpodobně nebude fungovat,
-      // ale zkusíme to jako poslední možnost
-    }
-
-    if (!url) {
-      return null;
-    }
-
-    const mimeType = format.mimeType || '';
-    const isVideo = mimeType.includes('video/');
-    const isAudio = mimeType.includes('audio/');
-
-    let container = 'unknown';
-    if (mimeType.includes('mp4')) container = 'mp4';
-    else if (mimeType.includes('webm')) container = 'webm';
-
-    const codecMatch = mimeType.match(/codecs="([^"]+)"/);
-    const codec = codecMatch ? codecMatch[1] : 'unknown';
-
-    return {
-      itag: format.itag,
-      url: url,
-      quality: format.qualityLabel || format.audioQuality || `${format.height}p`,
-      container: container,
-      codec: codec,
-      type: isCombined ? 'combined' : (isVideo ? 'video' : 'audio'),
-      source: 'direct',
-      fileSize: format.contentLength ? parseInt(format.contentLength) : null,
-      width: format.width,
-      height: format.height,
-      bitrate: format.bitrate
-    };
-  },
-
-  extractCompleteJson(str, startIndex) {
-    let depth = 0;
-    let inString = false;
-    let escape = false;
-
-    for (let i = startIndex; i < str.length && i < startIndex + 500000; i++) {
-      const char = str[i];
-
-      if (escape) {
-        escape = false;
-        continue;
-      }
-
-      if (char === '\\' && inString) {
-        escape = true;
-        continue;
-      }
-
-      if (char === '"' && !escape) {
-        inString = !inString;
-        continue;
-      }
-
-      if (!inString) {
-        if (char === '{') depth++;
-        else if (char === '}') {
-          depth--;
-          if (depth === 0) {
-            return str.substring(startIndex, i + 1);
-          }
-        }
-      }
-    }
-
-    return null;
-  },
-
-  // ============================================================================
-  // POMOCNÉ METODY
+  // HELPER - Počet formátů (pro kompatibilitu)
   // ============================================================================
 
   countFormats(formats) {
