@@ -55,7 +55,12 @@
     formatsVideo: document.getElementById('formats-video'),
     formatsAudio: document.getElementById('formats-audio'),
     tabs: document.querySelectorAll('.tab'),
-    tabContents: document.querySelectorAll('.tab-content')
+    tabContents: document.querySelectorAll('.tab-content'),
+    // Method info elements
+    methodInfo: document.getElementById('methodInfo'),
+    methodBadge: document.getElementById('methodBadge'),
+    methodDetailsBtn: document.getElementById('methodDetailsBtn'),
+    methodErrors: document.getElementById('methodErrors')
   };
 
   // ============================================================================
@@ -65,7 +70,10 @@
   const state = {
     currentVideoId: null,
     videoTitle: '',
-    formats: null
+    formats: null,
+    method: null,
+    errors: [],
+    debug: null
   };
 
   // ============================================================================
@@ -238,10 +246,14 @@
       state.currentVideoId = videoId;
       state.videoTitle = videoInfo.title;
       state.formats = formatsResult.formats;
+      state.method = formatsResult.method || 'unknown';
+      state.errors = formatsResult.errors || [];
+      state.debug = formatsResult.debug || null;
 
       // Krok 4: Zobrazeni dat
       displayVideoInfo(videoInfo);
       displayFormats(formatsResult.formats);
+      displayMethodInfo(state.method, state.errors);
 
       elements.loading.classList.remove('visible');
       elements.videoInfo.classList.add('visible');
@@ -252,6 +264,14 @@
       logError('FETCH', 'Chyba pri nacitani', error);
       showError(error.message);
       elements.loading.classList.remove('visible');
+      // Reset method info
+      if (elements.methodBadge) {
+        elements.methodBadge.textContent = 'Chyba';
+        elements.methodBadge.className = 'method-badge error';
+      }
+      if (elements.methodErrors) {
+        elements.methodErrors.classList.remove('visible');
+      }
     } finally {
       elements.fetchBtn.disabled = false;
     }
@@ -268,6 +288,46 @@
     };
     elements.videoTitle.textContent = info.title;
     elements.videoAuthor.textContent = info.author;
+  }
+
+  // ============================================================================
+  // DISPLAY METHOD INFO - Zobrazeni pouzite metody a chyb
+  // ============================================================================
+
+  function displayMethodInfo(method, errors) {
+    const methodNames = {
+      'cobalt': 'Cobalt API',
+      'invidious': 'Invidious',
+      'direct': 'Primá extrakce',
+      'unknown': 'Neznámá'
+    };
+
+    const badge = elements.methodBadge;
+    badge.textContent = methodNames[method] || method;
+    badge.className = 'method-badge ' + (method || 'unknown');
+
+    // Zobrazit varovani pro direct metodu
+    if (method === 'direct') {
+      badge.title = 'Varovani: Primá extrakce nemusí fungovat spolehlivě';
+    } else {
+      badge.title = '';
+    }
+
+    // Zobrazit chyby, pokud nejake byly
+    if (errors && errors.length > 0) {
+      elements.methodErrors.innerHTML = `
+        <div class="method-errors-title">Některé metody selhaly:</div>
+        ${errors.map(e => `<div class="method-error-item">${escapeHtml(e)}</div>`).join('')}
+      `;
+      elements.methodErrors.classList.add('visible');
+    } else {
+      elements.methodErrors.classList.remove('visible');
+    }
+
+    // Nastavit event listener pro details button
+    elements.methodDetailsBtn.onclick = () => {
+      elements.methodErrors.classList.toggle('visible');
+    };
   }
 
   // ============================================================================

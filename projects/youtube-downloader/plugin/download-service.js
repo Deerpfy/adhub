@@ -21,17 +21,19 @@ const DownloadService = {
       timeout: 30000
     },
 
-    // Invidious instance (seřazené podle spolehlivosti)
+    // Invidious instance (seřazené podle spolehlivosti - aktualizováno 2024)
     invidious: {
       instances: [
+        'https://invidious.fdn.fr',
+        'https://inv.tux.pizza',
+        'https://invidious.protokolla.fi',
+        'https://iv.datura.network',
+        'https://invidious.privacyredirect.com',
         'https://invidious.nerdvpn.de',
         'https://yewtu.be',
-        'https://vid.puffyan.us',
-        'https://invidious.namazso.eu',
-        'https://inv.nadeko.net',
-        'https://invidious.private.coffee'
+        'https://vid.puffyan.us'
       ],
-      timeout: 15000
+      timeout: 12000
     },
 
     // Debug mode
@@ -172,7 +174,7 @@ const DownloadService = {
   },
 
   // ============================================================================
-  // METODA 1: Cobalt API
+  // METODA 1: Cobalt API (aktualizováno pro novou verzi API)
   // ============================================================================
 
   async tryCobalt(videoId) {
@@ -182,79 +184,111 @@ const DownloadService = {
       success: false,
       error: null,
       formats: null,
-      videoInfo: null
+      videoInfo: null,
+      instanceErrors: []
     };
 
-    try {
-      // Cobalt API požadavek
-      const response = await fetch(this.config.cobalt.apiUrl, {
-        method: 'POST',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          url: `https://youtube.com/watch?v=${videoId}`,
-          downloadMode: 'auto',
-          filenameStyle: 'pretty',
-          videoQuality: 'max'
-        })
-      });
+    // Cobalt API instance - aktuální verze API (10+)
+    const cobaltInstances = [
+      { url: 'https://api.cobalt.tools', version: 10 },
+      { url: 'https://cobalt.r4fo.com', version: 10 },
+      { url: 'https://co.eepy.today', version: 10 }
+    ];
 
-      this.log('COBALT', `Response status: ${response.status}`);
+    for (const instance of cobaltInstances) {
+      try {
+        this.log('COBALT', `Zkouším instanci: ${instance.url}`);
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        result.error = `HTTP ${response.status}: ${errorText.substring(0, 100)}`;
-        return result;
-      }
-
-      const data = await response.json();
-      this.log('COBALT', 'Response data:', data);
-
-      // Cobalt vrací různé statusy
-      if (data.status === 'error') {
-        result.error = data.text || 'Cobalt error';
-        return result;
-      }
-
-      if (data.status === 'redirect' || data.status === 'tunnel' || data.status === 'stream') {
-        // Máme přímý download link
-        result.success = true;
-        result.formats = {
-          combined: {
-            mp4: [{
-              itag: 'cobalt',
-              url: data.url,
-              quality: 'Auto (nejlepší)',
-              container: 'mp4',
-              codec: 'h264/aac',
-              type: 'combined',
-              source: 'cobalt',
-              filename: data.filename || `${videoId}.mp4`
-            }],
-            webm: []
+        // Cobalt API v10 požadavek - vyžaduje specifické hlavičky
+        const response = await fetch(instance.url, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
           },
-          video: { mp4: [], webm: [] },
-          audio: { m4a: [], webm: [] }
-        };
+          body: JSON.stringify({
+            url: `https://www.youtube.com/watch?v=${videoId}`,
+            videoQuality: '1080',
+            audioBitrate: '320',
+            filenameStyle: 'pretty',
+            youtubeVideoCodec: 'h264'
+          })
+        });
 
-        // Pokud Cobalt vrací picker (více možností)
-        if (data.status === 'picker' && data.picker) {
-          result.formats = this.parseCobaltPicker(data.picker, videoId);
+        this.log('COBALT', `Response status: ${response.status}`);
+
+        const responseText = await response.text();
+        this.log('COBALT', `Response body: ${responseText.substring(0, 500)}`);
+
+        if (!response.ok) {
+          const errMsg = `HTTP ${response.status}: ${responseText.substring(0, 100)}`;
+          result.instanceErrors.push(`${instance.url}: ${errMsg}`);
+          this.log('COBALT', `Instance ${instance.url} selhala: ${errMsg}`);
+          continue;
         }
 
-        return result;
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          result.instanceErrors.push(`${instance.url}: Invalid JSON response`);
+          continue;
+        }
+
+        this.log('COBALT', 'Response data:', data);
+
+        // Cobalt vrací různé statusy
+        if (data.status === 'error' || data.error) {
+          const errText = data.error?.code || data.text || JSON.stringify(data.error);
+          result.instanceErrors.push(`${instance.url}: ${errText}`);
+          this.log('COBALT', `Instance ${instance.url} vrátila error: ${errText}`);
+          continue;
+        }
+
+        // Úspěšné statusy - v10+ používá jiné názvy
+        if (data.status === 'redirect' || data.status === 'tunnel' ||
+            data.status === 'stream' || data.status === 'success' || data.url) {
+          result.success = true;
+          result.formats = {
+            combined: {
+              mp4: [{
+                itag: 'cobalt',
+                url: data.url,
+                quality: 'Auto (nejlepší)',
+                container: 'mp4',
+                codec: 'h264/aac',
+                type: 'combined',
+                source: 'cobalt',
+                filename: data.filename || `${videoId}.mp4`
+              }],
+              webm: []
+            },
+            video: { mp4: [], webm: [] },
+            audio: { m4a: [], webm: [] }
+          };
+
+          // Pokud Cobalt vrací picker (více možností)
+          if (data.status === 'picker' && data.picker) {
+            result.formats = this.parseCobaltPicker(data.picker, videoId);
+          }
+
+          this.log('COBALT', `Úspěch s instancí ${instance.url}`);
+          return result;
+        }
+
+        result.instanceErrors.push(`${instance.url}: Unknown status "${data.status}"`);
+        this.log('COBALT', `Instance ${instance.url}: neznámý status ${data.status}`);
+
+      } catch (error) {
+        result.instanceErrors.push(`${instance.url}: ${error.message}`);
+        this.logError('COBALT', `Instance ${instance.url} exception: ${error.message}`);
       }
-
-      result.error = `Neznámý Cobalt status: ${data.status}`;
-      return result;
-
-    } catch (error) {
-      this.logError('COBALT', 'Exception', error);
-      result.error = error.message;
-      return result;
     }
+
+    result.error = result.instanceErrors.length > 0
+      ? result.instanceErrors.join(' | ')
+      : 'Všechny Cobalt instance selhaly';
+    return result;
   },
 
   parseCobaltPicker(picker, videoId) {
