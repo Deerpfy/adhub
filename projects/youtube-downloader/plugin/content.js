@@ -284,15 +284,23 @@
       <span class="adhub-btn-text">Stáhnout</span>
     `;
 
-    // Přidat click handler přímo
-    btn.onclick = function(e) {
+    // Přidat více event handlerů pro jistotu
+    const handleClick = function(e) {
       e.preventDefault();
       e.stopPropagation();
       e.stopImmediatePropagation();
-      log('Download tlačítko kliknuto (onclick)!');
+      console.log('[AdHub YT] *** BUTTON CLICKED ***');
       toggleDropdown();
       return false;
     };
+
+    // Použít mousedown (spustí se dříve než click)
+    btn.addEventListener('mousedown', handleClick, true);
+    btn.addEventListener('click', handleClick, true);
+    btn.onclick = handleClick;
+
+    // Debug - ověřit že tlačítko existuje
+    console.log('[AdHub YT] Tlačítko vytvořeno, handler přidán');
 
     const dropdown = document.createElement('div');
     dropdown.id = 'adhub-dropdown';
@@ -776,6 +784,33 @@
       }
     }
   });
+
+  // ============================================================================
+  // GLOBÁLNÍ CLICK HANDLER (záloha)
+  // ============================================================================
+
+  // Zachytit kliknutí na document úrovni
+  document.addEventListener('click', function(e) {
+    const target = e.target;
+    const btn = target.closest('#adhub-download-btn');
+    if (btn) {
+      console.log('[AdHub YT] Globální handler zachytil klik na tlačítko');
+      e.preventDefault();
+      e.stopPropagation();
+      toggleDropdown();
+    }
+  }, true);
+
+  document.addEventListener('mousedown', function(e) {
+    const target = e.target;
+    const btn = target.closest('#adhub-download-btn');
+    if (btn) {
+      console.log('[AdHub YT] Globální mousedown handler');
+      e.preventDefault();
+      e.stopPropagation();
+      toggleDropdown();
+    }
+  }, true);
 
   // ============================================================================
   // START

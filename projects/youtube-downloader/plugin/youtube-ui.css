@@ -56,6 +56,11 @@
 .adhub-btn-primary {
   background: linear-gradient(135deg, #ff0000, #cc0000);
   color: white;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  touch-action: manipulation !important;
 }
 
 .adhub-btn-primary:hover {
