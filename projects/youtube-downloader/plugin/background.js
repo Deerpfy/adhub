@@ -1,325 +1,318 @@
 /**
- * AdHub YouTube Downloader v4.0 - Background Service Worker
+ * AdHub YouTube Downloader v5.5 - Background Script
  *
- * Hlavní funkce:
- * - Stahování video streamů (má host_permissions pro googlevideo.com)
- * - Komunikace s content scriptem
- * - Správa stahování přes chrome.downloads API
+ * Hybridni rezim:
+ * - Zakladni: Prime stahovani pres chrome.downloads (max 720p)
+ * - Rozsireny: Native Messaging s yt-dlp/ffmpeg (vse)
+ *
+ * Nove v5.5:
+ * - Automaticke ziskavani cookies pro vekove omezena videa
  */
+
+console.log('[AdHub BG] YouTube Downloader v5.5 (Hybrid) loaded');
 
 // ============================================================================
 // KONFIGURACE
 // ============================================================================
 
-const CONFIG = {
-  DEBUG: true,
-  MAX_CHUNK_SIZE: 10 * 1024 * 1024, // 10MB chunks pro velká videa
-  TIMEOUT: 60000, // 60s timeout
+const NATIVE_HOST = 'com.adhub.ytdownloader';
+const STORAGE_KEY = 'adhub_yt_settings';
+
+// ============================================================================
+// STAV
+// ============================================================================
+
+const state = {
+  settings: {
+    ytdlpPath: '',
+    ffmpegPath: '',
+    nativeHostInstalled: false
+  },
+  nativePort: null
 };
 
 // ============================================================================
-// LOGGING
+// INIT - Nacti nastaveni pri startu
 // ============================================================================
 
-function log(...args) {
-  if (CONFIG.DEBUG) console.log('[AdHub BG]', ...args);
-}
-
-function logError(...args) {
-  console.error('[AdHub BG ERROR]', ...args);
-}
+(async function init() {
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEY);
+    if (result[STORAGE_KEY]) {
+      state.settings = { ...state.settings, ...result[STORAGE_KEY] };
+      console.log('[AdHub BG] Nastaveni nacteno:', state.settings);
+    }
+  } catch (e) {
+    console.log('[AdHub BG] Chyba pri nacitani nastaveni:', e);
+  }
+})();
 
 // ============================================================================
 // MESSAGE HANDLER
 // ============================================================================
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  log('Přijata zpráva:', request.action, request);
+  console.log('[AdHub BG] Message:', request.action);
 
   switch (request.action) {
-    case 'downloadVideo':
-      handleDownload(request.data, sender.tab?.id)
-        .then(result => sendResponse(result))
-        .catch(error => sendResponse({ success: false, error: error.message }));
-      return true; // Async response
+    case 'ping':
+      sendResponse({ success: true, version: '5.5', mode: 'hybrid' });
+      return false;
 
-    case 'getVideoInfo':
-      handleGetVideoInfo(request.videoId)
+    case 'download':
+      handleDownload(request.data)
         .then(result => sendResponse(result))
         .catch(error => sendResponse({ success: false, error: error.message }));
       return true;
 
-    case 'ping':
-      sendResponse({
-        success: true,
-        version: chrome.runtime.getManifest().version,
-        active: true
-      });
+    case 'downloadAdvanced':
+      handleAdvancedDownload(request.data)
+        .then(result => sendResponse(result))
+        .catch(error => sendResponse({ success: false, error: error.message }));
+      return true;
+
+    case 'checkNativeHost':
+      checkNativeHost()
+        .then(result => sendResponse(result))
+        .catch(error => sendResponse({ nativeHostAvailable: false, error: error.message }));
+      return true;
+
+    case 'testTool':
+      testTool(request.tool, request.path)
+        .then(result => sendResponse(result))
+        .catch(error => sendResponse({ success: false, error: error.message }));
+      return true;
+
+    case 'updateSettings':
+      state.settings = { ...state.settings, ...request.settings };
+      console.log('[AdHub BG] Nastaveni aktualizovano:', state.settings);
+      sendResponse({ success: true });
       return false;
 
-    case 'checkStatus':
-      sendResponse({
-        success: true,
-        version: chrome.runtime.getManifest().version,
-        capabilities: {
-          directDownload: true,
-          progressiveFormats: true,
-          adaptiveFormats: true
-        }
-      });
+    case 'getSettings':
+      sendResponse({ success: true, settings: state.settings });
       return false;
 
     default:
-      sendResponse({ success: false, error: 'Neznámá akce' });
+      sendResponse({ success: false, error: 'Unknown action' });
       return false;
   }
 });
 
 // ============================================================================
-// STAHOVÁNÍ VIDEA
+// COOKIES - Automaticke ziskavani pro vekove omezena videa
 // ============================================================================
 
-async function handleDownload(data, tabId) {
-  const { url, filename, videoId, itag, mimeType } = data;
-
-  log('Zahajuji stahování:', { url: url?.substring(0, 100), filename, videoId, itag });
-
-  if (!url) {
-    throw new Error('Chybí URL pro stažení');
-  }
-
+async function getYouTubeCookies() {
   try {
-    // Metoda 1: Přímé stažení přes chrome.downloads API
-    // Toto funguje protože máme host_permissions pro googlevideo.com
-    const downloadId = await initiateDownload(url, filename);
+    // Ziskat vsechny YouTube cookies (vcetne YouTube Music)
+    const cookies = await chrome.cookies.getAll({ domain: '.youtube.com' });
+    const musicCookies = await chrome.cookies.getAll({ domain: 'music.youtube.com' });
+    const googleCookies = await chrome.cookies.getAll({ domain: '.google.com' });
 
-    log('Stahování zahájeno, ID:', downloadId);
+    const allCookies = [...cookies, ...musicCookies, ...googleCookies];
 
-    // Notifikovat tab o úspěchu
-    if (tabId) {
-      try {
-        await chrome.tabs.sendMessage(tabId, {
-          action: 'downloadProgress',
-          percent: 100,
-          text: 'Stahování zahájeno v prohlížeči'
-        });
-      } catch (e) {}
+    if (allCookies.length === 0) {
+      console.log('[AdHub BG] Zadne YouTube cookies nenalezeny');
+      return null;
     }
 
-    return {
-      success: true,
-      downloadId: downloadId,
-      message: 'Stahování zahájeno'
-    };
+    // Konvertovat na Netscape format (pro yt-dlp)
+    const netscapeCookies = allCookies.map(cookie => {
+      const domain = cookie.domain.startsWith('.') ? cookie.domain : '.' + cookie.domain;
+      const flag = cookie.domain.startsWith('.') ? 'TRUE' : 'FALSE';
+      const path = cookie.path || '/';
+      const secure = cookie.secure ? 'TRUE' : 'FALSE';
+      const expires = cookie.expirationDate ? Math.floor(cookie.expirationDate) : 0;
+      const name = cookie.name;
+      const value = cookie.value;
 
-  } catch (error) {
-    logError('Chyba při stahování:', error);
+      return `${domain}\t${flag}\t${path}\t${secure}\t${expires}\t${name}\t${value}`;
+    });
 
-    // Fallback: Zkusit blob metodu
-    try {
-      log('Zkouším blob metodu...');
-      return await downloadViaBlob(url, filename, tabId);
-    } catch (blobError) {
-      logError('Blob metoda také selhala:', blobError);
-      throw new Error(`Stahování selhalo: ${error.message}`);
-    }
+    // Pridat hlavicku Netscape formatu
+    const cookieFile = [
+      '# Netscape HTTP Cookie File',
+      '# https://curl.haxx.se/docs/http-cookies.html',
+      '# This file was generated by AdHub YouTube Downloader',
+      '',
+      ...netscapeCookies
+    ].join('\n');
+
+    console.log('[AdHub BG] Ziskano', allCookies.length, 'cookies');
+    return cookieFile;
+
+  } catch (e) {
+    console.error('[AdHub BG] Chyba pri ziskavani cookies:', e);
+    return null;
   }
 }
 
 // ============================================================================
-// PŘÍMÉ STAHOVÁNÍ PŘES CHROME.DOWNLOADS
+// ZAKLADNI STAHOVANI (Prime URL pres chrome.downloads)
 // ============================================================================
 
-async function initiateDownload(url, filename) {
+async function handleDownload(data) {
+  const { url, filename } = data;
+
+  if (!url) {
+    throw new Error('URL is required');
+  }
+
+  console.log('[AdHub BG] Starting basic download:', filename);
+
   return new Promise((resolve, reject) => {
     chrome.downloads.download({
       url: url,
-      filename: filename,
-      saveAs: false, // Automaticky uložit do Downloads
-      conflictAction: 'uniquify' // Přejmenovat pokud existuje
+      filename: filename || 'video.mp4',
+      saveAs: false,
+      conflictAction: 'uniquify'
     }, (downloadId) => {
       if (chrome.runtime.lastError) {
+        console.error('[AdHub BG] Download error:', chrome.runtime.lastError.message);
         reject(new Error(chrome.runtime.lastError.message));
       } else if (downloadId === undefined) {
-        reject(new Error('Stahování nebylo zahájeno'));
+        reject(new Error('Download failed to start'));
       } else {
-        resolve(downloadId);
+        console.log('[AdHub BG] Download started, ID:', downloadId);
+        resolve({ success: true, downloadId: downloadId });
       }
     });
   });
 }
 
 // ============================================================================
-// BLOB METODA (FALLBACK)
+// ROZSIRENE STAHOVANI (pres Native Host s yt-dlp)
 // ============================================================================
 
-async function downloadViaBlob(url, filename, tabId) {
-  log('Stahování přes blob:', url?.substring(0, 100));
+async function handleAdvancedDownload(data) {
+  const { videoUrl, format, quality, audioFormat } = data;
 
-  // Fetch video data
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Range': 'bytes=0-', // Celý soubor
-    },
-    credentials: 'omit'
+  if (!videoUrl) {
+    throw new Error('Video URL is required');
+  }
+
+  console.log('[AdHub BG] Starting advanced download via native host');
+
+  // Automaticky ziskat cookies
+  const cookies = await getYouTubeCookies();
+
+  return sendNativeMessage({
+    action: 'download',
+    url: videoUrl,
+    format: format || 'mp4',
+    quality: quality || 'best',
+    audioFormat: audioFormat,
+    ytdlpPath: state.settings.ytdlpPath,
+    ffmpegPath: state.settings.ffmpegPath,
+    cookies: cookies,  // Poslat cookies na native host
+    useCookies: true
   });
-
-  if (!response.ok) {
-    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-  }
-
-  const contentLength = response.headers.get('content-length');
-  const totalSize = contentLength ? parseInt(contentLength) : 0;
-
-  log('Velikost souboru:', totalSize, 'bytes');
-
-  // Pro velké soubory použít streaming
-  if (totalSize > 50 * 1024 * 1024) { // > 50MB
-    log('Velký soubor, používám chunked download');
-    return await downloadLargeFile(url, filename, totalSize, tabId);
-  }
-
-  // Pro menší soubory načíst celý do paměti
-  const blob = await response.blob();
-  const blobUrl = URL.createObjectURL(blob);
-
-  const downloadId = await initiateDownload(blobUrl, filename);
-
-  // Vyčistit blob URL po stažení
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
-
-  return {
-    success: true,
-    downloadId: downloadId,
-    method: 'blob'
-  };
 }
 
 // ============================================================================
-// STAHOVÁNÍ VELKÝCH SOUBORŮ (CHUNKED)
+// NATIVE MESSAGING
 // ============================================================================
 
-async function downloadLargeFile(url, filename, totalSize, tabId) {
-  const chunks = [];
-  let downloaded = 0;
-  const chunkSize = CONFIG.MAX_CHUNK_SIZE;
+function connectNativeHost() {
+  if (state.nativePort) {
+    return state.nativePort;
+  }
 
-  while (downloaded < totalSize) {
-    const end = Math.min(downloaded + chunkSize - 1, totalSize - 1);
-    const rangeHeader = `bytes=${downloaded}-${end}`;
+  try {
+    state.nativePort = chrome.runtime.connectNative(NATIVE_HOST);
 
-    log(`Stahuji chunk: ${rangeHeader}`);
-
-    const response = await fetch(url, {
-      headers: { 'Range': rangeHeader },
-      credentials: 'omit'
+    state.nativePort.onDisconnect.addListener(() => {
+      console.log('[AdHub BG] Native host disconnected');
+      state.nativePort = null;
     });
 
-    if (!response.ok && response.status !== 206) {
-      throw new Error(`Chunk download failed: ${response.status}`);
-    }
+    console.log('[AdHub BG] Connected to native host');
+    return state.nativePort;
 
-    const chunk = await response.arrayBuffer();
-    chunks.push(chunk);
-
-    downloaded += chunk.byteLength;
-
-    // Update progress
-    const percent = Math.round((downloaded / totalSize) * 100);
-    if (tabId) {
-      try {
-        await chrome.tabs.sendMessage(tabId, {
-          action: 'downloadProgress',
-          percent: percent,
-          text: `Stahování: ${percent}%`
-        });
-      } catch (e) {}
-    }
-
-    log(`Progress: ${percent}% (${downloaded}/${totalSize})`);
+  } catch (e) {
+    console.error('[AdHub BG] Failed to connect native host:', e);
+    state.nativePort = null;
+    throw e;
   }
+}
 
-  // Sestavit blob z chunks
-  const blob = new Blob(chunks);
-  const blobUrl = URL.createObjectURL(blob);
+async function sendNativeMessage(message) {
+  return new Promise((resolve, reject) => {
+    try {
+      chrome.runtime.sendNativeMessage(NATIVE_HOST, message, (response) => {
+        if (chrome.runtime.lastError) {
+          console.error('[AdHub BG] Native message error:', chrome.runtime.lastError.message);
+          reject(new Error(chrome.runtime.lastError.message));
+        } else if (response?.error) {
+          reject(new Error(response.error));
+        } else {
+          resolve(response);
+        }
+      });
+    } catch (e) {
+      reject(e);
+    }
+  });
+}
 
-  const downloadId = await initiateDownload(blobUrl, filename);
+async function checkNativeHost() {
+  try {
+    const response = await sendNativeMessage({
+      action: 'check',
+      ytdlpPath: state.settings.ytdlpPath,
+      ffmpegPath: state.settings.ffmpegPath
+    });
 
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
+    return {
+      nativeHostAvailable: true,
+      ytdlpAvailable: response.ytdlp?.available || false,
+      ytdlpVersion: response.ytdlp?.version || null,
+      ffmpegAvailable: response.ffmpeg?.available || false,
+      ffmpegVersion: response.ffmpeg?.version || null
+    };
 
-  return {
-    success: true,
-    downloadId: downloadId,
-    method: 'chunked'
-  };
+  } catch (e) {
+    console.log('[AdHub BG] Native host check failed:', e.message);
+    return {
+      nativeHostAvailable: false,
+      error: e.message
+    };
+  }
+}
+
+async function testTool(tool, path) {
+  try {
+    const response = await sendNativeMessage({
+      action: 'test',
+      tool: tool,
+      path: path
+    });
+
+    return {
+      success: response.available || false,
+      version: response.version || null,
+      error: response.error || null
+    };
+
+  } catch (e) {
+    return {
+      success: false,
+      error: e.message
+    };
+  }
 }
 
 // ============================================================================
-// ZÍSKÁNÍ INFO O VIDEU (OEMBED FALLBACK)
-// ============================================================================
-
-async function handleGetVideoInfo(videoId) {
-  log('Získávám info pro:', videoId);
-
-  if (!videoId) {
-    throw new Error('Chybí video ID');
-  }
-
-  // Použít oEmbed API pro základní info
-  const oEmbedUrl = `https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`;
-
-  const response = await fetch(oEmbedUrl);
-  if (!response.ok) {
-    throw new Error(`oEmbed selhalo: ${response.status}`);
-  }
-
-  const data = await response.json();
-
-  return {
-    success: true,
-    videoId: videoId,
-    title: data.title,
-    author: data.author_name,
-    thumbnail: `https://i.ytimg.com/vi/${videoId}/maxresdefault.jpg`
-  };
-}
-
-// ============================================================================
-// SLEDOVÁNÍ STAHOVÁNÍ
+// DOWNLOAD STATUS TRACKING
 // ============================================================================
 
 chrome.downloads.onChanged.addListener((delta) => {
   if (delta.state) {
-    log('Download state změněn:', delta.id, delta.state.current);
-
     if (delta.state.current === 'complete') {
-      log('Stahování dokončeno:', delta.id);
+      console.log('[AdHub BG] Download completed:', delta.id);
     } else if (delta.state.current === 'interrupted') {
-      logError('Stahování přerušeno:', delta.id, delta.error);
+      console.log('[AdHub BG] Download interrupted:', delta.id, delta.error);
     }
   }
 });
-
-// ============================================================================
-// INSTALACE / AKTUALIZACE
-// ============================================================================
-
-chrome.runtime.onInstalled.addListener((details) => {
-  log('Extension nainstalována/aktualizována:', details.reason);
-
-  if (details.reason === 'install') {
-    // První instalace
-    log('První instalace - verze:', chrome.runtime.getManifest().version);
-  } else if (details.reason === 'update') {
-    // Aktualizace
-    log('Aktualizace z verze:', details.previousVersion);
-  }
-});
-
-// ============================================================================
-// STARTUP
-// ============================================================================
-
-log('AdHub YouTube Downloader v4.0 - Background script načten');
-log('Verze:', chrome.runtime.getManifest().version);

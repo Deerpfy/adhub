@@ -15,8 +15,8 @@
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
       color: white;
-      width: 360px;
-      min-height: 200px;
+      width: 380px;
+      min-height: 300px;
     }
 
     .header {
@@ -47,103 +47,153 @@
       padding: 16px;
     }
 
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      color: #888;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      background: rgba(255,0,0,0.2);
+      color: white;
+    }
+
+    .tab:hover:not(.active) {
+      color: #ccc;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
     /* Status Section */
-    .status-section {
+    .feature-list {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .feature-item {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 12px;
-      background: rgba(34, 197, 94, 0.1);
-      border: 1px solid rgba(34, 197, 94, 0.3);
-      border-radius: 8px;
-      margin-bottom: 16px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
     }
 
-    .status-section.error {
-      background: rgba(239, 68, 68, 0.1);
-      border-color: rgba(239, 68, 68, 0.3);
+    .feature-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
     }
 
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      background: #22c55e;
-      border-radius: 50%;
-      animation: pulse 2s infinite;
+    .feature-item:first-child {
+      padding-top: 0;
     }
 
-    .status-section.error .status-dot {
-      background: #ef4444;
+    .feature-icon {
+      font-size: 16px;
+      width: 24px;
+      text-align: center;
     }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
+    .feature-info {
+      flex: 1;
     }
 
-    .status-text {
+    .feature-name {
       font-size: 13px;
-      color: #a0a0a0;
-    }
-
-    .status-text strong {
-      color: #22c55e;
-    }
-
-    .status-section.error .status-text strong {
-      color: #ef4444;
-    }
-
-    /* Instructions */
-    .instructions {
-      background: rgba(255, 255, 255, 0.05);
-      border-radius: 10px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-
-    .instructions-title {
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 12px;
+      font-weight: 500;
       color: #fff;
     }
 
-    .instruction-step {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 10px;
+    .feature-desc {
+      font-size: 11px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    .feature-status {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .feature-status.ok {
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+    }
+
+    .feature-status.missing {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+    }
+
+    /* Info Box */
+    .info-box {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      color: #93c5fd;
+      line-height: 1.5;
+    }
+
+    .info-box strong {
+      color: #60a5fa;
+    }
+
+    /* Settings Section */
+    .settings-group {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .settings-title {
       font-size: 13px;
-      color: #a0a0a0;
-    }
-
-    .instruction-step:last-child {
-      margin-bottom: 0;
-    }
-
-    .step-number {
-      width: 22px;
-      height: 22px;
-      background: linear-gradient(135deg, #FF0000, #CC0000);
-      border-radius: 50%;
+      font-weight: 600;
+      margin-bottom: 12px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 600;
-      color: white;
-      flex-shrink: 0;
+      gap: 8px;
     }
 
-    .step-text {
-      line-height: 1.4;
-      padding-top: 2px;
+    .settings-title .icon {
+      font-size: 16px;
     }
 
-    /* Input Section */
-    .input-section {
-      margin-bottom: 16px;
+    .input-group {
+      margin-bottom: 12px;
+    }
+
+    .input-group:last-child {
+      margin-bottom: 0;
     }
 
     .input-label {
@@ -160,12 +210,12 @@
 
     .input-field {
       flex: 1;
-      padding: 10px 14px;
+      padding: 10px 12px;
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 8px;
+      border-radius: 6px;
       color: white;
-      font-size: 13px;
+      font-size: 12px;
       outline: none;
       transition: border-color 0.2s;
     }
@@ -175,15 +225,23 @@
     }
 
     .input-field::placeholder {
-      color: #666;
+      color: #555;
+    }
+
+    .input-field.valid {
+      border-color: #22c55e;
+    }
+
+    .input-field.invalid {
+      border-color: #ef4444;
     }
 
     .btn {
-      padding: 10px 16px;
+      padding: 10px 14px;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
       color: white;
-      font-size: 13px;
+      font-size: 12px;
       font-weight: 500;
       cursor: pointer;
       transition: all 0.2s;
@@ -197,71 +255,96 @@
       background: linear-gradient(135deg, #CC0000, #990000);
     }
 
+    .btn-secondary {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.15);
+    }
+
     .btn:disabled {
       opacity: 0.5;
       cursor: not-allowed;
     }
 
-    /* Video Card */
-    .video-card {
-      display: none;
+    .path-status {
+      font-size: 11px;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .path-status.valid {
+      color: #4ade80;
+    }
+
+    .path-status.invalid {
+      color: #f87171;
+    }
+
+    /* Instructions */
+    .instructions {
       background: rgba(255, 255, 255, 0.05);
       border-radius: 10px;
       padding: 14px;
       margin-bottom: 16px;
     }
 
-    .video-card.visible {
-      display: block;
-    }
-
-    .video-preview {
-      display: flex;
-      gap: 12px;
+    .instructions-title {
+      font-size: 13px;
+      font-weight: 600;
       margin-bottom: 12px;
     }
 
-    .video-thumbnail {
-      width: 120px;
-      height: 68px;
-      object-fit: cover;
-      border-radius: 6px;
-      background: #333;
-    }
-
-    .video-details {
-      flex: 1;
-      min-width: 0;
-    }
-
-    .video-title {
-      font-size: 13px;
-      font-weight: 500;
-      line-height: 1.3;
-      margin-bottom: 4px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-    }
-
-    .video-author {
-      font-size: 11px;
-      color: #888;
-    }
-
-    .download-info {
-      background: rgba(34, 197, 94, 0.1);
-      border: 1px solid rgba(34, 197, 94, 0.3);
-      border-radius: 6px;
-      padding: 10px;
+    .instruction-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
       font-size: 12px;
       color: #a0a0a0;
     }
 
-    .download-info strong {
-      color: #22c55e;
+    .instruction-step:last-child {
+      margin-bottom: 0;
+    }
+
+    .step-number {
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(135deg, #FF0000, #CC0000);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .step-text {
+      line-height: 1.4;
+      padding-top: 2px;
+    }
+
+    .step-text a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
+
+    .step-text a:hover {
+      text-decoration: underline;
+    }
+
+    .step-text code {
+      background: rgba(255,255,255,0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 11px;
     }
 
     /* Footer */
@@ -283,50 +366,30 @@
       color: #fff;
     }
 
-    /* Loading */
-    .loading {
-      display: none;
-      text-align: center;
-      padding: 20px;
-    }
-
-    .loading.visible {
-      display: block;
-    }
-
-    .spinner {
-      width: 28px;
-      height: 28px;
-      border: 3px solid rgba(255, 0, 0, 0.2);
-      border-top-color: #FF0000;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 10px;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
-    .loading-text {
-      color: #888;
-      font-size: 12px;
-    }
-
-    /* Error */
-    .error-message {
-      display: none;
-      background: rgba(239, 68, 68, 0.15);
-      border: 1px solid rgba(239, 68, 68, 0.3);
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #22c55e;
+      color: white;
+      padding: 10px 16px;
       border-radius: 8px;
-      padding: 10px 14px;
-      color: #f87171;
       font-size: 12px;
-      margin-bottom: 14px;
+      font-weight: 500;
+      opacity: 0;
+      transition: all 0.3s;
+      pointer-events: none;
     }
 
-    .error-message.visible {
-      display: block;
+    .toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast.error {
+      background: #ef4444;
     }
   </style>
 </head>
@@ -334,65 +397,164 @@
   <div class="header">
     <img src="icons/icon32.png" alt="Logo" class="header-icon">
     <span class="header-title">YouTube Downloader</span>
-    <span class="header-version" id="version">v4.0.0</span>
+    <span class="header-version">v5.5</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="status">Status</button>
+    <button class="tab" data-tab="settings">Nastaveni</button>
+    <button class="tab" data-tab="help">Napoveda</button>
   </div>
 
   <div class="content">
-    <div class="status-section" id="statusSection">
-      <div class="status-dot"></div>
-      <div class="status-text">
-        <strong>Plugin aktivní</strong> - Přímé stahování povoleno
-      </div>
-    </div>
+    <!-- STATUS TAB -->
+    <div class="tab-content active" id="tab-status">
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon">📥</div>
+          <div class="feature-info">
+            <div class="feature-name">Zakladni stahovani</div>
+            <div class="feature-desc">Video do 720p, audio M4A</div>
+          </div>
+          <span class="feature-status ok">Aktivni</span>
+        </div>
 
-    <div class="instructions">
-      <div class="instructions-title">Jak stahovat videa:</div>
-      <div class="instruction-step">
-        <div class="step-number">1</div>
-        <div class="step-text">Otevřete YouTube video, které chcete stáhnout</div>
-      </div>
-      <div class="instruction-step">
-        <div class="step-number">2</div>
-        <div class="step-text">Klikněte na červené tlačítko <strong>"Stáhnout"</strong> pod videem</div>
-      </div>
-      <div class="instruction-step">
-        <div class="step-number">3</div>
-        <div class="step-text">Vyberte kvalitu a video se automaticky stáhne</div>
-      </div>
-    </div>
+        <div class="feature-item" id="feature-hd">
+          <div class="feature-icon">🎬</div>
+          <div class="feature-info">
+            <div class="feature-name">HD/4K kvalita</div>
+            <div class="feature-desc">1080p, 1440p, 4K video</div>
+          </div>
+          <span class="feature-status missing" id="status-ytdlp">Chybi yt-dlp</span>
+        </div>
 
-    <div class="error-message" id="error"></div>
-
-    <div class="input-section">
-      <label class="input-label">Nebo vložte YouTube URL:</label>
-      <div class="input-row">
-        <input type="text" class="input-field" id="videoInput" placeholder="https://youtube.com/watch?v=...">
-        <button class="btn btn-primary" id="goBtn">Jít</button>
-      </div>
-    </div>
-
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <div class="loading-text">Načítám...</div>
-    </div>
-
-    <div class="video-card" id="videoCard">
-      <div class="video-preview">
-        <img class="video-thumbnail" id="thumbnail" src="" alt="">
-        <div class="video-details">
-          <div class="video-title" id="videoTitle">-</div>
-          <div class="video-author" id="videoAuthor">-</div>
+        <div class="feature-item" id="feature-convert">
+          <div class="feature-icon">🎵</div>
+          <div class="feature-info">
+            <div class="feature-name">MP3/WAV konverze</div>
+            <div class="feature-desc">Audio ve vsech formatech</div>
+          </div>
+          <span class="feature-status missing" id="status-ffmpeg">Chybi ffmpeg</span>
         </div>
       </div>
-      <div class="download-info">
-        <strong>Tip:</strong> Pro stažení tohoto videa klikněte na tlačítko "Stáhnout" přímo na YouTube stránce.
+
+      <div class="info-box">
+        <strong>Zakladni rezim aktivni!</strong><br>
+        Stahovani funguje ihned. Pro HD kvalitu a MP3 konverzi prejdete do Nastaveni.
+      </div>
+
+      <div class="instructions">
+        <div class="instructions-title">Jak stahovat:</div>
+        <div class="instruction-step">
+          <div class="step-number">1</div>
+          <div class="step-text">Otevrete YouTube video</div>
+        </div>
+        <div class="instruction-step">
+          <div class="step-number">2</div>
+          <div class="step-text">Kliknete na cervene tlacitko <strong>"Stahnout"</strong></div>
+        </div>
+        <div class="instruction-step">
+          <div class="step-number">3</div>
+          <div class="step-text">Vyberte kvalitu a video se stahne</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div class="tab-content" id="tab-settings">
+      <div class="settings-group">
+        <div class="settings-title">
+          <span class="icon">🎬</span>
+          yt-dlp (HD/4K stahovani)
+        </div>
+        <div class="input-group">
+          <label class="input-label">Cesta k yt-dlp:</label>
+          <div class="input-row">
+            <input type="text" class="input-field" id="ytdlp-path" placeholder="C:\tools\yt-dlp.exe nebo /usr/local/bin/yt-dlp">
+            <button class="btn btn-secondary" id="test-ytdlp">Test</button>
+          </div>
+          <div class="path-status" id="ytdlp-status"></div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-title">
+          <span class="icon">🎵</span>
+          FFmpeg (audio konverze)
+        </div>
+        <div class="input-group">
+          <label class="input-label">Cesta k ffmpeg:</label>
+          <div class="input-row">
+            <input type="text" class="input-field" id="ffmpeg-path" placeholder="C:\tools\ffmpeg.exe nebo /usr/local/bin/ffmpeg">
+            <button class="btn btn-secondary" id="test-ffmpeg">Test</button>
+          </div>
+          <div class="path-status" id="ffmpeg-status"></div>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" id="save-settings" style="width: 100%;">Ulozit nastaveni</button>
+    </div>
+
+    <!-- HELP TAB -->
+    <div class="tab-content" id="tab-help">
+      <div class="instructions">
+        <div class="instructions-title">Instalace yt-dlp:</div>
+        <div class="instruction-step">
+          <div class="step-number">1</div>
+          <div class="step-text">
+            <strong>Windows:</strong> Stahnete z <a href="https://github.com/yt-dlp/yt-dlp/releases" target="_blank">github.com/yt-dlp</a>
+          </div>
+        </div>
+        <div class="instruction-step">
+          <div class="step-number">2</div>
+          <div class="step-text">
+            <strong>macOS:</strong> <code>brew install yt-dlp</code>
+          </div>
+        </div>
+        <div class="instruction-step">
+          <div class="step-number">3</div>
+          <div class="step-text">
+            <strong>Linux:</strong> <code>pip install yt-dlp</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="instructions">
+        <div class="instructions-title">Instalace FFmpeg:</div>
+        <div class="instruction-step">
+          <div class="step-number">1</div>
+          <div class="step-text">
+            <strong>Windows:</strong> Stahnete z <a href="https://ffmpeg.org/download.html" target="_blank">ffmpeg.org</a>
+          </div>
+        </div>
+        <div class="instruction-step">
+          <div class="step-number">2</div>
+          <div class="step-text">
+            <strong>macOS:</strong> <code>brew install ffmpeg</code>
+          </div>
+        </div>
+        <div class="instruction-step">
+          <div class="step-number">3</div>
+          <div class="step-text">
+            <strong>Linux:</strong> <code>sudo apt install ffmpeg</code>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <strong>Po instalaci:</strong><br>
+        1. Spustte instalacni skript z native-host slozky<br>
+        2. Zadejte cesty v Nastaveni<br>
+        3. Restartujte prohlizec
       </div>
     </div>
   </div>
 
   <div class="footer">
-    AdHub YouTube Downloader &bull; <a href="https://adhub.cz" target="_blank">adhub.cz</a>
+    AdHub &bull; <a href="https://deerpfy.github.io/adhub/" target="_blank">deerpfy.github.io/adhub</a>
   </div>
+
+  <div class="toast" id="toast"></div>
 
   <script src="popup.js"></script>
 </body>

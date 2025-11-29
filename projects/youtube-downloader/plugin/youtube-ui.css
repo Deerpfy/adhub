@@ -1,86 +1,125 @@
 /**
- * AdHub YouTube Downloader v4.0 - YouTube UI Styles
- * Styly pro injektované UI přímo na YouTube stránce
+ * AdHub YouTube Downloader v5.5 - Styles
+ *
+ * Designový systém:
+ * - Tlačítko "Stáhnout" + šipka pro dropdown
+ * - Progress overlay
+ * - Notifikace a toast
  */
 
 /* ============================================================================
-   RESET & BASE
+   RESET & ZÁKLADY
    ============================================================================ */
 
-#adhub-download-container,
-#adhub-download-container * {
+#adhub-yt-downloader,
+#adhub-yt-downloader *,
+#adhub-progress-overlay,
+#adhub-progress-overlay *,
+.adhub-notification,
+.adhub-notification *,
+.adhub-complete-toast,
+.adhub-complete-toast * {
   box-sizing: border-box;
   font-family: 'Roboto', 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
 }
 
 /* ============================================================================
-   MAIN CONTAINER
+   KONTEJNER
    ============================================================================ */
 
-#adhub-download-container {
-  display: inline-flex !important;
+#adhub-yt-downloader {
+  display: inline-flex;
   align-items: center;
-  margin-right: 8px;
   position: relative;
+  margin-left: 8px;
   z-index: 9999;
-  pointer-events: auto !important;
-}
-
-#adhub-download-container * {
-  pointer-events: auto !important;
-}
-
-.adhub-download-wrapper {
-  position: relative;
 }
 
 /* ============================================================================
-   DOWNLOAD BUTTON
+   SKUPINA TLAČÍTEK (hlavní + šipka)
    ============================================================================ */
 
-.adhub-btn {
+.adhub-btn-group {
+  display: inline-flex;
+  align-items: center;
+  position: relative;
+}
+
+/* Hlavní tlačítko "Stáhnout" */
+.adhub-btn-main {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 0 16px;
+  padding: 0 14px 0 12px;
   height: 36px;
+  background: #cc0000;
   border: none;
-  border-radius: 18px;
+  border-radius: 18px 0 0 18px;
+  color: white;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.2s ease;
-  white-space: nowrap;
+  transition: background 0.2s;
 }
 
-.adhub-btn-primary {
-  background: linear-gradient(135deg, #ff0000, #cc0000);
+.adhub-btn-main:hover {
+  background: #aa0000;
+}
+
+.adhub-btn-main:active {
+  background: #880000;
+}
+
+.adhub-btn-main .adhub-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Šipka dropdown */
+.adhub-btn-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 36px;
+  background: #aa0000;
+  border: none;
+  border-left: 1px solid rgba(255,255,255,0.2);
+  border-radius: 0 18px 18px 0;
   color: white;
-  pointer-events: auto !important;
-  cursor: pointer !important;
-  user-select: none !important;
-  -webkit-user-select: none !important;
-  touch-action: manipulation !important;
+  cursor: pointer;
+  transition: background 0.2s;
 }
 
-.adhub-btn-primary:hover {
-  background: linear-gradient(135deg, #cc0000, #990000);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 0, 0, 0.3);
+.adhub-btn-arrow:hover {
+  background: #880000;
 }
 
-.adhub-btn-primary:active {
-  transform: translateY(0);
+.adhub-btn-arrow svg {
+  width: 18px;
+  height: 18px;
 }
 
-.adhub-icon {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
+/* Server indikátor - tečka */
+.adhub-server-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid #0f0f0f;
 }
 
-.adhub-btn-text {
-  font-size: 14px;
+.adhub-server-dot.online {
+  background: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.6);
+}
+
+.adhub-server-dot.offline {
+  background: #6b7280;
 }
 
 /* ============================================================================
@@ -90,248 +129,231 @@
 .adhub-dropdown {
   position: absolute;
   top: calc(100% + 8px);
-  left: 50%;
-  transform: translateX(-50%);
-  min-width: 280px;
-  max-width: 320px;
+  right: 0;
+  width: 280px;
   background: #282828;
   border-radius: 12px;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
   overflow: hidden;
   z-index: 10000;
-  animation: adhub-fadeIn 0.2s ease;
+  animation: adhub-slideDown 0.2s ease;
 }
 
 .adhub-dropdown.hidden {
   display: none;
 }
 
-@keyframes adhub-fadeIn {
+@keyframes adhub-slideDown {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(-8px);
+    transform: translateY(-8px);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateY(0);
   }
 }
 
-/* Dropdown Header */
+/* Header */
 .adhub-dropdown-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   padding: 12px 16px;
   background: #1f1f1f;
   border-bottom: 1px solid #3f3f3f;
-  font-size: 14px;
+}
+
+.adhub-dropdown-title {
+  font-size: 13px;
   font-weight: 500;
   color: #fff;
 }
 
-.adhub-dropdown-close {
-  background: none;
-  border: none;
-  color: #aaa;
-  font-size: 20px;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
+/* Sekce */
+.adhub-dropdown-section {
+  padding: 12px 16px;
 }
 
-.adhub-dropdown-close:hover {
-  color: #fff;
-}
-
-/* ============================================================================
-   FORMATS LIST
-   ============================================================================ */
-
-.adhub-formats-list {
-  max-height: 350px;
-  overflow-y: auto;
-  padding: 8px;
-}
-
-.adhub-formats-list::-webkit-scrollbar {
-  width: 6px;
-}
-
-.adhub-formats-list::-webkit-scrollbar-track {
-  background: #1f1f1f;
-}
-
-.adhub-formats-list::-webkit-scrollbar-thumb {
-  background: #555;
-  border-radius: 3px;
-}
-
-/* Format Group */
-.adhub-format-group {
-  margin-bottom: 12px;
-}
-
-.adhub-format-group:last-child {
-  margin-bottom: 0;
-}
-
-.adhub-format-group-title {
+.adhub-label {
+  display: block;
   font-size: 11px;
   font-weight: 500;
   color: #888;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  padding: 4px 8px;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
 }
 
-/* Format Button */
-.adhub-format-btn {
+/* Divider */
+.adhub-dropdown-divider {
+  height: 1px;
+  background: #3f3f3f;
+  margin: 0 16px;
+}
+
+/* Format buttons */
+.adhub-format-options,
+.adhub-quality-options {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  width: 100%;
-  padding: 10px 12px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.adhub-format-btn,
+.adhub-quality-btn,
+.adhub-audio-btn {
+  padding: 6px 12px;
   background: #3f3f3f;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   color: #fff;
+  font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
-  margin-bottom: 4px;
+  transition: all 0.15s;
 }
 
-.adhub-format-btn:last-child {
-  margin-bottom: 0;
-}
-
-.adhub-format-btn:hover {
+.adhub-format-btn:hover,
+.adhub-quality-btn:hover,
+.adhub-audio-btn:hover {
   background: #4f4f4f;
-  transform: translateX(2px);
 }
 
-.adhub-format-btn:active {
-  background: #5f5f5f;
+.adhub-format-btn.active,
+.adhub-quality-btn.active {
+  background: #cc0000;
 }
 
-.adhub-format-btn.adhub-format-disabled,
-.adhub-format-btn[disabled] {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background: #2a2a2a;
+.adhub-audio-btn {
+  background: #2d4a3a;
 }
 
-.adhub-format-btn.adhub-format-disabled:hover,
-.adhub-format-btn[disabled]:hover {
-  background: #2a2a2a;
-  transform: none;
+.adhub-audio-btn:hover {
+  background: #3d5a4a;
 }
 
-.adhub-format-quality {
+/* Footer */
+.adhub-dropdown-footer {
+  padding: 10px 16px;
+  background: #1f1f1f;
+  border-top: 1px solid #3f3f3f;
+}
+
+.adhub-video-info {
+  font-size: 11px;
+  color: #888;
+}
+
+/* ============================================================================
+   PROGRESS OVERLAY
+   ============================================================================ */
+
+#adhub-progress-overlay {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 100000;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+#adhub-progress-overlay.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.adhub-progress-card {
+  background: #282828;
+  border-radius: 12px;
+  padding: 16px 20px;
+  min-width: 280px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+.adhub-progress-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  color: #fff;
   font-size: 14px;
   font-weight: 500;
 }
 
-.adhub-format-info {
-  font-size: 12px;
-  color: #aaa;
+.adhub-progress-icon {
+  width: 20px;
+  height: 20px;
+  color: #cc0000;
 }
 
-/* ============================================================================
-   PROGRESS BAR
-   ============================================================================ */
-
-.adhub-progress-container {
-  padding: 12px 16px;
-  border-top: 1px solid #3f3f3f;
-}
-
-.adhub-progress-container.hidden {
-  display: none;
-}
-
-.adhub-progress-text {
-  font-size: 12px;
-  color: #aaa;
+.adhub-progress-bar-container {
+  height: 6px;
+  background: #3f3f3f;
+  border-radius: 3px;
+  overflow: hidden;
   margin-bottom: 8px;
 }
 
 .adhub-progress-bar {
-  height: 4px;
-  background: #3f3f3f;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.adhub-progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #ff0000, #ff4444);
-  border-radius: 2px;
-  transition: width 0.3s ease;
+  background: linear-gradient(90deg, #cc0000, #ff4444);
+  border-radius: 3px;
   width: 0%;
+  transition: width 0.3s ease;
 }
 
-/* ============================================================================
-   STATES
-   ============================================================================ */
-
-.adhub-loading {
-  text-align: center;
-  padding: 20px;
+.adhub-progress-text {
+  font-size: 12px;
   color: #888;
-  font-size: 13px;
-}
-
-.adhub-loading::before {
-  content: '';
-  display: block;
-  width: 24px;
-  height: 24px;
-  margin: 0 auto 10px;
-  border: 2px solid #3f3f3f;
-  border-top-color: #ff0000;
-  border-radius: 50%;
-  animation: adhub-spin 1s linear infinite;
-}
-
-@keyframes adhub-spin {
-  to { transform: rotate(360deg); }
-}
-
-.adhub-error {
-  text-align: center;
-  padding: 16px;
-  color: #ff6b6b;
-  font-size: 13px;
-  line-height: 1.4;
 }
 
 /* ============================================================================
-   NOTIFICATION
+   NOTIFIKACE
    ============================================================================ */
 
 .adhub-notification {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
-  padding: 12px 20px;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
   background: #282828;
-  border-radius: 8px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-  color: #fff;
-  font-size: 14px;
-  z-index: 100000;
-  transform: translateY(100px);
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  z-index: 100001;
   opacity: 0;
+  transform: translateY(20px);
   transition: all 0.3s ease;
 }
 
-.adhub-notification.show {
-  transform: translateY(0);
+.adhub-notification.visible {
   opacity: 1;
+  transform: translateY(0);
 }
 
+.adhub-notification-text {
+  color: #fff;
+  font-size: 14px;
+}
+
+.adhub-notification-close {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.adhub-notification-close:hover {
+  color: #fff;
+}
+
+/* Typy notifikací */
 .adhub-notification-info {
   border-left: 4px solid #3b82f6;
 }
@@ -344,51 +366,299 @@
   border-left: 4px solid #ef4444;
 }
 
-/* ============================================================================
-   RESPONSIVE
-   ============================================================================ */
-
-@media (max-width: 600px) {
-  .adhub-btn-text {
-    display: none;
-  }
-
-  .adhub-btn {
-    padding: 0 12px;
-  }
-
-  .adhub-dropdown {
-    min-width: 260px;
-    left: auto;
-    right: 0;
-    transform: none;
-  }
+.adhub-notification-warning {
+  border-left: 4px solid #f59e0b;
 }
 
 /* ============================================================================
-   DARK/LIGHT MODE ADAPTATION
+   COMPLETE TOAST (po dokončení)
    ============================================================================ */
 
-/* YouTube light mode */
-html[dark="false"] #adhub-download-container .adhub-dropdown,
-html:not([dark]) #adhub-download-container .adhub-dropdown {
-  /* Stále používáme tmavý dropdown pro kontrast */
+.adhub-complete-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #1a3a2a 0%, #282828 100%);
+  border-left: 4px solid #22c55e;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  z-index: 100001;
+  max-width: 360px;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease;
+}
+
+.adhub-complete-toast.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.adhub-complete-icon {
+  width: 32px;
+  height: 32px;
+  background: #22c55e;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.adhub-complete-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.adhub-complete-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #22c55e;
+  margin-bottom: 4px;
+}
+
+.adhub-complete-filename {
+  font-size: 13px;
+  color: #fff;
+  word-break: break-word;
+  margin-bottom: 4px;
+}
+
+.adhub-complete-path {
+  font-size: 11px;
+  color: #888;
+  word-break: break-all;
+}
+
+.adhub-complete-close {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.adhub-complete-close:hover {
+  color: #fff;
 }
 
 /* ============================================================================
    YOUTUBE SPECIFIC FIXES
    ============================================================================ */
 
-/* Zajistit že tlačítko je viditelné v různých YouTube layoutech */
-#top-level-buttons-computed #adhub-download-container,
-ytd-menu-renderer #adhub-download-container {
-  display: inline-flex !important;
-  visibility: visible !important;
-  opacity: 1 !important;
+/* Zajistit viditelnost */
+#top-level-buttons-computed,
+ytd-menu-renderer #top-level-buttons,
+#actions ytd-menu-renderer {
+  overflow: visible !important;
 }
 
-/* Fix pro overflow v YouTube menu */
-#actions.ytd-watch-metadata,
-#top-level-buttons-computed {
-  overflow: visible !important;
+/* Responzivita */
+@media (max-width: 700px) {
+  .adhub-btn-label {
+    display: none;
+  }
+
+  .adhub-btn-main {
+    padding: 0 10px;
+    border-radius: 18px 0 0 18px;
+  }
+
+  .adhub-dropdown {
+    right: -50px;
+    width: 260px;
+  }
+}
+
+/* ============================================================================
+   v5.5 - HD BADGE & MODE INDICATOR
+   ============================================================================ */
+
+/* HD badge na hlavnim tlacitku */
+.adhub-mode-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  background: #22c55e;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  margin-left: 4px;
+  text-transform: uppercase;
+}
+
+/* Mode label v dropdown header */
+.adhub-dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.adhub-mode-label {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.1);
+}
+
+/* Format groups */
+.adhub-formats-list {
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.adhub-format-group {
+  padding: 8px 0;
+  border-bottom: 1px solid #3f3f3f;
+}
+
+.adhub-format-group:last-child {
+  border-bottom: none;
+}
+
+.adhub-format-group-title {
+  font-size: 11px;
+  font-weight: 500;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 4px 16px 8px;
+}
+
+/* Format buttons v5.4 */
+.adhub-format-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.adhub-format-btn:hover {
+  background: #3f3f3f;
+}
+
+.adhub-format-quality {
+  font-weight: 500;
+}
+
+.adhub-format-info {
+  font-size: 12px;
+  color: #888;
+}
+
+/* Advanced format buttons (yt-dlp) */
+.adhub-format-advanced {
+  border-left: 3px solid #22c55e;
+}
+
+.adhub-format-advanced:hover {
+  background: rgba(34, 197, 94, 0.1);
+}
+
+/* Loading & error v dropdown */
+.adhub-loading,
+.adhub-error {
+  padding: 20px 16px;
+  text-align: center;
+  color: #888;
+  font-size: 13px;
+}
+
+.adhub-error {
+  color: #ef4444;
+}
+
+/* Progress bar background */
+.adhub-progress-bar-bg {
+  height: 6px;
+  background: #3f3f3f;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+/* Notifikace close button */
+.adhub-notif-close {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 0 0 8px;
+  line-height: 1;
+}
+
+.adhub-notif-close:hover {
+  color: #fff;
+}
+
+/* Complete toast file */
+.adhub-complete-file {
+  font-size: 12px;
+  color: #aaa;
+  word-break: break-word;
+}
+
+/* ============================================================================
+   YOUTUBE MUSIC SPECIFIC STYLES
+   ============================================================================ */
+
+/* YouTube Music ma tmavsi theme */
+:host-context(ytmusic-app) #adhub-yt-downloader,
+ytmusic-app #adhub-yt-downloader {
+  margin-left: 12px;
+  margin-right: 12px;
+}
+
+/* Mensi tlacitko pro player bar */
+ytmusic-player-bar #adhub-yt-downloader .adhub-btn-main {
+  height: 32px;
+  padding: 0 12px 0 10px;
+  font-size: 13px;
+}
+
+ytmusic-player-bar #adhub-yt-downloader .adhub-btn-arrow {
+  height: 32px;
+  width: 24px;
+}
+
+ytmusic-player-bar #adhub-yt-downloader .adhub-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Dropdown pozice pro YouTube Music */
+ytmusic-player-bar .adhub-dropdown {
+  bottom: calc(100% + 8px);
+  top: auto;
+  right: 0;
+}
+
+/* Skryt label na mensich obrazovkach v YT Music */
+ytmusic-player-bar .adhub-btn-label {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  ytmusic-player-bar .adhub-btn-label {
+    display: inline;
+  }
 }

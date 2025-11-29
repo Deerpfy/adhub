@@ -1,0 +1,9 @@
+{
+  "name": "com.adhub.ytdownloader",
+  "description": "AdHub YouTube Downloader Native Host",
+  "path": "/PATH/TO/adhub_yt_host.py",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://EXTENSION_ID/"
+  ]
+}

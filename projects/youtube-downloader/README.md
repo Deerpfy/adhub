@@ -1,144 +1,154 @@
-# 🎥 AdHUB YouTube Downloader
+# AdHub YouTube Downloader v5.0
 
-![Status](https://img.shields.io/badge/status-complete-success) ![Version](https://img.shields.io/badge/version-1.1.1-purple) ![License](https://img.shields.io/badge/license-MIT-blue)
+![Status](https://img.shields.io/badge/status-complete-success) ![Version](https://img.shields.io/badge/version-5.0.0-purple) ![License](https://img.shields.io/badge/license-MIT-blue)
 
-Stahujte YouTube videa přímo z prohlížeče **bez potřeby serveru**! Ideální pro hostování na GitHub Pages.
+Kompletní řešení pro stahování YouTube videí ve **všech formátech a kvalitách**.
 
-**Aktuální verze: 1.1.1** | [Changelog](#-changelog)
+## Funkce
 
-## ✨ Funkce
+- **Všechny video kvality**: 4K, 2K, 1080p, 720p, 480p, 360p, 240p, 144p
+- **Všechny audio formáty**: MP3, WAV, M4A, FLAC, OGG
+- **Tlačítko přímo na YouTube**: Stahujte jedním kliknutím
+- **Lokální server**: Plná podpora všech formátů přes yt-dlp
+- **Fallback režim**: Základní formáty fungují i bez serveru
 
-- ✅ **Bez serveru** - Vše běží v prohlížeči
-- ✅ **GitHub Pages ready** - Jednoduché hostování jako statická stránka
-- ✅ **Více formátů** - MP4, M4A, WebM
-- ✅ **Různé kvality** - Od 144p až po 4K (podle dostupnosti)
-- ✅ **YouTube integrace** - Tlačítko přímo na YouTube stránce
-- ✅ **Auto-Update Loader** - Automatické aktualizace z GitHubu
-- ✅ **Open source** - Zdarma a volně dostupné
+## Instalace
 
-## 🚀 Jak používat
+### 1. Nainstalujte Browser Extension
 
-### 1. Otevřete stránku
+1. Stáhněte složku `plugin/` nebo ZIP z webové stránky
+2. Otevřete `chrome://extensions` (nebo `edge://extensions`)
+3. Zapněte "Vývojářský režim"
+4. Klikněte "Načíst rozbalené" a vyberte složku `plugin/`
 
-Jděte na: **[vaše-github-username.github.io/youtube-downloader]()**
+### 2. Nainstalujte Python Server (doporučeno)
 
-### 2. Stáhněte rozšíření
+Pro plnou podporu všech formátů a kvalit:
 
-Klikněte na tlačítko **"Stáhnout rozšíření (.zip)"** na stránce.
+```bash
+# Požadavky
+pip install yt-dlp
 
-### 3. Nainstalujte rozšíření
+# Volitelně pro audio konverzi
+# macOS:   brew install ffmpeg
+# Ubuntu:  sudo apt install ffmpeg
+# Windows: https://ffmpeg.org/download.html
 
-1. **Rozbalte** stažený ZIP soubor
-2. Otevřete **`chrome://extensions`** (nebo `edge://extensions`)
-3. Zapněte **"Vývojářský režim"** (Developer mode)
-4. Klikněte na **"Načíst rozbalené"** (Load unpacked)
-5. Vyberte rozbalenou složku `adhub-youtube-extension`
+# Spuštění serveru
+cd server
+./start_server.sh      # Linux/macOS
+start_server.bat       # Windows
+```
 
-### 4. Stahujte videa! 🎉
+Server poběží na `http://127.0.0.1:8765`
 
-- **Na YouTube**: Pod každým videem se objeví tlačítko "Stáhnout"
-- **Přes popup**: Klikněte na ikonu rozšíření v prohlížeči
+## Použití
 
-## 📖 Podrobný návod
+### S lokálním serverem (doporučeno)
 
-### Způsob 1: Přímo na YouTube (doporučeno)
-
-1. Jděte na libovolné YouTube video
-2. Pod videem se objeví tlačítko **"Stáhnout"** (fialové)
-3. Klikněte na tlačítko
+1. Spusťte server: `python server/yt_server.py`
+2. Jděte na YouTube video
+3. Klikněte na tlačítko "Stáhnout" pod videem
 4. Vyberte formát a kvalitu
-5. Video se stáhne do prohlížeče
+5. Soubor se stáhne do `~/Downloads`
 
-### Způsob 2: Přes popup rozšíření
+### Bez serveru (omezené formáty)
 
-1. Klikněte na ikonu rozšíření v prohlížeči
-2. Zadejte YouTube URL
-3. Klikněte na "Načíst"
-4. Vyberte formát
+1. Jděte na YouTube video
+2. Klikněte na tlačítko "Stáhnout"
+3. Dostupné jsou pouze progressive formáty (max 720p)
 
-## 📁 Struktura projektu
+## API Endpointy
+
+Server poskytuje REST API:
+
+| Endpoint | Metoda | Popis |
+|----------|--------|-------|
+| `/api/status` | GET | Stav serveru |
+| `/api/info?url=URL` | GET | Info o videu + formáty |
+| `/api/formats` | GET | Seznam podporovaných formátů |
+| `/api/download` | POST | Zahájit stahování |
+| `/api/progress/<id>` | GET | Průběh stahování |
+
+### Příklad stažení přes API
+
+```bash
+# Info o videu
+curl "http://127.0.0.1:8765/api/info?url=https://www.youtube.com/watch?v=VIDEO_ID"
+
+# Stáhnout MP3
+curl -X POST http://127.0.0.1:8765/api/download \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://www.youtube.com/watch?v=VIDEO_ID", "format_type": "audio", "audio_format": "mp3"}'
+
+# Stáhnout video v 1080p
+curl -X POST http://127.0.0.1:8765/api/download \
+  -H "Content-Type: application/json" \
+  -d '{"url": "https://www.youtube.com/watch?v=VIDEO_ID", "format_type": "video", "quality": 1080}'
+```
+
+## Struktura projektu
 
 ```
 youtube-downloader/
-├── index.html          # Hlavní stránka (instalační průvodce)
-├── script.js           # Logika + embedded extension files
-├── styles.css          # Styly
-├── README.md           # Tato dokumentace
-└── extension/          # Zdrojové soubory rozšíření (reference)
-    ├── manifest.json
-    ├── background.js
-    ├── content.js
-    ├── popup.html
-    ├── popup.js
-    └── icons/
+├── plugin/                 # Browser extension
+│   ├── manifest.json
+│   ├── content.js         # Injektuje UI na YouTube
+│   ├── background.js      # Service worker
+│   ├── youtube-ui.css     # Styly
+│   └── icons/
+├── server/                 # Python server
+│   ├── yt_server.py       # Hlavní server
+│   ├── start_server.sh    # Spouštěč (Linux/macOS)
+│   └── start_server.bat   # Spouštěč (Windows)
+├── index.html             # Webová stránka
+├── script.js              # Web UI logika
+└── styles.css             # Web styly
 ```
 
-## 🔧 Technické detaily
+## Řešení problémů
 
-### Jak to funguje?
+### Server nefunguje
 
-1. **Stránka** generuje ZIP soubor s rozšířením přímo v prohlížeči (pomocí JSZip)
-2. **Rozšíření** obchází CORS omezení a komunikuje s YouTube API
-3. **Content script** přidává tlačítko stahování přímo na YouTube
-4. **Stahování** probíhá přes Chrome Downloads API
+1. Zkontrolujte, že máte Python 3.7+
+2. Nainstalujte yt-dlp: `pip install yt-dlp`
+3. Pro MP3/WAV nainstalujte FFmpeg
 
-### Podporované formáty
+### Tlačítko se nezobrazuje
 
-| Typ | Formát | Poznámka |
-|-----|--------|----------|
-| Video + Audio | MP4, WebM | Kombinované streamy |
-| Pouze Video | MP4, WebM | Bez zvuku |
-| Pouze Audio | M4A, WebM | Různé bitrates |
+1. Obnovte stránku (F5)
+2. Zkontrolujte, že je extension aktivní
+3. Zkuste přeinstalovat extension
 
-### Omezení
+### Formáty nejsou dostupné
 
-- Některá videa mohou být chráněná proti stahování
-- Šifrované streamy nemusí být dostupné
-- Kvalita závisí na dostupnosti na YouTube
+1. Spusťte lokální server
+2. Server zobrazí zelený indikátor na tlačítku
 
-## 🌐 Hosting na GitHub Pages
+## Changelog
 
-1. Forkněte tento repozitář
-2. Jděte do Settings > Pages
-3. Vyberte branch `main` a složku `/` (root)
-4. Uložte - stránka bude dostupná na `username.github.io/repo-name`
+### v5.0.0
+- Nový Python server s yt-dlp
+- Podpora všech formátů (MP3, WAV, FLAC, OGG)
+- Podpora všech kvalit (4K až 144p)
+- Server indikátor na tlačítku
+- Fallback režim bez serveru
 
-## 🔒 Bezpečnost & Soukromí
+### v4.0.0
+- Přepracované UI
+- Lepší detekce formátů
+- Opravy stability
 
-- ✅ **Žádné sledování** - Nesbíráme žádná data
-- ✅ **Lokální zpracování** - Vše běží ve vašem prohlížeči
-- ✅ **Bez serveru** - Žádná data se neodesílají
-- ✅ **Open source** - Můžete zkontrolovat kód
+## Bezpečnost & Soukromí
 
-## 📝 Changelog
+- **Žádné sledování** - Nesbíráme žádná data
+- **Lokální zpracování** - Vše běží na vašem počítači
+- **Open source** - Můžete zkontrolovat kód
 
-### v1.1.1 (2025-11-25)
-- 🐛 **FIX**: Opraven HTTP 403 error při stahování videí
-- ⚡ Optimalizovány HTTP hlavičky pro lepší kompatibilitu s YouTube servery
-- 🔧 Odstraněny problematické CORS hlavičky
-
-### v1.1.0 (2025-11-24)
-- ✨ Plná funkcionalita stahování YouTube videí
-- 🎨 Vylepšené UI s podporou více formátů
-- 🚀 Auto-update funkcionalita
-
-### v1.0.0 (2025-11-22)
-- 🎉 První release
-- ✅ Základní funkcionalita stahování
-
-## 📜 Licence
-
-MIT License - Volně k použití a modifikaci.
-
-## ⚠️ Právní upozornění
+## Právní upozornění
 
 Tento nástroj je určen pouze pro stahování videí, ke kterým máte právo. Respektujte autorská práva a podmínky použití YouTube.
 
-## 📂 Další komponenty
-
-- **[extension/](extension/)** - Zdrojový kód browser extension
-- **[extension-loader/](extension-loader/)** - Auto-update loader pro extension
-
 ---
 
-**Součást projektu [AdHUB](../../index.html)** | Vytvořeno s ❤️
+**Součást projektu [AdHUB](../../index.html)**
