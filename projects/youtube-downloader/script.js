@@ -162,47 +162,31 @@ function handlePluginReady(event) {
         state.pluginId = event.detail.id;
         state.pluginVersion = event.detail.version;
         updatePluginStatus(true);
+
+        // Po detekci pluginu zkontrolujeme verzi
+        checkPluginVersion();
     }
 }
 
 async function checkPlugin() {
     console.log('[AdHub] Kontroluji plugin...');
 
+    // DULEZITE: Vymaz stare localStorage signaly - zustavaji i po deaktivaci pluginu!
+    // Plugin je nastavi znovu, pokud bezi
+    clearStalePluginSignals();
+
     try {
-        // Metoda 1: localStorage (nastaveno page-bridge.js)
-        const storedActive = localStorage.getItem('adhub_extension_active');
-        const storedId = localStorage.getItem('adhub_extension_id');
-        const storedVersion = localStorage.getItem('adhub_extension_version');
-
-        if (storedActive === 'true' && storedId) {
-            console.log('[AdHub] Plugin detekovan pres localStorage');
-            state.pluginConnected = true;
-            state.pluginId = storedId;
-            state.pluginVersion = storedVersion;
-            updatePluginStatus(true);
-            return;
-        }
-
-        // Metoda 2: data atribut
-        const dataAttr = document.documentElement.getAttribute('data-adhub-extension');
-        const dataId = document.documentElement.getAttribute('data-adhub-extension-id');
-        const dataVersion = document.documentElement.getAttribute('data-adhub-extension-version');
-
-        if (dataAttr === 'true' && dataId) {
-            console.log('[AdHub] Plugin detekovan pres data atribut');
-            state.pluginConnected = true;
-            state.pluginId = dataId;
-            state.pluginVersion = dataVersion;
-            updatePluginStatus(true);
-            return;
-        }
-
-        // Metoda 3: Custom event
+        // Pockej na plugin - pouzijeme jen event-based detekci
+        // Protoze localStorage neni spolehlivy (zustavaji stare hodnoty)
         const detected = await detectPluginViaEvent();
+
         if (detected) {
-            console.log('[AdHub] Plugin detekovan pres event');
+            console.log('[AdHub] Plugin detekovan');
             state.pluginConnected = true;
             updatePluginStatus(true);
+
+            // Po detekci pluginu zkontrolujeme verzi
+            checkPluginVersion();
             return;
         }
 
@@ -217,15 +201,30 @@ async function checkPlugin() {
     }
 }
 
+function clearStalePluginSignals() {
+    // Smaz stare localStorage hodnoty - plugin je nastavi znovu, pokud bezi
+    console.log('[AdHub] Mazem stare localStorage signaly');
+    localStorage.removeItem('adhub_extension_active');
+    localStorage.removeItem('adhub_extension_id');
+    localStorage.removeItem('adhub_extension_version');
+    localStorage.removeItem('adhub_extension_name');
+}
+
 function detectPluginViaEvent() {
     return new Promise((resolve) => {
+        // Timeout 3 sekundy - pokud plugin neodpovi, neni aktivni
         const timeout = setTimeout(() => {
+            console.log('[AdHub] Plugin timeout - neni aktivni');
+            window.removeEventListener('adhub-extension-ready', readyHandler);
+            window.removeEventListener('adhub-extension-response', responseHandler);
             resolve(false);
-        }, 2000);
+        }, 3000);
 
-        const handler = (event) => {
+        const readyHandler = (event) => {
+            console.log('[AdHub] Prijat adhub-extension-ready event');
             clearTimeout(timeout);
-            window.removeEventListener('adhub-extension-response', handler);
+            window.removeEventListener('adhub-extension-ready', readyHandler);
+            window.removeEventListener('adhub-extension-response', responseHandler);
 
             if (event.detail && event.detail.id) {
                 state.pluginId = event.detail.id;
@@ -234,9 +233,102 @@ function detectPluginViaEvent() {
             resolve(true);
         };
 
-        window.addEventListener('adhub-extension-response', handler, { once: true });
+        const responseHandler = (event) => {
+            console.log('[AdHub] Prijat adhub-extension-response event');
+            clearTimeout(timeout);
+            window.removeEventListener('adhub-extension-ready', readyHandler);
+            window.removeEventListener('adhub-extension-response', responseHandler);
+
+            if (event.detail && event.detail.id) {
+                state.pluginId = event.detail.id;
+                state.pluginVersion = event.detail.version;
+            }
+            resolve(true);
+        };
+
+        // Poslouchej oba eventy
+        window.addEventListener('adhub-extension-ready', readyHandler);
+        window.addEventListener('adhub-extension-response', responseHandler);
+
+        // Pozadej plugin o odpoved
         window.dispatchEvent(new CustomEvent('adhub-extension-check'));
     });
+}
+
+// ============================================================================
+// KONTROLA VERZE PLUGINU
+// ============================================================================
+
+function checkPluginVersion() {
+    console.log('[AdHub] Kontroluji verzi pluginu...');
+
+    const downloadedCommit = localStorage.getItem('adhub_downloaded_commit');
+
+    if (!downloadedCommit) {
+        console.log('[AdHub] Zadny stazeny commit v localStorage');
+        return;
+    }
+
+    if (!state.latestCommit) {
+        console.log('[AdHub] Zatim nemame info o nejnovejsim commitu');
+        // Zkusime pozdeji, az se nacte commit info
+        return;
+    }
+
+    const latestShort = state.latestCommit.sha.substring(0, 7);
+    const downloadedShort = downloadedCommit.substring(0, 7);
+
+    console.log('[AdHub] Porovnani verzi:', { downloaded: downloadedShort, latest: latestShort });
+
+    if (downloadedShort !== latestShort) {
+        console.log('[AdHub] Je k dispozici nova verze!');
+        showUpdateNotification(downloadedShort, latestShort);
+    } else {
+        console.log('[AdHub] Plugin je aktualni');
+        hideUpdateNotification();
+    }
+}
+
+function showUpdateNotification(oldCommit, newCommit) {
+    // Zobraz banner o dostupne aktualizaci
+    let updateBanner = document.getElementById('updateBanner');
+
+    if (!updateBanner) {
+        updateBanner = document.createElement('div');
+        updateBanner.id = 'updateBanner';
+        updateBanner.className = 'update-banner';
+        updateBanner.innerHTML = `
+            <div class="update-banner-content">
+                <span class="update-icon">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/>
+                    </svg>
+                </span>
+                <div class="update-text">
+                    <strong>Je k dispozici aktualizace!</strong>
+                    <span>Tvuj plugin: <code>${oldCommit}</code> → Nejnovejsi: <code>${newCommit}</code></span>
+                </div>
+                <button class="btn btn-update" onclick="handleDownloadPlugin('main')">
+                    Aktualizovat
+                </button>
+            </div>
+        `;
+
+        // Vloz banner za plugin info bar nebo na zacatek download sekce
+        const downloadSection = document.getElementById('downloadSection');
+        if (downloadSection) {
+            downloadSection.insertBefore(updateBanner, downloadSection.firstChild);
+        }
+    }
+
+    updateBanner.style.display = 'block';
+}
+
+function hideUpdateNotification() {
+    const updateBanner = document.getElementById('updateBanner');
+    if (updateBanner) {
+        updateBanner.style.display = 'none';
+    }
 }
 
 function updatePluginStatus(connected) {
@@ -336,6 +428,11 @@ async function loadLatestCommitInfo() {
         // Aktualizace commit ID v male karte v sidebaru
         if (elements.commitIdSmall) {
             elements.commitIdSmall.textContent = commit.sha.substring(0, 7);
+        }
+
+        // Zkontroluj verzi pluginu (pokud uz byl detekovan)
+        if (state.pluginConnected) {
+            checkPluginVersion();
         }
 
     } catch (error) {
@@ -444,6 +541,14 @@ async function handleDownloadPlugin(type = 'main') {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(downloadUrl);
+
+        // Uloz commit ID do localStorage pro pozdejsi kontrolu verze
+        if (state.latestCommit) {
+            localStorage.setItem('adhub_downloaded_commit', state.latestCommit.sha);
+            console.log('[AdHub] Ulozen stazeny commit:', state.latestCommit.sha.substring(0, 7));
+            // Skryj update banner pokud je videt
+            hideUpdateNotification();
+        }
 
         if (progressFill) progressFill.style.width = '100%';
         if (progressText) progressText.textContent = 'Stahovani dokonceno!';
@@ -834,3 +939,6 @@ window.copyToClipboard = function(text) {
         showToast('Zkopirovano!', 'success');
     });
 };
+
+// Globalni funkce pro stahovani pluginu (pro onclick v HTML)
+window.handleDownloadPlugin = handleDownloadPlugin;

@@ -1529,3 +1529,97 @@ header h1 {
 .plugin-download-card .download-progress {
     margin-top: 12px;
 }
+
+/* ============================================================================
+   Update Banner - Upozorneni na novou verzi pluginu
+   ============================================================================ */
+
+.update-banner {
+    background: linear-gradient(135deg, rgba(251, 146, 60, 0.15), rgba(251, 146, 60, 0.08));
+    border: 1px solid rgba(251, 146, 60, 0.4);
+    border-radius: 16px;
+    padding: 16px 24px;
+    margin: 0 28px 20px 28px;
+    animation: slideDown 0.3s ease;
+}
+
+.update-banner-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.update-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #fb923c, #f97316);
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.update-icon svg {
+    color: white;
+}
+
+.update-text {
+    flex: 1;
+    min-width: 200px;
+}
+
+.update-text strong {
+    display: block;
+    color: #fb923c;
+    font-size: 15px;
+    margin-bottom: 4px;
+}
+
+.update-text span {
+    color: var(--adhub-muted);
+    font-size: 13px;
+}
+
+.update-text code {
+    font-family: 'Consolas', 'Monaco', monospace;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    color: var(--adhub-text);
+}
+
+.btn-update {
+    background: linear-gradient(135deg, #fb923c, #f97316) !important;
+    border-color: rgba(251, 146, 60, 0.5) !important;
+    padding: 10px 20px;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.btn-update:hover {
+    background: linear-gradient(135deg, #fdba74, #fb923c) !important;
+    transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+    .update-banner {
+        margin: 0 16px 16px 16px;
+        padding: 14px 18px;
+    }
+
+    .update-banner-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .update-text {
+        min-width: auto;
+    }
+
+    .btn-update {
+        width: 100%;
+    }
+}
