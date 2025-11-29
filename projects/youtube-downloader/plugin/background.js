@@ -236,22 +236,49 @@ function extractFormats(html) {
   const formats = [];
 
   try {
-    // Hledani ytInitialPlayerResponse
-    const playerMatch = html.match(/ytInitialPlayerResponse\s*=\s*(\{.+?\});/s);
+    // Hledani ytInitialPlayerResponse s lepsim regexem
+    // YouTube muze mit ruzne formaty, zkusime vice patternu
+    let playerData = null;
 
-    if (!playerMatch) {
+    // Pattern 1: ytInitialPlayerResponse = {...};
+    const patterns = [
+      /ytInitialPlayerResponse\s*=\s*(\{.+?\});\s*(?:var|let|const|<\/script>)/s,
+      /ytInitialPlayerResponse\s*=\s*(\{.+?\});/s,
+      /var\s+ytInitialPlayerResponse\s*=\s*(\{.+?\});/s
+    ];
+
+    for (const pattern of patterns) {
+      const match = html.match(pattern);
+      if (match) {
+        try {
+          // Zkusime najit konec JSON objektu spravne
+          const jsonStr = extractCompleteJson(html, match.index + match[0].indexOf('{'));
+          if (jsonStr) {
+            playerData = JSON.parse(jsonStr);
+            log('EXTRACT', 'ytInitialPlayerResponse nalezeno a parsovano');
+            break;
+          }
+        } catch (e) {
+          log('EXTRACT', `Pattern nefungoval: ${e.message}`);
+        }
+      }
+    }
+
+    if (!playerData) {
       log('EXTRACT', 'ytInitialPlayerResponse nenalezeno, zkousim alternativni metodu');
       return extractFormatsAlternative(html);
     }
 
-    const playerData = JSON.parse(playerMatch[1]);
-    log('EXTRACT', 'ytInitialPlayerResponse nalezeno a parsovano');
-
     // Ziskani streamingData
     const streamingData = playerData.streamingData;
     if (!streamingData) {
-      throw new Error('StreamingData nenalezeno');
+      log('EXTRACT', 'StreamingData nenalezeno, zkousim alternativni metodu');
+      return extractFormatsAlternative(html);
     }
+
+    // Extrahuj base.js URL pro decipher (pokud potreba)
+    const baseJsUrl = extractBaseJsUrl(html);
+    log('EXTRACT', 'Base.js URL:', baseJsUrl);
 
     // Zpracovani adaptivnich formatu (video-only, audio-only)
     if (streamingData.adaptiveFormats) {
@@ -284,6 +311,69 @@ function extractFormats(html) {
 }
 
 // ============================================================================
+// HELPER: Extract Complete JSON - Extrakce kompletniho JSON objektu
+// ============================================================================
+
+function extractCompleteJson(str, startIndex) {
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  let start = startIndex;
+
+  for (let i = startIndex; i < str.length && i < startIndex + 500000; i++) {
+    const char = str[i];
+
+    if (escape) {
+      escape = false;
+      continue;
+    }
+
+    if (char === '\\' && inString) {
+      escape = true;
+      continue;
+    }
+
+    if (char === '"' && !escape) {
+      inString = !inString;
+      continue;
+    }
+
+    if (!inString) {
+      if (char === '{') depth++;
+      else if (char === '}') {
+        depth--;
+        if (depth === 0) {
+          return str.substring(start, i + 1);
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
+// ============================================================================
+// HELPER: Extract Base.js URL - Extrakce URL pro decipher script
+// ============================================================================
+
+function extractBaseJsUrl(html) {
+  const patterns = [
+    /"jsUrl":"(\/s\/player\/[^"]+\/player_ias\.vflset\/[^"]+\/base\.js)"/,
+    /"PLAYER_JS_URL":"(\/s\/player\/[^"]+base\.js)"/,
+    /src="(\/s\/player\/[^"]+base\.js)"/
+  ];
+
+  for (const pattern of patterns) {
+    const match = html.match(pattern);
+    if (match) {
+      return 'https://www.youtube.com' + match[1];
+    }
+  }
+
+  return null;
+}
+
+// ============================================================================
 // HELPER: Extract Formats Alternative - Alternativni metoda extrakce
 // ============================================================================
 
@@ -292,19 +382,116 @@ function extractFormatsAlternative(html) {
   const formats = [];
 
   try {
-    // Hledani v embedded player config
-    const configMatch = html.match(/ytcfg\.set\s*\(\s*(\{.+?\})\s*\)/s);
-    if (configMatch) {
-      log('EXTRACT_ALT', 'Nalezen ytcfg.set');
+    // Metoda 1: Hledani streamingData primo v HTML
+    const streamingMatch = html.match(/"streamingData"\s*:\s*(\{[^}]+(?:\{[^}]*\}[^}]*)*\})/);
+    if (streamingMatch) {
+      try {
+        const streamingData = JSON.parse(streamingMatch[1]);
+        log('EXTRACT_ALT', 'Nalezeno streamingData v HTML');
+
+        if (streamingData.formats) {
+          for (const format of streamingData.formats) {
+            const processed = processFormat(format, true);
+            if (processed) formats.push(processed);
+          }
+        }
+
+        if (streamingData.adaptiveFormats) {
+          for (const format of streamingData.adaptiveFormats) {
+            const processed = processFormat(format);
+            if (processed) formats.push(processed);
+          }
+        }
+      } catch (e) {
+        log('EXTRACT_ALT', 'Nelze parsovat streamingData', e.message);
+      }
     }
 
-    // Dalsi alternativni metody mohou byt pridany zde
+    // Metoda 2: Hledani jednotlivych format URL v HTML
+    if (formats.length === 0) {
+      const urlPatterns = [
+        /https:\/\/[^"]+googlevideo\.com\/videoplayback[^"]+/g,
+        /"url"\s*:\s*"(https:\/\/[^"]+googlevideo\.com[^"]+)"/g
+      ];
+
+      for (const pattern of urlPatterns) {
+        const matches = html.matchAll(pattern);
+        for (const match of matches) {
+          const url = match[1] || match[0];
+          if (url && !formats.some(f => f.url === url)) {
+            // Zkusime extrahovat itag z URL
+            const itagMatch = url.match(/itag[=\/](\d+)/);
+            const itag = itagMatch ? parseInt(itagMatch[1]) : null;
+
+            if (itag) {
+              const formatInfo = getFormatInfoByItag(itag);
+              formats.push({
+                itag: itag,
+                url: url.replace(/\\u0026/g, '&'),
+                ...formatInfo
+              });
+              log('EXTRACT_ALT', `Nalezen format z URL: itag=${itag}`);
+            }
+          }
+        }
+      }
+    }
 
   } catch (error) {
     logError('EXTRACT_ALT', 'Alternativni metoda selhala', error);
   }
 
+  log('EXTRACT_ALT', `Nalezeno ${formats.length} formatu alternativni metodou`);
   return formats;
+}
+
+// ============================================================================
+// HELPER: Get Format Info By Itag - Informace o formatu podle itag
+// ============================================================================
+
+function getFormatInfoByItag(itag) {
+  // Mapa znamych YouTube itag hodnot
+  const itagMap = {
+    // Combined (video + audio)
+    18: { container: 'mp4', codec: 'avc1/mp4a', quality: '360p', type: 'combined' },
+    22: { container: 'mp4', codec: 'avc1/mp4a', quality: '720p', type: 'combined' },
+    // Video only
+    137: { container: 'mp4', codec: 'avc1', quality: '1080p', type: 'video' },
+    136: { container: 'mp4', codec: 'avc1', quality: '720p', type: 'video' },
+    135: { container: 'mp4', codec: 'avc1', quality: '480p', type: 'video' },
+    134: { container: 'mp4', codec: 'avc1', quality: '360p', type: 'video' },
+    133: { container: 'mp4', codec: 'avc1', quality: '240p', type: 'video' },
+    160: { container: 'mp4', codec: 'avc1', quality: '144p', type: 'video' },
+    298: { container: 'mp4', codec: 'avc1', quality: '720p60', type: 'video' },
+    299: { container: 'mp4', codec: 'avc1', quality: '1080p60', type: 'video' },
+    264: { container: 'mp4', codec: 'avc1', quality: '1440p', type: 'video' },
+    266: { container: 'mp4', codec: 'avc1', quality: '2160p', type: 'video' },
+    // WebM video
+    248: { container: 'webm', codec: 'vp9', quality: '1080p', type: 'video' },
+    247: { container: 'webm', codec: 'vp9', quality: '720p', type: 'video' },
+    244: { container: 'webm', codec: 'vp9', quality: '480p', type: 'video' },
+    243: { container: 'webm', codec: 'vp9', quality: '360p', type: 'video' },
+    242: { container: 'webm', codec: 'vp9', quality: '240p', type: 'video' },
+    278: { container: 'webm', codec: 'vp9', quality: '144p', type: 'video' },
+    302: { container: 'webm', codec: 'vp9', quality: '720p60', type: 'video' },
+    303: { container: 'webm', codec: 'vp9', quality: '1080p60', type: 'video' },
+    308: { container: 'webm', codec: 'vp9', quality: '1440p60', type: 'video' },
+    315: { container: 'webm', codec: 'vp9', quality: '2160p60', type: 'video' },
+    // Audio only
+    140: { container: 'mp4', codec: 'mp4a', audioQuality: '128kbps', type: 'audio' },
+    141: { container: 'mp4', codec: 'mp4a', audioQuality: '256kbps', type: 'audio' },
+    171: { container: 'webm', codec: 'vorbis', audioQuality: '128kbps', type: 'audio' },
+    249: { container: 'webm', codec: 'opus', audioQuality: '50kbps', type: 'audio' },
+    250: { container: 'webm', codec: 'opus', audioQuality: '70kbps', type: 'audio' },
+    251: { container: 'webm', codec: 'opus', audioQuality: '160kbps', type: 'audio' }
+  };
+
+  return itagMap[itag] || {
+    container: 'unknown',
+    codec: 'unknown',
+    quality: 'unknown',
+    type: 'unknown'
+  };
 }
 
 // ============================================================================
@@ -316,14 +503,28 @@ function processFormat(format, isCombined = false) {
     // Ziskani URL
     let url = format.url;
 
-    // Pokud je URL sifrovane, potrebujeme desifrovat
+    // Pokud je URL sifrovane v signatureCipher
     if (!url && format.signatureCipher) {
-      log('FORMAT', 'Format vyzaduje desifrovani');
-      // Desifrovani je komplexni a casto se meni, prozatim preskakujeme
-      return null;
+      log('FORMAT', `Format itag=${format.itag} ma signatureCipher`);
+      const cipherUrl = decodeSignatureCipher(format.signatureCipher);
+      if (cipherUrl) {
+        url = cipherUrl;
+        log('FORMAT', 'SignatureCipher dekodovano (bez signature)');
+      }
+    }
+
+    // Pokud je URL sifrovane v cipher (starsi format)
+    if (!url && format.cipher) {
+      log('FORMAT', `Format itag=${format.itag} ma cipher`);
+      const cipherUrl = decodeSignatureCipher(format.cipher);
+      if (cipherUrl) {
+        url = cipherUrl;
+        log('FORMAT', 'Cipher dekodovano (bez signature)');
+      }
     }
 
     if (!url) {
+      log('FORMAT', `Format itag=${format.itag} nema URL, preskakuji`);
       return null;
     }
 
@@ -373,6 +574,40 @@ function processFormat(format, isCombined = false) {
 
   } catch (error) {
     logError('FORMAT', 'Chyba pri zpracovani formatu', error);
+    return null;
+  }
+}
+
+// ============================================================================
+// HELPER: Decode Signature Cipher - Dekodovani signature cipher
+// ============================================================================
+
+function decodeSignatureCipher(cipher) {
+  try {
+    const params = new URLSearchParams(cipher);
+    const url = params.get('url');
+    const sig = params.get('s');
+    const sp = params.get('sp') || 'sig';
+
+    if (!url) {
+      return null;
+    }
+
+    // Pokud neni signature, vrat jen URL (nekdy funguje)
+    if (!sig) {
+      return url;
+    }
+
+    // Vrat URL i s nezpracovanym signature parametrem
+    // Nektera videa mohou fungovat i bez spravne desifrovane signature
+    // Pro plnou podporu by bylo potreba implementovat signature deobfuscation
+    const urlObj = new URL(url);
+    urlObj.searchParams.set(sp, sig);
+
+    return urlObj.toString();
+
+  } catch (error) {
+    logError('CIPHER', 'Chyba pri dekodovani cipher', error);
     return null;
   }
 }
