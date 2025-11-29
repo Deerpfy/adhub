@@ -454,42 +454,59 @@ async function handleDownloadVideo(request, sendResponse) {
     }
     log('DOWNLOAD', 'Krok 1: Parametry validovany');
 
-    // Krok 2: Stazeni jako blob
-    log('DOWNLOAD', 'Krok 2: Stahuji video data...');
+    // Krok 2: Priprava Referer URL pro YouTube
+    const refererUrl = videoId
+      ? `https://www.youtube.com/watch?v=${videoId}`
+      : 'https://www.youtube.com/';
+    log('DOWNLOAD', 'Krok 2: Pouzivam Referer:', refererUrl);
+
+    // Krok 3: Stazeni jako blob
+    log('DOWNLOAD', 'Krok 3: Stahuji video data...');
     const response = await fetch(url, {
+      method: 'GET',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        'Accept': '*/*',
+        'Referer': refererUrl,
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
       }
     });
 
     if (!response.ok) {
+      const errorText = await response.text().catch(() => '');
+      log('DOWNLOAD', 'Chyba odpovedi:', { status: response.status, text: errorText.substring(0, 200) });
       throw new Error(`Stazeni selhalo: ${response.status}`);
     }
 
     const blob = await response.blob();
-    log('DOWNLOAD', `Krok 3: Data stazena (${blob.size} bytes)`);
+    log('DOWNLOAD', `Krok 4: Data stazena (${blob.size} bytes, typ: ${blob.type})`);
 
-    // Krok 4: Vytvoreni object URL
+    // Kontrola prazdneho blobu
+    if (blob.size === 0) {
+      throw new Error('Stazeny soubor je prazdny');
+    }
+
+    // Krok 5: Vytvoreni object URL
     const objectUrl = URL.createObjectURL(blob);
-    log('DOWNLOAD', 'Krok 4: Object URL vytvoreno');
+    log('DOWNLOAD', 'Krok 5: Object URL vytvoreno');
 
-    // Krok 5: Spusteni stahovani
-    log('DOWNLOAD', 'Krok 5: Spoustim stahovani do prohlizece');
+    // Krok 6: Spusteni stahovani
+    log('DOWNLOAD', 'Krok 6: Spoustim stahovani do prohlizece');
 
     const downloadId = await chrome.downloads.download({
       url: objectUrl,
       filename: filename || `youtube-video-${videoId || 'unknown'}.mp4`,
-      saveAs: true
+      saveAs: false,
+      conflictAction: 'uniquify'
     });
 
-    log('DOWNLOAD', `Krok 6: Stahovani spusteno, ID: ${downloadId}`);
+    log('DOWNLOAD', `Krok 7: Stahovani spusteno, ID: ${downloadId}`);
 
-    // Krok 7: Cekame na dokonceni a uvolnime object URL
+    // Krok 8: Cekame na dokonceni a uvolnime object URL
     // Pouzivame jednorazovy listener, ne interval!
     chrome.downloads.onChanged.addListener(function cleanup(delta) {
       if (delta.id === downloadId && delta.state) {
         if (delta.state.current === 'complete' || delta.state.current === 'interrupted') {
-          log('DOWNLOAD', `Krok 7: Stahovani dokonceno, uklizim object URL`);
+          log('DOWNLOAD', `Krok 8: Stahovani dokonceno, uklizim object URL`);
           URL.revokeObjectURL(objectUrl);
           // Odebrani listeneru - DULEZITE pro zabraneni memory leaku!
           chrome.downloads.onChanged.removeListener(cleanup);
