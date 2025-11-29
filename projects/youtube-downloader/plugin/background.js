@@ -365,16 +365,29 @@ echo Write-Host "    OK: $YtdlpExe" -ForegroundColor Cyan
 echo.
 echo Write-Host '[+] Stahuji ffmpeg (chvili to potrva^)...' -ForegroundColor Green
 echo $FfmpegZip = "$env:TEMP\\ffmpeg.zip"
+echo $FfmpegExtract = "$env:TEMP\\ffmpeg-extract"
 echo try {
-echo     Invoke-WebRequest -Uri 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip' -OutFile $FfmpegZip -UseBasicParsing
-echo     Expand-Archive -Path $FfmpegZip -DestinationPath "$env:TEMP\\ffmpeg-extract" -Force
-echo     $bin = Get-ChildItem -Path "$env:TEMP\\ffmpeg-extract" -Recurse -Directory ^| Where-Object { $_.Name -eq 'bin' } ^| Select-Object -First 1
-echo     if ^($bin^) { Copy-Item -Path "$^($bin.FullName^)\\*" -Destination $FfmpegDir -Force }
+echo     # Pouzijeme gyan.dev - spolehlivy zdroj ffmpeg pro Windows
+echo     $ffmpegUrl = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
+echo     Write-Host "    Stahuji z: $ffmpegUrl" -ForegroundColor Gray
+echo     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+echo     Invoke-WebRequest -Uri $ffmpegUrl -OutFile $FfmpegZip -UseBasicParsing -TimeoutSec 300
+echo     Write-Host "    Rozbaluji..." -ForegroundColor Gray
+echo     if ^(Test-Path $FfmpegExtract^) { Remove-Item -Path $FfmpegExtract -Recurse -Force }
+echo     Expand-Archive -Path $FfmpegZip -DestinationPath $FfmpegExtract -Force
+echo     $bin = Get-ChildItem -Path $FfmpegExtract -Recurse -Directory ^| Where-Object { $_.Name -eq 'bin' } ^| Select-Object -First 1
+echo     if ^($bin^) {
+echo         Copy-Item -Path "$^($bin.FullName^)\\ffmpeg.exe" -Destination $FfmpegDir -Force
+echo         Copy-Item -Path "$^($bin.FullName^)\\ffprobe.exe" -Destination $FfmpegDir -Force -ErrorAction SilentlyContinue
+echo         Write-Host "    OK: $FfmpegDir\\ffmpeg.exe" -ForegroundColor Cyan
+echo     } else {
+echo         Write-Host "    CHYBA: bin slozka nenalezena v archivu" -ForegroundColor Yellow
+echo     }
 echo     Remove-Item -Path $FfmpegZip -Force -ErrorAction SilentlyContinue
-echo     Remove-Item -Path "$env:TEMP\\ffmpeg-extract" -Recurse -Force -ErrorAction SilentlyContinue
-echo     Write-Host "    OK: $FfmpegDir" -ForegroundColor Cyan
+echo     Remove-Item -Path $FfmpegExtract -Recurse -Force -ErrorAction SilentlyContinue
 echo } catch {
-echo     Write-Host "    CHYBA: ffmpeg se nepodarilo stahnout" -ForegroundColor Yellow
+echo     Write-Host "    CHYBA: $^($_.Exception.Message^)" -ForegroundColor Yellow
+echo     Write-Host "    Zkuste stahnout rucne z: https://www.gyan.dev/ffmpeg/builds/" -ForegroundColor Yellow
 echo }
 echo.
 echo Write-Host '[+] Vytvarim Native Host...' -ForegroundColor Green
