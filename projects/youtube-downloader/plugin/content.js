@@ -61,20 +61,21 @@
       gap: 6px;
       padding: 8px 16px;
       margin-left: 8px;
-      background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+      background: linear-gradient(135deg, #8b5cf6, #ec4899);
       color: white;
       border: none;
       border-radius: 20px;
       font-size: 14px;
-      font-weight: 500;
+      font-weight: 600;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.3s ease;
       font-family: 'Roboto', Arial, sans-serif;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
     }
 
     .adhub-download-btn:hover {
-      background: linear-gradient(135deg, #7c3aed, #6d28d9);
-      transform: scale(1.02);
+      transform: scale(1.05);
+      box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
     }
 
     .adhub-download-btn:active {
@@ -82,8 +83,8 @@
     }
 
     .adhub-download-btn svg {
-      width: 16px;
-      height: 16px;
+      width: 20px;
+      height: 20px;
       fill: currentColor;
     }
 
