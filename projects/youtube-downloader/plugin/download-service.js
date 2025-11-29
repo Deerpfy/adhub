@@ -21,19 +21,16 @@ const DownloadService = {
       timeout: 30000
     },
 
-    // Invidious instance (seřazené podle spolehlivosti - aktualizováno 2024)
+    // Invidious instance - používáme ty které nepřesměrovávají a mají CORS
     invidious: {
       instances: [
-        'https://invidious.fdn.fr',
-        'https://inv.tux.pizza',
-        'https://invidious.protokolla.fi',
-        'https://iv.datura.network',
-        'https://invidious.privacyredirect.com',
-        'https://invidious.nerdvpn.de',
-        'https://yewtu.be',
-        'https://vid.puffyan.us'
+        'https://inv.nadeko.net',
+        'https://invidious.lunar.icu',
+        'https://yt.artemislena.eu',
+        'https://invidious.perennialte.ch',
+        'https://invidious.drgns.space'
       ],
-      timeout: 12000
+      timeout: 10000
     },
 
     // Debug mode
@@ -188,31 +185,38 @@ const DownloadService = {
       instanceErrors: []
     };
 
-    // Cobalt API instance - aktuální verze API (10+)
+    // Cobalt API instance - aktuální verze API
+    // Poznámka: cobalt.tools oficiální API vyžaduje API klíč, používáme veřejné instance
     const cobaltInstances = [
-      { url: 'https://api.cobalt.tools', version: 10 },
-      { url: 'https://cobalt.r4fo.com', version: 10 },
-      { url: 'https://co.eepy.today', version: 10 }
+      { url: 'https://cobalt-api.kwiatekmiki.com/api/json', version: 7 },
+      { url: 'https://cobalt.canine.tools/api/json', version: 7 },
+      { url: 'https://co.wuk.sh/api/json', version: 7 }
     ];
 
     for (const instance of cobaltInstances) {
       try {
         this.log('COBALT', `Zkouším instanci: ${instance.url}`);
 
-        // Cobalt API v10 požadavek - vyžaduje specifické hlavičky
+        // Cobalt API požadavek - v7 formát (kompatibilní s veřejnými instancemi)
+        const requestBody = {
+          url: `https://www.youtube.com/watch?v=${videoId}`,
+          vCodec: 'h264',
+          vQuality: '1080',
+          aFormat: 'mp3',
+          filenamePattern: 'pretty',
+          isAudioOnly: false,
+          isNoTTWatermark: true,
+          isTTFullAudio: false,
+          disableMetadata: false
+        };
+
         const response = await fetch(instance.url, {
           method: 'POST',
           headers: {
             'Accept': 'application/json',
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            url: `https://www.youtube.com/watch?v=${videoId}`,
-            videoQuality: '1080',
-            audioBitrate: '320',
-            filenameStyle: 'pretty',
-            youtubeVideoCodec: 'h264'
-          })
+          body: JSON.stringify(requestBody)
         });
 
         this.log('COBALT', `Response status: ${response.status}`);
