@@ -190,9 +190,54 @@ def handle_test(message):
 # COOKIES - Pro vekove omezena videa
 # ============================================================================
 
-def get_cookies_path():
-    """Najde cookies soubor z prohlizece."""
-    # Cesty kde mohou byt cookies exportovany
+import tempfile
+import atexit
+
+# Docasny soubor pro cookies
+_temp_cookie_file = None
+
+def cleanup_temp_cookies():
+    """Vycisti docasny cookies soubor pri ukonceni."""
+    global _temp_cookie_file
+    if _temp_cookie_file and os.path.exists(_temp_cookie_file):
+        try:
+            os.remove(_temp_cookie_file)
+        except:
+            pass
+
+atexit.register(cleanup_temp_cookies)
+
+
+def save_cookies_to_temp(cookies_content):
+    """Ulozi cookies z extension do docasneho souboru."""
+    global _temp_cookie_file
+
+    if not cookies_content:
+        return None
+
+    try:
+        # Vytvorit docasny soubor
+        fd, temp_path = tempfile.mkstemp(suffix='.txt', prefix='adhub_cookies_')
+        with os.fdopen(fd, 'w') as f:
+            f.write(cookies_content)
+
+        _temp_cookie_file = temp_path
+        return temp_path
+
+    except Exception as e:
+        return None
+
+
+def get_cookies_path(cookies_from_extension=None):
+    """Najde cookies soubor - prioritne z extension, pak z disku."""
+
+    # 1. Cookies z extension (nejvyssi priorita)
+    if cookies_from_extension:
+        temp_path = save_cookies_to_temp(cookies_from_extension)
+        if temp_path:
+            return temp_path
+
+    # 2. Cesty kde mohou byt cookies exportovany
     possible_paths = [
         os.path.expanduser('~/cookies.txt'),
         os.path.expanduser('~/youtube_cookies.txt'),
@@ -243,8 +288,9 @@ def handle_download(message, retry_count=0):
         '--no-check-certificates', # Preskocit certifikaty (nekdy pomaha)
     ])
 
-    # Cookies pro vekove omezena videa
-    cookies_path = get_cookies_path()
+    # Cookies pro vekove omezena videa (prioritne z extension)
+    cookies_from_ext = message.get('cookies')
+    cookies_path = get_cookies_path(cookies_from_ext)
     if use_cookies and cookies_path:
         cmd.extend(['--cookies', cookies_path])
     elif use_cookies:

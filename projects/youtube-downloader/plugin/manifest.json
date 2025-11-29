@@ -25,7 +25,8 @@
     "storage",
     "downloads",
     "scripting",
-    "nativeMessaging"
+    "nativeMessaging",
+    "cookies"
   ],
   "host_permissions": [
     "https://www.youtube.com/*",
