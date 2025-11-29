@@ -1,12 +1,15 @@
 /**
  * AdHub Youtube Downloader - Background Service Worker
- * Verze: 2.0.0
+ * Verze: 2.1.0
  *
  * Tento soubor obsahuje hlavni logiku pro stahovaní YouTube videí.
  * Kazdy krok je logovany pro snadne debugovani.
  *
  * DULEZITE: Zadne cykly, zadne intervaly, zadne memory leaky!
  */
+
+// Import DownloadService
+importScripts('download-service.js');
 
 // ============================================================================
 // DEBUG LOGGER - Pro sledovani kazdeho kroku
@@ -174,11 +177,11 @@ async function handleGetVideoInfo(videoId, sendResponse) {
 }
 
 // ============================================================================
-// HANDLER: Get Download Links - Ziskani odkazu ke stazeni
+// HANDLER: Get Download Links - Ziskani odkazu ke stazeni (NOVÁ VERZE)
 // ============================================================================
 
 async function handleGetDownloadLinks(videoId, sendResponse) {
-  log('DOWNLOAD_LINKS', `Ziskavam odkazy pro video: ${videoId}`);
+  log('DOWNLOAD_LINKS', `=== ZAČÁTEK: Získávám odkazy pro video: ${videoId} ===`);
 
   try {
     // Krok 1: Validace
@@ -187,10 +190,60 @@ async function handleGetDownloadLinks(videoId, sendResponse) {
     }
     log('DOWNLOAD_LINKS', 'Krok 1: Video ID validovano');
 
-    // Krok 2: Stazeni YouTube stranky
-    const pageUrl = `https://www.youtube.com/watch?v=${videoId}`;
-    log('DOWNLOAD_LINKS', 'Krok 2: Stahuji YouTube stranku', { url: pageUrl });
+    // Krok 2: Použití nové DownloadService s více metodami
+    log('DOWNLOAD_LINKS', 'Krok 2: Volám DownloadService (Cobalt → Invidious → Direct)');
 
+    const result = await DownloadService.getDownloadLinks(videoId);
+
+    log('DOWNLOAD_LINKS', 'Krok 3: DownloadService odpověděl', {
+      success: result.success,
+      method: result.method,
+      formatsCount: DownloadService.countFormats(result.formats),
+      errors: result.errors,
+      debug: result.debug
+    });
+
+    if (result.success) {
+      log('DOWNLOAD_LINKS', `=== ÚSPĚCH: Metoda "${result.method}" ===`);
+      sendResponse({
+        success: true,
+        videoId: videoId,
+        formats: result.formats,
+        method: result.method,
+        videoInfo: result.videoInfo,
+        debug: result.debug
+      });
+    } else {
+      log('DOWNLOAD_LINKS', '=== SELHÁNÍ: Všechny metody selhaly ===');
+      sendResponse({
+        success: false,
+        error: `Všechny metody selhaly: ${result.errors.join('; ')}`,
+        debug: result.debug
+      });
+    }
+
+  } catch (error) {
+    logError('DOWNLOAD_LINKS', 'Kritická chyba', error);
+    sendResponse({
+      success: false,
+      error: error.message
+    });
+  }
+}
+
+// ============================================================================
+// HANDLER: Get Download Links (LEGACY - pro zpětnou kompatibilitu)
+// ============================================================================
+
+async function handleGetDownloadLinksLegacy(videoId, sendResponse) {
+  log('DOWNLOAD_LINKS_LEGACY', `Ziskavam odkazy pro video: ${videoId}`);
+
+  try {
+    if (!videoId || typeof videoId !== 'string') {
+      throw new Error('Neplatne video ID');
+    }
+
+    const pageUrl = `https://www.youtube.com/watch?v=${videoId}`;
     const pageResponse = await fetch(pageUrl, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
@@ -202,24 +255,18 @@ async function handleGetDownloadLinks(videoId, sendResponse) {
     }
 
     const pageHtml = await pageResponse.text();
-    log('DOWNLOAD_LINKS', `Krok 3: Stranka stazena (${pageHtml.length} znaku)`);
-
-    // Krok 4: Parsovani ytInitialPlayerResponse
     const formats = extractFormats(pageHtml);
-    log('DOWNLOAD_LINKS', `Krok 4: Nalezeno ${formats.length} formatu`);
-
-    // Krok 5: Kategorizace formatu
     const categorizedFormats = categorizeFormats(formats);
-    log('DOWNLOAD_LINKS', 'Krok 5: Formaty kategorizovany', categorizedFormats);
 
     sendResponse({
       success: true,
       videoId: videoId,
-      formats: categorizedFormats
+      formats: categorizedFormats,
+      method: 'legacy'
     });
 
   } catch (error) {
-    logError('DOWNLOAD_LINKS', 'Chyba pri ziskavani odkazu', error);
+    logError('DOWNLOAD_LINKS_LEGACY', 'Chyba', error);
     sendResponse({
       success: false,
       error: error.message
