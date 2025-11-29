@@ -315,6 +315,10 @@
     injectStyles();
     log('INIT', 'Krok 1: Styly vlozeny');
 
+    // Krok 1.5: Vlozeni page scriptu pro stahovani
+    injectPageScript();
+    log('INIT', 'Krok 1.5: Page script vlozeny');
+
     // Krok 2: Nastaveni signalu pro webovou stranku
     setExtensionSignal();
     log('INIT', 'Krok 2: Signal nastaven');
@@ -830,64 +834,158 @@
     log('DIRECT_DOWNLOAD', 'Zacinam prime stahovani', { filename, videoId });
 
     try {
-      // Krok 1: Fetch video s YouTube kontextem (cookies, session)
-      log('DIRECT_DOWNLOAD', 'Krok 1: Stahuji video data...');
-
-      const response = await fetch(url, {
-        method: 'GET',
-        credentials: 'include', // Zahrnout YouTube cookies
-        headers: {
-          'Accept': '*/*',
-          'Accept-Language': 'cs,en;q=0.9',
-          'Range': 'bytes=0-' // Dulezite pro streaming video
-        }
-      });
-
-      log('DIRECT_DOWNLOAD', `Krok 2: Response status: ${response.status}`);
-
-      if (!response.ok && response.status !== 206) {
-        throw new Error(`HTTP error: ${response.status}`);
-      }
-
-      // Krok 2: Cist data jako blob
-      log('DIRECT_DOWNLOAD', 'Krok 3: Ctu response jako blob...');
-      const blob = await response.blob();
-      log('DIRECT_DOWNLOAD', `Krok 4: Blob vytvoren (${blob.size} bytes, typ: ${blob.type})`);
-
-      if (blob.size === 0) {
-        throw new Error('Stazeny soubor je prazdny');
-      }
-
-      // Krok 3: Vytvorit object URL a stahnout
-      log('DIRECT_DOWNLOAD', 'Krok 5: Vytvaram download link...');
-      const objectUrl = URL.createObjectURL(blob);
-
-      // Pouzit chrome.downloads pres background script
-      const downloadResult = await sendMessage({
-        action: 'saveBlob',
-        blobUrl: objectUrl,
-        filename: filename
-      });
-
-      // Cleanup
-      setTimeout(() => {
-        URL.revokeObjectURL(objectUrl);
-        log('DIRECT_DOWNLOAD', 'Object URL uvolneno');
-      }, 60000); // Drzet URL 60 sekund pro stahovani
-
-      if (!downloadResult.success) {
-        // Fallback: stahnout pres <a> element
-        log('DIRECT_DOWNLOAD', 'Background download selhal, zkousim <a> tag fallback');
-        return await downloadViaAnchor(objectUrl, filename);
-      }
-
-      log('DIRECT_DOWNLOAD', 'Stahovani uspesne spusteno');
-      return { success: true };
-
+      // Pouzijeme injektovany skript v kontextu stranky pro obejiti CORS
+      const result = await downloadViaPageContext(url, filename);
+      return result;
     } catch (error) {
       logError('DIRECT_DOWNLOAD', 'Chyba', error);
       return { success: false, error: error.message };
     }
+  }
+
+  // ============================================================================
+  // DOWNLOAD VIA PAGE CONTEXT - Stahovani pres injektovany skript
+  // ============================================================================
+
+  function downloadViaPageContext(url, filename) {
+    return new Promise((resolve, reject) => {
+      const requestId = 'dl_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+
+      log('PAGE_DOWNLOAD', `Posilam pozadavek do page kontextu: ${requestId}`);
+
+      // Listener pro odpoved z page kontextu
+      const responseHandler = (event) => {
+        if (event.source !== window) return;
+        if (!event.data || event.data.type !== 'ADHUB_DOWNLOAD_RESPONSE') return;
+        if (event.data.requestId !== requestId) return;
+
+        window.removeEventListener('message', responseHandler);
+
+        if (event.data.success) {
+          log('PAGE_DOWNLOAD', 'Stahovani uspesne');
+
+          // Blob URL z page kontextu - pouzijeme <a> tag pro stahovani
+          if (event.data.blobUrl) {
+            downloadViaAnchor(event.data.blobUrl, filename)
+              .then(resolve)
+              .catch(reject);
+          } else {
+            resolve({ success: true });
+          }
+        } else {
+          logError('PAGE_DOWNLOAD', 'Chyba z page kontextu:', event.data.error);
+          reject(new Error(event.data.error || 'Download failed'));
+        }
+      };
+
+      window.addEventListener('message', responseHandler);
+
+      // Timeout
+      setTimeout(() => {
+        window.removeEventListener('message', responseHandler);
+        reject(new Error('Page download timeout'));
+      }, 120000); // 2 minuty timeout pro velke soubory
+
+      // Posli pozadavek do page kontextu
+      window.postMessage({
+        type: 'ADHUB_DOWNLOAD_REQUEST',
+        requestId: requestId,
+        url: url,
+        filename: filename
+      }, '*');
+    });
+  }
+
+  // ============================================================================
+  // INJECT PAGE SCRIPT - Vlozeni skriptu do kontextu stranky
+  // ============================================================================
+
+  function injectPageScript() {
+    if (document.getElementById('adhub-page-script')) {
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.id = 'adhub-page-script';
+    script.textContent = `
+      (function() {
+        // AdHub Page Context Downloader
+        // Tento skript bezi primo v kontextu YouTube stranky
+        // a ma pristup k YouTube cookies a origin
+
+        window.addEventListener('message', async function(event) {
+          if (event.source !== window) return;
+          if (!event.data || event.data.type !== 'ADHUB_DOWNLOAD_REQUEST') return;
+
+          const { requestId, url, filename } = event.data;
+          console.log('[AdHub Page] Prijat pozadavek na stahovani:', requestId);
+
+          try {
+            // Fetch s plnym YouTube kontextem
+            const response = await fetch(url, {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                'Accept': '*/*',
+                'Accept-Language': 'cs,en;q=0.9'
+              }
+            });
+
+            console.log('[AdHub Page] Response status:', response.status);
+
+            if (!response.ok) {
+              throw new Error('HTTP error: ' + response.status);
+            }
+
+            // Cist jako blob
+            const blob = await response.blob();
+            console.log('[AdHub Page] Blob vytvoren:', blob.size, 'bytes');
+
+            if (blob.size === 0) {
+              throw new Error('Prazdny soubor');
+            }
+
+            // Vytvorit blob URL a stahnout primo
+            const blobUrl = URL.createObjectURL(blob);
+
+            // Stahnout pres <a> element primo v page kontextu
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = filename;
+            a.style.display = 'none';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+
+            // Uvolnit blob URL po chvili
+            setTimeout(function() {
+              URL.revokeObjectURL(blobUrl);
+            }, 60000);
+
+            window.postMessage({
+              type: 'ADHUB_DOWNLOAD_RESPONSE',
+              requestId: requestId,
+              success: true
+            }, '*');
+
+          } catch (error) {
+            console.error('[AdHub Page] Chyba:', error);
+            window.postMessage({
+              type: 'ADHUB_DOWNLOAD_RESPONSE',
+              requestId: requestId,
+              success: false,
+              error: error.message
+            }, '*');
+          }
+        });
+
+        console.log('[AdHub Page] Page context downloader nainstalovany');
+      })();
+    `;
+
+    // Vlozit na zacatek <head> nebo <body>
+    (document.head || document.documentElement).appendChild(script);
+    log('INJECT', 'Page script vlozeny');
   }
 
   // ============================================================================
