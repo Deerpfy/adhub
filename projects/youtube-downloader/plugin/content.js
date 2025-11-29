@@ -487,41 +487,76 @@
       return;
     }
 
+    // Zkontroluj, jestli tlacitko uz neni na strance
+    if (document.querySelector('.adhub-download-btn')) {
+      log('BUTTON', 'Tlacitko uz je na strance (z predchoziho pokusu)');
+      state.buttonInserted = true;
+      return;
+    }
+
     log('BUTTON', 'Hledam misto pro tlacitko');
 
-    // Primarni kontejner pro tlacitka - YTD akce
+    // Primarni kontejner pro tlacitka - YTD akce (2024 YouTube layout)
     const containerSelectors = [
-      '#top-level-buttons-computed',
-      'ytd-watch-metadata #actions #top-level-buttons-computed',
+      // Novy YouTube layout (2024)
       'ytd-watch-metadata #actions-inner #top-level-buttons-computed',
-      '#actions #top-level-buttons-computed',
+      'ytd-watch-metadata #actions #top-level-buttons-computed',
+      '#top-level-buttons-computed',
+      // Segmented buttons (like/dislike area)
+      'ytd-watch-metadata #actions ytd-segmented-like-dislike-button-renderer',
+      '#actions ytd-segmented-like-dislike-button-renderer',
+      // Menu renderer
+      '#actions-inner ytd-menu-renderer #top-level-buttons-computed',
       'ytd-menu-renderer #top-level-buttons-computed',
-      '#info #menu-container #top-level-buttons-computed',
-      // Fallback pro starsi layout
+      // Starsi layout
       'ytd-video-primary-info-renderer #top-level-buttons-computed',
-      '#menu-container ytd-menu-renderer'
+      '#info #menu-container #top-level-buttons-computed',
+      // Fallback - primo actions kontejner
+      'ytd-watch-metadata #actions-inner',
+      'ytd-watch-metadata #actions',
+      '#below #actions'
     ];
 
     let container = null;
+    let foundSelector = '';
     for (const selector of containerSelectors) {
-      container = document.querySelector(selector);
-      if (container && container.children.length > 0) {
-        log('BUTTON', `Kontejner nalezen: ${selector}`);
-        break;
+      const el = document.querySelector(selector);
+      if (el) {
+        // Pro nektere selektory chceme alespon 1 dite
+        if (selector.includes('top-level-buttons') || selector.includes('segmented')) {
+          if (el.children.length > 0) {
+            container = el;
+            foundSelector = selector;
+            break;
+          }
+        } else {
+          container = el;
+          foundSelector = selector;
+          break;
+        }
       }
     }
 
-    if (!container) {
+    if (container) {
+      log('BUTTON', `Kontejner nalezen: ${foundSelector} (${container.children.length} deti)`);
+      insertButtonIntoContainer(container);
+    } else {
       log('BUTTON', 'Kontejner nenalezen, cekam na DOM...');
+      // Logovat dostupne elementy pro debug
+      log('BUTTON', 'Dostupne elementy:', {
+        actions: !!document.querySelector('#actions'),
+        actionsInner: !!document.querySelector('#actions-inner'),
+        topLevel: !!document.querySelector('#top-level-buttons-computed'),
+        metadata: !!document.querySelector('ytd-watch-metadata'),
+        below: !!document.querySelector('#below')
+      });
+
       waitForElement(containerSelectors, (foundContainer) => {
         if (foundContainer && !state.buttonInserted) {
           insertButtonIntoContainer(foundContainer);
         }
       });
-      return;
     }
-
-    insertButtonIntoContainer(container);
   }
 
   // ============================================================================
@@ -531,7 +566,17 @@
   function waitForElement(selectors, callback) {
     // Maximalni pocet pokusu (zabranuji nekonecnemu cekani)
     let attempts = 0;
-    const maxAttempts = 50;
+    const maxAttempts = 100; // Zvyseno pro pomale stranky
+
+    // Nejdrive zkusime okamzite
+    for (const selector of selectors) {
+      const element = document.querySelector(selector);
+      if (element && (element.children.length > 0 || !selector.includes('top-level'))) {
+        log('WAIT', `Element nalezen okamzite: ${selector}`);
+        callback(element);
+        return;
+      }
+    }
 
     const observer = new MutationObserver((mutations, obs) => {
       attempts++;
@@ -539,15 +584,31 @@
       for (const selector of selectors) {
         const element = document.querySelector(selector);
         if (element) {
-          log('WAIT', `Element nalezen po ${attempts} pokusech: ${selector}`);
-          obs.disconnect();
-          callback(element);
-          return;
+          // Pro top-level-buttons chceme alespon 1 dite
+          if (selector.includes('top-level-buttons') || selector.includes('segmented')) {
+            if (element.children.length > 0) {
+              log('WAIT', `Element nalezen po ${attempts} pokusech: ${selector}`);
+              obs.disconnect();
+              callback(element);
+              return;
+            }
+          } else {
+            log('WAIT', `Element nalezen po ${attempts} pokusech: ${selector}`);
+            obs.disconnect();
+            callback(element);
+            return;
+          }
         }
       }
 
       if (attempts >= maxAttempts) {
         log('WAIT', `Element nenalezen po ${maxAttempts} pokusech, ukoncuji`);
+        log('WAIT', 'Finalni stav DOM:', {
+          actions: !!document.querySelector('#actions'),
+          actionsInner: !!document.querySelector('#actions-inner'),
+          topLevel: !!document.querySelector('#top-level-buttons-computed'),
+          metadata: !!document.querySelector('ytd-watch-metadata')
+        });
         obs.disconnect();
       }
     });
@@ -556,6 +617,22 @@
       childList: true,
       subtree: true
     });
+
+    // Fallback - zkusit znovu po 2 sekundach
+    setTimeout(() => {
+      if (state.buttonInserted) return;
+
+      log('WAIT', 'Fallback check po 2s...');
+      for (const selector of selectors) {
+        const element = document.querySelector(selector);
+        if (element) {
+          log('WAIT', `Fallback nalezl: ${selector}`);
+          observer.disconnect();
+          callback(element);
+          return;
+        }
+      }
+    }, 2000);
   }
 
   // ============================================================================
@@ -1053,5 +1130,22 @@
   }
 
   log('SCRIPT', 'Content script nacten');
+
+  // ============================================================================
+  // MESSAGE HANDLER - Pro komunikaci s popup
+  // ============================================================================
+
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === 'getDebugInfo') {
+      sendResponse({
+        initialized: state.initialized,
+        currentVideoId: state.currentVideoId,
+        buttonInserted: state.buttonInserted,
+        modalOpen: state.modalOpen,
+        observerActive: !!state.observer
+      });
+      return true;
+    }
+  });
 
 })();
