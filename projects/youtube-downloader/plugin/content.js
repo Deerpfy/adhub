@@ -65,7 +65,8 @@
     formats: [],
     buttonInjected: false,
     isDownloading: false,
-    downloadProgress: 0
+    downloadProgress: 0,
+    lastToggleTime: 0  // Pro debounce
   };
 
   // ============================================================================
@@ -329,6 +330,14 @@
   }
 
   function toggleDropdown() {
+    // Debounce - ignorovat opakované volání do 300ms
+    const now = Date.now();
+    if (now - state.lastToggleTime < 300) {
+      log('Toggle ignorován (debounce)');
+      return;
+    }
+    state.lastToggleTime = now;
+
     const dropdown = document.getElementById('adhub-dropdown');
     if (!dropdown) {
       logError('Dropdown nenalezen!');
