@@ -1,6 +1,6 @@
 /**
  * AdHub Youtube Downloader - Background Service Worker
- * Verze: 2.2.0
+ * Verze: 2.3.0
  *
  * Tento soubor obsahuje hlavni logiku pro stahovaní YouTube videí.
  * Kazdy krok je logovany pro snadne debugovani.

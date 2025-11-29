@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "AdHub Youtube Downloader",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "description": "Stahujte YouTube videa ve vsech formatech a kvalitach - MP4, MP3, WAV a dalsi. Pouziva Cobalt, Invidious a primou extrakci.",
   "author": "AdHub",
   "icons": {
@@ -33,18 +33,16 @@
     "https://*.ytimg.com/*",
     "http://localhost:*/*",
     "https://deerpfy.github.io/*",
-    "https://api.cobalt.tools/*",
     "https://*.cobalt.tools/*",
-    "https://cobalt.r4fo.com/*",
-    "https://co.eepy.today/*",
-    "https://invidious.fdn.fr/*",
-    "https://inv.tux.pizza/*",
-    "https://invidious.protokolla.fi/*",
-    "https://iv.datura.network/*",
-    "https://invidious.privacyredirect.com/*",
-    "https://invidious.nerdvpn.de/*",
-    "https://yewtu.be/*",
-    "https://vid.puffyan.us/*"
+    "https://cobalt-api.kwiatekmiki.com/*",
+    "https://cobalt.canine.tools/*",
+    "https://co.wuk.sh/*",
+    "https://inv.nadeko.net/*",
+    "https://invidious.lunar.icu/*",
+    "https://yt.artemislena.eu/*",
+    "https://invidious.perennialte.ch/*",
+    "https://invidious.drgns.space/*",
+    "https://*.ggpht.com/*"
   ],
   "background": {
     "service_worker": "background.js"
