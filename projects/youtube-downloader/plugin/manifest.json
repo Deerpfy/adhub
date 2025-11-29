@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "AdHub Youtube Downloader",
-  "version": "2.4.0",
-  "description": "Stahujte YouTube videa ve vsech formatech a kvalitach - MP4, MP3, WAV a dalsi. Pouziva Cobalt, Invidious a primou extrakci.",
+  "version": "3.0.0",
+  "description": "Rychlý přístup ke stažení YouTube videí přes Cobalt.tools. Zobrazí info o videu a otevře stahování.",
   "author": "AdHub",
   "icons": {
     "16": "icons/icon16.png",
@@ -18,58 +18,17 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "AdHub Youtube Downloader"
+    "default_title": "YouTube Downloader - Stáhnout video"
   },
   "permissions": [
-    "activeTab",
-    "storage",
-    "downloads",
-    "scripting"
+    "activeTab"
   ],
   "host_permissions": [
     "https://www.youtube.com/*",
     "https://youtube.com/*",
-    "https://*.googlevideo.com/*",
-    "https://*.ytimg.com/*",
-    "http://localhost:*/*",
-    "https://deerpfy.github.io/*",
-    "https://*.cobalt.tools/*",
-    "https://cobalt-api.kwiatekmiki.com/*",
-    "https://cobalt.canine.tools/*",
-    "https://co.wuk.sh/*",
-    "https://inv.nadeko.net/*",
-    "https://invidious.lunar.icu/*",
-    "https://yt.artemislena.eu/*",
-    "https://invidious.perennialte.ch/*",
-    "https://invidious.drgns.space/*",
-    "https://*.ggpht.com/*"
+    "https://*.ytimg.com/*"
   ],
   "background": {
     "service_worker": "background.js"
-  },
-  "content_scripts": [
-    {
-      "matches": ["https://www.youtube.com/*", "https://youtube.com/*"],
-      "js": ["content.js"],
-      "run_at": "document_idle"
-    },
-    {
-      "matches": [
-        "http://localhost:*/*",
-        "https://deerpfy.github.io/*"
-      ],
-      "js": ["page-bridge.js"],
-      "run_at": "document_start"
-    }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": ["icons/*"],
-      "matches": ["https://www.youtube.com/*", "https://youtube.com/*"]
-    },
-    {
-      "resources": ["page-downloader.js"],
-      "matches": ["https://www.youtube.com/*", "https://youtube.com/*"]
-    }
-  ]
+  }
 }
