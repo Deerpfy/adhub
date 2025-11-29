@@ -256,8 +256,8 @@
       });
 
       if (response?.success && response?.content) {
-        // Stahnout soubor
-        const filename = platform === 'windows' ? 'install-all.ps1' : 'install-all.sh';
+        // Stahnout soubor - pro Windows .bat, pro Unix .sh
+        const filename = platform === 'windows' ? 'adhub-install.bat' : 'adhub-install.sh';
         const mimeType = 'text/plain';
 
         const blob = new Blob([response.content], { type: mimeType });
@@ -271,7 +271,12 @@
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
 
-        showToast(`${filename} stazen!`);
+        // Zobrazit instrukce
+        if (platform === 'windows') {
+          showToast('Stazeno! Poklikejte na adhub-install.bat');
+        } else {
+          showToast('Stazeno! Spustte: ./adhub-install.sh');
+        }
       } else {
         showToast(response?.error || 'Chyba pri generovani', true);
       }

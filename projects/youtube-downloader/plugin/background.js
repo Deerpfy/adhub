@@ -326,147 +326,164 @@ chrome.downloads.onChanged.addListener((delta) => {
 // ============================================================================
 
 function generateWindowsInstaller() {
-  return `<#
-.SYNOPSIS
-    AdHub YouTube Downloader - Kompletni instalator pro Windows
-.DESCRIPTION
-    Automaticky stahne a nainstaluje yt-dlp, ffmpeg a Native Host.
-.NOTES
-    Verze: 5.5 | Autor: Deerpfy
-#>
+  // Generujeme .bat soubor ktery automaticky spusti PowerShell s bypass
+  // Uzivatel jen poklikat na soubor - zadne slozite prikazy
+  return `@echo off
+chcp 65001 >nul 2>&1
+title AdHub YouTube Downloader - Instalator v5.5
 
-$ErrorActionPreference = "Stop"
-$ProgressPreference = "SilentlyContinue"
+echo.
+echo ==============================================
+echo   AdHub YouTube Downloader - Instalator v5.5
+echo ==============================================
+echo.
+echo Spoustim instalaci...
+echo.
 
-Write-Host ""
-Write-Host "==============================================" -ForegroundColor Yellow
-Write-Host "  AdHub YouTube Downloader - Instalator v5.5" -ForegroundColor Yellow
-Write-Host "==============================================" -ForegroundColor Yellow
-Write-Host ""
+:: Vytvorit docasny PowerShell skript a spustit ho
+set "PS_SCRIPT=%TEMP%\\adhub_install.ps1"
 
-# Instalacni cesta
-$InstallDir = "$env:LOCALAPPDATA\\AdHub"
-$YtdlpDir = "$InstallDir\\yt-dlp"
-$FfmpegDir = "$InstallDir\\ffmpeg"
-$NativeHostDir = "$InstallDir\\native-host"
+:: Zapiseme PowerShell skript
+(
+echo $ErrorActionPreference = 'Stop'
+echo $ProgressPreference = 'SilentlyContinue'
+echo.
+echo Write-Host '[+] Vytvarim slozky...' -ForegroundColor Green
+echo $InstallDir = "$env:LOCALAPPDATA\\AdHub"
+echo $YtdlpDir = "$InstallDir\\yt-dlp"
+echo $FfmpegDir = "$InstallDir\\ffmpeg"
+echo $NativeHostDir = "$InstallDir\\native-host"
+echo New-Item -ItemType Directory -Force -Path $YtdlpDir ^| Out-Null
+echo New-Item -ItemType Directory -Force -Path $FfmpegDir ^| Out-Null
+echo New-Item -ItemType Directory -Force -Path $NativeHostDir ^| Out-Null
+echo Write-Host "    Cesta: $InstallDir" -ForegroundColor Cyan
+echo.
+echo Write-Host '[+] Stahuji yt-dlp...' -ForegroundColor Green
+echo $YtdlpExe = "$YtdlpDir\\yt-dlp.exe"
+echo Invoke-WebRequest -Uri 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe' -OutFile $YtdlpExe -UseBasicParsing
+echo Write-Host "    OK: $YtdlpExe" -ForegroundColor Cyan
+echo.
+echo Write-Host '[+] Stahuji ffmpeg (chvili to potrva^)...' -ForegroundColor Green
+echo $FfmpegZip = "$env:TEMP\\ffmpeg.zip"
+echo try {
+echo     Invoke-WebRequest -Uri 'https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip' -OutFile $FfmpegZip -UseBasicParsing
+echo     Expand-Archive -Path $FfmpegZip -DestinationPath "$env:TEMP\\ffmpeg-extract" -Force
+echo     $bin = Get-ChildItem -Path "$env:TEMP\\ffmpeg-extract" -Recurse -Directory ^| Where-Object { $_.Name -eq 'bin' } ^| Select-Object -First 1
+echo     if ^($bin^) { Copy-Item -Path "$^($bin.FullName^)\\*" -Destination $FfmpegDir -Force }
+echo     Remove-Item -Path $FfmpegZip -Force -ErrorAction SilentlyContinue
+echo     Remove-Item -Path "$env:TEMP\\ffmpeg-extract" -Recurse -Force -ErrorAction SilentlyContinue
+echo     Write-Host "    OK: $FfmpegDir" -ForegroundColor Cyan
+echo } catch {
+echo     Write-Host "    CHYBA: ffmpeg se nepodarilo stahnout" -ForegroundColor Yellow
+echo }
+echo.
+echo Write-Host '[+] Vytvarim Native Host...' -ForegroundColor Green
+echo $PyScript = @'
+echo #!/usr/bin/env python3
+echo import sys,os,json,struct,subprocess,shutil,tempfile,atexit
+echo VERSION='5.5'
+echo def read_message^(^):
+echo     raw=sys.stdin.buffer.read^(4^)
+echo     if not raw:return None
+echo     return json.loads^(sys.stdin.buffer.read^(struct.unpack^('I',raw^)[0]^).decode^('utf-8'^)^)
+echo def send_message^(m^):
+echo     e=json.dumps^(m^).encode^('utf-8'^)
+echo     sys.stdout.buffer.write^(struct.pack^('I',len^(e^)^)+e^)
+echo     sys.stdout.buffer.flush^(^)
+echo def find_tool^(n,c=None^):
+echo     for p in [c,shutil.which^(n^)]:
+echo         if p:
+echo             try:
+echo                 r=subprocess.run^([p,'--version'],capture_output=True,text=True,timeout=10^)
+echo                 if r.returncode==0:return{'available':True,'path':p,'version':'ok'}
+echo             except:pass
+echo     return{'available':False,'path':None,'version':None}
+echo _tcf=None
+echo def save_cookies^(c^):
+echo     global _tcf
+echo     if not c:return None
+echo     fd,p=tempfile.mkstemp^(suffix='.txt'^)
+echo     with os.fdopen^(fd,'w'^)as f:f.write^(c^)
+echo     _tcf=p
+echo     return p
+echo def cleanup^(^):
+echo     if _tcf and os.path.exists^(_tcf^):os.remove^(_tcf^)
+echo atexit.register^(cleanup^)
+echo def handle_download^(m^):
+echo     url,fmt,q,af=m.get^('url'^),m.get^('format','video'^),m.get^('quality','best'^),m.get^('audioFormat'^)
+echo     yt=find_tool^('yt-dlp',m.get^('ytdlpPath'^)^)
+echo     if not yt['available']:return{'success':False,'error':'yt-dlp neni dostupny'}
+echo     cmd=[yt['path'],'--no-playlist','--no-warnings','-o',os.path.expanduser^('~/Downloads/%%^(title^).150s.%%^(ext^)s'^)]
+echo     ck=save_cookies^(m.get^('cookies'^)^)
+echo     if ck:cmd.extend^(['--cookies',ck]^)
+echo     if fmt=='audio'or af:
+echo         cmd.extend^(['-f','bestaudio/best']^)
+echo         if af:cmd.extend^(['-x','--audio-format',af]^)
+echo     else:
+echo         cmd.extend^(['-f','bestvideo+bestaudio/best','--merge-output-format','mp4']^)
+echo     ff=find_tool^('ffmpeg',m.get^('ffmpegPath'^)^)
+echo     if ff['available']:cmd.extend^(['--ffmpeg-location',os.path.dirname^(ff['path']^)]^)
+echo     cmd.append^(url^)
+echo     try:
+echo         r=subprocess.run^(cmd,capture_output=True,text=True,timeout=900^)
+echo         return{'success':r.returncode==0,'error':r.stderr[:200]if r.returncode!=0 else None}
+echo     except Exception as e:return{'success':False,'error':str^(e^)[:200]}
+echo def main^(^):
+echo     while True:
+echo         m=read_message^(^)
+echo         if not m:break
+echo         a=m.get^('action'^)
+echo         if a=='check':send_message^({'success':True,'version':VERSION,'ytdlp':find_tool^('yt-dlp'^),'ffmpeg':find_tool^('ffmpeg'^)}^)
+echo         elif a=='test':send_message^(find_tool^(m.get^('tool'^),m.get^('path'^)^)^)
+echo         elif a=='download':send_message^(handle_download^(m^)^);break
+echo         elif a=='ping':send_message^({'success':True,'version':VERSION}^)
+echo         else:send_message^({'success':False,'error':'Unknown'^)
+echo if __name__=='__main__':main^(^)
+echo '@
+echo Set-Content -Path "$NativeHostDir\\adhub_yt_host.py" -Value $PyScript -Encoding UTF8
+echo Write-Host "    OK: $NativeHostDir\\adhub_yt_host.py" -ForegroundColor Cyan
+echo.
+echo Write-Host '[+] Vytvarim manifest...' -ForegroundColor Green
+echo $manifest = @"
+echo {
+echo   "name": "com.adhub.ytdownloader",
+echo   "description": "AdHub YouTube Downloader Native Host",
+echo   "path": "$NativeHostDir\\adhub_yt_host.py",
+echo   "type": "stdio",
+echo   "allowed_origins": ["chrome-extension://*/"]
+echo }
+echo "@
+echo Set-Content -Path "$NativeHostDir\\com.adhub.ytdownloader.json" -Value $manifest -Encoding UTF8
+echo.
+echo Write-Host '[+] Registruji pro Chrome...' -ForegroundColor Green
+echo $regPath = 'HKCU:\\Software\\Google\\Chrome\\NativeMessagingHosts\\com.adhub.ytdownloader'
+echo New-Item -Path $regPath -Force ^| Out-Null
+echo Set-ItemProperty -Path $regPath -Name '^(Default^)' -Value "$NativeHostDir\\com.adhub.ytdownloader.json"
+echo.
+echo Write-Host '[+] Registruji pro Edge...' -ForegroundColor Green
+echo $regPath = 'HKCU:\\Software\\Microsoft\\Edge\\NativeMessagingHosts\\com.adhub.ytdownloader'
+echo New-Item -Path $regPath -Force ^| Out-Null
+echo Set-ItemProperty -Path $regPath -Name '^(Default^)' -Value "$NativeHostDir\\com.adhub.ytdownloader.json"
+echo.
+echo Write-Host ''
+echo Write-Host '==============================================' -ForegroundColor Green
+echo Write-Host '  INSTALACE DOKONCENA!' -ForegroundColor Green
+echo Write-Host '==============================================' -ForegroundColor Green
+echo Write-Host ''
+echo Write-Host "yt-dlp:  $YtdlpExe" -ForegroundColor Cyan
+echo Write-Host "ffmpeg:  $FfmpegDir\\ffmpeg.exe" -ForegroundColor Cyan
+echo Write-Host ''
+echo Write-Host 'Restartujte prohlizec a otevrete rozsireni.' -ForegroundColor Yellow
+) > "%PS_SCRIPT%"
 
-Write-Host "[+] Vytvarim slozky..." -ForegroundColor Green
-New-Item -ItemType Directory -Force -Path $YtdlpDir | Out-Null
-New-Item -ItemType Directory -Force -Path $FfmpegDir | Out-Null
-New-Item -ItemType Directory -Force -Path $NativeHostDir | Out-Null
+:: Spustit PowerShell skript s bypass
+powershell -ExecutionPolicy Bypass -File "%PS_SCRIPT%"
 
-# Stazeni yt-dlp
-Write-Host "[+] Stahuji yt-dlp..." -ForegroundColor Green
-$YtdlpExe = "$YtdlpDir\\yt-dlp.exe"
-Invoke-WebRequest -Uri "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe" -OutFile $YtdlpExe -UseBasicParsing
-Write-Host "    Ulozeno: $YtdlpExe" -ForegroundColor Cyan
+:: Smazat docasny skript
+del "%PS_SCRIPT%" 2>nul
 
-# Stazeni ffmpeg
-Write-Host "[+] Stahuji ffmpeg (muze trvat dele)..." -ForegroundColor Green
-$FfmpegZip = "$env:TEMP\\ffmpeg.zip"
-Invoke-WebRequest -Uri "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip" -OutFile $FfmpegZip -UseBasicParsing
-Expand-Archive -Path $FfmpegZip -DestinationPath "$env:TEMP\\ffmpeg-extract" -Force
-$FfmpegBin = Get-ChildItem -Path "$env:TEMP\\ffmpeg-extract" -Recurse -Directory | Where-Object { $_.Name -eq "bin" } | Select-Object -First 1
-if ($FfmpegBin) { Copy-Item -Path "$($FfmpegBin.FullName)\\*" -Destination $FfmpegDir -Force }
-Remove-Item -Path $FfmpegZip -Force -ErrorAction SilentlyContinue
-Remove-Item -Path "$env:TEMP\\ffmpeg-extract" -Recurse -Force -ErrorAction SilentlyContinue
-Write-Host "    Ulozeno: $FfmpegDir" -ForegroundColor Cyan
-
-# Native Host Python skript
-Write-Host "[+] Vytvarim Native Host..." -ForegroundColor Green
-$PythonScript = @"
-#!/usr/bin/env python3
-import sys, os, json, struct, subprocess, shutil, time, tempfile, atexit
-VERSION = '5.5'
-YTDLP_PATH = r'$YtdlpExe'
-FFMPEG_PATH = r'$FfmpegDir\\ffmpeg.exe'
-_temp_cookie_file = None
-def cleanup():
-    global _temp_cookie_file
-    if _temp_cookie_file and os.path.exists(_temp_cookie_file): os.remove(_temp_cookie_file)
-atexit.register(cleanup)
-def read_message():
-    raw = sys.stdin.buffer.read(4)
-    if not raw: return None
-    return json.loads(sys.stdin.buffer.read(struct.unpack('I', raw)[0]).decode('utf-8'))
-def send_message(msg):
-    encoded = json.dumps(msg).encode('utf-8')
-    sys.stdout.buffer.write(struct.pack('I', len(encoded)) + encoded)
-    sys.stdout.buffer.flush()
-def find_tool(name, custom=None):
-    paths = [p for p in [custom, YTDLP_PATH if name == 'yt-dlp' else FFMPEG_PATH, shutil.which(name)] if p]
-    for p in paths:
-        try:
-            r = subprocess.run([p, '--version'], capture_output=True, text=True, timeout=10)
-            if r.returncode == 0: return {'available': True, 'path': p, 'version': r.stdout.split()[1] if 'yt-dlp' in r.stdout else 'ok'}
-        except: pass
-    return {'available': False, 'path': None, 'version': None}
-def save_cookies(content):
-    global _temp_cookie_file
-    if not content: return None
-    fd, path = tempfile.mkstemp(suffix='.txt', prefix='adhub_')
-    with os.fdopen(fd, 'w') as f: f.write(content)
-    _temp_cookie_file = path
-    return path
-def handle_download(msg):
-    url, fmt, quality, audio = msg.get('url'), msg.get('format','video'), msg.get('quality','best'), msg.get('audioFormat')
-    yt = find_tool('yt-dlp', msg.get('ytdlpPath'))
-    if not yt['available']: return {'success': False, 'error': 'yt-dlp neni dostupny'}
-    cmd = [yt['path'], '--no-playlist', '--no-warnings', '--ignore-errors', '-o', os.path.expanduser('~/Downloads/%(title).150s.%(ext)s')]
-    cookies = save_cookies(msg.get('cookies'))
-    if cookies: cmd.extend(['--cookies', cookies])
-    if fmt == 'audio' or audio:
-        cmd.extend(['-f', 'bestaudio/best'])
-        if audio: cmd.extend(['-x', '--audio-format', audio, '--audio-quality', '0'])
-        ff = find_tool('ffmpeg', msg.get('ffmpegPath'))
-        if ff['available']: cmd.extend(['--ffmpeg-location', os.path.dirname(ff['path'])])
-    else:
-        cmd.extend(['-f', f'bestvideo[height<={quality}]+bestaudio/best' if quality != 'best' else 'bestvideo+bestaudio/best', '--merge-output-format', 'mp4'])
-        ff = find_tool('ffmpeg', msg.get('ffmpegPath'))
-        if ff['available']: cmd.extend(['--ffmpeg-location', os.path.dirname(ff['path'])])
-    cmd.append(url)
-    try:
-        r = subprocess.run(cmd, capture_output=True, text=True, timeout=900)
-        return {'success': r.returncode == 0, 'error': r.stderr[:200] if r.returncode != 0 else None}
-    except Exception as e: return {'success': False, 'error': str(e)[:200]}
-def main():
-    while True:
-        msg = read_message()
-        if not msg: break
-        action = msg.get('action')
-        if action == 'check': send_message({'success': True, 'version': VERSION, 'ytdlp': find_tool('yt-dlp'), 'ffmpeg': find_tool('ffmpeg')})
-        elif action == 'test': send_message(find_tool(msg.get('tool'), msg.get('path')))
-        elif action == 'download': send_message(handle_download(msg)); break
-        elif action == 'ping': send_message({'success': True, 'version': VERSION})
-        else: send_message({'success': False, 'error': 'Neznama akce'})
-if __name__ == '__main__': main()
-"@
-Set-Content -Path "$NativeHostDir\\adhub_yt_host.py" -Value $PythonScript -Encoding UTF8
-
-# Native Host manifest
-$Manifest = @{ name = "com.adhub.ytdownloader"; description = "AdHub YouTube Downloader"; path = "$NativeHostDir\\adhub_yt_host.py"; type = "stdio"; allowed_origins = @("chrome-extension://*/") }
-Set-Content -Path "$NativeHostDir\\com.adhub.ytdownloader.json" -Value ($Manifest | ConvertTo-Json) -Encoding UTF8
-
-# Registrace
-Write-Host "[+] Registruji Native Host..." -ForegroundColor Green
-$RegPath = "HKCU:\\Software\\Google\\Chrome\\NativeMessagingHosts\\com.adhub.ytdownloader"
-New-Item -Path $RegPath -Force | Out-Null
-Set-ItemProperty -Path $RegPath -Name "(Default)" -Value "$NativeHostDir\\com.adhub.ytdownloader.json"
-# Edge
-New-Item -Path "HKCU:\\Software\\Microsoft\\Edge\\NativeMessagingHosts\\com.adhub.ytdownloader" -Force | Out-Null
-Set-ItemProperty -Path "HKCU:\\Software\\Microsoft\\Edge\\NativeMessagingHosts\\com.adhub.ytdownloader" -Name "(Default)" -Value "$NativeHostDir\\com.adhub.ytdownloader.json"
-
-Write-Host ""
-Write-Host "==============================================" -ForegroundColor Green
-Write-Host "  INSTALACE DOKONCENA!" -ForegroundColor Green
-Write-Host "==============================================" -ForegroundColor Green
-Write-Host ""
-Write-Host "yt-dlp:  $YtdlpExe" -ForegroundColor Cyan
-Write-Host "ffmpeg:  $FfmpegDir\\ffmpeg.exe" -ForegroundColor Cyan
-Write-Host ""
-Write-Host "Restartujte prohlizec a otevrete rozsireni." -ForegroundColor Yellow
-Write-Host ""
-Read-Host "Stisknete Enter pro ukonceni"
+echo.
+pause
 `;
 }
 
