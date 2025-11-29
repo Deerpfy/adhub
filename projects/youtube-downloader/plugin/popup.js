@@ -448,9 +448,252 @@
   }
 
   // ============================================================================
+  // DEBUG PANEL
+  // ============================================================================
+
+  const debugElements = {
+    btn: document.getElementById('debugBtn'),
+    panel: document.getElementById('debugPanel'),
+    close: document.getElementById('debugClose'),
+    content: document.getElementById('debugContent'),
+    copy: document.getElementById('debugCopy'),
+    refresh: document.getElementById('debugRefresh')
+  };
+
+  let debugReport = '';
+
+  function setupDebugPanel() {
+    debugElements.btn.addEventListener('click', () => {
+      debugElements.panel.classList.add('visible');
+      refreshDebugInfo();
+    });
+
+    debugElements.close.addEventListener('click', () => {
+      debugElements.panel.classList.remove('visible');
+    });
+
+    debugElements.copy.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(debugReport);
+        debugElements.copy.textContent = '✓ Zkopírovano!';
+        setTimeout(() => {
+          debugElements.copy.textContent = '📋 Kopírovat do schránky';
+        }, 2000);
+      } catch (e) {
+        debugElements.copy.textContent = '✗ Chyba';
+      }
+    });
+
+    debugElements.refresh.addEventListener('click', refreshDebugInfo);
+  }
+
+  async function refreshDebugInfo() {
+    debugElements.content.textContent = 'Načítám debug informace...';
+
+    const info = {
+      timestamp: new Date().toISOString(),
+      extension: {},
+      tab: {},
+      contentScript: {},
+      youtube: {},
+      errors: []
+    };
+
+    try {
+      // Extension info
+      const manifest = chrome.runtime.getManifest();
+      info.extension = {
+        id: chrome.runtime.id,
+        version: manifest.version,
+        name: manifest.name
+      };
+
+      // Current tab info
+      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+      if (tab) {
+        info.tab = {
+          id: tab.id,
+          url: tab.url,
+          title: tab.title?.substring(0, 50),
+          isYouTube: tab.url?.includes('youtube.com')
+        };
+
+        // Try to get info from content script
+        if (info.tab.isYouTube) {
+          try {
+            const response = await chrome.tabs.sendMessage(tab.id, { action: 'getDebugInfo' });
+            info.contentScript = response || { error: 'No response' };
+          } catch (e) {
+            info.contentScript = { error: e.message };
+            info.errors.push(`Content script error: ${e.message}`);
+          }
+
+          // Execute script to check DOM
+          try {
+            const results = await chrome.scripting.executeScript({
+              target: { tabId: tab.id },
+              func: () => {
+                return {
+                  url: window.location.href,
+                  videoId: new URLSearchParams(window.location.search).get('v'),
+                  dom: {
+                    topLevelButtons: !!document.querySelector('#top-level-buttons-computed'),
+                    topLevelButtonsChildren: document.querySelector('#top-level-buttons-computed')?.children.length || 0,
+                    actions: !!document.querySelector('#actions'),
+                    actionsInner: !!document.querySelector('#actions-inner'),
+                    menuRenderer: !!document.querySelector('ytd-menu-renderer'),
+                    adhubButton: !!document.querySelector('.adhub-download-btn'),
+                    adhubModal: !!document.querySelector('.adhub-modal-overlay'),
+                    pageScript: !!document.getElementById('adhub-page-script'),
+                    adhubStyles: !!document.getElementById('adhub-yt-styles')
+                  },
+                  localStorage: {
+                    active: localStorage.getItem('adhub_extension_active'),
+                    id: localStorage.getItem('adhub_extension_id'),
+                    version: localStorage.getItem('adhub_extension_version')
+                  },
+                  // Check all possible button containers
+                  containers: [
+                    '#top-level-buttons-computed',
+                    '#actions',
+                    '#actions-inner',
+                    'ytd-menu-renderer',
+                    '#menu-container',
+                    'ytd-watch-metadata #actions'
+                  ].map(sel => ({
+                    selector: sel,
+                    exists: !!document.querySelector(sel),
+                    children: document.querySelector(sel)?.children.length || 0
+                  }))
+                };
+              }
+            });
+            info.youtube = results[0]?.result || {};
+          } catch (e) {
+            info.youtube = { error: e.message };
+            info.errors.push(`Script execution error: ${e.message}`);
+          }
+        }
+      }
+
+      // Test background connection
+      try {
+        const bgResponse = await sendMessage({ action: 'checkStatus' });
+        info.background = bgResponse;
+      } catch (e) {
+        info.background = { error: e.message };
+        info.errors.push(`Background error: ${e.message}`);
+      }
+
+    } catch (e) {
+      info.errors.push(`General error: ${e.message}`);
+    }
+
+    // Format the report
+    debugReport = formatDebugReport(info);
+    debugElements.content.innerHTML = formatDebugReportHtml(info);
+  }
+
+  function formatDebugReport(info) {
+    return `=== ADHUB DEBUG REPORT ===
+Čas: ${info.timestamp}
+Extension: ${info.extension.name} v${info.extension.version}
+Extension ID: ${info.extension.id}
+
+=== TAB ===
+URL: ${info.tab.url || 'N/A'}
+Je YouTube: ${info.tab.isYouTube ? 'ANO' : 'NE'}
+Video ID: ${info.youtube.videoId || 'N/A'}
+
+=== DOM STATUS ===
+#top-level-buttons-computed: ${info.youtube.dom?.topLevelButtons ? 'ANO' : 'NE'} (${info.youtube.dom?.topLevelButtonsChildren || 0} dětí)
+#actions: ${info.youtube.dom?.actions ? 'ANO' : 'NE'}
+#actions-inner: ${info.youtube.dom?.actionsInner ? 'ANO' : 'NE'}
+ytd-menu-renderer: ${info.youtube.dom?.menuRenderer ? 'ANO' : 'NE'}
+AdHub tlačítko: ${info.youtube.dom?.adhubButton ? 'ANO' : 'NE'}
+AdHub styly: ${info.youtube.dom?.adhubStyles ? 'ANO' : 'NE'}
+Page script: ${info.youtube.dom?.pageScript ? 'ANO' : 'NE'}
+
+=== KONTEJNERY ===
+${(info.youtube.containers || []).map(c => `${c.selector}: ${c.exists ? 'ANO' : 'NE'} (${c.children} dětí)`).join('\n')}
+
+=== LOCALSTORAGE ===
+adhub_extension_active: ${info.youtube.localStorage?.active || 'N/A'}
+adhub_extension_version: ${info.youtube.localStorage?.version || 'N/A'}
+
+=== BACKGROUND ===
+Status: ${info.background?.success ? 'OK' : 'ERROR'}
+${info.background?.error || ''}
+
+=== CONTENT SCRIPT ===
+${JSON.stringify(info.contentScript, null, 2)}
+
+=== ERRORS (${info.errors.length}) ===
+${info.errors.join('\n') || '(žádné)'}
+
+=== RAW DATA ===
+${JSON.stringify(info, null, 2)}`;
+  }
+
+  function formatDebugReportHtml(info) {
+    const ok = (val) => val ? '<span class="debug-ok">ANO</span>' : '<span class="debug-err">NE</span>';
+    const dom = info.youtube.dom || {};
+    const ls = info.youtube.localStorage || {};
+
+    return `<div class="debug-section">
+<div class="debug-section-title">EXTENSION</div>
+${info.extension.name} v${info.extension.version}
+ID: ${info.extension.id}
+</div>
+
+<div class="debug-section">
+<div class="debug-section-title">TAB</div>
+URL: ${info.tab.url || 'N/A'}
+Je YouTube: ${ok(info.tab.isYouTube)}
+Video ID: ${info.youtube.videoId || '<span class="debug-warn">N/A</span>'}
+</div>
+
+<div class="debug-section">
+<div class="debug-section-title">DOM STATUS</div>
+#top-level-buttons-computed: ${ok(dom.topLevelButtons)} (${dom.topLevelButtonsChildren || 0} dětí)
+#actions: ${ok(dom.actions)}
+#actions-inner: ${ok(dom.actionsInner)}
+ytd-menu-renderer: ${ok(dom.menuRenderer)}
+<strong>AdHub tlačítko: ${ok(dom.adhubButton)}</strong>
+AdHub styly: ${ok(dom.adhubStyles)}
+Page script: ${ok(dom.pageScript)}
+</div>
+
+<div class="debug-section">
+<div class="debug-section-title">KONTEJNERY</div>
+${(info.youtube.containers || []).map(c => `${c.selector}: ${ok(c.exists)} (${c.children} dětí)`).join('\n')}
+</div>
+
+<div class="debug-section">
+<div class="debug-section-title">LOCALSTORAGE</div>
+active: ${ls.active || '<span class="debug-warn">N/A</span>'}
+version: ${ls.version || '<span class="debug-warn">N/A</span>'}
+</div>
+
+<div class="debug-section">
+<div class="debug-section-title">BACKGROUND</div>
+Status: ${info.background?.success ? '<span class="debug-ok">OK</span>' : '<span class="debug-err">ERROR</span>'}
+${info.background?.error ? `<span class="debug-err">${info.background.error}</span>` : ''}
+</div>
+
+<div class="debug-section">
+<div class="debug-section-title">ERRORS (${info.errors.length})</div>
+${info.errors.length ? info.errors.map(e => `<span class="debug-err">${e}</span>`).join('\n') : '<span class="debug-ok">(žádné)</span>'}
+</div>`;
+  }
+
+  // ============================================================================
   // START
   // ============================================================================
 
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', () => {
+    init();
+    setupDebugPanel();
+  });
 
 })();
