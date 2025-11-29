@@ -1,19 +1,31 @@
 /**
- * AdHub YouTube Downloader v5.4 - Content Script
+ * AdHub YouTube Downloader v5.5 - Content Script
  *
- * Hybridni rezim:
+ * Hybridni rezim s kompletnim pokrytim vsech typu videi:
  * - Zakladni: Formaty s primym URL (max 720p)
  * - Rozsireny: Vsechny formaty pres native host (4K, MP3, atd.)
+ *
+ * Podporovane typy:
+ * - Bezna videa, Shorts, Embedovana videa
+ * - Vekove omezena (s cookies)
+ * - Zive prenosy (pouze pres yt-dlp)
  */
 
 (function() {
   'use strict';
 
   if (window.top !== window.self) return;
-  if (window.__ADHUB_YT_DL_V54__) return;
-  window.__ADHUB_YT_DL_V54__ = true;
+  if (window.__ADHUB_YT_DL_V55__) return;
+  window.__ADHUB_YT_DL_V55__ = true;
 
-  console.log('[AdHub] YouTube Downloader v5.4 (Hybrid)');
+  console.log('[AdHub] YouTube Downloader v5.5 (Hybrid)');
+
+  // ============================================================================
+  // KONSTANTY
+  // ============================================================================
+
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 2000;
 
   // ============================================================================
   // STAV
@@ -27,6 +39,8 @@
     bestFormat: null,
     isDownloading: false,
     advancedMode: false,
+    videoType: 'regular', // regular, shorts, live, premiere, unavailable
+    videoStatus: null,    // playable, age_restricted, private, unavailable
   };
 
   // ============================================================================
@@ -56,15 +70,42 @@
     return match ? match[2] : null;
   }
 
+  function detectVideoType() {
+    const url = window.location.href;
+    if (url.includes('/shorts/')) return 'shorts';
+    if (url.includes('/embed/')) return 'embed';
+    if (url.includes('/live/')) return 'live';
+    return 'regular';
+  }
+
   function extractPlayerResponse() {
+    // Metoda 1: Globalni promenna
     if (window.ytInitialPlayerResponse) {
       return window.ytInitialPlayerResponse;
     }
 
+    // Metoda 2: ytplayer.config
+    if (window.ytplayer?.config?.args?.player_response) {
+      try {
+        return JSON.parse(window.ytplayer.config.args.player_response);
+      } catch (e) {}
+    }
+
+    // Metoda 3: Z HTML scriptu
     const scripts = document.querySelectorAll('script');
     for (const script of scripts) {
       const text = script.textContent || '';
-      const match = text.match(/ytInitialPlayerResponse\s*=\s*({.+?});/s);
+
+      // Varianta A: ytInitialPlayerResponse
+      let match = text.match(/ytInitialPlayerResponse\s*=\s*({.+?});/s);
+      if (match) {
+        try {
+          return JSON.parse(match[1]);
+        } catch (e) {}
+      }
+
+      // Varianta B: var ytInitialPlayerResponse
+      match = text.match(/var\s+ytInitialPlayerResponse\s*=\s*({.+?});/s);
       if (match) {
         try {
           return JSON.parse(match[1]);
@@ -73,6 +114,51 @@
     }
 
     return null;
+  }
+
+  function analyzeVideoStatus(playerResponse) {
+    if (!playerResponse) {
+      return { status: 'unavailable', reason: 'no_data', message: 'Data videa nejsou dostupna' };
+    }
+
+    const playability = playerResponse.playabilityStatus || {};
+    const status = playability.status;
+
+    // Zive vysilani
+    if (playerResponse.videoDetails?.isLive) {
+      return { status: 'live', reason: 'live_stream', message: 'Zive vysilani - pouzijte yt-dlp' };
+    }
+
+    // Premiery
+    if (playerResponse.videoDetails?.isUpcoming) {
+      return { status: 'premiere', reason: 'upcoming', message: 'Video jeste nezacalo' };
+    }
+
+    switch (status) {
+      case 'OK':
+        return { status: 'playable', reason: null, message: null };
+
+      case 'LOGIN_REQUIRED':
+        if (playability.reason?.includes('age')) {
+          return { status: 'age_restricted', reason: 'age', message: 'Vekove omezene - pouzijte yt-dlp s cookies' };
+        }
+        return { status: 'login_required', reason: 'login', message: 'Vyzaduje prihlaseni' };
+
+      case 'UNPLAYABLE':
+        return { status: 'unavailable', reason: 'unplayable', message: playability.reason || 'Video nelze prehrat' };
+
+      case 'ERROR':
+        return { status: 'unavailable', reason: 'error', message: playability.reason || 'Video neni dostupne' };
+
+      case 'LIVE_STREAM_OFFLINE':
+        return { status: 'unavailable', reason: 'offline', message: 'Zivy prenos skoncil' };
+
+      default:
+        if (playability.reason) {
+          return { status: 'unavailable', reason: 'unknown', message: playability.reason };
+        }
+        return { status: 'playable', reason: null, message: null };
+    }
   }
 
   function parseFormats(playerResponse) {
@@ -142,7 +228,27 @@
     const videoId = getVideoId();
     if (!videoId) return [];
 
+    // Detekce typu videa
+    state.videoType = detectVideoType();
+
     const playerResponse = extractPlayerResponse();
+
+    // Analyzuj status videa
+    const statusInfo = analyzeVideoStatus(playerResponse);
+    state.videoStatus = statusInfo;
+
+    console.log('[AdHub] Video type:', state.videoType, 'Status:', statusInfo.status);
+
+    // Pokud video neni prehravatelne, zkontroluj jestli muzeme pouzit advanced mode
+    if (statusInfo.status !== 'playable') {
+      if (state.advancedMode) {
+        // V advanced mode muzeme stahnout i problematicka videa
+        console.log('[AdHub] Video neni primo prehravatelne, pouzije se yt-dlp');
+      } else {
+        console.log('[AdHub] Video neni dostupne:', statusInfo.message);
+      }
+    }
+
     if (!playerResponse) {
       console.log('[AdHub] Player response nenalezen');
       return [];
@@ -152,6 +258,7 @@
     state.formats = formats;
     state.bestFormat = formats.find(f => f.type === 'video+audio') || formats[0];
     state.currentVideoId = videoId;
+    state.videoUrl = `https://www.youtube.com/watch?v=${videoId}`;
 
     console.log('[AdHub] Nalezeno formatu:', formats.length, 'Advanced:', state.advancedMode);
     return formats;
@@ -180,14 +287,29 @@
   // STAHOVANI
   // ============================================================================
 
-  async function downloadFormat(format) {
-    if (state.isDownloading) {
+  async function downloadFormat(format, retryCount = 0) {
+    if (state.isDownloading && retryCount === 0) {
       showNotification('Stahovani jiz probiha...', 'warning');
       return;
     }
 
     state.isDownloading = true;
     showProgressOverlay();
+
+    // Kontrola statusu videa
+    if (state.videoStatus?.status !== 'playable' && !format.requiresNative && !state.advancedMode) {
+      hideProgressOverlay();
+      state.isDownloading = false;
+
+      const msg = state.videoStatus?.message || 'Video neni dostupne';
+      if (state.videoStatus?.status === 'age_restricted' || state.videoStatus?.status === 'live') {
+        showNotification(`${msg}. Nainstalujte yt-dlp pro rozsireny rezim.`, 'warning');
+      } else {
+        showNotification(msg, 'error');
+      }
+      return;
+    }
+
     updateProgress(10, 'Pripravuji stahovani...');
 
     try {
@@ -195,16 +317,43 @@
         await downloadAdvanced(format);
       } else if (format.url) {
         await downloadBasic(format);
+      } else if (state.advancedMode) {
+        // Zkus stahnout pres yt-dlp pokud neni prime URL
+        console.log('[AdHub] Zadne prime URL, zkousim yt-dlp');
+        await downloadAdvanced({ ...format, requiresNative: true, quality: 'best' });
       } else {
-        throw new Error('Tento format neni dostupny');
+        throw new Error('Tento format neni dostupny. Zkuste rozsireny rezim (yt-dlp).');
       }
     } catch (e) {
       console.error('[AdHub] Download error:', e);
+
+      // Retry logika
+      if (retryCount < MAX_RETRIES && shouldRetry(e.message)) {
+        console.log(`[AdHub] Retry ${retryCount + 1}/${MAX_RETRIES}...`);
+        updateProgress(10, `Zkousim znovu (${retryCount + 1}/${MAX_RETRIES})...`);
+        await sleep(RETRY_DELAY);
+        return downloadFormat(format, retryCount + 1);
+      }
+
       hideProgressOverlay();
       showNotification(`Chyba: ${e.message}`, 'error');
     } finally {
-      state.isDownloading = false;
+      if (retryCount === 0 || retryCount >= MAX_RETRIES) {
+        state.isDownloading = false;
+      }
     }
+  }
+
+  function shouldRetry(errorMessage) {
+    const retryableErrors = [
+      'network', 'timeout', 'connection', 'ECONNRESET',
+      'fetch', 'Failed to fetch', 'NetworkError'
+    ];
+    return retryableErrors.some(err => errorMessage.toLowerCase().includes(err.toLowerCase()));
+  }
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   async function downloadBasic(format) {

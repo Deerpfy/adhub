@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 """
-AdHub YouTube Downloader - Native Host v5.4
+AdHub YouTube Downloader - Native Host v5.5
 ============================================
 Native Messaging host pro browser extension.
 Umoznuje HD/4K stahovani a audio konverzi.
+
+Podporovane typy videi:
+- Bezna videa (vsechny kvality)
+- Vekove omezena (s cookies z prohlizece)
+- Zive prenosy
+- Shorts
 
 Akce:
 - check: Zkontroluje dostupnost yt-dlp a ffmpeg
@@ -17,12 +23,15 @@ import json
 import struct
 import subprocess
 import shutil
+import time
 
 # ============================================================================
 # KONFIGURACE
 # ============================================================================
 
-VERSION = '5.4'
+VERSION = '5.5'
+MAX_RETRIES = 3
+RETRY_DELAY = 2  # sekundy
 
 # Defaultni cesty k nastrojum
 DEFAULT_YTDLP_PATHS = [
@@ -178,17 +187,38 @@ def handle_test(message):
     return result
 
 # ============================================================================
+# COOKIES - Pro vekove omezena videa
+# ============================================================================
+
+def get_cookies_path():
+    """Najde cookies soubor z prohlizece."""
+    # Cesty kde mohou byt cookies exportovany
+    possible_paths = [
+        os.path.expanduser('~/cookies.txt'),
+        os.path.expanduser('~/youtube_cookies.txt'),
+        os.path.expanduser('~/.config/yt-dlp/cookies.txt'),
+        os.path.expanduser('~/Downloads/cookies.txt'),
+    ]
+
+    for path in possible_paths:
+        if os.path.exists(path):
+            return path
+
+    return None
+
+# ============================================================================
 # AKCE: DOWNLOAD
 # ============================================================================
 
-def handle_download(message):
-    """Stahne video/audio z YouTube."""
+def handle_download(message, retry_count=0):
+    """Stahne video/audio z YouTube s podporou vsech typu videi."""
     url = message.get('url')
     format_type = message.get('format', 'video')  # video nebo audio
     quality = message.get('quality', 'best')
     audio_format = message.get('audioFormat')
     ytdlp_path = message.get('ytdlpPath', '')
     ffmpeg_path = message.get('ffmpegPath', '')
+    use_cookies = message.get('useCookies', True)
 
     if not url:
         return {'success': False, 'error': 'URL neni zadana'}
@@ -200,27 +230,46 @@ def handle_download(message):
 
     # Pripravit argumenty
     output_dir = get_download_dir()
-    output_template = os.path.join(output_dir, '%(title)s.%(ext)s')
+    # Sanitizovat nazev souboru
+    output_template = os.path.join(output_dir, '%(title).150s.%(ext)s')
 
     cmd = [ytdlp['path']]
+
+    # Obecne nastaveni pro lepsi kompatibilitu
+    cmd.extend([
+        '--no-playlist',           # Nestahovat playlisty
+        '--no-warnings',           # Potlacit varovani
+        '--ignore-errors',         # Pokracovat pri chybach
+        '--no-check-certificates', # Preskocit certifikaty (nekdy pomaha)
+    ])
+
+    # Cookies pro vekove omezena videa
+    cookies_path = get_cookies_path()
+    if use_cookies and cookies_path:
+        cmd.extend(['--cookies', cookies_path])
+    elif use_cookies:
+        # Zkusit cookies primo z prohlizece (Chrome/Firefox)
+        cmd.extend(['--cookies-from-browser', 'chrome'])
 
     # Format
     if format_type == 'audio' or audio_format:
         cmd.extend(['-f', 'bestaudio/best'])
 
-        if audio_format in ['mp3', 'wav', 'flac', 'ogg']:
+        if audio_format in ['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac']:
             cmd.extend(['-x', '--audio-format', audio_format])
+            cmd.extend(['--audio-quality', '0'])  # Nejlepsi kvalita
 
             # Najit ffmpeg pro konverzi
             ffmpeg = find_tool('ffmpeg', ffmpeg_path, DEFAULT_FFMPEG_PATHS)
             if ffmpeg['available']:
                 ffmpeg_dir = os.path.dirname(ffmpeg['path'])
-                if ffmpeg_dir:  # Pouze pokud neni prazdny
+                if ffmpeg_dir:
                     cmd.extend(['--ffmpeg-location', ffmpeg_dir])
     else:
         # Video
         if quality and quality != 'best':
-            cmd.extend(['-f', f'bestvideo[height<={quality}]+bestaudio/best[height<={quality}]/best'])
+            # Flexibilnejsi format selector
+            cmd.extend(['-f', f'bestvideo[height<={quality}]+bestaudio/best[height<={quality}]/bestvideo+bestaudio/best'])
         else:
             cmd.extend(['-f', 'bestvideo+bestaudio/best'])
 
@@ -230,7 +279,7 @@ def handle_download(message):
         ffmpeg = find_tool('ffmpeg', ffmpeg_path, DEFAULT_FFMPEG_PATHS)
         if ffmpeg['available']:
             ffmpeg_dir = os.path.dirname(ffmpeg['path'])
-            if ffmpeg_dir:  # Pouze pokud neni prazdny
+            if ffmpeg_dir:
                 cmd.extend(['--ffmpeg-location', ffmpeg_dir])
 
     cmd.extend(['-o', output_template])
@@ -241,24 +290,11 @@ def handle_download(message):
             cmd,
             capture_output=True,
             text=True,
-            timeout=600  # 10 minut timeout
+            timeout=900  # 15 minut timeout pro velka videa
         )
 
         if result.returncode == 0:
-            # Pokusit se zjistit nazev souboru
-            # yt-dlp vypisuje "Destination: filename" nebo "[download] filename has already been downloaded"
-            filename = None
-            for line in result.stdout.split('\n') + result.stderr.split('\n'):
-                if 'Destination:' in line:
-                    filename = line.split('Destination:')[-1].strip()
-                    break
-                elif 'has already been downloaded' in line:
-                    filename = line.split('[download]')[-1].split('has already')[0].strip()
-                    break
-                elif '[Merger]' in line and 'Merging formats into' in line:
-                    filename = line.split('Merging formats into')[-1].strip().strip('"')
-                    break
-
+            filename = extract_filename_from_output(result.stdout, result.stderr)
             return {
                 'success': True,
                 'filename': os.path.basename(filename) if filename else 'video.mp4',
@@ -266,15 +302,83 @@ def handle_download(message):
             }
         else:
             error_msg = result.stderr or result.stdout or 'Neznama chyba'
+
+            # Analyzovat chybu a pripadne zkusit znovu
+            if retry_count < MAX_RETRIES and should_retry_error(error_msg):
+                time.sleep(RETRY_DELAY)
+                return handle_download(message, retry_count + 1)
+
+            # Parsovat uzivatelsky pritelive chybove hlasky
+            friendly_error = parse_error_message(error_msg)
             return {
                 'success': False,
-                'error': error_msg[:200]  # Max 200 znaku
+                'error': friendly_error,
+                'raw_error': error_msg[:500]
             }
 
     except subprocess.TimeoutExpired:
-        return {'success': False, 'error': 'Stahovani trvalo prilis dlouho (timeout)'}
+        return {'success': False, 'error': 'Stahovani trvalo prilis dlouho. Zkuste nizsi kvalitu.'}
     except Exception as e:
+        if retry_count < MAX_RETRIES:
+            time.sleep(RETRY_DELAY)
+            return handle_download(message, retry_count + 1)
         return {'success': False, 'error': str(e)[:200]}
+
+
+def extract_filename_from_output(stdout, stderr):
+    """Extrahuje nazev souboru z vystupu yt-dlp."""
+    for line in (stdout + '\n' + stderr).split('\n'):
+        if 'Destination:' in line:
+            return line.split('Destination:')[-1].strip()
+        elif 'has already been downloaded' in line:
+            return line.split('[download]')[-1].split('has already')[0].strip()
+        elif '[Merger]' in line and 'Merging formats into' in line:
+            return line.split('Merging formats into')[-1].strip().strip('"')
+        elif '[ExtractAudio]' in line and 'Destination:' in line:
+            return line.split('Destination:')[-1].strip()
+    return None
+
+
+def should_retry_error(error_msg):
+    """Urcuje zda by se mela chyba zkusit znovu."""
+    retryable = [
+        'HTTP Error 503',
+        'HTTP Error 429',  # Rate limiting
+        'Connection reset',
+        'Connection refused',
+        'timed out',
+        'Temporary failure',
+        'Unable to download',
+    ]
+    error_lower = error_msg.lower()
+    return any(err.lower() in error_lower for err in retryable)
+
+
+def parse_error_message(error_msg):
+    """Parsuje chybovou hlasku na uzivatelsky pritelive zpravy."""
+    error_lower = error_msg.lower()
+
+    if 'sign in' in error_lower or 'age' in error_lower:
+        return 'Video je vekove omezene. Exportujte cookies z prohlizece do ~/cookies.txt'
+    elif 'private' in error_lower:
+        return 'Video je soukrome'
+    elif 'unavailable' in error_lower or 'not available' in error_lower:
+        return 'Video neni dostupne ve vasi zemi nebo bylo smazano'
+    elif 'copyright' in error_lower:
+        return 'Video bylo zablokovano z duvodu autorskych prav'
+    elif 'live' in error_lower and 'not' in error_lower:
+        return 'Zivy prenos jeste nezacal nebo uz skoncil'
+    elif '403' in error_msg or 'forbidden' in error_lower:
+        return 'Pristup odepren. Zkuste exportovat cookies z prohlizece'
+    elif '404' in error_msg:
+        return 'Video nebylo nalezeno'
+    elif 'rate' in error_lower or '429' in error_msg:
+        return 'Prilis mnoho pozadavku. Pockejte chvili a zkuste znovu'
+
+    # Zkratit dlouhe chyby
+    if len(error_msg) > 150:
+        return error_msg[:150] + '...'
+    return error_msg
 
 # ============================================================================
 # HLAVNI LOOP
