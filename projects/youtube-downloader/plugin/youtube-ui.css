@@ -18,11 +18,16 @@
    ============================================================================ */
 
 #adhub-download-container {
-  display: inline-flex;
+  display: inline-flex !important;
   align-items: center;
   margin-right: 8px;
   position: relative;
   z-index: 9999;
+  pointer-events: auto !important;
+}
+
+#adhub-download-container * {
+  pointer-events: auto !important;
 }
 
 .adhub-download-wrapper {

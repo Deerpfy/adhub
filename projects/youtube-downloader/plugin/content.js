@@ -10,6 +10,11 @@
 (function() {
   'use strict';
 
+  // Spustit pouze v hlavním okně (ne v iframe)
+  if (window.top !== window.self) {
+    return;
+  }
+
   // Prevence dvojité inicializace
   if (window.__ADHUB_YT_DOWNLOADER_LOADED__) return;
   window.__ADHUB_YT_DOWNLOADER_LOADED__ = true;
@@ -262,32 +267,73 @@
   function createDownloadButton() {
     const container = document.createElement('div');
     container.id = 'adhub-download-container';
-    container.innerHTML = `
-      <div class="adhub-download-wrapper">
-        <button id="adhub-download-btn" class="adhub-btn adhub-btn-primary" title="Stáhnout video">
-          <svg class="adhub-icon" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 16l-5-5h3V4h4v7h3l-5 5zm-7 2h14v2H5v-2z"/>
-          </svg>
-          <span class="adhub-btn-text">Stáhnout</span>
-        </button>
-        <div id="adhub-dropdown" class="adhub-dropdown hidden">
-          <div class="adhub-dropdown-header">
-            <span>Vyberte kvalitu</span>
-            <button id="adhub-dropdown-close" class="adhub-dropdown-close">&times;</button>
-          </div>
-          <div id="adhub-formats-list" class="adhub-formats-list">
-            <div class="adhub-loading">Načítám formáty...</div>
-          </div>
-          <div id="adhub-progress-container" class="adhub-progress-container hidden">
-            <div class="adhub-progress-text">Stahování: <span id="adhub-progress-percent">0%</span></div>
-            <div class="adhub-progress-bar">
-              <div id="adhub-progress-fill" class="adhub-progress-fill"></div>
-            </div>
-          </div>
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'adhub-download-wrapper';
+
+    // Vytvořit tlačítko programaticky (ne přes innerHTML) pro lepší event handling
+    const btn = document.createElement('button');
+    btn.id = 'adhub-download-btn';
+    btn.className = 'adhub-btn adhub-btn-primary';
+    btn.title = 'Stáhnout video';
+    btn.type = 'button';
+    btn.innerHTML = `
+      <svg class="adhub-icon" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 16l-5-5h3V4h4v7h3l-5 5zm-7 2h14v2H5v-2z"/>
+      </svg>
+      <span class="adhub-btn-text">Stáhnout</span>
+    `;
+
+    // Přidat click handler přímo
+    btn.onclick = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      log('Download tlačítko kliknuto (onclick)!');
+      toggleDropdown();
+      return false;
+    };
+
+    const dropdown = document.createElement('div');
+    dropdown.id = 'adhub-dropdown';
+    dropdown.className = 'adhub-dropdown hidden';
+    dropdown.innerHTML = `
+      <div class="adhub-dropdown-header">
+        <span>Vyberte kvalitu</span>
+        <button id="adhub-dropdown-close" class="adhub-dropdown-close" type="button">&times;</button>
+      </div>
+      <div id="adhub-formats-list" class="adhub-formats-list">
+        <div class="adhub-loading">Načítám formáty...</div>
+      </div>
+      <div id="adhub-progress-container" class="adhub-progress-container hidden">
+        <div class="adhub-progress-text">Stahování: <span id="adhub-progress-percent">0%</span></div>
+        <div class="adhub-progress-bar">
+          <div id="adhub-progress-fill" class="adhub-progress-fill"></div>
         </div>
       </div>
     `;
+
+    wrapper.appendChild(btn);
+    wrapper.appendChild(dropdown);
+    container.appendChild(wrapper);
+
     return container;
+  }
+
+  function toggleDropdown() {
+    const dropdown = document.getElementById('adhub-dropdown');
+    if (!dropdown) {
+      logError('Dropdown nenalezen!');
+      return;
+    }
+
+    if (dropdown.classList.contains('hidden')) {
+      log('Otevírám dropdown...');
+      showDropdown();
+    } else {
+      log('Zavírám dropdown...');
+      hideDropdown();
+    }
   }
 
   // ============================================================================
@@ -562,34 +608,28 @@
     const button = createDownloadButton();
     targetContainer.insertBefore(button, targetContainer.firstChild);
 
-    // Event listenery
-    const downloadBtn = document.getElementById('adhub-download-btn');
-    const closeBtn = document.getElementById('adhub-dropdown-close');
+    // Přidat close button handler
+    setTimeout(() => {
+      const closeBtn = document.getElementById('adhub-dropdown-close');
+      if (closeBtn) {
+        closeBtn.onclick = function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+          hideDropdown();
+          return false;
+        };
+      }
+    }, 50);
 
-    if (downloadBtn) {
-      downloadBtn.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        const dropdown = document.getElementById('adhub-dropdown');
-        if (dropdown?.classList.contains('hidden')) {
-          showDropdown();
-        } else {
+    // Zavřít dropdown při kliknutí mimo (s delay)
+    setTimeout(() => {
+      document.addEventListener('click', (e) => {
+        const container = document.getElementById('adhub-download-container');
+        if (container && !container.contains(e.target)) {
           hideDropdown();
         }
-      });
-    }
-
-    if (closeBtn) {
-      closeBtn.addEventListener('click', hideDropdown);
-    }
-
-    // Zavřít dropdown při kliknutí mimo
-    document.addEventListener('click', (e) => {
-      const container = document.getElementById('adhub-download-container');
-      if (container && !container.contains(e.target)) {
-        hideDropdown();
-      }
-    });
+      }, true);
+    }, 200);
 
     log('Tlačítko úspěšně injektováno');
     state.buttonInjected = true;
