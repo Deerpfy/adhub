@@ -25,19 +25,15 @@ const APP_VERSION = '1.0.1';
 // }
 // ============================================
 
-// Firebase konfigurace - VYPLŇTE SVÉ ÚDAJE z Firebase Console
+// Firebase konfigurace pro AdHUB
 const FIREBASE_CONFIG = {
-    // Příklad konfigurace (nahraďte svými údaji):
-    // apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-    // authDomain: "your-project.firebaseapp.com",
-    // databaseURL: "https://your-project-default-rtdb.firebaseio.com",
-    // projectId: "your-project",
-    // storageBucket: "your-project.appspot.com",
-    // messagingSenderId: "123456789012",
-    // appId: "1:123456789012:web:xxxxxxxxxxxxxxxxxxxx"
-
-    // Pro demo účely - nahraďte svou konfigurací
-    databaseURL: null // null = použije se localStorage jako fallback
+    apiKey: "AIzaSyBVB12MdkfloLnyaPp34CMCmb4ZUnfkZ24",
+    authDomain: "adhub-views.firebaseapp.com",
+    databaseURL: "https://adhub-views-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "adhub-views",
+    storageBucket: "adhub-views.firebasestorage.app",
+    messagingSenderId: "248696540700",
+    appId: "1:248696540700:web:d3bbd247c4a091e29119d9"
 };
 
 // Stav počítadla návštěv
