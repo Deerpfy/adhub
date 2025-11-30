@@ -363,19 +363,31 @@ echo $YtdlpExe = "$YtdlpDir\\yt-dlp.exe"
 echo Invoke-WebRequest -Uri 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe' -OutFile $YtdlpExe -UseBasicParsing
 echo Write-Host "    OK: $YtdlpExe" -ForegroundColor Cyan
 echo.
-echo Write-Host '[+] Stahuji ffmpeg (muze trvat 2-5 minut^)...' -ForegroundColor Green
+echo Write-Host '[+] Stahuji ffmpeg...' -ForegroundColor Green
 echo $FfmpegZip = "$env:TEMP\\ffmpeg.zip"
 echo $FfmpegExtract = "$env:TEMP\\ffmpeg-extract"
 echo try {
-echo     # Pouzijeme gyan.dev - spolehlivy zdroj ffmpeg pro Windows
 echo     $ffmpegUrl = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
 echo     Write-Host "    Zdroj: gyan.dev (cca 80 MB)" -ForegroundColor Gray
-echo     Write-Host "    Stahuji... prosim cekejte..." -ForegroundColor Yellow
 echo     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-echo     # Pouzijeme WebClient pro lepsi spolehlivost
+echo     # Stahujeme s progress monitoringem
 echo     $webClient = New-Object System.Net.WebClient
-echo     $webClient.DownloadFile^($ffmpegUrl, $FfmpegZip^)
-echo     Write-Host "    Stazeno! Rozbaluji..." -ForegroundColor Gray
+echo     $Global:downloadComplete = $false
+echo     $Global:downloadError = $null
+echo     Register-ObjectEvent -InputObject $webClient -EventName DownloadProgressChanged -Action {
+echo         $pct = $Event.SourceEventArgs.ProgressPercentage
+echo         $recv = [math]::Round^($Event.SourceEventArgs.BytesReceived / 1MB, 1^)
+echo         $total = [math]::Round^($Event.SourceEventArgs.TotalBytesToReceive / 1MB, 1^)
+echo         Write-Host "`r    Progress: $recv MB / $total MB [$pct%%]      " -NoNewline -ForegroundColor Yellow
+echo     } ^| Out-Null
+echo     Register-ObjectEvent -InputObject $webClient -EventName DownloadFileCompleted -Action {
+echo         $Global:downloadComplete = $true
+echo         if ^($Event.SourceEventArgs.Error^) { $Global:downloadError = $Event.SourceEventArgs.Error }
+echo     } ^| Out-Null
+echo     $webClient.DownloadFileAsync^([Uri]$ffmpegUrl, $FfmpegZip^)
+echo     while ^(-not $Global:downloadComplete^) { Start-Sleep -Milliseconds 200 }
+echo     if ^($Global:downloadError^) { throw $Global:downloadError }
+echo     Write-Host "`r    Stazeno! Rozbaluji...                          " -ForegroundColor Green
 echo     if ^(Test-Path $FfmpegExtract^) { Remove-Item -Path $FfmpegExtract -Recurse -Force }
 echo     Expand-Archive -Path $FfmpegZip -DestinationPath $FfmpegExtract -Force
 echo     $bin = Get-ChildItem -Path $FfmpegExtract -Recurse -Directory ^| Where-Object { $_.Name -eq 'bin' } ^| Select-Object -First 1
