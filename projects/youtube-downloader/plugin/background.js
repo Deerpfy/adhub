@@ -377,6 +377,27 @@ try {
     Write-Host "    Chyba ffmpeg: $_" -ForegroundColor Red
 }
 
+# Kontrola Pythonu
+Write-Host "[+] Kontroluji Python..." -ForegroundColor Green
+$pyExe = $null
+foreach ($cmd in @('python', 'python3', 'py')) {
+    try {
+        $ver = & $cmd --version 2>&1
+        if ($LASTEXITCODE -eq 0) {
+            $pyExe = $cmd
+            Write-Host "    OK: $cmd ($ver)" -ForegroundColor Cyan
+            break
+        }
+    } catch {}
+}
+if (-not $pyExe) {
+    Write-Host "    CHYBA: Python neni nainstalovan!" -ForegroundColor Red
+    Write-Host "    Stahnete Python z: https://www.python.org/downloads/" -ForegroundColor Yellow
+    Write-Host "    Pri instalaci zaskrtnete 'Add Python to PATH'" -ForegroundColor Yellow
+    Read-Host "Stisknete Enter pro ukonceni"
+    exit 1
+}
+
 Write-Host "[+] Vytvarim Native Host..." -ForegroundColor Green
 $pyCode = @"
 #!/usr/bin/env python3
@@ -433,8 +454,14 @@ while 1:
 Set-Content -Path "$nh\\adhub_yt_host.py" -Value $pyCode -Encoding UTF8
 Write-Host "    OK: $nh\\adhub_yt_host.py" -ForegroundColor Cyan
 
+# Vytvorit BAT wrapper pro spusteni Python skriptu
+Write-Host "[+] Vytvarim BAT wrapper..." -ForegroundColor Green
+$batContent = "@echo off`r`n$pyExe `"%~dp0adhub_yt_host.py`" %*"
+Set-Content -Path "$nh\\adhub_yt_host.bat" -Value $batContent -Encoding ASCII
+Write-Host "    OK: $nh\\adhub_yt_host.bat" -ForegroundColor Cyan
+
 Write-Host "[+] Vytvarim manifest..." -ForegroundColor Green
-$manifestPath = $nh.Replace("\\","\\\\") + "\\\\adhub_yt_host.py"
+$manifestPath = $nh.Replace("\\","\\\\") + "\\\\adhub_yt_host.bat"
 $mf = '{"name":"com.adhub.ytdownloader","description":"AdHub","path":"' + $manifestPath + '","type":"stdio","allowed_origins":["chrome-extension://*/"]}'
 Set-Content -Path "$nh\\com.adhub.ytdownloader.json" -Value $mf -Encoding UTF8
 
@@ -452,8 +479,10 @@ Write-Host "==============================================" -ForegroundColor Gre
 Write-Host "  INSTALACE DOKONCENA!" -ForegroundColor Green
 Write-Host "==============================================" -ForegroundColor Green
 Write-Host ""
+Write-Host "Python:  $pyExe" -ForegroundColor Cyan
 Write-Host "yt-dlp:  $ytexe" -ForegroundColor Cyan
 Write-Host "ffmpeg:  $ff\\ffmpeg.exe" -ForegroundColor Cyan
+Write-Host "Native:  $nh\\adhub_yt_host.bat" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "Restartujte prohlizec a zkontrolujte rozsireni!" -ForegroundColor Yellow
 Write-Host ""
