@@ -1107,6 +1107,45 @@ PixelPirate"></textarea>
         // Spin animation
         let isSpinning = false;
 
+        /**
+         * Determines the winner based on the current wheel rotation.
+         * The pointer is at the TOP of the wheel (270° in canvas coordinates).
+         *
+         * Canvas coordinate system:
+         * - 0° = right (3 o'clock)
+         * - 90° = bottom (6 o'clock)
+         * - 180° = left (9 o'clock)
+         * - 270° = top (12 o'clock) - where the pointer is
+         *
+         * After rotation, segment i covers angles:
+         *   from: i * segmentAngle + currentRotation
+         *   to:   (i + 1) * segmentAngle + currentRotation
+         *
+         * We need to find which segment contains the 270° angle.
+         */
+        const getWinnerFromRotation = (subscribers, rotation) => {
+            const segmentAngle = 360 / subscribers.length;
+
+            // Normalize rotation to [0, 360)
+            const normalizedRotation = ((rotation % 360) + 360) % 360;
+
+            // The pointer is at 270°. We need to find which segment is under it.
+            // Segment i starts at: i * segmentAngle + normalizedRotation
+            // So we need: i * segmentAngle + normalizedRotation <= 270 < (i+1) * segmentAngle + normalizedRotation
+            // Rearranging: i * segmentAngle <= 270 - normalizedRotation < (i+1) * segmentAngle
+            //
+            // Calculate the "pointer angle" relative to the unrotated wheel:
+            const pointerRelativeAngle = ((270 - normalizedRotation) % 360 + 360) % 360;
+
+            // Find which segment this angle falls into
+            const winnerIndex = Math.floor(pointerRelativeAngle / segmentAngle) % subscribers.length;
+
+            return {
+                index: winnerIndex,
+                name: subscribers[winnerIndex]
+            };
+        };
+
         const spinWheel = async () => {
             if (isSpinning) return;
 
@@ -1128,28 +1167,10 @@ PixelPirate"></textarea>
             spinBtn.disabled = true;
             spinBtn.textContent = 'Spinning...';
 
-            // Calculate winner
-            const winnerIndex = Math.floor(Math.random() * subscribers.length);
-            const winner = subscribers[winnerIndex];
-
-            // Calculate target rotation
-            const segmentAngle = 360 / subscribers.length;
-            // Pointer is at 270° (top center, pointing down)
-            // Account for clockwise drawing: segments go 0° → 90° → 180° → 270° → 360°
-            // Segment i spans from (i * segmentAngle) to ((i+1) * segmentAngle)
-            // Center of segment i is at (i * segmentAngle + segmentAngle/2)
-            const segmentCenterBeforeRotation = winnerIndex * segmentAngle + (segmentAngle / 2);
-
-            // Calculate how much to rotate to align this segment center with the pointer at 270°
-            // We need to rotate so that: segmentCenter + rotation ≡ 270° (mod 360)
-            const targetSegmentCenter = (270 - segmentCenterBeforeRotation + 360) % 360;
+            // Generate random rotation (5-8 full spins + random angle)
             const spins = 5 + Math.random() * 3;
-
-            // Calculate target rotation ensuring we always move forward
-            const currentAngle = currentRotation % 360;
-            let angleToAdd = targetSegmentCenter - currentAngle;
-            if (angleToAdd < 0) angleToAdd += 360;
-            const targetRotation = currentRotation + (spins * 360) + angleToAdd;
+            const randomAngle = Math.random() * 360;
+            const targetRotation = currentRotation + (spins * 360) + randomAngle;
 
             // Animate
             const startRotation = currentRotation;
@@ -1160,22 +1181,24 @@ PixelPirate"></textarea>
             const animate = (currentTime) => {
                 const elapsed = currentTime - startTime;
                 const progress = Math.min(elapsed / duration, 1);
-                
-                // Easing function
+
+                // Easing function (deceleration)
                 const easeOut = 1 - Math.pow(1 - progress, 4);
-                
+
                 currentRotation = startRotation + (totalRotation * easeOut);
                 drawWheel(subscribers);
 
                 if (progress < 1) {
                     requestAnimationFrame(animate);
                 } else {
-                    // Spin complete
+                    // Spin complete - determine winner based on final wheel position
+                    const winner = getWinnerFromRotation(subscribers, currentRotation);
                     const randomGame = availableGames[Math.floor(Math.random() * availableGames.length)];
-                    showWinner(winner, randomGame);
+
+                    showWinner(winner.name, randomGame);
                     markGameAsPicked(randomGame.id);
-                    addToHistory(winner, randomGame);
-                    
+                    addToHistory(winner.name, randomGame);
+
                     isSpinning = false;
                     spinBtn.disabled = false;
                     spinBtn.textContent = 'Spin the Wheel';
