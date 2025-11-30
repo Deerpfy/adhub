@@ -390,11 +390,9 @@ def handle_download(message, retry_count=0):
     cmd.extend([
         '--no-playlist',           # Nestahovat playlisty
         '--no-check-certificates', # Preskocit certifikaty (nekdy pomaha)
-        # ios a web_creator klienti obchazeji n challenge (throttling)
-        # mweb jako fallback
-        '--extractor-args', 'youtube:player_client=ios,web_creator,mweb',
-        # Preskocit problematicke player konfigurace
-        '--extractor-args', 'youtube:player_skip=webpage,configs',
+        # android a ios klienti obchazeji n challenge (throttling)
+        # Kombinovane extractor-args (nesmi se psat 2x --extractor-args!)
+        '--extractor-args', 'youtube:player_client=android,ios,mweb;player_skip=webpage,configs',
     ])
 
     # Cookies pro vekove omezena videa (prioritne z extension)
