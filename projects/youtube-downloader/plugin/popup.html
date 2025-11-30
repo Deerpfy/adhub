@@ -407,6 +407,15 @@
     .error-box strong {
       color: #f87171;
     }
+
+    /* Update Box */
+    .update-box {
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.4);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
   </style>
 </head>
 <body>
@@ -425,6 +434,18 @@
   <div class="content">
     <!-- STATUS TAB -->
     <div class="tab-content active" id="tab-status">
+      <!-- yt-dlp Update Box -->
+      <div id="ytdlp-update-box" class="update-box" style="display: none;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 18px;">🔄</span>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; color: #fbbf24;">Aktualizace yt-dlp</div>
+            <div id="ytdlp-update-info" style="font-size: 11px; color: #888;">Kontroluji...</div>
+          </div>
+          <button id="ytdlp-update-btn" class="btn btn-primary" style="padding: 6px 12px; font-size: 11px;">Aktualizovat</button>
+        </div>
+      </div>
+
       <!-- Native Host Error Box -->
       <div id="native-host-error" class="error-box" style="display: none;">
         <div id="native-host-error-text">Native Host neni dostupny</div>

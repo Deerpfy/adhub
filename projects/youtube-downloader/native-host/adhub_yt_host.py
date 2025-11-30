@@ -24,14 +24,18 @@ import struct
 import subprocess
 import shutil
 import time
+import urllib.request
+import ssl
 
 # ============================================================================
 # KONFIGURACE
 # ============================================================================
 
-VERSION = '5.5'
+VERSION = '5.6'
 MAX_RETRIES = 3
 RETRY_DELAY = 2  # sekundy
+YTDLP_RELEASES_URL = 'https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest'
+YTDLP_DOWNLOAD_URL = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe'
 
 # Defaultni cesty k nastrojum
 DEFAULT_YTDLP_PATHS = [
@@ -156,6 +160,102 @@ def get_download_dir():
     if os.path.exists(downloads):
         return downloads
     return os.path.expanduser('~')
+
+# ============================================================================
+# YT-DLP UPDATE FUNKCE
+# ============================================================================
+
+def get_latest_ytdlp_version():
+    """Ziska nejnovejsi verzi yt-dlp z GitHub API."""
+    try:
+        # Vytvorit SSL context (nekdy potreba na Windows)
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+
+        req = urllib.request.Request(
+            YTDLP_RELEASES_URL,
+            headers={'User-Agent': 'AdHub-YT-Downloader'}
+        )
+
+        with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            return data.get('tag_name', None)
+    except Exception as e:
+        return None
+
+def get_installed_ytdlp_version(ytdlp_path=None):
+    """Ziska verzi nainstalovaneho yt-dlp."""
+    ytdlp = find_tool('yt-dlp', ytdlp_path, DEFAULT_YTDLP_PATHS)
+    if not ytdlp['available']:
+        return None
+    return ytdlp.get('version'), ytdlp.get('path')
+
+def download_ytdlp_update(target_path=None):
+    """Stahne nejnovejsi verzi yt-dlp."""
+    try:
+        # Urcit cilovou cestu
+        if not target_path:
+            # Defaultni cesta - AdHub slozka
+            adhub_dir = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'AdHub', 'yt-dlp')
+            if not os.path.exists(adhub_dir):
+                os.makedirs(adhub_dir, exist_ok=True)
+            target_path = os.path.join(adhub_dir, 'yt-dlp.exe')
+
+        # Vytvorit zalohu pokud existuje
+        if os.path.exists(target_path):
+            backup_path = target_path + '.backup'
+            try:
+                if os.path.exists(backup_path):
+                    os.remove(backup_path)
+                shutil.copy2(target_path, backup_path)
+            except:
+                pass
+
+        # Stahnout novou verzi
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+
+        req = urllib.request.Request(
+            YTDLP_DOWNLOAD_URL,
+            headers={'User-Agent': 'AdHub-YT-Downloader'}
+        )
+
+        with urllib.request.urlopen(req, timeout=120, context=ctx) as response:
+            with open(target_path, 'wb') as f:
+                f.write(response.read())
+
+        # Overit ze funguje
+        result = check_tool_at_path(target_path, 'yt-dlp')
+        if result['available']:
+            # Smazat zalohu
+            backup_path = target_path + '.backup'
+            if os.path.exists(backup_path):
+                try:
+                    os.remove(backup_path)
+                except:
+                    pass
+            return {
+                'success': True,
+                'version': result['version'],
+                'path': target_path
+            }
+        else:
+            # Obnovit zalohu
+            backup_path = target_path + '.backup'
+            if os.path.exists(backup_path):
+                shutil.copy2(backup_path, target_path)
+            return {
+                'success': False,
+                'error': 'Stazeny soubor nefunguje'
+            }
+
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e)[:200]
+        }
 
 # ============================================================================
 # AKCE: CHECK
@@ -491,6 +591,36 @@ def main():
                 result = handle_test(message)
             elif action == 'download':
                 result = handle_download(message)
+            elif action == 'checkYtdlpUpdate':
+                # Zkontrolovat dostupnost aktualizace yt-dlp
+                ytdlp_path = message.get('ytdlpPath', '')
+                installed = get_installed_ytdlp_version(ytdlp_path)
+                latest = get_latest_ytdlp_version()
+
+                if installed:
+                    current_ver, current_path = installed
+                else:
+                    current_ver, current_path = None, None
+
+                result = {
+                    'success': True,
+                    'installed': current_ver,
+                    'latest': latest,
+                    'path': current_path,
+                    'updateAvailable': bool(latest and current_ver and latest != current_ver)
+                }
+            elif action == 'updateYtdlp':
+                # Aktualizovat yt-dlp
+                ytdlp_path = message.get('ytdlpPath', '')
+
+                # Najit aktualni cestu k yt-dlp
+                installed = get_installed_ytdlp_version(ytdlp_path)
+                if installed:
+                    _, target_path = installed
+                else:
+                    target_path = None
+
+                result = download_ytdlp_update(target_path)
             elif action == 'ping':
                 result = {
                     'success': True,

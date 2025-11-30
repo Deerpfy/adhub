@@ -54,6 +54,9 @@
 
     // Zkontroluj status nastroju
     await checkToolsStatus();
+
+    // Zkontroluj aktualizace yt-dlp
+    await checkYtdlpUpdate();
   }
 
   function displayExtensionId() {
@@ -286,6 +289,9 @@
 
     // Kopirovat extension ID
     $('#copy-ext-id')?.addEventListener('click', copyExtensionId);
+
+    // Aktualizovat yt-dlp
+    $('#ytdlp-update-btn')?.addEventListener('click', doYtdlpUpdate);
   }
 
   async function autoDetectPaths() {
@@ -343,6 +349,80 @@
       document.execCommand('copy');
       document.body.removeChild(textArea);
       showToast('Extension ID zkopirovano!');
+    }
+  }
+
+  // ============================================================================
+  // YT-DLP UPDATE
+  // ============================================================================
+
+  async function checkYtdlpUpdate() {
+    const updateBox = document.getElementById('ytdlp-update-box');
+    const updateInfo = document.getElementById('ytdlp-update-info');
+
+    if (!updateBox) return;
+
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'checkYtdlpUpdate'
+      });
+
+      if (response?.success && response.updateAvailable) {
+        // Je dostupna aktualizace
+        updateBox.style.display = 'block';
+        if (updateInfo) {
+          updateInfo.textContent = `${response.installed} → ${response.latest}`;
+        }
+        console.log('[Popup] yt-dlp update available:', response.installed, '->', response.latest);
+      } else if (response?.success && response.installed && response.latest) {
+        // Verze je aktualni
+        console.log('[Popup] yt-dlp is up to date:', response.installed);
+        updateBox.style.display = 'none';
+      } else {
+        updateBox.style.display = 'none';
+      }
+    } catch (e) {
+      console.log('[Popup] yt-dlp update check failed:', e);
+      updateBox.style.display = 'none';
+    }
+  }
+
+  async function doYtdlpUpdate() {
+    const updateBtn = document.getElementById('ytdlp-update-btn');
+    const updateInfo = document.getElementById('ytdlp-update-info');
+
+    if (updateBtn) {
+      updateBtn.disabled = true;
+      updateBtn.textContent = 'Aktualizuji...';
+    }
+
+    showToast('Stahuji aktualizaci yt-dlp...');
+
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'updateYtdlp'
+      });
+
+      if (response?.success) {
+        showToast(`Aktualizovano na ${response.version}!`);
+        const updateBox = document.getElementById('ytdlp-update-box');
+        if (updateBox) updateBox.style.display = 'none';
+
+        // Aktualizovat status
+        await checkToolsStatus();
+      } else {
+        showToast('Chyba: ' + (response?.error || 'Neznama chyba'), true);
+        if (updateBtn) {
+          updateBtn.disabled = false;
+          updateBtn.textContent = 'Aktualizovat';
+        }
+      }
+    } catch (e) {
+      showToast('Chyba: ' + e.message, true);
+      if (updateBtn) {
+        updateBtn.disabled = false;
+        updateBtn.textContent = 'Aktualizovat';
+      }
     }
   }
 
