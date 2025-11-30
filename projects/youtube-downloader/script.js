@@ -266,6 +266,7 @@ function checkPluginVersion() {
 
     if (!downloadedCommit) {
         console.log('[AdHub] Zadny stazeny commit v localStorage');
+        hideUpdateNotification();
         return;
     }
 
@@ -306,18 +307,39 @@ function showUpdateNotification(oldCommit, newCommit) {
                 </span>
                 <div class="update-text">
                     <strong>Je k dispozici aktualizace!</strong>
-                    <span>Tvuj plugin: <code>${oldCommit}</code> → Nejnovejsi: <code>${newCommit}</code></span>
+                    <span>Stazena verze: <code>${oldCommit}</code> → Nejnovejsi: <code>${newCommit}</code></span>
                 </div>
                 <button class="btn btn-update" onclick="handleDownloadPlugin('main')">
                     Aktualizovat
                 </button>
             </div>
         `;
+    }
 
-        // Vloz banner za plugin info bar nebo na zacatek download sekce
-        const downloadSection = document.getElementById('downloadSection');
-        if (downloadSection) {
-            downloadSection.insertBefore(updateBanner, downloadSection.firstChild);
+    // Vloz banner do spravne sekce podle stavu pluginu
+    // Pokud plugin neni aktivni, vloz do install sekce
+    // Pokud plugin je aktivni, vloz do download sekce
+    const targetSection = state.pluginConnected
+        ? document.getElementById('downloadSection')
+        : document.getElementById('installSection');
+
+    if (targetSection && !targetSection.contains(updateBanner)) {
+        // Odeber z predchozi pozice, pokud existuje
+        if (updateBanner.parentNode) {
+            updateBanner.parentNode.removeChild(updateBanner);
+        }
+
+        // Vloz na zacatek cilove sekce
+        if (state.pluginConnected) {
+            targetSection.insertBefore(updateBanner, targetSection.firstChild);
+        } else {
+            // V install sekci vloz za hero
+            const installHero = targetSection.querySelector('.install-hero');
+            if (installHero && installHero.nextSibling) {
+                targetSection.insertBefore(updateBanner, installHero.nextSibling);
+            } else {
+                targetSection.insertBefore(updateBanner, targetSection.firstChild);
+            }
         }
     }
 
@@ -430,10 +452,9 @@ async function loadLatestCommitInfo() {
             elements.commitIdSmall.textContent = commit.sha.substring(0, 7);
         }
 
-        // Zkontroluj verzi pluginu (pokud uz byl detekovan)
-        if (state.pluginConnected) {
-            checkPluginVersion();
-        }
+        // Zkontroluj verzi pluginu (vzdy po nacteni commit info)
+        // Funguje i bez aktivniho pluginu - zobrazuje varovani v install sekci
+        checkPluginVersion();
 
     } catch (error) {
         console.error('[AdHub] Chyba pri nacitani commitu:', error);
