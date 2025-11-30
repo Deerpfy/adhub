@@ -289,9 +289,8 @@ def handle_download(message, retry_count=0):
     # Obecne nastaveni pro lepsi kompatibilitu
     cmd.extend([
         '--no-playlist',           # Nestahovat playlisty
-        '--no-warnings',           # Potlacit varovani
-        '--ignore-errors',         # Pokracovat pri chybach
         '--no-check-certificates', # Preskocit certifikaty (nekdy pomaha)
+        '--extractor-args', 'youtube:player_client=web,android',  # Pouzit vice klientu pro lepsi pristup
     ])
 
     # Cookies pro vekove omezena videa (prioritne z extension)
@@ -320,12 +319,14 @@ def handle_download(message, retry_count=0):
     else:
         # Video
         if quality and quality != 'best':
-            # Flexibilnejsi format selector
-            cmd.extend(['-f', f'bestvideo[height<={quality}]+bestaudio/best[height<={quality}]/bestvideo+bestaudio/best'])
+            # Flexibilnejsi format selector - * dovoluje vice kodeku
+            cmd.extend(['-f', f'bestvideo*[height<={quality}]+bestaudio*/bestvideo*+bestaudio*/best'])
         else:
-            cmd.extend(['-f', 'bestvideo+bestaudio/best'])
+            # Nejlepsi kvalita - pouzit * pro maximalni kompatibilitu
+            cmd.extend(['-f', 'bestvideo*+bestaudio*/best'])
 
         cmd.extend(['--merge-output-format', 'mp4'])
+        cmd.extend(['--remux-video', 'mp4'])  # Zajistit MP4 format
 
         # FFmpeg pro merge
         ffmpeg = find_tool('ffmpeg', ffmpeg_path, DEFAULT_FFMPEG_PATHS)
@@ -353,7 +354,18 @@ def handle_download(message, retry_count=0):
                 'filepath': filename or output_dir,
             }
         else:
-            error_msg = result.stderr or result.stdout or 'Neznama chyba'
+            # Ziskat chybu - preferovat stderr, pak stdout
+            error_msg = result.stderr.strip() if result.stderr else ''
+            stdout_msg = result.stdout.strip() if result.stdout else ''
+
+            # Nekdy je chyba v stdout misto stderr
+            if not error_msg and stdout_msg:
+                error_msg = stdout_msg
+            elif error_msg and stdout_msg:
+                error_msg = f"{error_msg}\n{stdout_msg}"
+
+            if not error_msg:
+                error_msg = 'Neznama chyba'
 
             # Analyzovat chybu a pripadne zkusit znovu
             if retry_count < MAX_RETRIES and should_retry_error(error_msg):
@@ -362,10 +374,15 @@ def handle_download(message, retry_count=0):
 
             # Parsovat uzivatelsky pritelive chybove hlasky
             friendly_error = parse_error_message(error_msg)
+
+            # Pripojit cast raw chyby pro ladeni
+            debug_hint = error_msg[:300].replace('\n', ' ').strip()
+
             return {
                 'success': False,
                 'error': friendly_error,
-                'raw_error': error_msg[:500]
+                'raw_error': debug_hint,
+                'returncode': result.returncode
             }
 
     except subprocess.TimeoutExpired:
@@ -411,25 +428,32 @@ def parse_error_message(error_msg):
     error_lower = error_msg.lower()
 
     if 'sign in' in error_lower or 'age' in error_lower:
-        return 'Video je vekove omezene. Exportujte cookies z prohlizece do ~/cookies.txt'
+        return 'Video je vekove omezene. Zkuste aktualizovat yt-dlp: yt-dlp -U'
     elif 'private' in error_lower:
         return 'Video je soukrome'
-    elif 'unavailable' in error_lower or 'not available' in error_lower:
-        return 'Video neni dostupne ve vasi zemi nebo bylo smazano'
-    elif 'copyright' in error_lower:
+    elif 'members only' in error_lower or 'member' in error_lower:
+        return 'Video je pouze pro cleny kanalu'
+    elif 'copyright' in error_lower or 'blocked' in error_lower:
         return 'Video bylo zablokovano z duvodu autorskych prav'
-    elif 'live' in error_lower and 'not' in error_lower:
+    elif 'live' in error_lower and ('not' in error_lower or 'offline' in error_lower):
         return 'Zivy prenos jeste nezacal nebo uz skoncil'
     elif '403' in error_msg or 'forbidden' in error_lower:
-        return 'Pristup odepren. Zkuste exportovat cookies z prohlizece'
+        return 'Pristup odepren (403). Zkuste aktualizovat yt-dlp: yt-dlp -U'
     elif '404' in error_msg:
-        return 'Video nebylo nalezeno'
+        return 'Video nebylo nalezeno (404)'
     elif 'rate' in error_lower or '429' in error_msg:
-        return 'Prilis mnoho pozadavku. Pockejte chvili a zkuste znovu'
+        return 'Prilis mnoho pozadavku (429). Pockejte chvili a zkuste znovu'
+    elif 'unavailable' in error_lower or 'not available' in error_lower:
+        # Toto musi byt po ostatnich specifickych chybach
+        return 'Video neni dostupne. Zkuste aktualizovat yt-dlp: yt-dlp -U'
+    elif 'no suitable' in error_lower or 'no format' in error_lower:
+        return 'Zadny kompatibilni format. Zkuste jinou kvalitu'
+    elif 'ffmpeg' in error_lower or 'postprocess' in error_lower:
+        return 'Chyba zpracovani videa. Overtte ze ffmpeg je spravne nainstalovan'
 
-    # Zkratit dlouhe chyby
-    if len(error_msg) > 150:
-        return error_msg[:150] + '...'
+    # Zkratit dlouhe chyby ale zachovat vice informaci
+    if len(error_msg) > 200:
+        return error_msg[:200] + '...'
     return error_msg
 
 # ============================================================================
