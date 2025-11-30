@@ -1,6 +1,6 @@
-# AdHub YouTube Downloader - Instalator v5.8
+# AdHub YouTube Downloader - Instalator v5.9
 # Tento skript se stahuje a spousti pres adhub-install.bat
-# Nove: Vzdy se pta na Extension ID - spolehlivejsi nez auto-detekce
+# v5.9: Zjednoduseny pristup - nechat yt-dlp vybrat nejlepsi klient
 
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
@@ -8,7 +8,7 @@ $ProgressPreference = 'SilentlyContinue'
 
 Write-Host ""
 Write-Host "==============================================" -ForegroundColor Yellow
-Write-Host "  AdHub YouTube Downloader - Instalator v5.8" -ForegroundColor Yellow
+Write-Host "  AdHub YouTube Downloader - Instalator v5.9" -ForegroundColor Yellow
 Write-Host "==============================================" -ForegroundColor Yellow
 Write-Host ""
 
