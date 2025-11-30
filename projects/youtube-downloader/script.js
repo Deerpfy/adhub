@@ -30,7 +30,6 @@ const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com';
 
 const state = {
     pluginConnected: false,
-    pluginId: null,
     pluginVersion: null,
     latestCommit: null,
     latestManifestVersion: null, // Verze z manifestu na GitHubu
@@ -213,7 +212,6 @@ function clearStalePluginSignals() {
         if (age > maxAge) {
             console.log('[AdHub] Plugin timestamp je stary (' + Math.round(age / 1000) + 's), mazem signaly');
             localStorage.removeItem('adhub_extension_active');
-            localStorage.removeItem('adhub_extension_id');
             localStorage.removeItem('adhub_extension_version');
             localStorage.removeItem('adhub_extension_name');
             localStorage.removeItem('adhub_extension_timestamp');
@@ -224,7 +222,6 @@ function clearStalePluginSignals() {
         // Zadny timestamp = stare data, smazat
         console.log('[AdHub] Zadny timestamp, mazem stare signaly');
         localStorage.removeItem('adhub_extension_active');
-        localStorage.removeItem('adhub_extension_id');
         localStorage.removeItem('adhub_extension_version');
         localStorage.removeItem('adhub_extension_name');
     }
@@ -240,11 +237,9 @@ function detectPluginViaEvent() {
         if (timestamp && (now - parseInt(timestamp, 10)) < maxAge) {
             const active = localStorage.getItem('adhub_extension_active');
             const version = localStorage.getItem('adhub_extension_version');
-            const id = localStorage.getItem('adhub_extension_id');
 
-            if (active === 'true' && version && id) {
+            if (active === 'true' && version) {
                 console.log('[AdHub] Plugin detekovan z localStorage (timestamp aktualni)');
-                state.pluginId = id;
                 state.pluginVersion = version;
                 resolve(true);
                 return;
@@ -265,8 +260,7 @@ function detectPluginViaEvent() {
             window.removeEventListener('adhub-extension-ready', readyHandler);
             window.removeEventListener('adhub-extension-response', responseHandler);
 
-            if (event.detail && event.detail.id) {
-                state.pluginId = event.detail.id;
+            if (event.detail && event.detail.version) {
                 state.pluginVersion = event.detail.version;
             }
             resolve(true);
@@ -278,8 +272,7 @@ function detectPluginViaEvent() {
             window.removeEventListener('adhub-extension-ready', readyHandler);
             window.removeEventListener('adhub-extension-response', responseHandler);
 
-            if (event.detail && event.detail.id) {
-                state.pluginId = event.detail.id;
+            if (event.detail && event.detail.version) {
                 state.pluginVersion = event.detail.version;
             }
             resolve(true);

@@ -17,7 +17,6 @@
   // Ziskat informace o rozsireni z manifestu
   const manifest = chrome.runtime.getManifest();
   const extensionInfo = {
-    id: chrome.runtime.id,
     version: manifest.version,
     name: manifest.name
   };
@@ -34,18 +33,15 @@
     // Metoda 2: Data attribute na <html>
     document.documentElement.setAttribute('data-adhub-extension', 'true');
     document.documentElement.setAttribute('data-adhub-extension-version', extensionInfo.version);
-    document.documentElement.setAttribute('data-adhub-extension-id', extensionInfo.id);
 
     // Metoda 3: Global promenna
     window.adhubExtensionAvailable = true;
     window.adhubExtensionVersion = extensionInfo.version;
-    window.adhubExtensionId = extensionInfo.id;
 
     // Metoda 4: localStorage (pro perzistenci mezi reloady)
     try {
       localStorage.setItem('adhub_extension_active', 'true');
       localStorage.setItem('adhub_extension_version', extensionInfo.version);
-      localStorage.setItem('adhub_extension_id', extensionInfo.id);
       localStorage.setItem('adhub_extension_name', extensionInfo.name);
       localStorage.setItem('adhub_extension_timestamp', Date.now().toString());
     } catch (e) {
