@@ -40,6 +40,7 @@ const FIREBASE_CONFIG = {
 let viewCounts = {};
 let firebaseInitialized = false;
 let firebaseDb = null;
+let pendingIncrements = new Set(); // Ochrana proti vícenásobnému volání
 
 // Inicializace Firebase (pouze pokud je nakonfigurováno)
 async function initFirebase() {
@@ -123,6 +124,13 @@ function loadViewCountsFromLocalStorage() {
 async function incrementViewCount(toolId) {
     if (!toolId) return;
 
+    // Ochrana proti vícenásobnému volání (debounce)
+    if (pendingIncrements.has(toolId)) {
+        console.log(`[ViewCounter] ${toolId}: již probíhá, přeskakuji`);
+        return;
+    }
+    pendingIncrements.add(toolId);
+
     // Odeslání do Firebase (pokud je nakonfigurováno)
     if (firebaseInitialized && firebaseDb) {
         try {
@@ -156,6 +164,9 @@ async function incrementViewCount(toolId) {
         localStorage.setItem('adhub_view_counts', JSON.stringify(viewCounts));
         updateViewCountUI(toolId);
     }
+
+    // Uvolnění zámku po krátké době
+    setTimeout(() => pendingIncrements.delete(toolId), 1000);
 }
 
 // Aktualizace UI pro všechny počítadla
