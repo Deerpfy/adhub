@@ -532,13 +532,9 @@ async function setLanguage(lang) {
         
         // Re-render tools to update their translations
         renderTools();
-        
-        // Update status
-        updateStatus(t('status_loaded', { tools: allTools.length, links: allLinks.length }), true);
-        
+
     } catch (error) {
         console.error('Failed to set language:', error);
-        updateStatus(t('translation_error'), false);
     } finally {
         isTranslating = false;
         showTranslationIndicator(false);
@@ -626,7 +622,7 @@ function getLocalizedConfig() {
                 "url": "projects/youtube-downloader/index.html",
                 "type": "local",
                 "enabled": true,
-                "tags": ["extension", "download", "audio", "video", "youtube", "chrome"]
+                "tags": ["video", "download", "browser"]
             },
             {
                 "id": "chat-panel",
@@ -637,7 +633,7 @@ function getLocalizedConfig() {
                 "url": "projects/chat-panel/index.html",
                 "type": "local",
                 "enabled": true,
-                "tags": ["twitch", "kick", "youtube", "chat", "overlay"]
+                "tags": ["streaming", "chat", "overlay"]
             },
             {
                 "id": "komopizza-demo",
@@ -648,7 +644,7 @@ function getLocalizedConfig() {
                 "url": "projects/komopizza/index.html",
                 "type": "local",
                 "enabled": true,
-                "tags": ["frontend", "demo", "proto", "ui"]
+                "tags": ["demo", "ui", "prototype"]
             },
             {
                 "id": "spinning-wheel-giveaway",
@@ -659,7 +655,7 @@ function getLocalizedConfig() {
                 "url": "projects/spinning-wheel-giveaway/index.html",
                 "type": "local",
                 "enabled": true,
-                "tags": ["giveaway", "streaming", "wheel", "lottery", "winner"]
+                "tags": ["streaming", "giveaway", "interactive"]
             },
             {
                 "id": "resignation-bets",
@@ -670,7 +666,7 @@ function getLocalizedConfig() {
                 "url": "projects/resignation-bets/index.html",
                 "type": "local",
                 "enabled": true,
-                "tags": ["casino", "betting", "fun", "office", "roulette", "game"]
+                "tags": ["demo", "game", "fun"]
             },
             {
                 "id": "ai-prompting",
@@ -681,7 +677,7 @@ function getLocalizedConfig() {
                 "url": "projects/ai-prompting/index.html",
                 "type": "local",
                 "enabled": true,
-                "tags": ["ai", "prompting", "claude", "chatgpt", "prompt", "formatter", "react"]
+                "tags": ["ai", "productivity", "formatter"]
             },
             {
                 "id": "pdf-merge",
@@ -692,7 +688,7 @@ function getLocalizedConfig() {
                 "url": "projects/pdf-merge/index.html",
                 "type": "local",
                 "enabled": true,
-                "tags": ["pdf", "merge", "combine", "document", "files"]
+                "tags": ["pdf", "documents", "utility"]
             },
             {
                 "id": "pdf-editor",
@@ -703,7 +699,7 @@ function getLocalizedConfig() {
                 "url": "projects/pdf-editor/index.html",
                 "type": "local",
                 "enabled": true,
-                "tags": ["pdf", "editor", "sign", "compress", "signature", "document", "annotation"]
+                "tags": ["pdf", "editor", "documents"]
             },
             {
                 "id": "mindhub",
@@ -714,7 +710,7 @@ function getLocalizedConfig() {
                 "url": "projects/mindhub/index.html",
                 "type": "local",
                 "enabled": true,
-                "tags": ["mindmap", "tasks", "organization", "productivity", "notes", "ideas"]
+                "tags": ["productivity", "tasks", "organization"]
             }
         ],
         "links": [
@@ -726,7 +722,7 @@ function getLocalizedConfig() {
                 "icon": "⚙️",
                 "url": "https://ninite.com/",
                 "type": "external",
-                "tags": ["windows", "install", "automation"]
+                "tags": ["windows", "setup"]
             },
             {
                 "id": "winget-catalog",
@@ -736,7 +732,7 @@ function getLocalizedConfig() {
                 "icon": "🪟",
                 "url": "https://winget.run/",
                 "type": "external",
-                "tags": ["windows", "cli", "packages"]
+                "tags": ["windows", "packages"]
             },
             {
                 "id": "obs-project",
@@ -746,7 +742,7 @@ function getLocalizedConfig() {
                 "icon": "🎥",
                 "url": "https://obsproject.com/download",
                 "type": "external",
-                "tags": ["streaming", "recording", "tools"]
+                "tags": ["streaming", "recording"]
             },
             {
                 "id": "yt-dlp-releases",
@@ -756,7 +752,7 @@ function getLocalizedConfig() {
                 "icon": "⬇️",
                 "url": "https://github.com/yt-dlp/yt-dlp/releases/latest",
                 "type": "external",
-                "tags": ["yt-dlp", "download", "cli"]
+                "tags": ["video", "download"]
             }
         ]
     };
@@ -767,9 +763,7 @@ function useDefaultConfig() {
     const config = getLocalizedConfig();
     allTools = config.tools || [];
     allLinks = config.links || [];
-    updateStatus(t('status_loaded', { tools: allTools.length, links: allLinks.length }), true);
     renderTools();
-    updateCategoryFilters();
 }
 
 // Update status bar
