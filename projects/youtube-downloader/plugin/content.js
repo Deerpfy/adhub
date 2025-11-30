@@ -374,7 +374,12 @@
     const quality = format.quality || '';
     const filename = `${title} [${quality}].${format.ext}`;
 
-    updateProgress(30, 'Zahajuji stahovani...');
+    // Zobrazit detaily pro základní režim
+    updateProgress(30, 'Zahajuji stahovani...', {
+      mode: `Zakladni ${quality}`,
+      status: 'Prime URL',
+      statusType: ''
+    });
 
     const response = await chrome.runtime.sendMessage({
       action: 'download',
@@ -389,18 +394,38 @@
     }
 
     if (response.success) {
-      updateProgress(100, 'Stahovani zahajeno!');
+      updateProgress(100, 'Stahovani zahajeno!', {
+        status: 'Dokonceno',
+        statusType: 'success'
+      });
       setTimeout(() => {
         hideProgressOverlay();
         showDownloadComplete(filename);
       }, 1500);
     } else {
+      updateProgress(0, `Chyba: ${response.error || 'Stahovani selhalo'}`, {
+        status: 'Selhalo',
+        statusType: 'error'
+      });
       throw new Error(response.error || 'Stahovani selhalo');
     }
   }
 
   async function downloadAdvanced(format) {
-    updateProgress(20, 'Pripojuji k native host...');
+    // Zobrazit inicializaci s detaily
+    const qualityLabel = format.label || format.quality || 'HD';
+    const modeLabel = format.audioFormat ? `Audio ${format.audioFormat.toUpperCase()}` : `HD ${qualityLabel}`;
+
+    updateProgress(10, 'Pripojuji k native host...', {
+      mode: modeLabel,
+      status: 'Inicializace',
+      statusType: ''
+    });
+
+    updateProgress(20, 'Odesilam pozadavek na yt-dlp...', {
+      status: 'Pripojeno',
+      statusType: 'success'
+    });
 
     const response = await chrome.runtime.sendMessage({
       action: 'downloadAdvanced',
@@ -417,17 +442,35 @@
     }
 
     if (response.success) {
-      updateProgress(100, 'Stahovani zahajeno!');
+      // Zobrazit uspech s info o strategii
+      const strategyInfo = response.strategy_desc || '';
+      updateProgress(100, 'Stahovani zahajeno!', {
+        status: 'Dokonceno',
+        statusType: 'success',
+        strategy: strategyInfo ? `Strategie: ${strategyInfo}` : null
+      });
+
       const filename = response.filename || `${state.videoTitle}.${format.audioFormat || 'mp4'}`;
       setTimeout(() => {
         hideProgressOverlay();
-        showDownloadComplete(filename);
+        showDownloadComplete(filename, { strategy: strategyInfo });
       }, 1500);
     } else {
       // Zobrazit vice detailu pro ladeni
       const errorMsg = response.error || 'Stahovani selhalo';
+      const strategiesTried = response.strategies_tried || 1;
+      const lastStrategy = response.last_strategy || '';
+
+      // Aktualizovat progress s chybovym stavem
+      updateProgress(0, `Chyba: ${errorMsg}`, {
+        status: 'Selhalo',
+        statusType: 'error',
+        strategy: strategiesTried > 1 ? `Vyzkouseno ${strategiesTried} strategii` : null
+      });
+
       if (response.raw_error) {
         console.error('[AdHub] Raw yt-dlp error:', response.raw_error);
+        console.error('[AdHub] Last strategy:', lastStrategy);
       }
       throw new Error(errorMsg);
     }
@@ -724,10 +767,10 @@
   }
 
   // ============================================================================
-  // PROGRESS & NOTIFICATIONS
+  // PROGRESS & NOTIFICATIONS - VYLEPŠENO v5.6
   // ============================================================================
 
-  function showProgressOverlay() {
+  function showProgressOverlay(initialText = 'Pripravuji...') {
     let overlay = document.getElementById('adhub-progress-overlay');
     if (!overlay) {
       overlay = document.createElement('div');
@@ -738,12 +781,29 @@
             <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
               <path d="M12 16l-5-5h3V4h4v7h3l-5 5zm-7 2h14v2H5v-2z"/>
             </svg>
-            <span>Stahovani</span>
+            <span>Stahuji video</span>
           </div>
           <div class="adhub-progress-bar-bg">
             <div id="adhub-progress-bar" class="adhub-progress-bar"></div>
           </div>
-          <div id="adhub-progress-text" class="adhub-progress-text">Pripravuji...</div>
+          <div id="adhub-progress-text" class="adhub-progress-text">${initialText}</div>
+          <div class="adhub-progress-details" id="adhub-progress-details">
+            <div class="adhub-progress-detail">
+              <span class="adhub-progress-detail-icon">🎯</span>
+              <span class="adhub-progress-detail-label">Rezim:</span>
+              <span class="adhub-progress-detail-value" id="adhub-detail-mode">-</span>
+            </div>
+            <div class="adhub-progress-detail">
+              <span class="adhub-progress-detail-icon">⚡</span>
+              <span class="adhub-progress-detail-label">Stav:</span>
+              <span class="adhub-progress-detail-value" id="adhub-detail-status">Pripojuji...</span>
+            </div>
+            <div class="adhub-progress-detail" id="adhub-detail-strategy-row" style="display:none">
+              <span class="adhub-progress-detail-icon">🔄</span>
+              <span class="adhub-progress-detail-label">Pokus:</span>
+              <span class="adhub-progress-detail-value" id="adhub-detail-strategy">-</span>
+            </div>
+          </div>
         </div>
       `;
       document.body.appendChild(overlay);
@@ -755,11 +815,39 @@
     document.getElementById('adhub-progress-overlay')?.classList.remove('visible');
   }
 
-  function updateProgress(percent, text) {
+  function updateProgress(percent, text, details = {}) {
     const bar = document.getElementById('adhub-progress-bar');
     const textEl = document.getElementById('adhub-progress-text');
     if (bar) bar.style.width = `${percent}%`;
     if (textEl) textEl.textContent = text;
+
+    // Aktualizovat detaily pokud jsou zadané
+    if (details.mode) {
+      const modeEl = document.getElementById('adhub-detail-mode');
+      if (modeEl) {
+        modeEl.textContent = details.mode;
+        modeEl.className = 'adhub-progress-detail-value' +
+          (details.mode.includes('HD') ? ' success' : '');
+      }
+    }
+
+    if (details.status) {
+      const statusEl = document.getElementById('adhub-detail-status');
+      if (statusEl) {
+        statusEl.textContent = details.status;
+        statusEl.className = 'adhub-progress-detail-value' +
+          (details.statusType === 'success' ? ' success' :
+           details.statusType === 'warning' ? ' warning' :
+           details.statusType === 'error' ? ' error' : '');
+      }
+    }
+
+    if (details.strategy) {
+      const strategyRow = document.getElementById('adhub-detail-strategy-row');
+      const strategyEl = document.getElementById('adhub-detail-strategy');
+      if (strategyRow) strategyRow.style.display = 'flex';
+      if (strategyEl) strategyEl.textContent = details.strategy;
+    }
   }
 
   function showNotification(message, type = 'info') {
@@ -775,16 +863,22 @@
     setTimeout(() => el.remove(), 5000);
   }
 
-  function showDownloadComplete(filename) {
+  function showDownloadComplete(filename, details = {}) {
     document.querySelector('.adhub-complete-toast')?.remove();
+
+    // Sestavit detail text
+    let detailText = filename;
+    if (details.strategy) {
+      detailText += ` • ${details.strategy}`;
+    }
 
     const toast = document.createElement('div');
     toast.className = 'adhub-complete-toast';
     toast.innerHTML = `
-      <div class="adhub-complete-icon">OK</div>
+      <div class="adhub-complete-icon">✓</div>
       <div class="adhub-complete-content">
         <div class="adhub-complete-title">Stahovani zahajeno!</div>
-        <div class="adhub-complete-file">${filename}</div>
+        <div class="adhub-complete-file">${detailText}</div>
       </div>
       <button class="adhub-complete-close">&times;</button>
     `;
