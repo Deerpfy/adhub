@@ -3,6 +3,19 @@
 const APP_VERSION = '1.0.1';
 
 // ============================================
+// GITHUB API - YouTube Downloader Plugin Version
+// ============================================
+const GITHUB_REPO = 'Deerpfy/adhub';
+const GITHUB_BRANCH = 'main';
+const PLUGIN_PATH = 'projects/youtube-downloader/plugin';
+const GITHUB_API_BASE = 'https://api.github.com';
+const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com';
+
+// Plugin version state
+let pluginLatestCommit = null;
+let pluginLatestVersion = null;
+
+// ============================================
 // VIEW COUNTER MODULE - Firebase Realtime Database
 // ============================================
 // Pro správné fungování počítadla návštěvnosti je potřeba:
@@ -1128,6 +1141,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log('[AdHUB] Extension ready event received');
         checkYouTubeExtensionStatus();
     });
+
+    // Load YouTube Downloader plugin version info
+    loadYouTubePluginVersionInfo();
 });
 
 // Check YouTube Downloader extension status
@@ -1220,6 +1236,111 @@ if (document.readyState === 'loading') {
     initIdeaModal();
 }
 
+// ============================================
+// YOUTUBE DOWNLOADER PLUGIN VERSION CHECKING
+// ============================================
+
+// Load latest commit info for YouTube Downloader plugin
+async function loadYouTubePluginVersionInfo() {
+    console.log('[AdHUB] Loading YouTube Downloader plugin version info...');
+
+    try {
+        // Fetch commit info and manifest.json in parallel
+        const [commitResponse, manifestResponse] = await Promise.all([
+            fetch(`${GITHUB_API_BASE}/repos/${GITHUB_REPO}/commits?path=${PLUGIN_PATH}&per_page=1`),
+            fetch(`${GITHUB_RAW_BASE}/${GITHUB_REPO}/${GITHUB_BRANCH}/${PLUGIN_PATH}/manifest.json`)
+        ]);
+
+        // Process commit info
+        if (commitResponse.ok) {
+            const commits = await commitResponse.json();
+            if (commits.length > 0) {
+                pluginLatestCommit = commits[0];
+                console.log('[AdHUB] Latest plugin commit:', pluginLatestCommit.sha.substring(0, 7));
+            }
+        }
+
+        // Process manifest.json for version
+        if (manifestResponse.ok) {
+            const manifest = await manifestResponse.json();
+            if (manifest.version) {
+                pluginLatestVersion = manifest.version;
+                console.log('[AdHUB] Latest plugin version:', pluginLatestVersion);
+            }
+        }
+
+        // Check if user has downloaded an older version
+        checkDownloadedPluginVersion();
+
+    } catch (error) {
+        console.error('[AdHUB] Error loading plugin version info:', error);
+    }
+}
+
+// Check if downloaded plugin version differs from latest
+function checkDownloadedPluginVersion() {
+    const downloadedCommit = localStorage.getItem('adhub_downloaded_commit');
+
+    if (!downloadedCommit || !pluginLatestCommit) {
+        return;
+    }
+
+    const latestShort = pluginLatestCommit.sha.substring(0, 7);
+    const downloadedShort = downloadedCommit.substring(0, 7);
+
+    console.log('[AdHUB] Comparing downloaded vs latest:', { downloaded: downloadedShort, latest: latestShort });
+
+    if (downloadedShort !== latestShort) {
+        console.log('[AdHUB] Downloaded plugin version is outdated');
+        showPluginUpdateBanner(downloadedShort, latestShort);
+    }
+}
+
+// Show update banner for plugin
+function showPluginUpdateBanner(oldCommit, newCommit) {
+    // Check if banner already exists
+    let updateBanner = document.getElementById('pluginUpdateBanner');
+
+    if (!updateBanner) {
+        updateBanner = document.createElement('div');
+        updateBanner.id = 'pluginUpdateBanner';
+        updateBanner.className = 'plugin-update-banner';
+    }
+
+    const versionText = pluginLatestVersion ? `v${pluginLatestVersion}` : newCommit;
+
+    updateBanner.innerHTML = `
+        <div class="plugin-update-content">
+            <span class="plugin-update-icon">🔄</span>
+            <div class="plugin-update-text">
+                <strong>YouTube Downloader: K dispozici nová verze!</strong>
+                <span>Staženo: <code>${oldCommit}</code> → Aktuální: <code>${versionText}</code></span>
+            </div>
+            <a href="projects/youtube-downloader/index.html" class="btn btn-update-plugin">
+                Aktualizovat
+            </a>
+            <button class="plugin-update-close" onclick="hidePluginUpdateBanner()" title="Zavřít">×</button>
+        </div>
+    `;
+
+    // Insert banner after header
+    const container = document.querySelector('.container');
+    const header = document.querySelector('.header');
+    if (container && header && !document.getElementById('pluginUpdateBanner')) {
+        header.after(updateBanner);
+    }
+
+    updateBanner.style.display = 'block';
+}
+
+// Hide plugin update banner
+function hidePluginUpdateBanner() {
+    const updateBanner = document.getElementById('pluginUpdateBanner');
+    if (updateBanner) {
+        updateBanner.style.display = 'none';
+    }
+}
+
 // Export functions for global use
 window.openTool = openTool;
 window.openLink = openLink;
@@ -1227,3 +1348,4 @@ window.setLanguage = setLanguage;
 window.APP_VERSION = APP_VERSION;
 window.incrementViewCount = incrementViewCount;
 window.getViewCount = getViewCount;
+window.hidePluginUpdateBanner = hidePluginUpdateBanner;
