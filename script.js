@@ -1,6 +1,194 @@
 // AdHUB - Central Hub Script
 // Version management
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
+
+// ============================================
+// VIEW COUNTER MODULE - Firebase Realtime Database
+// ============================================
+// Pro správné fungování počítadla návštěvnosti je potřeba:
+// 1. Vytvořit Firebase projekt na https://console.firebase.google.com/
+// 2. Vytvořit Realtime Database (Start in test mode)
+// 3. Nastavit pravidla databáze (viz níže)
+// 4. Zkopírovat konfiguraci do FIREBASE_CONFIG
+//
+// Pravidla pro Firebase Realtime Database:
+// {
+//   "rules": {
+//     "views": {
+//       ".read": true,
+//       "$tool_id": {
+//         ".write": true,
+//         ".validate": "newData.isNumber() && newData.val() === data.val() + 1"
+//       }
+//     }
+//   }
+// }
+// ============================================
+
+// Firebase konfigurace - VYPLŇTE SVÉ ÚDAJE z Firebase Console
+const FIREBASE_CONFIG = {
+    // Příklad konfigurace (nahraďte svými údaji):
+    // apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+    // authDomain: "your-project.firebaseapp.com",
+    // databaseURL: "https://your-project-default-rtdb.firebaseio.com",
+    // projectId: "your-project",
+    // storageBucket: "your-project.appspot.com",
+    // messagingSenderId: "123456789012",
+    // appId: "1:123456789012:web:xxxxxxxxxxxxxxxxxxxx"
+
+    // Pro demo účely - nahraďte svou konfigurací
+    databaseURL: null // null = použije se localStorage jako fallback
+};
+
+// Stav počítadla návštěv
+let viewCounts = {};
+let firebaseInitialized = false;
+let firebaseDb = null;
+
+// Inicializace Firebase (pouze pokud je nakonfigurováno)
+async function initFirebase() {
+    if (!FIREBASE_CONFIG.databaseURL) {
+        console.log('[ViewCounter] Firebase není nakonfigurováno, používám localStorage jako fallback');
+        loadViewCountsFromLocalStorage();
+        return false;
+    }
+
+    try {
+        // Dynamické načtení Firebase SDK
+        if (typeof firebase === 'undefined') {
+            await loadScript('https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js');
+            await loadScript('https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js');
+        }
+
+        // Inicializace Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(FIREBASE_CONFIG);
+        }
+
+        firebaseDb = firebase.database();
+        firebaseInitialized = true;
+
+        // Načtení počtů z Firebase
+        await loadViewCountsFromFirebase();
+
+        console.log('[ViewCounter] Firebase inicializováno úspěšně');
+        return true;
+    } catch (error) {
+        console.error('[ViewCounter] Chyba při inicializaci Firebase:', error);
+        loadViewCountsFromLocalStorage();
+        return false;
+    }
+}
+
+// Pomocná funkce pro dynamické načtení skriptu
+function loadScript(src) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
+// Načtení počtů z Firebase
+async function loadViewCountsFromFirebase() {
+    if (!firebaseDb) return;
+
+    try {
+        const snapshot = await firebaseDb.ref('views').once('value');
+        const data = snapshot.val() || {};
+        viewCounts = data;
+
+        // Uložení do localStorage jako cache
+        localStorage.setItem('adhub_view_counts', JSON.stringify(viewCounts));
+
+        // Aktualizace UI
+        updateViewCountsUI();
+    } catch (error) {
+        console.error('[ViewCounter] Chyba při načítání z Firebase:', error);
+        loadViewCountsFromLocalStorage();
+    }
+}
+
+// Načtení počtů z localStorage (fallback)
+function loadViewCountsFromLocalStorage() {
+    try {
+        const cached = localStorage.getItem('adhub_view_counts');
+        viewCounts = cached ? JSON.parse(cached) : {};
+        updateViewCountsUI();
+    } catch (error) {
+        console.error('[ViewCounter] Chyba při načítání z localStorage:', error);
+        viewCounts = {};
+    }
+}
+
+// Inkrementace počtu návštěv pro konkrétní nástroj
+async function incrementViewCount(toolId) {
+    if (!toolId) return;
+
+    // Kontrola, zda už nebyla návštěva zaznamenána v této session
+    const sessionKey = `adhub_viewed_${toolId}`;
+    if (sessionStorage.getItem(sessionKey)) {
+        return; // Již zaznamenáno v této session
+    }
+
+    // Inkrementace lokálně
+    viewCounts[toolId] = (viewCounts[toolId] || 0) + 1;
+
+    // Označení jako navštívené v této session
+    sessionStorage.setItem(sessionKey, 'true');
+
+    // Uložení do localStorage
+    localStorage.setItem('adhub_view_counts', JSON.stringify(viewCounts));
+
+    // Aktualizace UI
+    updateViewCountUI(toolId);
+
+    // Odeslání do Firebase (pokud je nakonfigurováno)
+    if (firebaseInitialized && firebaseDb) {
+        try {
+            await firebaseDb.ref(`views/${toolId}`).transaction((currentValue) => {
+                return (currentValue || 0) + 1;
+            });
+        } catch (error) {
+            console.error('[ViewCounter] Chyba při ukládání do Firebase:', error);
+        }
+    }
+}
+
+// Aktualizace UI pro všechny počítadla
+function updateViewCountsUI() {
+    Object.keys(viewCounts).forEach(toolId => {
+        updateViewCountUI(toolId);
+    });
+}
+
+// Aktualizace UI pro jedno počítadlo
+function updateViewCountUI(toolId) {
+    const countElement = document.querySelector(`[data-view-count="${toolId}"]`);
+    if (countElement) {
+        const count = viewCounts[toolId] || 0;
+        countElement.textContent = formatViewCount(count);
+        countElement.title = `${count} ${t('view_count_title')}`;
+    }
+}
+
+// Formátování čísla návštěv (1234 -> 1.2k)
+function formatViewCount(count) {
+    if (count >= 1000000) {
+        return (count / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    }
+    if (count >= 1000) {
+        return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'k';
+    }
+    return count.toString();
+}
+
+// Získání počtu návštěv pro nástroj
+function getViewCount(toolId) {
+    return viewCounts[toolId] || 0;
+}
 
 // All available languages for translation (ISO 639-1 codes)
 const AVAILABLE_LANGUAGES = [
@@ -97,7 +285,9 @@ const BASE_TRANSLATIONS = {
         search_language: 'Hledat jazyk...',
         idea_button: 'Sdílet nápad',
         idea_modal_title: 'Sdílejte svůj nápad',
-        idea_modal_description: 'Máte nápad na novou funkci nebo vylepšení? Připojte se k našemu Discord serveru a sdílejte své nápady v AI kanálu!'
+        idea_modal_description: 'Máte nápad na novou funkci nebo vylepšení? Připojte se k našemu Discord serveru a sdílejte své nápady v AI kanálu!',
+        view_count: 'zobrazení',
+        view_count_title: 'zobrazení'
     },
     en: {
         search_placeholder: 'Search tool, link...',
@@ -148,7 +338,9 @@ const BASE_TRANSLATIONS = {
         search_language: 'Search language...',
         idea_button: 'Share idea',
         idea_modal_title: 'Share your idea',
-        idea_modal_description: 'Have an idea for a new feature or improvement? Join our Discord server and share your ideas in the AI channel!'
+        idea_modal_description: 'Have an idea for a new feature or improvement? Join our Discord server and share your ideas in the AI channel!',
+        view_count: 'views',
+        view_count_title: 'views'
     }
 };
 
@@ -674,6 +866,7 @@ function renderTools() {
 function createToolCard(tool) {
     const isLocalFile = tool.type === 'local' || !tool.url.startsWith('http');
     const isYouTubeDownloader = tool.id === 'youtube-downloader';
+    const viewCount = getViewCount(tool.id);
 
     return `
         <div class="tool-card" data-id="${tool.id}" data-type="tool">
@@ -683,6 +876,9 @@ function createToolCard(tool) {
                     <span class="tool-name">${escapeHtml(tool.name)}</span>
                 </div>
                 <div class="tool-badges">
+                    <span class="tool-badge view-count-badge" title="${viewCount} ${t('view_count_title')}">
+                        👁️ <span data-view-count="${tool.id}">${formatViewCount(viewCount)}</span>
+                    </span>
                     ${isLocalFile ? `<span class="tool-badge local-badge">${t('local_badge')}</span>` : ''}
                     ${isYouTubeDownloader ? `<span class="tool-badge extension-status" id="ext-status-${tool.id}">⏳ Kontroluji...</span>` : ''}
                 </div>
@@ -698,7 +894,7 @@ function createToolCard(tool) {
             </div>
             <div class="tool-actions">
                 ${tool.url ? `
-                    <button class="btn btn-primary" onclick="openTool('${tool.url}')">
+                    <button class="btn btn-primary" onclick="openTool('${tool.url}', '${tool.id}')">
                         🔗 ${t('open')}
                     </button>
                 ` : ''}
@@ -710,13 +906,19 @@ function createToolCard(tool) {
 // Create link card
 function createLinkCard(link) {
     const url = link.type === 'local' ? link.url : link.url;
-    
+    const viewCount = getViewCount(link.id);
+
     return `
-        <div class="tool-card link" data-id="${link.id}" data-type="link" onclick="openLink('${url}')">
+        <div class="tool-card link" data-id="${link.id}" data-type="link" onclick="openLink('${url}', '${link.id}')">
             <div class="tool-header">
                 <div class="tool-title">
                     <span class="tool-icon">${link.icon || '🔗'}</span>
                     <span class="tool-name">${escapeHtml(link.name)}</span>
+                </div>
+                <div class="tool-badges">
+                    <span class="tool-badge view-count-badge" title="${viewCount} ${t('view_count_title')}">
+                        👁️ <span data-view-count="${link.id}">${formatViewCount(viewCount)}</span>
+                    </span>
                 </div>
             </div>
             <p class="tool-description">${escapeHtml(link.description || t('no_description'))}</p>
@@ -729,7 +931,7 @@ function createLinkCard(link) {
                 ` : ''}
             </div>
             <div class="tool-actions">
-                <button class="btn btn-primary" onclick="openLink('${url}')">
+                <button class="btn btn-primary" onclick="openLink('${url}', '${link.id}')">
                     🔗 ${t('open')}
                 </button>
             </div>
@@ -737,8 +939,13 @@ function createLinkCard(link) {
     `;
 }
 
-// Open tool
-function openTool(url) {
+// Open tool (with view count tracking)
+function openTool(url, toolId) {
+    // Inkrementace počtu návštěv
+    if (toolId) {
+        incrementViewCount(toolId);
+    }
+
     if (url.startsWith('http://') || url.startsWith('https://')) {
         window.open(url, '_blank');
     } else {
@@ -747,8 +954,13 @@ function openTool(url) {
     }
 }
 
-// Open link
-function openLink(url) {
+// Open link (with view count tracking)
+function openLink(url, linkId) {
+    // Inkrementace počtu návštěv
+    if (linkId) {
+        incrementViewCount(linkId);
+    }
+
     if (url.startsWith('http://') || url.startsWith('https://')) {
         window.open(url, '_blank');
     } else {
@@ -811,7 +1023,10 @@ function updateVersionDisplay() {
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Inicializace počítadla návštěv (Firebase nebo localStorage fallback)
+    await initFirebase();
+
     // Set initial language display
     const langInfo = getLanguageInfo(currentLanguage);
     updateCurrentLanguageDisplay(langInfo);
@@ -985,3 +1200,5 @@ window.openTool = openTool;
 window.openLink = openLink;
 window.setLanguage = setLanguage;
 window.APP_VERSION = APP_VERSION;
+window.incrementViewCount = incrementViewCount;
+window.getViewCount = getViewCount;

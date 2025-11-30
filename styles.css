@@ -707,6 +707,27 @@ body::before {
     text-transform: none;
 }
 
+/* View Count Badge - počítadlo návštěvnosti */
+.tool-badge.view-count-badge {
+    background: rgba(6, 182, 212, 0.15);
+    color: var(--accent-color);
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: none;
+    transition: var(--transition);
+    cursor: default;
+}
+
+.tool-badge.view-count-badge:hover {
+    background: rgba(6, 182, 212, 0.25);
+    border-color: rgba(6, 182, 212, 0.5);
+    transform: scale(1.05);
+}
+
 .tool-description {
     color: var(--text-secondary);
     font-size: 0.875rem;
