@@ -40,7 +40,9 @@ DEFAULT_YTDLP_PATHS = [
     '/usr/bin/yt-dlp',
     os.path.expanduser('~/.local/bin/yt-dlp'),
     os.path.expanduser('~/bin/yt-dlp'),
-    # Windows cesty
+    # Windows cesty - AdHub instalator
+    os.path.join(os.environ.get('LOCALAPPDATA', ''), 'AdHub', 'yt-dlp', 'yt-dlp.exe'),
+    # Windows cesty - ostatni
     os.path.expanduser('~/yt-dlp.exe'),
     'C:\\yt-dlp\\yt-dlp.exe',
     os.path.join(os.environ.get('LOCALAPPDATA', ''), 'yt-dlp', 'yt-dlp.exe'),
@@ -51,7 +53,9 @@ DEFAULT_FFMPEG_PATHS = [
     '/usr/local/bin/ffmpeg',
     '/usr/bin/ffmpeg',
     '/opt/homebrew/bin/ffmpeg',
-    # Windows cesty
+    # Windows cesty - AdHub instalator
+    os.path.join(os.environ.get('LOCALAPPDATA', ''), 'AdHub', 'ffmpeg', 'ffmpeg.exe'),
+    # Windows cesty - ostatni
     'C:\\ffmpeg\\bin\\ffmpeg.exe',
     'C:\\ffmpeg\\ffmpeg.exe',
     os.path.join(os.environ.get('LOCALAPPDATA', ''), 'ffmpeg', 'bin', 'ffmpeg.exe'),
@@ -100,18 +104,20 @@ def find_tool(tool_name, custom_path=None, default_paths=None):
         paths_to_check.extend(default_paths)
 
     for path in paths_to_check:
-        result = check_tool_at_path(path)
+        result = check_tool_at_path(path, tool_name)
         if result['available']:
             return result
 
     return {'available': False, 'path': None, 'version': None}
 
-def check_tool_at_path(path):
+def check_tool_at_path(path, tool_name=None):
     """Zkontroluje nastroj na konkretni ceste."""
     try:
-        # Zkusit spustit s --version
+        # ffmpeg pouziva -version (jedina pomlcka), yt-dlp pouziva --version
+        version_flag = '-version' if tool_name == 'ffmpeg' or 'ffmpeg' in path.lower() else '--version'
+
         result = subprocess.run(
-            [path, '--version'],
+            [path, version_flag],
             capture_output=True,
             text=True,
             timeout=10
@@ -183,7 +189,7 @@ def handle_test(message):
     if not path:
         return {'available': False, 'error': 'Cesta neni zadana'}
 
-    result = check_tool_at_path(path)
+    result = check_tool_at_path(path, tool)
     return result
 
 # ============================================================================
