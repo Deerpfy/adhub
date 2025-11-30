@@ -1,29 +1,21 @@
 #!/usr/bin/env python3
 """
-AdHub YouTube Downloader - Native Host v5.8
+AdHub YouTube Downloader - Native Host v5.9
 ============================================
 Native Messaging host pro browser extension.
 Umoznuje HD/4K stahovani a audio konverzi.
+
+STRATEGIE v5.9:
+- NEZADAVAT player_client - nechat yt-dlp automaticky vybrat nejlepsi
+- yt-dlp vyvojari neustale aktualizuji defaultni chovani
+- Cookies pouzit JEN kdyz je uzivatel explicitne posle (vekove omezena videa)
+- Jednoduchost > komplexita
 
 Podporovane typy videi:
 - Bezna videa (vsechny kvality)
 - Vekove omezena (s cookies z prohlizece)
 - Zive prenosy
 - Shorts
-
-Akce:
-- check: Zkontroluje dostupnost yt-dlp a ffmpeg
-- test: Otestuje konkretni nastroj
-- download: Stahne video/audio
-
-DULEZITE - Player klienti:
-- android, ios: Obchazeji n-challenge, ALE nepodporuji cookies!
-- web, mweb: Podporuji cookies, ale mohou vyzadovat n-challenge
-- web_creator: Podporuje cookies, casto funguje lepe nez web
-
-Strategie:
-1. Pro bezna videa (bez cookies): android -> ios -> mweb
-2. Pro vekove omezena (s cookies): web_creator -> web -> mweb
 """
 
 import sys
@@ -40,7 +32,7 @@ import ssl
 # KONFIGURACE
 # ============================================================================
 
-VERSION = '5.8'
+VERSION = '5.9'
 MAX_RETRIES = 3
 RETRY_DELAY = 2  # sekundy
 YTDLP_RELEASES_URL = 'https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest'
@@ -395,41 +387,28 @@ def handle_download(message, retry_count=0):
 
     cmd = [ytdlp['path']]
 
-    # Obecne nastaveni pro lepsi kompatibilitu
+    # =========================================================================
+    # v5.9: ZJEDNODUSENY PRISTUP
+    # =========================================================================
+    # - NEZADAVAME --extractor-args (nechat yt-dlp vybrat nejlepsi klient)
+    # - yt-dlp vyvojari aktivne updatuji defaultni chovani pro YouTube
+    # - Cookies pouzit JEN kdyz jsou explicitne poslane z extension
+    # - Toto zajistuje kompatibilitu s budoucimi zmenami YouTube
+    # =========================================================================
+
     cmd.extend([
         '--no-playlist',           # Nestahovat playlisty
-        '--no-check-certificates', # Preskocit certifikaty (nekdy pomaha)
+        '--no-check-certificates', # Preskocit problemy s certifikaty
+        '--no-warnings',           # Potlacit varovani (cleaner output)
     ])
 
-    # =========================================================================
-    # DULEZITE: Volba player klientu podle pouziti cookies
-    # =========================================================================
-    # - android, ios: Obchazeji n-challenge, ALE NEPODPORUJI COOKIES!
-    # - web_creator, web, mweb: Podporuji cookies
-    #
-    # Pokud pouzivame cookies a zaroven android/ios -> yt-dlp je PRESKOCI
-    # a zustane jen mweb ktery potrebuje PO Token -> SELHANI
-    # =========================================================================
-
+    # Cookies - pouzit JEN kdyz je extension explicitne posle
+    # (pro vekove omezena videa kde je uzivatel prihlasen)
     cookies_from_ext = message.get('cookies')
-    cookies_path = get_cookies_path(cookies_from_ext)
-
-    # Rozhodnout zda pouzit cookies
-    will_use_cookies = use_cookies and (cookies_path is not None)
-
-    if will_use_cookies:
-        # S COOKIES: Pouzit klienty ktere cookies podporuji
-        # web_creator je nejlepsi pro autentizovane pozadavky
-        cmd.extend([
-            '--extractor-args', 'youtube:player_client=web_creator,web,mweb',
-            '--cookies', cookies_path,
-        ])
-    else:
-        # BEZ COOKIES: Pouzit android/ios ktere obchazeji n-challenge
-        # Tyto klienti nevyzaduji reseni n-challenge
-        cmd.extend([
-            '--extractor-args', 'youtube:player_client=android,ios,mweb;player_skip=webpage',
-        ])
+    if use_cookies and cookies_from_ext:
+        cookies_path = get_cookies_path(cookies_from_ext)
+        if cookies_path:
+            cmd.extend(['--cookies', cookies_path])
 
     # Format
     if format_type == 'audio' or audio_format:
@@ -559,44 +538,50 @@ def parse_error_message(error_msg):
     """Parsuje chybovou hlasku na uzivatelsky pritelive zpravy."""
     error_lower = error_msg.lower()
 
-    # N challenge - YouTube throttling protection (ios klient by mel obejit)
+    # N challenge - YouTube anti-bot ochrana
     if 'n challenge' in error_lower or 'challenge solver' in error_lower:
-        return 'YouTube anti-bot ochrana. Zkuste znovu za chvili nebo pouzijte Zakladni stahovani'
-    # SABR streaming issue (novy YouTube problem)
+        return 'YouTube docasna ochrana. Pockejte 30s a zkuste znovu, nebo pouzijte Zakladni stahovani (do 720p)'
+    # PO Token issue
+    elif 'po token' in error_lower or 'gvs po' in error_lower:
+        return 'YouTube vyzaduje overeni. Zkuste Zakladni stahovani (do 720p)'
+    # SABR streaming issue
     elif 'sabr' in error_lower or 'missing a url' in error_lower:
-        return 'YouTube docasne blokuje. Zkuste znovu za 30 sekund'
+        return 'YouTube docasne blokuje. Pockejte 30s a zkuste znovu'
+    # Age restricted
     elif 'sign in' in error_lower and 'age' in error_lower:
-        return 'Video je vekove omezene. Ujistete se, ze jste prihlaseni na YouTube'
+        return 'Video je vekove omezene. Prihlaste se na YouTube a zkuste znovu'
     elif 'sign in' in error_lower:
         return 'Vyzaduje prihlaseni do YouTube'
+    # Content restrictions
     elif 'private' in error_lower:
         return 'Video je soukrome'
     elif 'members only' in error_lower or 'member' in error_lower:
         return 'Video je pouze pro cleny kanalu'
     elif 'copyright' in error_lower or 'blocked' in error_lower:
-        return 'Video bylo zablokovano z duvodu autorskych prav'
+        return 'Video zablokovano (autorska prava)'
     elif 'live' in error_lower and ('not' in error_lower or 'offline' in error_lower):
-        return 'Zivy prenos jeste nezacal nebo uz skoncil'
+        return 'Zivy prenos neni dostupny'
+    # HTTP errors
     elif '403' in error_msg or 'forbidden' in error_lower:
-        return 'Pristup odepren (403). Zkuste znovu nebo pouzijte Zakladni stahovani'
+        return 'Pristup odepren. Zkuste Zakladni stahovani'
     elif '404' in error_msg:
-        return 'Video nebylo nalezeno (404)'
+        return 'Video nenalezeno'
     elif 'rate' in error_lower or '429' in error_msg:
-        return 'Prilis mnoho pozadavku (429). Pockejte 1-2 minuty a zkuste znovu'
+        return 'Prilis mnoho pozadavku. Pockejte 2 minuty'
+    # Availability
     elif 'unavailable' in error_lower or 'not available' in error_lower:
-        return 'Video neni dostupne v teto zemi nebo bylo odstraneno'
+        return 'Video neni dostupne'
     elif 'no suitable' in error_lower or 'no format' in error_lower:
-        return 'Zadny kompatibilni format. Zkuste jinou kvalitu'
+        return 'Format neni dostupny. Zkuste jinou kvalitu'
+    # Technical issues
     elif 'ffmpeg' in error_lower or 'postprocess' in error_lower:
-        return 'Chyba zpracovani videa. Overtte ze ffmpeg je spravne nainstalovan'
-    elif 'skipping' in error_lower and 'client' in error_lower:
-        return 'YouTube docasne omezuje. Zkuste znovu za chvili'
+        return 'Chyba ffmpeg. Zkontrolujte instalaci'
     elif 'getaddrinfo' in error_lower or 'connection' in error_lower:
-        return 'Chyba pripojeni k internetu. Zkontrolujte sit'
+        return 'Chyba site. Zkontrolujte pripojeni'
 
-    # Zkratit dlouhe chyby ale zachovat vice informaci
-    if len(error_msg) > 200:
-        return error_msg[:200] + '...'
+    # Zkratit dlouhe chyby
+    if len(error_msg) > 150:
+        return error_msg[:150] + '...'
     return error_msg
 
 # ============================================================================
