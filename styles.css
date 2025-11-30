@@ -390,17 +390,15 @@ body::before {
 
 /* Controls - Moderní tabs */
 .controls {
-    margin: 24px 0 16px;
+    margin: 20px 0;
 }
 
 .filter-tabs {
     display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
+    gap: 6px;
     flex-wrap: wrap;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 4px;
 }
 
 .filter-tabs::-webkit-scrollbar {
@@ -418,14 +416,14 @@ body::before {
 }
 
 .filter-tab {
-    padding: 10px 20px;
+    padding: 8px 18px;
     background: var(--bg-card);
-    border: 1.5px solid var(--border-color);
-    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
     color: var(--text-secondary);
     cursor: pointer;
-    font-size: 0.9rem;
-    font-weight: 600;
+    font-size: 0.85rem;
+    font-weight: 500;
     transition: var(--transition);
     white-space: nowrap;
     touch-action: manipulation;
@@ -443,10 +441,9 @@ body::before {
 }
 
 .filter-tab.active {
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    background: var(--primary-color);
     border-color: var(--primary-color);
     color: white;
-    box-shadow: var(--shadow-glow);
 }
 
 .category-filters {
