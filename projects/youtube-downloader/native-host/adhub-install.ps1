@@ -1,6 +1,6 @@
-# AdHub YouTube Downloader - Instalator v5.9
+# AdHub YouTube Downloader - Instalator v6.0
 # Tento skript se stahuje a spousti pres adhub-install.bat
-# v5.9: Zjednoduseny pristup - nechat yt-dlp vybrat nejlepsi klient
+# v6.0: Automaticke retry s ruznymi player clients pro obejiti n-challenge
 
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
@@ -8,7 +8,7 @@ $ProgressPreference = 'SilentlyContinue'
 
 Write-Host ""
 Write-Host "==============================================" -ForegroundColor Yellow
-Write-Host "  AdHub YouTube Downloader - Instalator v5.9" -ForegroundColor Yellow
+Write-Host "  AdHub YouTube Downloader - Instalator v6.0" -ForegroundColor Yellow
 Write-Host "==============================================" -ForegroundColor Yellow
 Write-Host ""
 

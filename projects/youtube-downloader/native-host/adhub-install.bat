@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul 2>&1
-title AdHub YouTube Downloader - Installer v5.5
+title AdHub YouTube Downloader - Installer v6.0
 
 echo.
 echo ========================================
