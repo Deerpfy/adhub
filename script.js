@@ -910,7 +910,7 @@ function createLinkCard(link) {
     const viewCount = getViewCount(link.id);
 
     return `
-        <div class="tool-card link" data-id="${link.id}" data-type="link" onclick="openLink('${url}', '${link.id}')">
+        <div class="tool-card link" data-id="${link.id}" data-type="link">
             <div class="tool-header">
                 <div class="tool-title">
                     <span class="tool-icon">${link.icon || '🔗'}</span>
