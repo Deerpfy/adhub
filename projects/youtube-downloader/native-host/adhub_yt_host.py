@@ -290,8 +290,8 @@ def handle_download(message, retry_count=0):
     cmd.extend([
         '--no-playlist',           # Nestahovat playlisty
         '--no-check-certificates', # Preskocit certifikaty (nekdy pomaha)
-        # Pouzit klienty ktere funguji lepe s cookies a SABR
-        '--extractor-args', 'youtube:player_client=ios,web_creator',
+        # tv_embedded a mweb klienti funguji bez problemu s cookies
+        '--extractor-args', 'youtube:player_client=tv_embedded,mweb,web',
     ])
 
     # Cookies pro vekove omezena videa (prioritne z extension)
@@ -428,8 +428,11 @@ def parse_error_message(error_msg):
     """Parsuje chybovou hlasku na uzivatelsky pritelive zpravy."""
     error_lower = error_msg.lower()
 
+    # N challenge - YouTube throttling protection
+    if 'n challenge' in error_lower or 'challenge solver' in error_lower:
+        return 'YouTube throttling. NUTNE aktualizujte yt-dlp: yt-dlp -U'
     # SABR streaming issue (novy YouTube problem)
-    if 'sabr' in error_lower or 'missing a url' in error_lower:
+    elif 'sabr' in error_lower or 'missing a url' in error_lower:
         return 'YouTube blokuje stahovani. Aktualizujte yt-dlp: yt-dlp -U'
     elif 'sign in' in error_lower and 'age' in error_lower:
         return 'Video je vekove omezene. Aktualizujte yt-dlp: yt-dlp -U'
