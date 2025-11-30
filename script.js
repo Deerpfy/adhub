@@ -40,6 +40,7 @@ const FIREBASE_CONFIG = {
 let viewCounts = {};
 let firebaseInitialized = false;
 let firebaseDb = null;
+let pendingIncrements = new Set(); // Ochrana proti vícenásobnému volání
 
 // Inicializace Firebase (pouze pokud je nakonfigurováno)
 async function initFirebase() {
@@ -123,25 +124,49 @@ function loadViewCountsFromLocalStorage() {
 async function incrementViewCount(toolId) {
     if (!toolId) return;
 
-    // Inkrementace lokálně
-    viewCounts[toolId] = (viewCounts[toolId] || 0) + 1;
-
-    // Uložení do localStorage
-    localStorage.setItem('adhub_view_counts', JSON.stringify(viewCounts));
-
-    // Aktualizace UI
-    updateViewCountUI(toolId);
+    // Ochrana proti vícenásobnému volání (debounce)
+    if (pendingIncrements.has(toolId)) {
+        console.log(`[ViewCounter] ${toolId}: již probíhá, přeskakuji`);
+        return;
+    }
+    pendingIncrements.add(toolId);
 
     // Odeslání do Firebase (pokud je nakonfigurováno)
     if (firebaseInitialized && firebaseDb) {
         try {
-            await firebaseDb.ref(`views/${toolId}`).transaction((currentValue) => {
-                return (currentValue || 0) + 1;
-            });
+            // Použijeme serverValue.increment pro atomickou operaci
+            await firebaseDb.ref(`views/${toolId}`).set(
+                firebase.database.ServerValue.increment(1)
+            );
+
+            // Po úspěšném zápisu načteme aktuální hodnotu
+            const snapshot = await firebaseDb.ref(`views/${toolId}`).once('value');
+            const newValue = snapshot.val() || 0;
+            viewCounts[toolId] = newValue;
+
+            // Uložení do localStorage jako cache
+            localStorage.setItem('adhub_view_counts', JSON.stringify(viewCounts));
+
+            // Aktualizace UI
+            updateViewCountUI(toolId);
+
+            console.log(`[ViewCounter] ${toolId}: ${newValue}`);
         } catch (error) {
             console.error('[ViewCounter] Chyba při ukládání do Firebase:', error);
+            // Fallback na lokální inkrementaci
+            viewCounts[toolId] = (viewCounts[toolId] || 0) + 1;
+            localStorage.setItem('adhub_view_counts', JSON.stringify(viewCounts));
+            updateViewCountUI(toolId);
         }
+    } else {
+        // Fallback - pouze localStorage
+        viewCounts[toolId] = (viewCounts[toolId] || 0) + 1;
+        localStorage.setItem('adhub_view_counts', JSON.stringify(viewCounts));
+        updateViewCountUI(toolId);
     }
+
+    // Uvolnění zámku po krátké době
+    setTimeout(() => pendingIncrements.delete(toolId), 1000);
 }
 
 // Aktualizace UI pro všechny počítadla
@@ -890,7 +915,7 @@ function createLinkCard(link) {
     const viewCount = getViewCount(link.id);
 
     return `
-        <div class="tool-card link" data-id="${link.id}" data-type="link" onclick="openLink('${url}', '${link.id}')">
+        <div class="tool-card link" data-id="${link.id}" data-type="link">
             <div class="tool-header">
                 <div class="tool-title">
                     <span class="tool-icon">${link.icon || '🔗'}</span>
