@@ -326,12 +326,8 @@ chrome.downloads.onChanged.addListener((delta) => {
 // ============================================================================
 
 function generateWindowsInstaller() {
-  // Vraci PRIMO PowerShell skript - uzivatel ho spusti pres "Run with PowerShell"
-  // Nebo ho muzeme spustit pres powershell -File
-  return `# AdHub YouTube Downloader - Instalator v5.5
-# Kliknete pravym a "Run with PowerShell" nebo spustte: powershell -File adhub-install.ps1
-
-$ErrorActionPreference = 'Continue'
+  // PowerShell skript ktery se spusti
+  const ps1Script = `$ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
@@ -341,24 +337,26 @@ Write-Host "  AdHub YouTube Downloader - Instalator v5.5" -ForegroundColor Yello
 Write-Host "==============================================" -ForegroundColor Yellow
 Write-Host ""
 
-# Slozky
-Write-Host "[+] Vytvarim slozky..." -ForegroundColor Green
 $d = "$env:LOCALAPPDATA\\AdHub"
 $yt = "$d\\yt-dlp"
 $ff = "$d\\ffmpeg"
 $nh = "$d\\native-host"
+
+Write-Host "[+] Vytvarim slozky..." -ForegroundColor Green
 New-Item -ItemType Directory -Force -Path $yt | Out-Null
 New-Item -ItemType Directory -Force -Path $ff | Out-Null
 New-Item -ItemType Directory -Force -Path $nh | Out-Null
 Write-Host "    Cesta: $d" -ForegroundColor Cyan
 
-# yt-dlp
 Write-Host "[+] Stahuji yt-dlp..." -ForegroundColor Green
 $ytexe = "$yt\\yt-dlp.exe"
-Invoke-WebRequest -Uri "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe" -OutFile $ytexe -UseBasicParsing
-Write-Host "    OK: $ytexe" -ForegroundColor Cyan
+try {
+    Invoke-WebRequest -Uri "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe" -OutFile $ytexe -UseBasicParsing
+    Write-Host "    OK: $ytexe" -ForegroundColor Cyan
+} catch {
+    Write-Host "    Chyba: $_" -ForegroundColor Red
+}
 
-# ffmpeg
 Write-Host "[+] Stahuji ffmpeg (80MB, muze trvat 2-5 min)..." -ForegroundColor Yellow
 $fz = "$env:TEMP\\ffmpeg.zip"
 $fe = "$env:TEMP\\ffmpeg-ex"
@@ -376,12 +374,11 @@ try {
     Remove-Item $fe -Recurse -Force -ErrorAction SilentlyContinue
     Write-Host "    OK: $ff\\ffmpeg.exe" -ForegroundColor Cyan
 } catch {
-    Write-Host "    Chyba: $_" -ForegroundColor Yellow
+    Write-Host "    Chyba ffmpeg: $_" -ForegroundColor Red
 }
 
-# Native Host Python
 Write-Host "[+] Vytvarim Native Host..." -ForegroundColor Green
-$py = @'
+$pyCode = @"
 #!/usr/bin/env python3
 import sys,os,json,struct,subprocess,shutil,tempfile,atexit
 VERSION='5.5'
@@ -432,23 +429,23 @@ while 1:
     elif a=='test':send_msg(find_tool(m.get('tool'),m.get('path')))
     elif a=='download':send_msg(download(m));break
     elif a=='ping':send_msg({'success':1,'version':VERSION})
-'@
-Set-Content -Path "$nh\\adhub_yt_host.py" -Value $py -Encoding UTF8
+"@
+Set-Content -Path "$nh\\adhub_yt_host.py" -Value $pyCode -Encoding UTF8
 Write-Host "    OK: $nh\\adhub_yt_host.py" -ForegroundColor Cyan
 
-# Manifest
 Write-Host "[+] Vytvarim manifest..." -ForegroundColor Green
-$mf = '{"name":"com.adhub.ytdownloader","description":"AdHub","path":"' + $nh.Replace("\\","\\\\") + '\\\\adhub_yt_host.py","type":"stdio","allowed_origins":["chrome-extension://*/"]}'
+$manifestPath = $nh.Replace("\\","\\\\") + "\\\\adhub_yt_host.py"
+$mf = '{"name":"com.adhub.ytdownloader","description":"AdHub","path":"' + $manifestPath + '","type":"stdio","allowed_origins":["chrome-extension://*/"]}'
 Set-Content -Path "$nh\\com.adhub.ytdownloader.json" -Value $mf -Encoding UTF8
 
-# Registry
 Write-Host "[+] Registruji pro Chrome a Edge..." -ForegroundColor Green
+$manifestFile = "$nh\\com.adhub.ytdownloader.json"
 $rp = "HKCU:\\Software\\Google\\Chrome\\NativeMessagingHosts\\com.adhub.ytdownloader"
 New-Item -Path $rp -Force | Out-Null
-Set-ItemProperty -Path $rp -Name "(Default)" -Value "$nh\\com.adhub.ytdownloader.json"
+Set-ItemProperty -Path $rp -Name "(Default)" -Value $manifestFile
 $rp = "HKCU:\\Software\\Microsoft\\Edge\\NativeMessagingHosts\\com.adhub.ytdownloader"
 New-Item -Path $rp -Force | Out-Null
-Set-ItemProperty -Path $rp -Name "(Default)" -Value "$nh\\com.adhub.ytdownloader.json"
+Set-ItemProperty -Path $rp -Name "(Default)" -Value $manifestFile
 
 Write-Host ""
 Write-Host "==============================================" -ForegroundColor Green
@@ -458,9 +455,30 @@ Write-Host ""
 Write-Host "yt-dlp:  $ytexe" -ForegroundColor Cyan
 Write-Host "ffmpeg:  $ff\\ffmpeg.exe" -ForegroundColor Cyan
 Write-Host ""
-Write-Host "Restartujte prohlizec!" -ForegroundColor Yellow
+Write-Host "Restartujte prohlizec a zkontrolujte rozsireni!" -ForegroundColor Yellow
 Write-Host ""
-Read-Host "Stisknete Enter pro ukonceni"
+Read-Host "Stisknete Enter pro ukonceni"`;
+
+  // Konvertovat PS1 skript do UTF-16LE a pak Base64 pro -EncodedCommand
+  const utf16leBytes = [];
+  for (let i = 0; i < ps1Script.length; i++) {
+    const code = ps1Script.charCodeAt(i);
+    utf16leBytes.push(code & 0xFF);
+    utf16leBytes.push((code >> 8) & 0xFF);
+  }
+  const base64Script = btoa(String.fromCharCode.apply(null, utf16leBytes));
+
+  // Batch soubor ktery spusti PowerShell s Bypass a EncodedCommand
+  return `@echo off
+chcp 65001 >nul 2>&1
+echo.
+echo ========================================
+echo   AdHub YouTube Downloader Installer
+echo ========================================
+echo.
+echo Spoustim instalaci...
+echo.
+powershell -ExecutionPolicy Bypass -EncodedCommand ${base64Script}
 `;
 }
 
