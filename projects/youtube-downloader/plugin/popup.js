@@ -256,11 +256,26 @@
       unix: `${GITHUB_BASE}/adhub-install.sh`
     };
 
-    const filename = platform === 'windows' ? 'adhub-install.bat' : 'adhub-install.sh';
+    const ext = platform === 'windows' ? 'bat' : 'sh';
     const url = urls[platform];
 
     try {
-      // Stahnout primo z GitHubu
+      // Ziskat posledni commit hash pro soubor
+      let commitHash = 'unknown';
+      try {
+        const apiUrl = `https://api.github.com/repos/Deerpfy/adhub/commits?path=projects/youtube-downloader/native-host/adhub-install.${ext}&per_page=1`;
+        const commitResp = await fetch(apiUrl);
+        if (commitResp.ok) {
+          const commits = await commitResp.json();
+          if (commits.length > 0) {
+            commitHash = commits[0].sha.substring(0, 7); // Kratky hash (7 znaku)
+          }
+        }
+      } catch (e) {
+        console.log('[Popup] Nelze ziskat commit hash:', e);
+      }
+
+      // Stahnout instalator
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -270,6 +285,9 @@
       const content = await response.text();
       const blob = new Blob([content], { type: 'text/plain' });
       const blobUrl = URL.createObjectURL(blob);
+
+      // Nazev souboru s commit hashem
+      const filename = `adhub-install_${commitHash}.${ext}`;
 
       const a = document.createElement('a');
       a.href = blobUrl;
@@ -281,9 +299,9 @@
 
       // Zobrazit instrukce
       if (platform === 'windows') {
-        showToast('Stazeno! Dvakrat kliknete pro spusteni');
+        showToast(`Stazeno ${commitHash}! Dvakrat kliknete`);
       } else {
-        showToast('Stazeno! Spustte: ./adhub-install.sh');
+        showToast(`Stazeno ${commitHash}! ./adhub-install_${commitHash}.sh`);
       }
     } catch (e) {
       console.error('[Popup] Chyba pri stahovani instalatoru:', e);
