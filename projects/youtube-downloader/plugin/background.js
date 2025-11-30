@@ -326,146 +326,141 @@ chrome.downloads.onChanged.addListener((delta) => {
 // ============================================================================
 
 function generateWindowsInstaller() {
-  // Generuje PowerShell skript primo - bez batch file komplikaci
-  return `powershell -ExecutionPolicy Bypass -Command "& {
+  // Vraci PRIMO PowerShell skript - uzivatel ho spusti pres "Run with PowerShell"
+  // Nebo ho muzeme spustit pres powershell -File
+  return `# AdHub YouTube Downloader - Instalator v5.5
+# Kliknete pravym a "Run with PowerShell" nebo spustte: powershell -File adhub-install.ps1
+
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
-
-Write-Host ''
-Write-Host '==============================================' -ForegroundColor Yellow
-Write-Host '  AdHub YouTube Downloader - Instalator v5.5' -ForegroundColor Yellow
-Write-Host '==============================================' -ForegroundColor Yellow
-Write-Host ''
-
-Write-Host '[+] Vytvarim slozky...' -ForegroundColor Green
-$InstallDir = Join-Path $env:LOCALAPPDATA 'AdHub'
-$YtdlpDir = Join-Path $InstallDir 'yt-dlp'
-$FfmpegDir = Join-Path $InstallDir 'ffmpeg'
-$NativeHostDir = Join-Path $InstallDir 'native-host'
-New-Item -ItemType Directory -Force -Path $YtdlpDir | Out-Null
-New-Item -ItemType Directory -Force -Path $FfmpegDir | Out-Null
-New-Item -ItemType Directory -Force -Path $NativeHostDir | Out-Null
-Write-Host ('    Cesta: ' + $InstallDir) -ForegroundColor Cyan
-
-Write-Host '[+] Stahuji yt-dlp...' -ForegroundColor Green
-$YtdlpExe = Join-Path $YtdlpDir 'yt-dlp.exe'
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-Invoke-WebRequest -Uri 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe' -OutFile $YtdlpExe -UseBasicParsing
-Write-Host ('    OK: ' + $YtdlpExe) -ForegroundColor Cyan
 
-Write-Host '[+] Stahuji ffmpeg (80 MB, prosim cekejte)...' -ForegroundColor Green
-$FfmpegZip = Join-Path $env:TEMP 'ffmpeg.zip'
-$FfmpegExtract = Join-Path $env:TEMP 'ffmpeg-extract'
+Write-Host ""
+Write-Host "==============================================" -ForegroundColor Yellow
+Write-Host "  AdHub YouTube Downloader - Instalator v5.5" -ForegroundColor Yellow
+Write-Host "==============================================" -ForegroundColor Yellow
+Write-Host ""
+
+# Slozky
+Write-Host "[+] Vytvarim slozky..." -ForegroundColor Green
+$d = "$env:LOCALAPPDATA\\AdHub"
+$yt = "$d\\yt-dlp"
+$ff = "$d\\ffmpeg"
+$nh = "$d\\native-host"
+New-Item -ItemType Directory -Force -Path $yt | Out-Null
+New-Item -ItemType Directory -Force -Path $ff | Out-Null
+New-Item -ItemType Directory -Force -Path $nh | Out-Null
+Write-Host "    Cesta: $d" -ForegroundColor Cyan
+
+# yt-dlp
+Write-Host "[+] Stahuji yt-dlp..." -ForegroundColor Green
+$ytexe = "$yt\\yt-dlp.exe"
+Invoke-WebRequest -Uri "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe" -OutFile $ytexe -UseBasicParsing
+Write-Host "    OK: $ytexe" -ForegroundColor Cyan
+
+# ffmpeg
+Write-Host "[+] Stahuji ffmpeg (80MB, muze trvat 2-5 min)..." -ForegroundColor Yellow
+$fz = "$env:TEMP\\ffmpeg.zip"
+$fe = "$env:TEMP\\ffmpeg-ex"
 try {
     $wc = New-Object System.Net.WebClient
-    $wc.DownloadFile('https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip', $FfmpegZip)
-    Write-Host '    Stazeno! Rozbaluji...' -ForegroundColor Green
-    if (Test-Path $FfmpegExtract) { Remove-Item -Path $FfmpegExtract -Recurse -Force }
-    Expand-Archive -Path $FfmpegZip -DestinationPath $FfmpegExtract -Force
-    $bin = Get-ChildItem -Path $FfmpegExtract -Recurse -Directory | Where-Object { \\$_.Name -eq 'bin' } | Select-Object -First 1
-    if (\\$bin) {
-        Copy-Item -Path (Join-Path \\$bin.FullName 'ffmpeg.exe') -Destination $FfmpegDir -Force
-        Copy-Item -Path (Join-Path \\$bin.FullName 'ffprobe.exe') -Destination $FfmpegDir -Force -ErrorAction SilentlyContinue
-        Write-Host ('    OK: ' + $FfmpegDir + '\\\\ffmpeg.exe') -ForegroundColor Cyan
+    $wc.DownloadFile("https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip", $fz)
+    Write-Host "    Rozbaluji..." -ForegroundColor Green
+    Expand-Archive -Path $fz -DestinationPath $fe -Force
+    $bin = Get-ChildItem $fe -Recurse -Directory | Where-Object { $_.Name -eq "bin" } | Select-Object -First 1
+    if ($bin) {
+        Copy-Item "$($bin.FullName)\\ffmpeg.exe" $ff -Force
+        Copy-Item "$($bin.FullName)\\ffprobe.exe" $ff -Force -ErrorAction SilentlyContinue
     }
-    Remove-Item -Path $FfmpegZip -Force -ErrorAction SilentlyContinue
-    Remove-Item -Path $FfmpegExtract -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item $fz -Force -ErrorAction SilentlyContinue
+    Remove-Item $fe -Recurse -Force -ErrorAction SilentlyContinue
+    Write-Host "    OK: $ff\\ffmpeg.exe" -ForegroundColor Cyan
 } catch {
-    Write-Host ('    CHYBA: ' + \\$_.Exception.Message) -ForegroundColor Yellow
+    Write-Host "    Chyba: $_" -ForegroundColor Yellow
 }
 
-Write-Host '[+] Vytvarim Native Host...' -ForegroundColor Green
-$PyCode = @'
+# Native Host Python
+Write-Host "[+] Vytvarim Native Host..." -ForegroundColor Green
+$py = @'
 #!/usr/bin/env python3
 import sys,os,json,struct,subprocess,shutil,tempfile,atexit
 VERSION='5.5'
 _tcf=None
-def read_message():
-    raw=sys.stdin.buffer.read(4)
-    if not raw:return None
-    return json.loads(sys.stdin.buffer.read(struct.unpack('I',raw)[0]).decode('utf-8'))
-def send_message(m):
-    e=json.dumps(m).encode('utf-8')
+def read_msg():
+    r=sys.stdin.buffer.read(4)
+    return json.loads(sys.stdin.buffer.read(struct.unpack('I',r)[0]).decode()) if r else None
+def send_msg(m):
+    e=json.dumps(m).encode()
     sys.stdout.buffer.write(struct.pack('I',len(e))+e)
     sys.stdout.buffer.flush()
 def find_tool(n,c=None):
     for p in [c,shutil.which(n)]:
         if p:
             try:
-                r=subprocess.run([p,'--version'],capture_output=True,text=True,timeout=10)
-                if r.returncode==0:return{'available':True,'path':p,'version':'ok'}
+                if subprocess.run([p,'--version'],capture_output=1,timeout=10).returncode==0:return{'available':1,'path':p}
             except:pass
-    return{'available':False,'path':None,'version':None}
-def save_cookies(c):
+    return{'available':0,'path':None}
+def save_ck(c):
     global _tcf
-    if not c:return None
+    if not c:return
     fd,p=tempfile.mkstemp(suffix='.txt')
-    with os.fdopen(fd,'w')as f:f.write(c)
+    os.fdopen(fd,'w').write(c)
     _tcf=p
     return p
-def cleanup():
-    if _tcf and os.path.exists(_tcf):os.remove(_tcf)
-atexit.register(cleanup)
-def handle_download(m):
-    url,fmt,q,af=m.get('url'),m.get('format','video'),m.get('quality','best'),m.get('audioFormat')
+atexit.register(lambda:os.path.exists(_tcf) and os.remove(_tcf) if _tcf else None)
+def download(m):
     yt=find_tool('yt-dlp',m.get('ytdlpPath'))
-    if not yt['available']:return{'success':False,'error':'yt-dlp neni dostupny'}
-    cmd=[yt['path'],'--no-playlist','--no-warnings','-o',os.path.expanduser('~/Downloads/%(title).150s.%(ext)s')]
-    ck=save_cookies(m.get('cookies'))
-    if ck:cmd.extend(['--cookies',ck])
-    if fmt=='audio'or af:
-        cmd.extend(['-f','bestaudio/best'])
-        if af:cmd.extend(['-x','--audio-format',af])
-    else:
-        cmd.extend(['-f','bestvideo+bestaudio/best','--merge-output-format','mp4'])
+    if not yt['available']:return{'success':0,'error':'yt-dlp missing'}
+    cmd=[yt['path'],'--no-playlist','-o',os.path.expanduser('~/Downloads/%(title).100s.%(ext)s')]
+    ck=save_ck(m.get('cookies'))
+    if ck:cmd+=['--cookies',ck]
+    af=m.get('audioFormat')
+    if m.get('format')=='audio' or af:
+        cmd+=['-f','ba/b']
+        if af:cmd+=['-x','--audio-format',af]
+    else:cmd+=['-f','bv+ba/b','--merge-output-format','mp4']
     ff=find_tool('ffmpeg',m.get('ffmpegPath'))
-    if ff['available']:cmd.extend(['--ffmpeg-location',os.path.dirname(ff['path'])])
-    cmd.append(url)
-    try:
-        r=subprocess.run(cmd,capture_output=True,text=True,timeout=900)
-        return{'success':r.returncode==0,'error':r.stderr[:200]if r.returncode!=0 else None}
-    except Exception as e:return{'success':False,'error':str(e)[:200]}
-def main():
-    while True:
-        m=read_message()
-        if not m:break
-        a=m.get('action')
-        if a=='check':send_message({'success':True,'version':VERSION,'ytdlp':find_tool('yt-dlp'),'ffmpeg':find_tool('ffmpeg')})
-        elif a=='test':send_message(find_tool(m.get('tool'),m.get('path')))
-        elif a=='download':send_message(handle_download(m));break
-        elif a=='ping':send_message({'success':True,'version':VERSION})
-        else:send_message({'success':False,'error':'Unknown'})
-if __name__=='__main__':main()
+    if ff['available']:cmd+=['--ffmpeg-location',os.path.dirname(ff['path'])]
+    cmd.append(m['url'])
+    r=subprocess.run(cmd,capture_output=1,text=1,timeout=900)
+    return{'success':r.returncode==0,'error':r.stderr[:200] if r.returncode else None}
+while 1:
+    m=read_msg()
+    if not m:break
+    a=m.get('action')
+    if a=='check':send_msg({'success':1,'version':VERSION,'ytdlp':find_tool('yt-dlp'),'ffmpeg':find_tool('ffmpeg')})
+    elif a=='test':send_msg(find_tool(m.get('tool'),m.get('path')))
+    elif a=='download':send_msg(download(m));break
+    elif a=='ping':send_msg({'success':1,'version':VERSION})
 '@
-Set-Content -Path (Join-Path $NativeHostDir 'adhub_yt_host.py') -Value $PyCode -Encoding UTF8
-Write-Host ('    OK: ' + $NativeHostDir + '\\\\adhub_yt_host.py') -ForegroundColor Cyan
+Set-Content -Path "$nh\\adhub_yt_host.py" -Value $py -Encoding UTF8
+Write-Host "    OK: $nh\\adhub_yt_host.py" -ForegroundColor Cyan
 
-Write-Host '[+] Vytvarim manifest...' -ForegroundColor Green
-$manifest = '{\\\"name\\\":\\\"com.adhub.ytdownloader\\\",\\\"description\\\":\\\"AdHub YT DL\\\",\\\"path\\\":\\\"' + $NativeHostDir + '\\\\adhub_yt_host.py\\\",\\\"type\\\":\\\"stdio\\\",\\\"allowed_origins\\\":[\\\"chrome-extension://*/\\\"]}'
-Set-Content -Path (Join-Path $NativeHostDir 'com.adhub.ytdownloader.json') -Value $manifest -Encoding UTF8
+# Manifest
+Write-Host "[+] Vytvarim manifest..." -ForegroundColor Green
+$mf = '{"name":"com.adhub.ytdownloader","description":"AdHub","path":"' + $nh.Replace("\\","\\\\") + '\\\\adhub_yt_host.py","type":"stdio","allowed_origins":["chrome-extension://*/"]}'
+Set-Content -Path "$nh\\com.adhub.ytdownloader.json" -Value $mf -Encoding UTF8
 
-Write-Host '[+] Registruji pro Chrome...' -ForegroundColor Green
-$regPath = 'HKCU:\\\\Software\\\\Google\\\\Chrome\\\\NativeMessagingHosts\\\\com.adhub.ytdownloader'
-New-Item -Path $regPath -Force | Out-Null
-Set-ItemProperty -Path $regPath -Name '(Default)' -Value (Join-Path $NativeHostDir 'com.adhub.ytdownloader.json')
+# Registry
+Write-Host "[+] Registruji pro Chrome a Edge..." -ForegroundColor Green
+$rp = "HKCU:\\Software\\Google\\Chrome\\NativeMessagingHosts\\com.adhub.ytdownloader"
+New-Item -Path $rp -Force | Out-Null
+Set-ItemProperty -Path $rp -Name "(Default)" -Value "$nh\\com.adhub.ytdownloader.json"
+$rp = "HKCU:\\Software\\Microsoft\\Edge\\NativeMessagingHosts\\com.adhub.ytdownloader"
+New-Item -Path $rp -Force | Out-Null
+Set-ItemProperty -Path $rp -Name "(Default)" -Value "$nh\\com.adhub.ytdownloader.json"
 
-Write-Host '[+] Registruji pro Edge...' -ForegroundColor Green
-$regPath = 'HKCU:\\\\Software\\\\Microsoft\\\\Edge\\\\NativeMessagingHosts\\\\com.adhub.ytdownloader'
-New-Item -Path $regPath -Force | Out-Null
-Set-ItemProperty -Path $regPath -Name '(Default)' -Value (Join-Path $NativeHostDir 'com.adhub.ytdownloader.json')
-
-Write-Host ''
-Write-Host '==============================================' -ForegroundColor Green
-Write-Host '  INSTALACE DOKONCENA!' -ForegroundColor Green
-Write-Host '==============================================' -ForegroundColor Green
-Write-Host ''
-Write-Host ('yt-dlp:  ' + $YtdlpExe) -ForegroundColor Cyan
-Write-Host ('ffmpeg:  ' + $FfmpegDir + '\\\\ffmpeg.exe') -ForegroundColor Cyan
-Write-Host ''
-Write-Host 'Restartujte prohlizec a otevrete rozsireni.' -ForegroundColor Yellow
-Write-Host ''
-Read-Host 'Stisknete Enter pro ukonceni'
-}"
+Write-Host ""
+Write-Host "==============================================" -ForegroundColor Green
+Write-Host "  INSTALACE DOKONCENA!" -ForegroundColor Green
+Write-Host "==============================================" -ForegroundColor Green
+Write-Host ""
+Write-Host "yt-dlp:  $ytexe" -ForegroundColor Cyan
+Write-Host "ffmpeg:  $ff\\ffmpeg.exe" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Restartujte prohlizec!" -ForegroundColor Yellow
+Write-Host ""
+Read-Host "Stisknete Enter pro ukonceni"
 `;
 }
 
