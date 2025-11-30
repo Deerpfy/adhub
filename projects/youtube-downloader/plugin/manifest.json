@@ -51,6 +51,15 @@
       "css": ["youtube-ui.css"],
       "run_at": "document_idle",
       "all_frames": false
+    },
+    {
+      "matches": [
+        "https://deerpfy.github.io/adhub/*",
+        "https://deerpfy.github.io/adhub"
+      ],
+      "js": ["adhub-bridge.js"],
+      "run_at": "document_start",
+      "all_frames": false
     }
   ],
   "background": {

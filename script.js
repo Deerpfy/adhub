@@ -1136,20 +1136,39 @@ function checkYouTubeExtensionStatus() {
     if (!statusBadge) return;
 
     try {
-        // Check multiple methods
-        const hasExtension =
-            localStorage.getItem('adhub_extension_active') === 'true' ||
-            document.documentElement.getAttribute('data-adhub-extension') === 'true' ||
-            window.adhubExtensionAvailable === true;
+        // Kontrola timestamp - plugin ho aktualizuje kazdych 30 sekund
+        const timestamp = localStorage.getItem('adhub_extension_timestamp');
+        const now = Date.now();
+        const maxAge = 60 * 1000; // 60 sekund
+
+        let hasExtension = false;
+        let extensionVersion = null;
+
+        // Pokud je timestamp aktualni, plugin je aktivni
+        if (timestamp && (now - parseInt(timestamp, 10)) < maxAge) {
+            hasExtension = localStorage.getItem('adhub_extension_active') === 'true';
+            extensionVersion = localStorage.getItem('adhub_extension_version');
+        }
+
+        // Alternativni detekce pres data attribute nebo globalni promennou
+        if (!hasExtension) {
+            hasExtension = document.documentElement.getAttribute('data-adhub-extension') === 'true' ||
+                           window.adhubExtensionAvailable === true;
+            if (hasExtension) {
+                extensionVersion = document.documentElement.getAttribute('data-adhub-extension-version') ||
+                                   window.adhubExtensionVersion;
+            }
+        }
 
         if (hasExtension) {
-            statusBadge.innerHTML = '✅ Aktivní';
+            const versionText = extensionVersion ? ` v${extensionVersion}` : '';
+            statusBadge.innerHTML = '✅ Aktivní' + versionText;
             statusBadge.classList.add('status-active');
-            statusBadge.classList.remove('status-inactive');
+            statusBadge.classList.remove('status-inactive', 'status-checking');
         } else {
             statusBadge.innerHTML = '❌ Neaktivní';
             statusBadge.classList.add('status-inactive');
-            statusBadge.classList.remove('status-active');
+            statusBadge.classList.remove('status-active', 'status-checking');
         }
     } catch (error) {
         console.error('[AdHUB] Error checking extension status:', error);
