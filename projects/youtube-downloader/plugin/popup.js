@@ -60,9 +60,16 @@
   }
 
   function displayExtensionId() {
+    // Zobrazit v error boxu
     const extIdEl = document.getElementById('extension-id');
     if (extIdEl) {
       extIdEl.textContent = chrome.runtime.id;
+    }
+
+    // Zobrazit v nastaveni
+    const settingsExtIdEl = document.getElementById('settings-ext-id');
+    if (settingsExtIdEl) {
+      settingsExtIdEl.textContent = chrome.runtime.id;
     }
   }
 
@@ -287,8 +294,9 @@
     $('#download-installer-win')?.addEventListener('click', () => downloadInstaller('windows'));
     $('#download-installer-unix')?.addEventListener('click', () => downloadInstaller('unix'));
 
-    // Kopirovat extension ID
+    // Kopirovat extension ID (oba buttony)
     $('#copy-ext-id')?.addEventListener('click', copyExtensionId);
+    $('#copy-ext-id-settings')?.addEventListener('click', copyExtensionId);
 
     // Aktualizovat yt-dlp
     $('#ytdlp-update-btn')?.addEventListener('click', doYtdlpUpdate);
