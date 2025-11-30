@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AdHub YouTube Downloader - Native Host v5.5
+AdHub YouTube Downloader - Native Host v5.7
 ============================================
 Native Messaging host pro browser extension.
 Umoznuje HD/4K stahovani a audio konverzi.
@@ -31,7 +31,7 @@ import ssl
 # KONFIGURACE
 # ============================================================================
 
-VERSION = '5.6'
+VERSION = '5.7'
 MAX_RETRIES = 3
 RETRY_DELAY = 2  # sekundy
 YTDLP_RELEASES_URL = 'https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest'
@@ -390,8 +390,11 @@ def handle_download(message, retry_count=0):
     cmd.extend([
         '--no-playlist',           # Nestahovat playlisty
         '--no-check-certificates', # Preskocit certifikaty (nekdy pomaha)
-        # tv_embedded a mweb klienti funguji bez problemu s cookies
-        '--extractor-args', 'youtube:player_client=tv_embedded,mweb,web',
+        # ios a web_creator klienti obchazeji n challenge (throttling)
+        # mweb jako fallback
+        '--extractor-args', 'youtube:player_client=ios,web_creator,mweb',
+        # Preskocit problematicke player konfigurace
+        '--extractor-args', 'youtube:player_skip=webpage,configs',
     ])
 
     # Cookies pro vekove omezena videa (prioritne z extension)
@@ -519,6 +522,9 @@ def should_retry_error(error_msg):
         'timed out',
         'Temporary failure',
         'Unable to download',
+        'n challenge',      # YouTube throttling - retry s jinym klientem
+        'challenge solver', # YouTube throttling
+        'sabr',             # SABR streaming issue
     ]
     error_lower = error_msg.lower()
     return any(err.lower() in error_lower for err in retryable)
@@ -528,16 +534,16 @@ def parse_error_message(error_msg):
     """Parsuje chybovou hlasku na uzivatelsky pritelive zpravy."""
     error_lower = error_msg.lower()
 
-    # N challenge - YouTube throttling protection
+    # N challenge - YouTube throttling protection (ios klient by mel obejit)
     if 'n challenge' in error_lower or 'challenge solver' in error_lower:
-        return 'YouTube throttling. NUTNE aktualizujte yt-dlp: yt-dlp -U'
+        return 'YouTube anti-bot ochrana. Zkuste znovu za chvili nebo pouzijte Zakladni stahovani'
     # SABR streaming issue (novy YouTube problem)
     elif 'sabr' in error_lower or 'missing a url' in error_lower:
-        return 'YouTube blokuje stahovani. Aktualizujte yt-dlp: yt-dlp -U'
+        return 'YouTube docasne blokuje. Zkuste znovu za 30 sekund'
     elif 'sign in' in error_lower and 'age' in error_lower:
-        return 'Video je vekove omezene. Aktualizujte yt-dlp: yt-dlp -U'
+        return 'Video je vekove omezene. Ujistete se, ze jste prihlaseni na YouTube'
     elif 'sign in' in error_lower:
-        return 'Vyzaduje prihlaseni. Aktualizujte yt-dlp: yt-dlp -U'
+        return 'Vyzaduje prihlaseni do YouTube'
     elif 'private' in error_lower:
         return 'Video je soukrome'
     elif 'members only' in error_lower or 'member' in error_lower:
@@ -547,19 +553,21 @@ def parse_error_message(error_msg):
     elif 'live' in error_lower and ('not' in error_lower or 'offline' in error_lower):
         return 'Zivy prenos jeste nezacal nebo uz skoncil'
     elif '403' in error_msg or 'forbidden' in error_lower:
-        return 'Pristup odepren (403). Aktualizujte yt-dlp: yt-dlp -U'
+        return 'Pristup odepren (403). Zkuste znovu nebo pouzijte Zakladni stahovani'
     elif '404' in error_msg:
         return 'Video nebylo nalezeno (404)'
     elif 'rate' in error_lower or '429' in error_msg:
-        return 'Prilis mnoho pozadavku (429). Pockejte chvili a zkuste znovu'
+        return 'Prilis mnoho pozadavku (429). Pockejte 1-2 minuty a zkuste znovu'
     elif 'unavailable' in error_lower or 'not available' in error_lower:
-        return 'Video neni dostupne. Aktualizujte yt-dlp: yt-dlp -U'
+        return 'Video neni dostupne v teto zemi nebo bylo odstraneno'
     elif 'no suitable' in error_lower or 'no format' in error_lower:
-        return 'Zadny kompatibilni format. Zkuste jinou kvalitu nebo aktualizujte yt-dlp'
+        return 'Zadny kompatibilni format. Zkuste jinou kvalitu'
     elif 'ffmpeg' in error_lower or 'postprocess' in error_lower:
         return 'Chyba zpracovani videa. Overtte ze ffmpeg je spravne nainstalovan'
     elif 'skipping' in error_lower and 'client' in error_lower:
-        return 'YouTube omezuje stahovani. Aktualizujte yt-dlp: yt-dlp -U'
+        return 'YouTube docasne omezuje. Zkuste znovu za chvili'
+    elif 'getaddrinfo' in error_lower or 'connection' in error_lower:
+        return 'Chyba pripojeni k internetu. Zkontrolujte sit'
 
     # Zkratit dlouhe chyby ale zachovat vice informaci
     if len(error_msg) > 200:
