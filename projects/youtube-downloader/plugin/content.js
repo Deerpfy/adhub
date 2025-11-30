@@ -40,6 +40,7 @@
     bestFormat: null,
     isDownloading: false,
     advancedMode: false,
+    advancedModeChecked: false, // Zabrání opakovanému checkování
     videoType: 'regular', // regular, shorts, live, premiere, music, unavailable
     videoStatus: null,    // playable, age_restricted, private, unavailable
     isYouTubeMusic: window.location.hostname === 'music.youtube.com',
@@ -50,13 +51,20 @@
   // ============================================================================
 
   async function checkAdvancedMode() {
+    // Zkontroluj pouze jednou za session
+    if (state.advancedModeChecked) {
+      return state.advancedMode;
+    }
+
     try {
       const response = await chrome.runtime.sendMessage({ action: 'checkNativeHost' });
       state.advancedMode = response?.nativeHostAvailable && response?.ytdlpAvailable;
+      state.advancedModeChecked = true;
       console.log('[AdHub] Advanced mode:', state.advancedMode);
       return state.advancedMode;
     } catch (e) {
       state.advancedMode = false;
+      state.advancedModeChecked = true;
       return false;
     }
   }
@@ -468,18 +476,19 @@
   }
 
   async function injectButton() {
-    if (document.getElementById('adhub-yt-downloader')) return true;
+    // Pokud tlacitko uz existuje, nic nedelej
+    if (document.getElementById('adhub-yt-downloader')) {
+      return true;
+    }
 
     let target = null;
-    let insertMethod = 'append'; // append nebo before
 
     if (state.isYouTubeMusic) {
-      // YouTube Music selektory
+      // YouTube Music selektory - preferuj right-controls pro lepsi pozici
       const musicSelectors = [
-        'ytmusic-player-bar .middle-controls-buttons',
         'ytmusic-player-bar .right-controls-buttons',
-        '.ytmusic-player-bar .middle-controls',
-        '.player-controls-container',
+        'ytmusic-player-bar .middle-controls-buttons',
+        '.ytmusic-player-bar .right-controls',
         'ytmusic-player-bar',
       ];
 
@@ -506,8 +515,8 @@
     const button = createDownloadButton();
 
     if (state.isYouTubeMusic) {
-      // Pro YouTube Music vlozit na zacatek nebo konec podle typu targetu
-      target.appendChild(button);
+      // Pro YouTube Music vlozit na zacatek (prepend) pro lepsi viditelnost
+      target.prepend(button);
     } else {
       const likeBtn = target.querySelector('ytd-segmented-like-dislike-button-renderer, ytd-toggle-button-renderer');
       if (likeBtn?.nextSibling) {
@@ -519,11 +528,15 @@
 
     setupEventListeners();
 
-    // Zkontroluj advanced mode
+    // Zkontroluj advanced mode (pouze jednou)
     await checkAdvancedMode();
     updateModeIndicator();
 
-    console.log('[AdHub] Tlacitko injektovano', state.isYouTubeMusic ? '(YouTube Music)' : '');
+    // Log jen pri prvnim vytvoreni
+    if (!state.advancedModeChecked || state.advancedMode !== undefined) {
+      console.log('[AdHub] Tlacitko injektovano', state.isYouTubeMusic ? '(YouTube Music)' : '');
+    }
+
     return true;
   }
 
@@ -781,47 +794,66 @@
 
   function setupNavigationObserver() {
     let lastUrl = window.location.href;
+    let lastMusicTitle = ''; // Pro detekci zmeny skladby na YouTube Music
 
+    // Sledovani URL
     setInterval(() => {
       if (window.location.href !== lastUrl) {
         lastUrl = window.location.href;
-        handlePageChange();
+        handlePageChange(false);
       }
     }, 500);
 
     // YouTube eventy
-    window.addEventListener('yt-navigate-finish', () => setTimeout(handlePageChange, 500));
+    window.addEventListener('yt-navigate-finish', () => setTimeout(() => handlePageChange(false), 500));
 
-    // YouTube Music pouziva jine eventy
+    // YouTube Music - specialni handling
     if (state.isYouTubeMusic) {
-      window.addEventListener('yt-page-data-updated', () => setTimeout(handlePageChange, 500));
+      // Sleduj zmenu skladby podle titulku v player baru
+      setInterval(() => {
+        const titleEl = document.querySelector('ytmusic-player-bar .title');
+        const currentTitle = titleEl?.textContent?.trim() || '';
 
-      // Observer pro zmeny v prehravaci (nova skladba)
-      const observer = new MutationObserver((mutations) => {
-        const newVideoId = getVideoId();
-        if (newVideoId && newVideoId !== state.currentVideoId) {
-          handlePageChange();
-        }
-      });
+        if (currentTitle && currentTitle !== lastMusicTitle) {
+          lastMusicTitle = currentTitle;
+          console.log('[AdHub] YouTube Music - nova skladba:', currentTitle);
 
-      // Pozoruj title element pro zmeny skladby
-      const titleObserver = setInterval(() => {
-        const playerBar = document.querySelector('ytmusic-player-bar');
-        if (playerBar) {
-          observer.observe(playerBar, { subtree: true, childList: true, characterData: true });
-          clearInterval(titleObserver);
+          // Resetuj formaty ale NEZMAZEJ tlacitko
+          state.formats = [];
+          state.bestFormat = null;
+          state.currentVideoId = getVideoId();
+
+          // Pokud tlacitko neexistuje, vytvor ho
+          if (!document.getElementById('adhub-yt-downloader')) {
+            init();
+          }
         }
       }, 1000);
+
+      // Zajisti ze tlacitko existuje kdyz je player bar viditelny
+      setInterval(() => {
+        const playerBar = document.querySelector('ytmusic-player-bar');
+        const hasButton = document.getElementById('adhub-yt-downloader');
+
+        if (playerBar && !hasButton) {
+          init();
+        }
+      }, 2000);
     }
   }
 
-  function handlePageChange() {
+  function handlePageChange(removeButton = true) {
     state.currentVideoId = null;
     state.formats = [];
     state.bestFormat = null;
-    document.getElementById('adhub-yt-downloader')?.remove();
 
-    if (getVideoId()) {
+    // Na YouTube Music nemazeme tlacitko pri kazde zmene
+    if (removeButton && !state.isYouTubeMusic) {
+      document.getElementById('adhub-yt-downloader')?.remove();
+    }
+
+    const videoId = getVideoId();
+    if (videoId || state.isYouTubeMusic) {
       setTimeout(init, 500);
     }
   }
