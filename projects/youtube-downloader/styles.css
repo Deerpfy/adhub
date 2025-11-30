@@ -1604,10 +1604,19 @@ header h1 {
     transform: translateY(-2px);
 }
 
+/* Update banner v install sekci - bez bocnich marginu */
+.install-section .update-banner {
+    margin: 0 0 24px 0;
+}
+
 @media (max-width: 768px) {
     .update-banner {
         margin: 0 16px 16px 16px;
         padding: 14px 18px;
+    }
+
+    .install-section .update-banner {
+        margin: 0 0 16px 0;
     }
 
     .update-banner-content {

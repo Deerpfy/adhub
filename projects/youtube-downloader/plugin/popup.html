@@ -407,6 +407,15 @@
     .error-box strong {
       color: #f87171;
     }
+
+    /* Update Box */
+    .update-box {
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.4);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
   </style>
 </head>
 <body>
@@ -425,6 +434,18 @@
   <div class="content">
     <!-- STATUS TAB -->
     <div class="tab-content active" id="tab-status">
+      <!-- yt-dlp Update Box -->
+      <div id="ytdlp-update-box" class="update-box" style="display: none;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 18px;">🔄</span>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; color: #fbbf24;">Aktualizace yt-dlp</div>
+            <div id="ytdlp-update-info" style="font-size: 11px; color: #888;">Kontroluji...</div>
+          </div>
+          <button id="ytdlp-update-btn" class="btn btn-primary" style="padding: 6px 12px; font-size: 11px;">Aktualizovat</button>
+        </div>
+      </div>
+
       <!-- Native Host Error Box -->
       <div id="native-host-error" class="error-box" style="display: none;">
         <div id="native-host-error-text">Native Host neni dostupny</div>
@@ -487,6 +508,21 @@
 
     <!-- SETTINGS TAB -->
     <div class="tab-content" id="tab-settings">
+      <!-- Extension ID - vzdy viditelne -->
+      <div class="settings-group" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05)); border: 1px solid rgba(139, 92, 246, 0.3);">
+        <div class="settings-title" style="color: #a78bfa;">
+          <span class="icon">🔑</span>
+          Extension ID
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <code id="settings-ext-id" style="flex: 1; padding: 10px 12px; background: rgba(0,0,0,0.3); border-radius: 6px; font-size: 11px; color: #c4b5fd; user-select: all; word-break: break-all;">Nacitam...</code>
+          <button class="btn btn-secondary" id="copy-ext-id-settings" style="padding: 10px 14px;">Kopirovat</button>
+        </div>
+        <p style="font-size: 11px; color: #666; margin-top: 8px;">
+          Toto ID potrebujete pri instalaci Native Host
+        </p>
+      </div>
+
       <div class="settings-group">
         <div class="settings-title">
           <span class="icon">🎬</span>

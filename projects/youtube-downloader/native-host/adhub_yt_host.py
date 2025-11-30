@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AdHub YouTube Downloader - Native Host v5.5
+AdHub YouTube Downloader - Native Host v5.7
 ============================================
 Native Messaging host pro browser extension.
 Umoznuje HD/4K stahovani a audio konverzi.
@@ -24,14 +24,18 @@ import struct
 import subprocess
 import shutil
 import time
+import urllib.request
+import ssl
 
 # ============================================================================
 # KONFIGURACE
 # ============================================================================
 
-VERSION = '5.5'
+VERSION = '5.7'
 MAX_RETRIES = 3
 RETRY_DELAY = 2  # sekundy
+YTDLP_RELEASES_URL = 'https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest'
+YTDLP_DOWNLOAD_URL = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe'
 
 # Defaultni cesty k nastrojum
 DEFAULT_YTDLP_PATHS = [
@@ -156,6 +160,102 @@ def get_download_dir():
     if os.path.exists(downloads):
         return downloads
     return os.path.expanduser('~')
+
+# ============================================================================
+# YT-DLP UPDATE FUNKCE
+# ============================================================================
+
+def get_latest_ytdlp_version():
+    """Ziska nejnovejsi verzi yt-dlp z GitHub API."""
+    try:
+        # Vytvorit SSL context (nekdy potreba na Windows)
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+
+        req = urllib.request.Request(
+            YTDLP_RELEASES_URL,
+            headers={'User-Agent': 'AdHub-YT-Downloader'}
+        )
+
+        with urllib.request.urlopen(req, timeout=10, context=ctx) as response:
+            data = json.loads(response.read().decode('utf-8'))
+            return data.get('tag_name', None)
+    except Exception as e:
+        return None
+
+def get_installed_ytdlp_version(ytdlp_path=None):
+    """Ziska verzi nainstalovaneho yt-dlp."""
+    ytdlp = find_tool('yt-dlp', ytdlp_path, DEFAULT_YTDLP_PATHS)
+    if not ytdlp['available']:
+        return None
+    return ytdlp.get('version'), ytdlp.get('path')
+
+def download_ytdlp_update(target_path=None):
+    """Stahne nejnovejsi verzi yt-dlp."""
+    try:
+        # Urcit cilovou cestu
+        if not target_path:
+            # Defaultni cesta - AdHub slozka
+            adhub_dir = os.path.join(os.environ.get('LOCALAPPDATA', ''), 'AdHub', 'yt-dlp')
+            if not os.path.exists(adhub_dir):
+                os.makedirs(adhub_dir, exist_ok=True)
+            target_path = os.path.join(adhub_dir, 'yt-dlp.exe')
+
+        # Vytvorit zalohu pokud existuje
+        if os.path.exists(target_path):
+            backup_path = target_path + '.backup'
+            try:
+                if os.path.exists(backup_path):
+                    os.remove(backup_path)
+                shutil.copy2(target_path, backup_path)
+            except:
+                pass
+
+        # Stahnout novou verzi
+        ctx = ssl.create_default_context()
+        ctx.check_hostname = False
+        ctx.verify_mode = ssl.CERT_NONE
+
+        req = urllib.request.Request(
+            YTDLP_DOWNLOAD_URL,
+            headers={'User-Agent': 'AdHub-YT-Downloader'}
+        )
+
+        with urllib.request.urlopen(req, timeout=120, context=ctx) as response:
+            with open(target_path, 'wb') as f:
+                f.write(response.read())
+
+        # Overit ze funguje
+        result = check_tool_at_path(target_path, 'yt-dlp')
+        if result['available']:
+            # Smazat zalohu
+            backup_path = target_path + '.backup'
+            if os.path.exists(backup_path):
+                try:
+                    os.remove(backup_path)
+                except:
+                    pass
+            return {
+                'success': True,
+                'version': result['version'],
+                'path': target_path
+            }
+        else:
+            # Obnovit zalohu
+            backup_path = target_path + '.backup'
+            if os.path.exists(backup_path):
+                shutil.copy2(backup_path, target_path)
+            return {
+                'success': False,
+                'error': 'Stazeny soubor nefunguje'
+            }
+
+    except Exception as e:
+        return {
+            'success': False,
+            'error': str(e)[:200]
+        }
 
 # ============================================================================
 # AKCE: CHECK
@@ -290,8 +390,11 @@ def handle_download(message, retry_count=0):
     cmd.extend([
         '--no-playlist',           # Nestahovat playlisty
         '--no-check-certificates', # Preskocit certifikaty (nekdy pomaha)
-        # tv_embedded a mweb klienti funguji bez problemu s cookies
-        '--extractor-args', 'youtube:player_client=tv_embedded,mweb,web',
+        # ios a web_creator klienti obchazeji n challenge (throttling)
+        # mweb jako fallback
+        '--extractor-args', 'youtube:player_client=ios,web_creator,mweb',
+        # Preskocit problematicke player konfigurace
+        '--extractor-args', 'youtube:player_skip=webpage,configs',
     ])
 
     # Cookies pro vekove omezena videa (prioritne z extension)
@@ -419,6 +522,9 @@ def should_retry_error(error_msg):
         'timed out',
         'Temporary failure',
         'Unable to download',
+        'n challenge',      # YouTube throttling - retry s jinym klientem
+        'challenge solver', # YouTube throttling
+        'sabr',             # SABR streaming issue
     ]
     error_lower = error_msg.lower()
     return any(err.lower() in error_lower for err in retryable)
@@ -428,16 +534,16 @@ def parse_error_message(error_msg):
     """Parsuje chybovou hlasku na uzivatelsky pritelive zpravy."""
     error_lower = error_msg.lower()
 
-    # N challenge - YouTube throttling protection
+    # N challenge - YouTube throttling protection (ios klient by mel obejit)
     if 'n challenge' in error_lower or 'challenge solver' in error_lower:
-        return 'YouTube throttling. NUTNE aktualizujte yt-dlp: yt-dlp -U'
+        return 'YouTube anti-bot ochrana. Zkuste znovu za chvili nebo pouzijte Zakladni stahovani'
     # SABR streaming issue (novy YouTube problem)
     elif 'sabr' in error_lower or 'missing a url' in error_lower:
-        return 'YouTube blokuje stahovani. Aktualizujte yt-dlp: yt-dlp -U'
+        return 'YouTube docasne blokuje. Zkuste znovu za 30 sekund'
     elif 'sign in' in error_lower and 'age' in error_lower:
-        return 'Video je vekove omezene. Aktualizujte yt-dlp: yt-dlp -U'
+        return 'Video je vekove omezene. Ujistete se, ze jste prihlaseni na YouTube'
     elif 'sign in' in error_lower:
-        return 'Vyzaduje prihlaseni. Aktualizujte yt-dlp: yt-dlp -U'
+        return 'Vyzaduje prihlaseni do YouTube'
     elif 'private' in error_lower:
         return 'Video je soukrome'
     elif 'members only' in error_lower or 'member' in error_lower:
@@ -447,19 +553,21 @@ def parse_error_message(error_msg):
     elif 'live' in error_lower and ('not' in error_lower or 'offline' in error_lower):
         return 'Zivy prenos jeste nezacal nebo uz skoncil'
     elif '403' in error_msg or 'forbidden' in error_lower:
-        return 'Pristup odepren (403). Aktualizujte yt-dlp: yt-dlp -U'
+        return 'Pristup odepren (403). Zkuste znovu nebo pouzijte Zakladni stahovani'
     elif '404' in error_msg:
         return 'Video nebylo nalezeno (404)'
     elif 'rate' in error_lower or '429' in error_msg:
-        return 'Prilis mnoho pozadavku (429). Pockejte chvili a zkuste znovu'
+        return 'Prilis mnoho pozadavku (429). Pockejte 1-2 minuty a zkuste znovu'
     elif 'unavailable' in error_lower or 'not available' in error_lower:
-        return 'Video neni dostupne. Aktualizujte yt-dlp: yt-dlp -U'
+        return 'Video neni dostupne v teto zemi nebo bylo odstraneno'
     elif 'no suitable' in error_lower or 'no format' in error_lower:
-        return 'Zadny kompatibilni format. Zkuste jinou kvalitu nebo aktualizujte yt-dlp'
+        return 'Zadny kompatibilni format. Zkuste jinou kvalitu'
     elif 'ffmpeg' in error_lower or 'postprocess' in error_lower:
         return 'Chyba zpracovani videa. Overtte ze ffmpeg je spravne nainstalovan'
     elif 'skipping' in error_lower and 'client' in error_lower:
-        return 'YouTube omezuje stahovani. Aktualizujte yt-dlp: yt-dlp -U'
+        return 'YouTube docasne omezuje. Zkuste znovu za chvili'
+    elif 'getaddrinfo' in error_lower or 'connection' in error_lower:
+        return 'Chyba pripojeni k internetu. Zkontrolujte sit'
 
     # Zkratit dlouhe chyby ale zachovat vice informaci
     if len(error_msg) > 200:
@@ -491,6 +599,36 @@ def main():
                 result = handle_test(message)
             elif action == 'download':
                 result = handle_download(message)
+            elif action == 'checkYtdlpUpdate':
+                # Zkontrolovat dostupnost aktualizace yt-dlp
+                ytdlp_path = message.get('ytdlpPath', '')
+                installed = get_installed_ytdlp_version(ytdlp_path)
+                latest = get_latest_ytdlp_version()
+
+                if installed:
+                    current_ver, current_path = installed
+                else:
+                    current_ver, current_path = None, None
+
+                result = {
+                    'success': True,
+                    'installed': current_ver,
+                    'latest': latest,
+                    'path': current_path,
+                    'updateAvailable': bool(latest and current_ver and latest != current_ver)
+                }
+            elif action == 'updateYtdlp':
+                # Aktualizovat yt-dlp
+                ytdlp_path = message.get('ytdlpPath', '')
+
+                # Najit aktualni cestu k yt-dlp
+                installed = get_installed_ytdlp_version(ytdlp_path)
+                if installed:
+                    _, target_path = installed
+                else:
+                    target_path = None
+
+                result = download_ytdlp_update(target_path)
             elif action == 'ping':
                 result = {
                     'success': True,

@@ -1435,3 +1435,118 @@ html {
         font-size: 1.1rem;
     }
 }
+
+/* =============================================
+   PLUGIN UPDATE BANNER
+   ============================================= */
+
+.plugin-update-banner {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(236, 72, 153, 0.1));
+    border: 1px solid rgba(245, 158, 11, 0.4);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin: 12px 0;
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.plugin-update-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.plugin-update-icon {
+    font-size: 1.5rem;
+}
+
+.plugin-update-text {
+    flex: 1;
+    min-width: 200px;
+}
+
+.plugin-update-text strong {
+    display: block;
+    color: var(--warning-color);
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.plugin-update-text span {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.plugin-update-text code {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    font-size: 0.85em;
+    color: var(--primary-light);
+}
+
+.btn-update-plugin {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    background: linear-gradient(135deg, var(--warning-color), #d97706);
+    color: white;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 8px;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.btn-update-plugin:hover {
+    background: linear-gradient(135deg, #d97706, var(--warning-color));
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+.plugin-update-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    line-height: 1;
+    border-radius: 4px;
+    transition: var(--transition);
+}
+
+.plugin-update-close:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+@media (max-width: 600px) {
+    .plugin-update-content {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .plugin-update-close {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+    }
+
+    .plugin-update-banner {
+        position: relative;
+    }
+}

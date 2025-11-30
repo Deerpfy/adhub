@@ -300,6 +300,13 @@ function checkPluginVersion() {
     const installedVersion = state.pluginVersion;
     const latestVersion = state.latestManifestVersion;
 
+    if (!installedVersion) {
+        console.log('[AdHub] Nemame verzi nainstalovaneho pluginu');
+        // Zkontroluj jestli mame stazeny commit - pro install sekci
+        checkDownloadedCommitVersion();
+        return;
+    }
+
     if (!downloadedCommit) {
         console.log('[AdHub] Zadny stazeny commit v localStorage - plugin nebyl stazen pres tento web');
         // Pokud nemame commit, porovname aspon verze
@@ -403,7 +410,7 @@ function showUpdateNotification(oldVersion, newVersion, oldCommit, newCommit) {
         elements.extensionStatusText.innerHTML = 'Plugin aktivni <span class="version-outdated">v' + version + commitText + ' (zastaraly)</span>';
     }
 
-    // Vloz banner za header nebo na zacatek
+    // Vloz banner za header
     const container = document.querySelector('.container');
     const header = document.querySelector('header');
     if (container && header && !document.getElementById('updateBanner')) {
@@ -418,6 +425,65 @@ function hideUpdateNotification() {
     if (updateBanner) {
         updateBanner.style.display = 'none';
     }
+}
+
+// Kontrola verze pro uzivatele bez aktivniho pluginu (install sekce)
+function checkDownloadedCommitVersion() {
+    const downloadedCommit = localStorage.getItem('adhub_downloaded_commit');
+
+    if (!downloadedCommit || !state.latestCommit) {
+        return;
+    }
+
+    const latestShort = state.latestCommit.sha.substring(0, 7);
+    const downloadedShort = downloadedCommit.substring(0, 7);
+
+    console.log('[AdHub] Porovnani stazenych verzi:', { downloaded: downloadedShort, latest: latestShort });
+
+    if (downloadedShort !== latestShort) {
+        console.log('[AdHub] Stazena verze je zastarala');
+        showCommitUpdateNotification(downloadedShort, latestShort);
+    }
+}
+
+function showCommitUpdateNotification(oldCommit, newCommit) {
+    let updateBanner = document.getElementById('updateBanner');
+
+    if (!updateBanner) {
+        updateBanner = document.createElement('div');
+        updateBanner.id = 'updateBanner';
+        updateBanner.className = 'update-banner';
+    }
+
+    updateBanner.innerHTML = `
+        <div class="update-banner-content">
+            <span class="update-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </span>
+            <div class="update-text">
+                <strong>Je k dispozici nova verze!</strong>
+                <span>Stazeno: <code>${oldCommit}</code> → Aktualni: <code>${newCommit}</code></span>
+            </div>
+            <button class="btn btn-update" onclick="handleDownloadPlugin('main')">
+                Stahnout novou verzi
+            </button>
+        </div>
+    `;
+
+    // V install sekci vloz za hero
+    const installSection = document.getElementById('installSection');
+    if (installSection && !installSection.contains(updateBanner)) {
+        const installHero = installSection.querySelector('.install-hero');
+        if (installHero && installHero.nextSibling) {
+            installSection.insertBefore(updateBanner, installHero.nextSibling);
+        } else {
+            installSection.insertBefore(updateBanner, installSection.firstChild);
+        }
+    }
+
+    updateBanner.style.display = 'block';
 }
 
 function updatePluginStatus(connected) {
@@ -530,10 +596,8 @@ async function loadLatestCommitInfo() {
             }
         }
 
-        // Zkontroluj verzi pluginu (pokud uz byl detekovan)
-        if (state.pluginConnected && state.latestManifestVersion) {
-            checkPluginVersion();
-        }
+        // Zkontroluj verzi pluginu (pokud uz byl detekovan, nebo pro install sekci)
+        checkPluginVersion();
 
     } catch (error) {
         console.error('[AdHub] Chyba pri nacitani informaci:', error);
