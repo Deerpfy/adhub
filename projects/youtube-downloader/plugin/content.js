@@ -422,7 +422,12 @@
         showDownloadComplete(filename);
       }, 1500);
     } else {
-      throw new Error(response.error || 'Stahovani selhalo');
+      // Zobrazit vice detailu pro ladeni
+      const errorMsg = response.error || 'Stahovani selhalo';
+      if (response.raw_error) {
+        console.error('[AdHub] Raw yt-dlp error:', response.raw_error);
+      }
+      throw new Error(errorMsg);
     }
   }
 

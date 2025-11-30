@@ -68,7 +68,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     case 'downloadAdvanced':
       handleAdvancedDownload(request.data)
         .then(result => sendResponse(result))
-        .catch(error => sendResponse({ success: false, error: error.message }));
+        .catch(error => sendResponse({
+          success: false,
+          error: error.message,
+          raw_error: error.raw_error || null
+        }));
       return true;
 
     case 'checkNativeHost':
@@ -244,8 +248,13 @@ async function sendNativeMessage(message) {
         if (chrome.runtime.lastError) {
           console.error('[AdHub BG] Native message error:', chrome.runtime.lastError.message);
           reject(new Error(chrome.runtime.lastError.message));
-        } else if (response?.error) {
-          reject(new Error(response.error));
+        } else if (response?.success === false) {
+          // Predat celou odpoved vcetne raw_error
+          console.error('[AdHub BG] Native host error:', response.error, response.raw_error);
+          const error = new Error(response.error || 'Unknown error');
+          error.raw_error = response.raw_error;
+          error.response = response;
+          reject(error);
         } else {
           resolve(response);
         }
