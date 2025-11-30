@@ -294,28 +294,40 @@ function detectPluginViaEvent() {
 function checkPluginVersion() {
     console.log('[AdHub] Kontroluji verzi pluginu...');
 
-    // Porovnej verzi nainstalovaneho pluginu s verzi z manifestu na GitHubu
+    // Porovnej commit ID stazeneho pluginu s nejnovejsim commitem na GitHubu
+    const downloadedCommit = localStorage.getItem('adhub_downloaded_commit');
+    const latestCommit = state.latestCommit;
     const installedVersion = state.pluginVersion;
     const latestVersion = state.latestManifestVersion;
 
-    if (!installedVersion) {
-        console.log('[AdHub] Nemame verzi nainstalovaneho pluginu');
+    if (!downloadedCommit) {
+        console.log('[AdHub] Zadny stazeny commit v localStorage - plugin nebyl stazen pres tento web');
+        // Pokud nemame commit, porovname aspon verze
+        if (installedVersion && latestVersion) {
+            const isOutdated = compareVersions(installedVersion, latestVersion) < 0;
+            if (isOutdated) {
+                showUpdateNotification(installedVersion, latestVersion, null, null);
+            } else {
+                hideUpdateNotification();
+                showUpToDateBadge();
+            }
+        }
         return;
     }
 
-    if (!latestVersion) {
-        console.log('[AdHub] Zatim nemame info o nejnovejsi verzi z GitHubu');
+    if (!latestCommit) {
+        console.log('[AdHub] Zatim nemame info o nejnovejsim commitu z GitHubu');
         return;
     }
 
-    console.log('[AdHub] Porovnani verzi:', { installed: installedVersion, latest: latestVersion });
+    const downloadedShort = downloadedCommit.substring(0, 7);
+    const latestShort = latestCommit.sha.substring(0, 7);
 
-    // Porovnani verzi (semver)
-    const isOutdated = compareVersions(installedVersion, latestVersion) < 0;
+    console.log('[AdHub] Porovnani commitu:', { downloaded: downloadedShort, latest: latestShort });
 
-    if (isOutdated) {
-        console.log('[AdHub] Je k dispozici nova verze!');
-        showUpdateNotification(installedVersion, latestVersion);
+    if (downloadedShort !== latestShort) {
+        console.log('[AdHub] Je k dispozici nova verze (novy commit)!');
+        showUpdateNotification(installedVersion, latestVersion, downloadedShort, latestShort);
     } else {
         console.log('[AdHub] Plugin je aktualni');
         hideUpdateNotification();
@@ -341,11 +353,12 @@ function compareVersions(a, b) {
 function showUpToDateBadge() {
     // Zobraz badge ze plugin je aktualni
     if (elements.extensionStatusText) {
-        elements.extensionStatusText.innerHTML = 'Plugin aktivni <span class="version-ok">v' + state.pluginVersion + ' (aktualni)</span>';
+        const version = state.pluginVersion || state.latestManifestVersion;
+        elements.extensionStatusText.innerHTML = 'Plugin aktivni <span class="version-ok">v' + version + ' (aktualni)</span>';
     }
 }
 
-function showUpdateNotification(oldVersion, newVersion) {
+function showUpdateNotification(oldVersion, newVersion, oldCommit, newCommit) {
     // Zobraz banner o dostupne aktualizaci
     let updateBanner = document.getElementById('updateBanner');
 
@@ -353,6 +366,17 @@ function showUpdateNotification(oldVersion, newVersion) {
         updateBanner = document.createElement('div');
         updateBanner.id = 'updateBanner';
         updateBanner.className = 'update-banner';
+    }
+
+    // Zobraz commit ID pokud jsou k dispozici, jinak verze
+    let changeInfo = '';
+    if (oldCommit && newCommit) {
+        changeInfo = `Tvuj commit: <code>${oldCommit}</code> → Nejnovejsi: <code>${newCommit}</code>`;
+        if (oldVersion && newVersion && oldVersion !== newVersion) {
+            changeInfo += ` (v${oldVersion} → v${newVersion})`;
+        }
+    } else if (oldVersion && newVersion) {
+        changeInfo = `Tvuj plugin: <code>v${oldVersion}</code> → Nejnovejsi: <code>v${newVersion}</code>`;
     }
 
     updateBanner.innerHTML = `
@@ -364,7 +388,7 @@ function showUpdateNotification(oldVersion, newVersion) {
             </span>
             <div class="update-text">
                 <strong>Je k dispozici aktualizace!</strong>
-                <span>Tvuj plugin: <code>v${oldVersion}</code> → Nejnovejsi: <code>v${newVersion}</code></span>
+                <span>${changeInfo}</span>
             </div>
             <button class="btn btn-update" onclick="handleDownloadPlugin('main')">
                 Aktualizovat
@@ -374,7 +398,9 @@ function showUpdateNotification(oldVersion, newVersion) {
 
     // Aktualizuj i status text
     if (elements.extensionStatusText) {
-        elements.extensionStatusText.innerHTML = 'Plugin aktivni <span class="version-outdated">v' + oldVersion + ' (zastaraly)</span>';
+        const version = oldVersion || state.pluginVersion;
+        const commitText = oldCommit ? ` (${oldCommit})` : '';
+        elements.extensionStatusText.innerHTML = 'Plugin aktivni <span class="version-outdated">v' + version + commitText + ' (zastaraly)</span>';
     }
 
     // Vloz banner za header nebo na zacatek
