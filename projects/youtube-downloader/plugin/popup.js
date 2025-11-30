@@ -247,38 +247,43 @@
   // ============================================================================
 
   async function downloadInstaller(platform) {
-    showToast('Generuji instalator...');
+    showToast('Stahuji instalator...');
+
+    // URL instalatoru na GitHubu
+    const GITHUB_BASE = 'https://raw.githubusercontent.com/Deerpfy/adhub/main/projects/youtube-downloader/native-host';
+    const urls = {
+      windows: `${GITHUB_BASE}/adhub-install.bat`,
+      unix: `${GITHUB_BASE}/adhub-install.sh`
+    };
+
+    const filename = platform === 'windows' ? 'adhub-install.bat' : 'adhub-install.sh';
+    const url = urls[platform];
 
     try {
-      const response = await chrome.runtime.sendMessage({
-        action: 'generateInstaller',
-        platform: platform
-      });
+      // Stahnout primo z GitHubu
+      const response = await fetch(url);
 
-      if (response?.success && response?.content) {
-        // Stahnout soubor - pro Windows .bat, pro Unix .sh
-        const filename = platform === 'windows' ? 'adhub-install.bat' : 'adhub-install.sh';
-        const mimeType = 'text/plain';
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
 
-        const blob = new Blob([response.content], { type: mimeType });
-        const url = URL.createObjectURL(blob);
+      const content = await response.text();
+      const blob = new Blob([content], { type: 'text/plain' });
+      const blobUrl = URL.createObjectURL(blob);
 
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(blobUrl);
 
-        // Zobrazit instrukce
-        if (platform === 'windows') {
-          showToast('Stazeno! Dvakrat kliknete pro spusteni');
-        } else {
-          showToast('Stazeno! Spustte: ./adhub-install.sh');
-        }
+      // Zobrazit instrukce
+      if (platform === 'windows') {
+        showToast('Stazeno! Dvakrat kliknete pro spusteni');
       } else {
-        showToast(response?.error || 'Chyba pri generovani', true);
+        showToast('Stazeno! Spustte: ./adhub-install.sh');
       }
     } catch (e) {
       console.error('[Popup] Chyba pri stahovani instalatoru:', e);
