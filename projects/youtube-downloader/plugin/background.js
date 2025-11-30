@@ -363,31 +363,29 @@ echo $YtdlpExe = "$YtdlpDir\\yt-dlp.exe"
 echo Invoke-WebRequest -Uri 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe' -OutFile $YtdlpExe -UseBasicParsing
 echo Write-Host "    OK: $YtdlpExe" -ForegroundColor Cyan
 echo.
-echo Write-Host '[+] Stahuji ffmpeg...' -ForegroundColor Green
+echo Write-Host '[+] Stahuji ffmpeg (80 MB, muze trvat 2-5 min)...' -ForegroundColor Green
 echo $FfmpegZip = "$env:TEMP\\ffmpeg.zip"
 echo $FfmpegExtract = "$env:TEMP\\ffmpeg-extract"
 echo try {
 echo     $ffmpegUrl = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
-echo     Write-Host "    Zdroj: gyan.dev (cca 80 MB)" -ForegroundColor Gray
+echo     Write-Host "    Zdroj: gyan.dev" -ForegroundColor Gray
 echo     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-echo     # Stahujeme s progress monitoringem
+echo     # Stahnout s WebClient - zobrazit progress kazdych 10%%
 echo     $webClient = New-Object System.Net.WebClient
-echo     $Global:downloadComplete = $false
-echo     $Global:downloadError = $null
-echo     Register-ObjectEvent -InputObject $webClient -EventName DownloadProgressChanged -Action {
-echo         $pct = $Event.SourceEventArgs.ProgressPercentage
-echo         $recv = [math]::Round^($Event.SourceEventArgs.BytesReceived / 1MB, 1^)
-echo         $total = [math]::Round^($Event.SourceEventArgs.TotalBytesToReceive / 1MB, 1^)
-echo         Write-Host "`r    Progress: $recv MB / $total MB [$pct%%]      " -NoNewline -ForegroundColor Yellow
-echo     } ^| Out-Null
-echo     Register-ObjectEvent -InputObject $webClient -EventName DownloadFileCompleted -Action {
-echo         $Global:downloadComplete = $true
-echo         if ^($Event.SourceEventArgs.Error^) { $Global:downloadError = $Event.SourceEventArgs.Error }
-echo     } ^| Out-Null
+echo     $lastPct = 0
+echo     $webClient.DownloadProgressChanged += {
+echo         param^($s, $e^)
+echo         if ^($e.ProgressPercentage -ge $script:lastPct + 10^) {
+echo             $script:lastPct = $e.ProgressPercentage
+echo             $mb = [math]::Round^($e.BytesReceived / 1MB^)
+echo             Write-Host "    ... $mb MB stazeno ^($^($e.ProgressPercentage^)%%^)" -ForegroundColor Yellow
+echo         }
+echo     }
+echo     $webClient.DownloadFileCompleted += { $script:done = $true }
+echo     $script:done = $false
 echo     $webClient.DownloadFileAsync^([Uri]$ffmpegUrl, $FfmpegZip^)
-echo     while ^(-not $Global:downloadComplete^) { Start-Sleep -Milliseconds 200 }
-echo     if ^($Global:downloadError^) { throw $Global:downloadError }
-echo     Write-Host "`r    Stazeno! Rozbaluji...                          " -ForegroundColor Green
+echo     while ^(-not $script:done^) { Start-Sleep -Milliseconds 500 }
+echo     Write-Host "    Stazeno! Rozbaluji..." -ForegroundColor Green
 echo     if ^(Test-Path $FfmpegExtract^) { Remove-Item -Path $FfmpegExtract -Recurse -Force }
 echo     Expand-Archive -Path $FfmpegZip -DestinationPath $FfmpegExtract -Force
 echo     $bin = Get-ChildItem -Path $FfmpegExtract -Recurse -Directory ^| Where-Object { $_.Name -eq 'bin' } ^| Select-Object -First 1
