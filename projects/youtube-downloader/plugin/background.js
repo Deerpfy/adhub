@@ -363,29 +363,16 @@ echo $YtdlpExe = "$YtdlpDir\\yt-dlp.exe"
 echo Invoke-WebRequest -Uri 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe' -OutFile $YtdlpExe -UseBasicParsing
 echo Write-Host "    OK: $YtdlpExe" -ForegroundColor Cyan
 echo.
-echo Write-Host '[+] Stahuji ffmpeg (80 MB, muze trvat 2-5 min)...' -ForegroundColor Green
+echo Write-Host '[+] Stahuji ffmpeg...' -ForegroundColor Green
+echo Write-Host '    Zdroj: gyan.dev ^(cca 80 MB, prosim cekejte...^)' -ForegroundColor Yellow
 echo $FfmpegZip = "$env:TEMP\\ffmpeg.zip"
 echo $FfmpegExtract = "$env:TEMP\\ffmpeg-extract"
 echo try {
 echo     $ffmpegUrl = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
-echo     Write-Host "    Zdroj: gyan.dev" -ForegroundColor Gray
 echo     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-echo     # Stahnout s WebClient - zobrazit progress kazdych 10%%
-echo     $webClient = New-Object System.Net.WebClient
-echo     $lastPct = 0
-echo     $webClient.DownloadProgressChanged += {
-echo         param^($s, $e^)
-echo         if ^($e.ProgressPercentage -ge $script:lastPct + 10^) {
-echo             $script:lastPct = $e.ProgressPercentage
-echo             $mb = [math]::Round^($e.BytesReceived / 1MB^)
-echo             Write-Host "    ... $mb MB stazeno ^($^($e.ProgressPercentage^)%%^)" -ForegroundColor Yellow
-echo         }
-echo     }
-echo     $webClient.DownloadFileCompleted += { $script:done = $true }
-echo     $script:done = $false
-echo     $webClient.DownloadFileAsync^([Uri]$ffmpegUrl, $FfmpegZip^)
-echo     while ^(-not $script:done^) { Start-Sleep -Milliseconds 500 }
-echo     Write-Host "    Stazeno! Rozbaluji..." -ForegroundColor Green
+echo     $wc = New-Object System.Net.WebClient
+echo     $wc.DownloadFile^($ffmpegUrl, $FfmpegZip^)
+echo     Write-Host '    Stazeno! Rozbaluji...' -ForegroundColor Green
 echo     if ^(Test-Path $FfmpegExtract^) { Remove-Item -Path $FfmpegExtract -Recurse -Force }
 echo     Expand-Archive -Path $FfmpegZip -DestinationPath $FfmpegExtract -Force
 echo     $bin = Get-ChildItem -Path $FfmpegExtract -Recurse -Directory ^| Where-Object { $_.Name -eq 'bin' } ^| Select-Object -First 1
