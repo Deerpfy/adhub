@@ -1,21 +1,19 @@
 #!/usr/bin/env python3
 """
-AdHub YouTube Downloader - Native Host v5.9
+AdHub YouTube Downloader - Native Host v6.0
 ============================================
 Native Messaging host pro browser extension.
-Umoznuje HD/4K stahovani a audio konverzi.
 
-STRATEGIE v5.9:
-- NEZADAVAT player_client - nechat yt-dlp automaticky vybrat nejlepsi
-- yt-dlp vyvojari neustale aktualizuji defaultni chovani
-- Cookies pouzit JEN kdyz je uzivatel explicitne posle (vekove omezena videa)
-- Jednoduchost > komplexita
+STRATEGIE v6.0:
+YouTube vyzaduje JavaScript runtime pro n-challenge.
+Reseni: Automaticky vyzkousime ruzne player clients.
 
-Podporovane typy videi:
-- Bezna videa (vsechny kvality)
-- Vekove omezena (s cookies z prohlizece)
-- Zive prenosy
-- Shorts
+Pokus 1: Default (nechat yt-dlp rozhodnout)
+Pokus 2: TV klient (embedded, casto obchazi n-challenge)
+Pokus 3: Web Embedded klient
+Pokus 4: MWeb klient (mobilni web)
+
+Pokud vse selze: Doporucit "Zakladni stahovani" (do 720p)
 """
 
 import sys
@@ -32,11 +30,24 @@ import ssl
 # KONFIGURACE
 # ============================================================================
 
-VERSION = '5.9'
-MAX_RETRIES = 3
-RETRY_DELAY = 2  # sekundy
+VERSION = '6.0'
+MAX_RETRIES = 4  # Pocet strategii k vyzkouseni
+RETRY_DELAY = 1  # sekundy - kratsi pro rychlejsi retry
 YTDLP_RELEASES_URL = 'https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest'
 YTDLP_DOWNLOAD_URL = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe'
+
+# Strategie pro retry - kazdy pokus zkusi jinou konfiguraci
+# Ruzne player clients maji ruzne chovani vuci YouTube n-challenge
+RETRY_STRATEGIES = [
+    # Pokus 1: Nechat yt-dlp rozhodnout (default)
+    None,
+    # Pokus 2: TV klient - embeddovane prostedi, casto obchazi n-challenge
+    'youtube:player_client=tv',
+    # Pokus 3: Web Embedded - dalsi varianta
+    'youtube:player_client=web_embedded',
+    # Pokus 4: MWeb - mobilni web varianta
+    'youtube:player_client=mweb',
+]
 
 # Defaultni cesty k nastrojum
 DEFAULT_YTDLP_PATHS = [
@@ -362,8 +373,15 @@ def get_cookies_path(cookies_from_extension=None):
 # AKCE: DOWNLOAD
 # ============================================================================
 
-def handle_download(message, retry_count=0):
-    """Stahne video/audio z YouTube s podporou vsech typu videi."""
+def handle_download(message, strategy_index=0):
+    """Stahne video/audio z YouTube s podporou vsech typu videi.
+
+    v6.0: Pri chybe zkusi ruzne strategie (player clients):
+    - Pokus 0: Default (nechat yt-dlp rozhodnout)
+    - Pokus 1: TV klient (embedded, casto obchazi n-challenge)
+    - Pokus 2: Web Embedded klient
+    - Pokus 3: MWeb klient (mobilni web)
+    """
     url = message.get('url')
     format_type = message.get('format', 'video')  # video nebo audio
     quality = message.get('quality', 'best')
@@ -388,19 +406,32 @@ def handle_download(message, retry_count=0):
     cmd = [ytdlp['path']]
 
     # =========================================================================
-    # v5.9: ZJEDNODUSENY PRISTUP
+    # v6.0: STRATEGIE PRO OBCHAZENI N-CHALLENGE
     # =========================================================================
-    # - NEZADAVAME --extractor-args (nechat yt-dlp vybrat nejlepsi klient)
-    # - yt-dlp vyvojari aktivne updatuji defaultni chovani pro YouTube
-    # - Cookies pouzit JEN kdyz jsou explicitne poslane z extension
-    # - Toto zajistuje kompatibilitu s budoucimi zmenami YouTube
+    # YouTube vyzaduje JavaScript runtime pro reseni n-challenge.
+    # Reseni: Zkusit ruzne player clients - nekteri nevyzaduji n-challenge.
+    #
+    # Strategie (viz RETRY_STRATEGIES):
+    # 0: Default (nechat yt-dlp rozhodnout)
+    # 1: TV klient (embedded) - casto obchazi n-challenge
+    # 2: Web Embedded klient
+    # 3: MWeb klient (mobilni web)
     # =========================================================================
+
+    # Ziskat aktualni strategii
+    current_strategy = None
+    if strategy_index < len(RETRY_STRATEGIES):
+        current_strategy = RETRY_STRATEGIES[strategy_index]
 
     cmd.extend([
         '--no-playlist',           # Nestahovat playlisty
         '--no-check-certificates', # Preskocit problemy s certifikaty
         '--no-warnings',           # Potlacit varovani (cleaner output)
     ])
+
+    # Aplikovat strategii (player client) pokud je definovana
+    if current_strategy:
+        cmd.extend(['--extractor-args', current_strategy])
 
     # Cookies - pouzit JEN kdyz je extension explicitne posle
     # (pro vekove omezena videa kde je uzivatel prihlasen)
@@ -460,6 +491,7 @@ def handle_download(message, retry_count=0):
                 'success': True,
                 'filename': os.path.basename(filename) if filename else 'video.mp4',
                 'filepath': filename or output_dir,
+                'strategy_used': strategy_index,
             }
         else:
             # Ziskat chybu - preferovat stderr, pak stdout
@@ -475,13 +507,19 @@ def handle_download(message, retry_count=0):
             if not error_msg:
                 error_msg = 'Neznama chyba'
 
-            # Analyzovat chybu a pripadne zkusit znovu
-            if retry_count < MAX_RETRIES and should_retry_error(error_msg):
+            # v6.0: Zkusit dalsi strategii pokud je k dispozici
+            next_strategy_index = strategy_index + 1
+            if next_strategy_index < len(RETRY_STRATEGIES) and should_retry_error(error_msg):
                 time.sleep(RETRY_DELAY)
-                return handle_download(message, retry_count + 1)
+                return handle_download(message, next_strategy_index)
 
             # Parsovat uzivatelsky pritelive chybove hlasky
             friendly_error = parse_error_message(error_msg)
+
+            # Pripojit informaci o vyzkousenych strategiich
+            strategies_tried = strategy_index + 1
+            if strategies_tried > 1:
+                friendly_error += f' (vyzkouseno {strategies_tried} strategii)'
 
             # Pripojit cast raw chyby pro ladeni
             debug_hint = error_msg[:300].replace('\n', ' ').strip()
@@ -490,15 +528,18 @@ def handle_download(message, retry_count=0):
                 'success': False,
                 'error': friendly_error,
                 'raw_error': debug_hint,
-                'returncode': result.returncode
+                'returncode': result.returncode,
+                'strategies_tried': strategies_tried
             }
 
     except subprocess.TimeoutExpired:
         return {'success': False, 'error': 'Stahovani trvalo prilis dlouho. Zkuste nizsi kvalitu.'}
     except Exception as e:
-        if retry_count < MAX_RETRIES:
+        # Zkusit dalsi strategii i pri vyjimce
+        next_strategy_index = strategy_index + 1
+        if next_strategy_index < len(RETRY_STRATEGIES):
             time.sleep(RETRY_DELAY)
-            return handle_download(message, retry_count + 1)
+            return handle_download(message, next_strategy_index)
         return {'success': False, 'error': str(e)[:200]}
 
 
