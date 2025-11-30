@@ -391,6 +391,22 @@
     .toast.error {
       background: #ef4444;
     }
+
+    /* Error Box */
+    .error-box {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 14px;
+      font-size: 12px;
+      color: #fca5a5;
+      line-height: 1.5;
+    }
+
+    .error-box strong {
+      color: #f87171;
+    }
   </style>
 </head>
 <body>
@@ -409,6 +425,15 @@
   <div class="content">
     <!-- STATUS TAB -->
     <div class="tab-content active" id="tab-status">
+      <!-- Native Host Error Box -->
+      <div id="native-host-error" class="error-box" style="display: none;">
+        <div id="native-host-error-text">Native Host neni dostupny</div>
+        <div style="margin-top: 8px; font-size: 11px; color: #888;">
+          Extension ID: <code id="extension-id" style="color: #60a5fa; user-select: all;">...</code>
+          <button id="copy-ext-id" class="btn btn-secondary" style="padding: 4px 8px; margin-left: 6px; font-size: 10px;">Kopirovat</button>
+        </div>
+      </div>
+
       <div class="feature-list">
         <div class="feature-item">
           <div class="feature-icon">📥</div>
@@ -492,7 +517,10 @@
         </div>
       </div>
 
-      <button class="btn btn-primary" id="save-settings" style="width: 100%;">Ulozit nastaveni</button>
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" id="autodetect-paths" style="flex: 1;">Autodetekce</button>
+        <button class="btn btn-primary" id="save-settings" style="flex: 1;">Ulozit nastaveni</button>
+      </div>
     </div>
 
     <!-- HELP TAB -->
