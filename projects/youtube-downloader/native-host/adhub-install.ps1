@@ -44,11 +44,20 @@ function Get-LatestYtDlpVersion {
 }
 
 function Find-ChromeExtensionId {
-    # Hledat AdHub extension ve slozce Chrome extensions
+    # Hledat AdHub extension ve slozce Chrome/Edge/Brave extensions
     $chromePaths = @(
+        # Chrome
         "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Extensions",
         "$env:LOCALAPPDATA\Google\Chrome\User Data\Profile 1\Extensions",
-        "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Extensions"
+        "$env:LOCALAPPDATA\Google\Chrome\User Data\Profile 2\Extensions",
+        # Brave
+        "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Extensions",
+        "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Profile 1\Extensions",
+        # Edge
+        "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Extensions",
+        "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Profile 1\Extensions",
+        # Chromium
+        "$env:LOCALAPPDATA\Chromium\User Data\Default\Extensions"
     )
 
     foreach ($extPath in $chromePaths) {
@@ -290,15 +299,30 @@ $mf = '{"name":"com.adhub.ytdownloader","description":"AdHub YouTube Downloader"
 Set-Content -Path "$nh\com.adhub.ytdownloader.json" -Value $mf -Encoding UTF8
 Write-Host "    OK: $nh\com.adhub.ytdownloader.json" -ForegroundColor Cyan
 
-Write-Host "[+] Registruji pro Chrome a Edge..." -ForegroundColor Green
+Write-Host "[+] Registruji pro Chrome, Edge a Brave..." -ForegroundColor Green
 $manifestFile = "$nh\com.adhub.ytdownloader.json"
+
+# Chrome
 $rp = "HKCU:\Software\Google\Chrome\NativeMessagingHosts\com.adhub.ytdownloader"
 New-Item -Path $rp -Force | Out-Null
 Set-ItemProperty -Path $rp -Name "(Default)" -Value $manifestFile
+
+# Edge
 $rp = "HKCU:\Software\Microsoft\Edge\NativeMessagingHosts\com.adhub.ytdownloader"
 New-Item -Path $rp -Force | Out-Null
 Set-ItemProperty -Path $rp -Name "(Default)" -Value $manifestFile
-Write-Host "    Registry aktualizovany" -ForegroundColor Cyan
+
+# Brave
+$rp = "HKCU:\Software\BraveSoftware\Brave-Browser\NativeMessagingHosts\com.adhub.ytdownloader"
+New-Item -Path $rp -Force | Out-Null
+Set-ItemProperty -Path $rp -Name "(Default)" -Value $manifestFile
+
+# Chromium
+$rp = "HKCU:\Software\Chromium\NativeMessagingHosts\com.adhub.ytdownloader"
+New-Item -Path $rp -Force | Out-Null
+Set-ItemProperty -Path $rp -Name "(Default)" -Value $manifestFile
+
+Write-Host "    Registry aktualizovany (Chrome, Edge, Brave, Chromium)" -ForegroundColor Cyan
 
 # ============================================================================
 # HOTOVO
