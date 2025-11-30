@@ -1,6 +1,6 @@
-# AdHub YouTube Downloader - Instalator v5.6
+# AdHub YouTube Downloader - Instalator v5.7
 # Tento skript se stahuje a spousti pres adhub-install.bat
-# Nove: Preskoci stahovani pokud nastroje existuji, auto-detekce Extension ID
+# Nove: Opravena auto-detekce Extension ID - presnejsi hledani, podpora vice extensions
 
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
@@ -8,7 +8,7 @@ $ProgressPreference = 'SilentlyContinue'
 
 Write-Host ""
 Write-Host "==============================================" -ForegroundColor Yellow
-Write-Host "  AdHub YouTube Downloader - Instalator v5.6" -ForegroundColor Yellow
+Write-Host "  AdHub YouTube Downloader - Instalator v5.7" -ForegroundColor Yellow
 Write-Host "==============================================" -ForegroundColor Yellow
 Write-Host ""
 
@@ -60,6 +60,8 @@ function Find-ChromeExtensionId {
         "$env:LOCALAPPDATA\Chromium\User Data\Default\Extensions"
     )
 
+    $foundExtensions = @()
+
     foreach ($extPath in $chromePaths) {
         if (Test-Path $extPath) {
             # Projit vsechny extension slozky
@@ -71,8 +73,30 @@ function Find-ChromeExtensionId {
                     if (Test-Path $manifestPath) {
                         try {
                             $manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
-                            if ($manifest.name -like "*AdHub*" -or $manifest.name -like "*YouTube Downloader*") {
-                                return $extId
+                            # Specifictejsi hledani - hledat presny nazev "AdHub YouTube Downloader"
+                            # nebo zkontrolovat description obsahujici "adhub"
+                            $isAdHub = $false
+
+                            # Presny nazev
+                            if ($manifest.name -eq "AdHub YouTube Downloader") {
+                                $isAdHub = $true
+                            }
+                            # Nebo nazev obsahuje "AdHub" (case insensitive)
+                            elseif ($manifest.name -match "AdHub") {
+                                $isAdHub = $true
+                            }
+                            # Nebo popis obsahuje "adhub" nebo "deerpfy"
+                            elseif ($manifest.description -match "adhub|deerpfy") {
+                                $isAdHub = $true
+                            }
+
+                            if ($isAdHub) {
+                                $foundExtensions += @{
+                                    Id = $extId
+                                    Name = $manifest.name
+                                    Version = $manifest.version
+                                    Path = $extPath
+                                }
                             }
                         } catch {}
                     }
@@ -80,7 +104,37 @@ function Find-ChromeExtensionId {
             }
         }
     }
-    return $null
+
+    # Odstranit duplikaty (stejne ID)
+    $uniqueIds = $foundExtensions | Select-Object -Property Id -Unique
+
+    if ($uniqueIds.Count -eq 0) {
+        return $null
+    }
+    elseif ($uniqueIds.Count -eq 1) {
+        $ext = $foundExtensions | Select-Object -First 1
+        Write-Host "    Nalezeno: $($ext.Name) v$($ext.Version)" -ForegroundColor Cyan
+        return $ext.Id
+    }
+    else {
+        # Vice nalezenych - zobrazit vsechny a nechat uzivatele vybrat
+        Write-Host "    Nalezeno vice rozsireni:" -ForegroundColor Yellow
+        $i = 1
+        $uniqueExts = @()
+        foreach ($id in $uniqueIds) {
+            $ext = $foundExtensions | Where-Object { $_.Id -eq $id.Id } | Select-Object -First 1
+            Write-Host "      $i) $($ext.Name) v$($ext.Version) - $($ext.Id)" -ForegroundColor Cyan
+            $uniqueExts += $ext
+            $i++
+        }
+        Write-Host ""
+        $choice = Read-Host "    Vyberte cislo (1-$($uniqueExts.Count))"
+        $idx = [int]$choice - 1
+        if ($idx -ge 0 -and $idx -lt $uniqueExts.Count) {
+            return $uniqueExts[$idx].Id
+        }
+        return $uniqueExts[0].Id
+    }
 }
 
 function Get-CurrentManifestExtId {
