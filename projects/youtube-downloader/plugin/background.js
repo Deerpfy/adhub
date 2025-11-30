@@ -87,6 +87,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         .catch(error => sendResponse({ success: false, error: error.message }));
       return true;
 
+    case 'checkYtdlpUpdate':
+      checkYtdlpUpdate()
+        .then(result => sendResponse(result))
+        .catch(error => sendResponse({ success: false, error: error.message }));
+      return true;
+
+    case 'updateYtdlp':
+      updateYtdlp()
+        .then(result => sendResponse(result))
+        .catch(error => sendResponse({ success: false, error: error.message }));
+      return true;
+
     case 'updateSettings':
       state.settings = { ...state.settings, ...request.settings };
       console.log('[AdHub BG] Nastaveni aktualizovano:', state.settings);
@@ -305,6 +317,50 @@ async function testTool(tool, path) {
     };
 
   } catch (e) {
+    return {
+      success: false,
+      error: e.message
+    };
+  }
+}
+
+// ============================================================================
+// YT-DLP UPDATE KONTROLA
+// ============================================================================
+
+async function checkYtdlpUpdate() {
+  try {
+    const response = await sendNativeMessage({
+      action: 'checkYtdlpUpdate',
+      ytdlpPath: state.settings.ytdlpPath
+    });
+
+    console.log('[AdHub BG] yt-dlp update check:', response);
+    return response;
+
+  } catch (e) {
+    console.log('[AdHub BG] yt-dlp update check failed:', e.message);
+    return {
+      success: false,
+      error: e.message
+    };
+  }
+}
+
+async function updateYtdlp() {
+  try {
+    console.log('[AdHub BG] Starting yt-dlp update...');
+
+    const response = await sendNativeMessage({
+      action: 'updateYtdlp',
+      ytdlpPath: state.settings.ytdlpPath
+    });
+
+    console.log('[AdHub BG] yt-dlp update result:', response);
+    return response;
+
+  } catch (e) {
+    console.log('[AdHub BG] yt-dlp update failed:', e.message);
     return {
       success: false,
       error: e.message
