@@ -1,6 +1,6 @@
-# AdHub YouTube Downloader - Instalator v5.7
+# AdHub YouTube Downloader - Instalator v5.8
 # Tento skript se stahuje a spousti pres adhub-install.bat
-# Nove: Opravena auto-detekce Extension ID - presnejsi hledani, podpora vice extensions
+# Nove: Vzdy se pta na Extension ID - spolehlivejsi nez auto-detekce
 
 $ErrorActionPreference = 'Continue'
 $ProgressPreference = 'SilentlyContinue'
@@ -8,7 +8,7 @@ $ProgressPreference = 'SilentlyContinue'
 
 Write-Host ""
 Write-Host "==============================================" -ForegroundColor Yellow
-Write-Host "  AdHub YouTube Downloader - Instalator v5.7" -ForegroundColor Yellow
+Write-Host "  AdHub YouTube Downloader - Instalator v5.8" -ForegroundColor Yellow
 Write-Host "==============================================" -ForegroundColor Yellow
 Write-Host ""
 
@@ -40,100 +40,6 @@ function Get-LatestYtDlpVersion {
         return $release.tag_name
     } catch {
         return $null
-    }
-}
-
-function Find-ChromeExtensionId {
-    # Hledat AdHub extension ve slozce Chrome/Edge/Brave extensions
-    $chromePaths = @(
-        # Chrome
-        "$env:LOCALAPPDATA\Google\Chrome\User Data\Default\Extensions",
-        "$env:LOCALAPPDATA\Google\Chrome\User Data\Profile 1\Extensions",
-        "$env:LOCALAPPDATA\Google\Chrome\User Data\Profile 2\Extensions",
-        # Brave
-        "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Default\Extensions",
-        "$env:LOCALAPPDATA\BraveSoftware\Brave-Browser\User Data\Profile 1\Extensions",
-        # Edge
-        "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Default\Extensions",
-        "$env:LOCALAPPDATA\Microsoft\Edge\User Data\Profile 1\Extensions",
-        # Chromium
-        "$env:LOCALAPPDATA\Chromium\User Data\Default\Extensions"
-    )
-
-    $foundExtensions = @()
-
-    foreach ($extPath in $chromePaths) {
-        if (Test-Path $extPath) {
-            # Projit vsechny extension slozky
-            Get-ChildItem $extPath -Directory -ErrorAction SilentlyContinue | ForEach-Object {
-                $extId = $_.Name
-                # Hledat manifest.json s AdHub
-                Get-ChildItem $_.FullName -Directory -ErrorAction SilentlyContinue | ForEach-Object {
-                    $manifestPath = Join-Path $_.FullName "manifest.json"
-                    if (Test-Path $manifestPath) {
-                        try {
-                            $manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
-                            # Specifictejsi hledani - hledat presny nazev "AdHub YouTube Downloader"
-                            # nebo zkontrolovat description obsahujici "adhub"
-                            $isAdHub = $false
-
-                            # Presny nazev
-                            if ($manifest.name -eq "AdHub YouTube Downloader") {
-                                $isAdHub = $true
-                            }
-                            # Nebo nazev obsahuje "AdHub" (case insensitive)
-                            elseif ($manifest.name -match "AdHub") {
-                                $isAdHub = $true
-                            }
-                            # Nebo popis obsahuje "adhub" nebo "deerpfy"
-                            elseif ($manifest.description -match "adhub|deerpfy") {
-                                $isAdHub = $true
-                            }
-
-                            if ($isAdHub) {
-                                $foundExtensions += @{
-                                    Id = $extId
-                                    Name = $manifest.name
-                                    Version = $manifest.version
-                                    Path = $extPath
-                                }
-                            }
-                        } catch {}
-                    }
-                }
-            }
-        }
-    }
-
-    # Odstranit duplikaty (stejne ID)
-    $uniqueIds = $foundExtensions | Select-Object -Property Id -Unique
-
-    if ($uniqueIds.Count -eq 0) {
-        return $null
-    }
-    elseif ($uniqueIds.Count -eq 1) {
-        $ext = $foundExtensions | Select-Object -First 1
-        Write-Host "    Nalezeno: $($ext.Name) v$($ext.Version)" -ForegroundColor Cyan
-        return $ext.Id
-    }
-    else {
-        # Vice nalezenych - zobrazit vsechny a nechat uzivatele vybrat
-        Write-Host "    Nalezeno vice rozsireni:" -ForegroundColor Yellow
-        $i = 1
-        $uniqueExts = @()
-        foreach ($id in $uniqueIds) {
-            $ext = $foundExtensions | Where-Object { $_.Id -eq $id.Id } | Select-Object -First 1
-            Write-Host "      $i) $($ext.Name) v$($ext.Version) - $($ext.Id)" -ForegroundColor Cyan
-            $uniqueExts += $ext
-            $i++
-        }
-        Write-Host ""
-        $choice = Read-Host "    Vyberte cislo (1-$($uniqueExts.Count))"
-        $idx = [int]$choice - 1
-        if ($idx -ge 0 -and $idx -lt $uniqueExts.Count) {
-            return $uniqueExts[$idx].Id
-        }
-        return $uniqueExts[0].Id
     }
 }
 
@@ -292,44 +198,37 @@ Set-Content -Path "$nh\adhub_yt_host.bat" -Value $batContent -Encoding ASCII
 Write-Host "    OK: $nh\adhub_yt_host.bat" -ForegroundColor Cyan
 
 # ============================================================================
-# EXTENSION ID - AUTO-DETEKCE
+# EXTENSION ID - VZDY SE ZEPTAT UZIVATELE
 # ============================================================================
 
 Write-Host ""
-Write-Host "[+] Hledam Extension ID..." -ForegroundColor Green
+Write-Host "[+] Nastaveni Extension ID..." -ForegroundColor Green
+Write-Host ""
+Write-Host "==============================================" -ForegroundColor Cyan
+Write-Host "  DULEZITE: Zkopirujte Extension ID z rozsireni!" -ForegroundColor Cyan
+Write-Host "==============================================" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  1. Kliknete na ikonu rozsireni v prohlizeci" -ForegroundColor White
+Write-Host "  2. V popup okne kliknete na 'Kopiovat' u Extension ID" -ForegroundColor White
+Write-Host "  3. Vlozte sem (Ctrl+V)" -ForegroundColor White
+Write-Host ""
+
+$currentManifestId = Get-CurrentManifestExtId
+if ($currentManifestId) {
+    Write-Host "  Aktualne v registry: $currentManifestId" -ForegroundColor Gray
+    Write-Host "  (Pokud nefunguje, zadejte nove ID)" -ForegroundColor Gray
+    Write-Host ""
+}
+
+$inputId = Read-Host "Zadejte Extension ID"
+$inputId = $inputId.Trim()
 
 $extId = $null
-$currentManifestId = Get-CurrentManifestExtId
-
-# Zkusit auto-detekci
-$detectedId = Find-ChromeExtensionId
-if ($detectedId) {
-    Write-Host "    Nalezeno v Chrome: $detectedId" -ForegroundColor Cyan
-    $extId = $detectedId
-}
-
-# Pokud mame ID v manifestu a je stejne, pouzit ho
-if ($currentManifestId -and (-not $extId -or $currentManifestId -eq $extId)) {
-    Write-Host "    Aktualni v manifestu: $currentManifestId" -ForegroundColor Cyan
-    if (-not $extId) { $extId = $currentManifestId }
-}
-
-# Pokud nemame ID, zeptat se
-if (-not $extId) {
-    Write-Host ""
-    Write-Host "Extension ID nebylo nalezeno automaticky." -ForegroundColor Yellow
-    Write-Host "Najdete ho v Chrome na: chrome://extensions/" -ForegroundColor Cyan
-    Write-Host "Povolte 'Rezim vyvojare' a zkopirujte ID rozsireni AdHub." -ForegroundColor Cyan
-    Write-Host ""
-    Write-Host "Priklad: abcdefghijklmnopqrstuvwxyzabcd" -ForegroundColor Gray
-    Write-Host ""
-
-    $inputId = Read-Host "Zadejte Extension ID (nebo Enter pro wildcard)"
-    $inputId = $inputId.Trim()
-
-    if ($inputId -match '^[a-p]{32}$') {
-        $extId = $inputId
-    }
+if ($inputId -match '^[a-p]{32}$') {
+    $extId = $inputId
+    Write-Host "    OK: $extId" -ForegroundColor Green
+} else {
+    Write-Host "    Neplatny format ID! Pouzivam wildcard (*)" -ForegroundColor Yellow
 }
 
 # ============================================================================
