@@ -290,7 +290,8 @@ def handle_download(message, retry_count=0):
     cmd.extend([
         '--no-playlist',           # Nestahovat playlisty
         '--no-check-certificates', # Preskocit certifikaty (nekdy pomaha)
-        '--extractor-args', 'youtube:player_client=web,android',  # Pouzit vice klientu pro lepsi pristup
+        # Pouzit klienty ktere funguji lepe s cookies a SABR
+        '--extractor-args', 'youtube:player_client=ios,web_creator',
     ])
 
     # Cookies pro vekove omezena videa (prioritne z extension)
@@ -427,8 +428,13 @@ def parse_error_message(error_msg):
     """Parsuje chybovou hlasku na uzivatelsky pritelive zpravy."""
     error_lower = error_msg.lower()
 
-    if 'sign in' in error_lower or 'age' in error_lower:
-        return 'Video je vekove omezene. Zkuste aktualizovat yt-dlp: yt-dlp -U'
+    # SABR streaming issue (novy YouTube problem)
+    if 'sabr' in error_lower or 'missing a url' in error_lower:
+        return 'YouTube blokuje stahovani. Aktualizujte yt-dlp: yt-dlp -U'
+    elif 'sign in' in error_lower and 'age' in error_lower:
+        return 'Video je vekove omezene. Aktualizujte yt-dlp: yt-dlp -U'
+    elif 'sign in' in error_lower:
+        return 'Vyzaduje prihlaseni. Aktualizujte yt-dlp: yt-dlp -U'
     elif 'private' in error_lower:
         return 'Video je soukrome'
     elif 'members only' in error_lower or 'member' in error_lower:
@@ -438,18 +444,19 @@ def parse_error_message(error_msg):
     elif 'live' in error_lower and ('not' in error_lower or 'offline' in error_lower):
         return 'Zivy prenos jeste nezacal nebo uz skoncil'
     elif '403' in error_msg or 'forbidden' in error_lower:
-        return 'Pristup odepren (403). Zkuste aktualizovat yt-dlp: yt-dlp -U'
+        return 'Pristup odepren (403). Aktualizujte yt-dlp: yt-dlp -U'
     elif '404' in error_msg:
         return 'Video nebylo nalezeno (404)'
     elif 'rate' in error_lower or '429' in error_msg:
         return 'Prilis mnoho pozadavku (429). Pockejte chvili a zkuste znovu'
     elif 'unavailable' in error_lower or 'not available' in error_lower:
-        # Toto musi byt po ostatnich specifickych chybach
-        return 'Video neni dostupne. Zkuste aktualizovat yt-dlp: yt-dlp -U'
+        return 'Video neni dostupne. Aktualizujte yt-dlp: yt-dlp -U'
     elif 'no suitable' in error_lower or 'no format' in error_lower:
-        return 'Zadny kompatibilni format. Zkuste jinou kvalitu'
+        return 'Zadny kompatibilni format. Zkuste jinou kvalitu nebo aktualizujte yt-dlp'
     elif 'ffmpeg' in error_lower or 'postprocess' in error_lower:
         return 'Chyba zpracovani videa. Overtte ze ffmpeg je spravne nainstalovan'
+    elif 'skipping' in error_lower and 'client' in error_lower:
+        return 'YouTube omezuje stahovani. Aktualizujte yt-dlp: yt-dlp -U'
 
     # Zkratit dlouhe chyby ale zachovat vice informaci
     if len(error_msg) > 200:
