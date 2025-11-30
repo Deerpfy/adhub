@@ -363,16 +363,19 @@ echo $YtdlpExe = "$YtdlpDir\\yt-dlp.exe"
 echo Invoke-WebRequest -Uri 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe' -OutFile $YtdlpExe -UseBasicParsing
 echo Write-Host "    OK: $YtdlpExe" -ForegroundColor Cyan
 echo.
-echo Write-Host '[+] Stahuji ffmpeg (chvili to potrva^)...' -ForegroundColor Green
+echo Write-Host '[+] Stahuji ffmpeg (muze trvat 2-5 minut^)...' -ForegroundColor Green
 echo $FfmpegZip = "$env:TEMP\\ffmpeg.zip"
 echo $FfmpegExtract = "$env:TEMP\\ffmpeg-extract"
 echo try {
 echo     # Pouzijeme gyan.dev - spolehlivy zdroj ffmpeg pro Windows
 echo     $ffmpegUrl = 'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip'
-echo     Write-Host "    Stahuji z: $ffmpegUrl" -ForegroundColor Gray
+echo     Write-Host "    Zdroj: gyan.dev (cca 80 MB)" -ForegroundColor Gray
+echo     Write-Host "    Stahuji... prosim cekejte..." -ForegroundColor Yellow
 echo     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-echo     Invoke-WebRequest -Uri $ffmpegUrl -OutFile $FfmpegZip -UseBasicParsing -TimeoutSec 300
-echo     Write-Host "    Rozbaluji..." -ForegroundColor Gray
+echo     # Pouzijeme WebClient pro lepsi spolehlivost
+echo     $webClient = New-Object System.Net.WebClient
+echo     $webClient.DownloadFile^($ffmpegUrl, $FfmpegZip^)
+echo     Write-Host "    Stazeno! Rozbaluji..." -ForegroundColor Gray
 echo     if ^(Test-Path $FfmpegExtract^) { Remove-Item -Path $FfmpegExtract -Recurse -Force }
 echo     Expand-Archive -Path $FfmpegZip -DestinationPath $FfmpegExtract -Force
 echo     $bin = Get-ChildItem -Path $FfmpegExtract -Recurse -Directory ^| Where-Object { $_.Name -eq 'bin' } ^| Select-Object -First 1
