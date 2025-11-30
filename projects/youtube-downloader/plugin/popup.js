@@ -1,7 +1,7 @@
 /**
- * AdHub YouTube Downloader v5.5 - Popup Script
+ * AdHub YouTube Downloader v5.6 - Popup Script
  * Hybridni rezim: zakladni stahovani + volitelne rozsirene funkce
- * Nove v5.5: Automaticke cookies pro vekove omezena videa
+ * Nove v5.6: Opraveno stahovani - vylepsene format selectory a retry logika
  */
 
 (function() {
@@ -38,7 +38,7 @@
   // ============================================================================
 
   async function init() {
-    console.log('[Popup] Inicializace v5.5');
+    console.log('[Popup] Inicializace v5.6');
 
     // Nacti nastaveni
     await loadSettings();

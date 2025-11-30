@@ -1,5 +1,5 @@
 /**
- * AdHub YouTube Downloader v5.5 - Content Script
+ * AdHub YouTube Downloader v5.6 - Content Script
  *
  * Hybridni rezim s kompletnim pokrytim vsech typu videi:
  * - Zakladni: Formaty s primym URL (max 720p)
@@ -10,16 +10,18 @@
  * - Vekove omezena (s cookies)
  * - Zive prenosy (pouze pres yt-dlp)
  * - YouTube Music
+ *
+ * Nove v5.6: Opraveno stahovani - vylepsene format selectory a retry logika
  */
 
 (function() {
   'use strict';
 
   if (window.top !== window.self) return;
-  if (window.__ADHUB_YT_DL_V55__) return;
-  window.__ADHUB_YT_DL_V55__ = true;
+  if (window.__ADHUB_YT_DL_V56__) return;
+  window.__ADHUB_YT_DL_V56__ = true;
 
-  console.log('[AdHub] YouTube Downloader v5.5 (Hybrid)');
+  console.log('[AdHub] YouTube Downloader v5.6 (Hybrid)');
 
   // ============================================================================
   // KONSTANTY
