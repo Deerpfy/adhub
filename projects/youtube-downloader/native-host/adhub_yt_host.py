@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-AdHub YouTube Downloader - Native Host v5.7
+AdHub YouTube Downloader - Native Host v5.8
 ============================================
 Native Messaging host pro browser extension.
 Umoznuje HD/4K stahovani a audio konverzi.
@@ -15,6 +15,15 @@ Akce:
 - check: Zkontroluje dostupnost yt-dlp a ffmpeg
 - test: Otestuje konkretni nastroj
 - download: Stahne video/audio
+
+DULEZITE - Player klienti:
+- android, ios: Obchazeji n-challenge, ALE nepodporuji cookies!
+- web, mweb: Podporuji cookies, ale mohou vyzadovat n-challenge
+- web_creator: Podporuje cookies, casto funguje lepe nez web
+
+Strategie:
+1. Pro bezna videa (bez cookies): android -> ios -> mweb
+2. Pro vekove omezena (s cookies): web_creator -> web -> mweb
 """
 
 import sys
@@ -31,7 +40,7 @@ import ssl
 # KONFIGURACE
 # ============================================================================
 
-VERSION = '5.7'
+VERSION = '5.8'
 MAX_RETRIES = 3
 RETRY_DELAY = 2  # sekundy
 YTDLP_RELEASES_URL = 'https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest'
@@ -390,19 +399,37 @@ def handle_download(message, retry_count=0):
     cmd.extend([
         '--no-playlist',           # Nestahovat playlisty
         '--no-check-certificates', # Preskocit certifikaty (nekdy pomaha)
-        # android a ios klienti obchazeji n challenge (throttling)
-        # Kombinovane extractor-args (nesmi se psat 2x --extractor-args!)
-        '--extractor-args', 'youtube:player_client=android,ios,mweb;player_skip=webpage,configs',
     ])
 
-    # Cookies pro vekove omezena videa (prioritne z extension)
+    # =========================================================================
+    # DULEZITE: Volba player klientu podle pouziti cookies
+    # =========================================================================
+    # - android, ios: Obchazeji n-challenge, ALE NEPODPORUJI COOKIES!
+    # - web_creator, web, mweb: Podporuji cookies
+    #
+    # Pokud pouzivame cookies a zaroven android/ios -> yt-dlp je PRESKOCI
+    # a zustane jen mweb ktery potrebuje PO Token -> SELHANI
+    # =========================================================================
+
     cookies_from_ext = message.get('cookies')
     cookies_path = get_cookies_path(cookies_from_ext)
-    if use_cookies and cookies_path:
-        cmd.extend(['--cookies', cookies_path])
-    elif use_cookies:
-        # Zkusit cookies primo z prohlizece (Chrome/Firefox)
-        cmd.extend(['--cookies-from-browser', 'chrome'])
+
+    # Rozhodnout zda pouzit cookies
+    will_use_cookies = use_cookies and (cookies_path is not None)
+
+    if will_use_cookies:
+        # S COOKIES: Pouzit klienty ktere cookies podporuji
+        # web_creator je nejlepsi pro autentizovane pozadavky
+        cmd.extend([
+            '--extractor-args', 'youtube:player_client=web_creator,web,mweb',
+            '--cookies', cookies_path,
+        ])
+    else:
+        # BEZ COOKIES: Pouzit android/ios ktere obchazeji n-challenge
+        # Tyto klienti nevyzaduji reseni n-challenge
+        cmd.extend([
+            '--extractor-args', 'youtube:player_client=android,ios,mweb;player_skip=webpage',
+        ])
 
     # Format
     if format_type == 'audio' or audio_format:
