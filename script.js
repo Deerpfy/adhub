@@ -123,24 +123,38 @@ function loadViewCountsFromLocalStorage() {
 async function incrementViewCount(toolId) {
     if (!toolId) return;
 
-    // Inkrementace lokálně
-    viewCounts[toolId] = (viewCounts[toolId] || 0) + 1;
-
-    // Uložení do localStorage
-    localStorage.setItem('adhub_view_counts', JSON.stringify(viewCounts));
-
-    // Aktualizace UI
-    updateViewCountUI(toolId);
-
     // Odeslání do Firebase (pokud je nakonfigurováno)
     if (firebaseInitialized && firebaseDb) {
         try {
-            await firebaseDb.ref(`views/${toolId}`).transaction((currentValue) => {
-                return (currentValue || 0) + 1;
-            });
+            // Použijeme serverValue.increment pro atomickou operaci
+            await firebaseDb.ref(`views/${toolId}`).set(
+                firebase.database.ServerValue.increment(1)
+            );
+
+            // Po úspěšném zápisu načteme aktuální hodnotu
+            const snapshot = await firebaseDb.ref(`views/${toolId}`).once('value');
+            const newValue = snapshot.val() || 0;
+            viewCounts[toolId] = newValue;
+
+            // Uložení do localStorage jako cache
+            localStorage.setItem('adhub_view_counts', JSON.stringify(viewCounts));
+
+            // Aktualizace UI
+            updateViewCountUI(toolId);
+
+            console.log(`[ViewCounter] ${toolId}: ${newValue}`);
         } catch (error) {
             console.error('[ViewCounter] Chyba při ukládání do Firebase:', error);
+            // Fallback na lokální inkrementaci
+            viewCounts[toolId] = (viewCounts[toolId] || 0) + 1;
+            localStorage.setItem('adhub_view_counts', JSON.stringify(viewCounts));
+            updateViewCountUI(toolId);
         }
+    } else {
+        // Fallback - pouze localStorage
+        viewCounts[toolId] = (viewCounts[toolId] || 0) + 1;
+        localStorage.setItem('adhub_view_counts', JSON.stringify(viewCounts));
+        updateViewCountUI(toolId);
     }
 }
 
