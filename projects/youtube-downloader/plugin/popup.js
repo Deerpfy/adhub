@@ -49,8 +49,18 @@
     // Nastav event listenery
     setupEventListeners();
 
+    // Zobraz extension ID
+    displayExtensionId();
+
     // Zkontroluj status nastroju
     await checkToolsStatus();
+  }
+
+  function displayExtensionId() {
+    const extIdEl = document.getElementById('extension-id');
+    if (extIdEl) {
+      extIdEl.textContent = chrome.runtime.id;
+    }
   }
 
   // ============================================================================
@@ -125,15 +135,45 @@
         state.settings.nativeHostInstalled = true;
         updateToolStatus('ytdlp', response.ytdlpAvailable, response.ytdlpVersion);
         updateToolStatus('ffmpeg', response.ffmpegAvailable, response.ffmpegVersion);
+        hideNativeHostError();
       } else {
         state.settings.nativeHostInstalled = false;
         updateToolStatus('ytdlp', false);
         updateToolStatus('ffmpeg', false);
+        showNativeHostError(response?.error);
       }
     } catch (e) {
       console.log('[Popup] Native host neni dostupny:', e.message);
+      state.settings.nativeHostInstalled = false;
       updateToolStatus('ytdlp', false);
       updateToolStatus('ffmpeg', false);
+      showNativeHostError(e.message);
+    }
+  }
+
+  function showNativeHostError(errorMsg) {
+    const errorBox = document.getElementById('native-host-error');
+    if (errorBox) {
+      errorBox.style.display = 'block';
+
+      // Detekovat typ chyby
+      const errorText = document.getElementById('native-host-error-text');
+      if (errorText) {
+        if (errorMsg && errorMsg.includes('forbidden')) {
+          errorText.innerHTML = '<strong>Registry nesedi s extension ID!</strong><br>Spustte znovu instalator pro opravu.';
+        } else if (errorMsg && errorMsg.includes('not found')) {
+          errorText.innerHTML = '<strong>Native Host neni nainstalovan!</strong><br>Stisknete tlacitko nize pro instalaci.';
+        } else {
+          errorText.innerHTML = '<strong>Native Host neni dostupny</strong><br>Spustte instalator pro aktivaci HD rezimu.';
+        }
+      }
+    }
+  }
+
+  function hideNativeHostError() {
+    const errorBox = document.getElementById('native-host-error');
+    if (errorBox) {
+      errorBox.style.display = 'none';
     }
   }
 
@@ -225,6 +265,9 @@
     $('#test-ytdlp')?.addEventListener('click', () => testTool('ytdlp'));
     $('#test-ffmpeg')?.addEventListener('click', () => testTool('ffmpeg'));
 
+    // Auto-detect tlacitka
+    $('#autodetect-paths')?.addEventListener('click', autoDetectPaths);
+
     // Ulozit nastaveni
     $('#save-settings')?.addEventListener('click', saveSettings);
 
@@ -240,6 +283,67 @@
     // Stahnout instalator
     $('#download-installer-win')?.addEventListener('click', () => downloadInstaller('windows'));
     $('#download-installer-unix')?.addEventListener('click', () => downloadInstaller('unix'));
+
+    // Kopirovat extension ID
+    $('#copy-ext-id')?.addEventListener('click', copyExtensionId);
+  }
+
+  async function autoDetectPaths() {
+    showToast('Hledam nastroje...');
+
+    // Zkusit ziskat defaultni cesty z native hostu
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'checkNativeHost'
+      });
+
+      if (response?.nativeHostAvailable) {
+        // Native host funguje, cesty jsou OK
+        if (response.ytdlpAvailable && response.ytdlp?.path) {
+          $('#ytdlp-path').value = '';  // Prazdne = autodetekce
+        }
+        if (response.ffmpegAvailable && response.ffmpeg?.path) {
+          $('#ffmpeg-path').value = '';  // Prazdne = autodetekce
+        }
+        showToast('Nastroje nalezeny automaticky!');
+        await saveSettings();
+        return;
+      }
+    } catch (e) {
+      console.log('[Popup] Nelze kontaktovat native host:', e);
+    }
+
+    // Nabidnout typicke cesty
+    const isWindows = navigator.platform.toLowerCase().includes('win');
+    if (isWindows) {
+      const ytdlpInput = $('#ytdlp-path');
+      const ffmpegInput = $('#ffmpeg-path');
+
+      // Nabidnout AdHub cesty pro Windows
+      const username = '%LOCALAPPDATA%';  // Prohlizec nema pristup k env vars
+      ytdlpInput.placeholder = 'C:\\Users\\VASE_JMENO\\AppData\\Local\\AdHub\\yt-dlp\\yt-dlp.exe';
+      ffmpegInput.placeholder = 'C:\\Users\\VASE_JMENO\\AppData\\Local\\AdHub\\ffmpeg\\ffmpeg.exe';
+
+      showToast('Spustte instalator pro automaticke nastaveni');
+    } else {
+      showToast('Spustte instalator pro automaticke nastaveni');
+    }
+  }
+
+  async function copyExtensionId() {
+    try {
+      await navigator.clipboard.writeText(chrome.runtime.id);
+      showToast('Extension ID zkopirovano!');
+    } catch (e) {
+      // Fallback
+      const textArea = document.createElement('textarea');
+      textArea.value = chrome.runtime.id;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      showToast('Extension ID zkopirovano!');
+    }
   }
 
   // ============================================================================

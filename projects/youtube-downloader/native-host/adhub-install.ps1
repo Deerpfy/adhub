@@ -89,7 +89,32 @@ Write-Host "    OK: $nh\adhub_yt_host.bat" -ForegroundColor Cyan
 
 Write-Host "[+] Vytvarim manifest..." -ForegroundColor Green
 $manifestPath = $nh.Replace("\","\\") + "\\adhub_yt_host.bat"
-$mf = '{"name":"com.adhub.ytdownloader","description":"AdHub","path":"' + $manifestPath + '","type":"stdio","allowed_origins":["chrome-extension://*/"]}'
+
+# Ziskat extension ID
+Write-Host ""
+Write-Host "Pro spravne propojeni s rozsirenim potrebuji Extension ID." -ForegroundColor Yellow
+Write-Host "Najdete ho v Chrome na: chrome://extensions/" -ForegroundColor Cyan
+Write-Host "Povolte 'Rezim vyvojare' a zkopirujte ID rozsireni AdHub." -ForegroundColor Cyan
+Write-Host ""
+Write-Host "Priklad: abcdefghijklmnopqrstuvwxyzabcd" -ForegroundColor Gray
+Write-Host "(32 znaku, male pismena a-p)" -ForegroundColor Gray
+Write-Host ""
+
+$extId = Read-Host "Zadejte Extension ID (nebo Enter pro wildcard)"
+$extId = $extId.Trim()
+
+# Validace nebo wildcard
+if ($extId -match '^[a-p]{32}$') {
+    $origins = '"chrome-extension://' + $extId + '/"'
+    Write-Host "    Extension ID: $extId" -ForegroundColor Cyan
+} else {
+    # Wildcard - funguje na nekterych verzich Chrome
+    $origins = '"chrome-extension://*/"'
+    Write-Host "    Pouzivam wildcard (*)." -ForegroundColor Yellow
+    Write-Host "    Pokud nefunguje, spustte instalator znovu s platnym ID." -ForegroundColor Yellow
+}
+
+$mf = '{"name":"com.adhub.ytdownloader","description":"AdHub YouTube Downloader","path":"' + $manifestPath + '","type":"stdio","allowed_origins":[' + $origins + ']}'
 Set-Content -Path "$nh\com.adhub.ytdownloader.json" -Value $mf -Encoding UTF8
 Write-Host "    OK: $nh\com.adhub.ytdownloader.json" -ForegroundColor Cyan
 
