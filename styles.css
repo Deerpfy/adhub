@@ -73,15 +73,17 @@ body::before {
 
 /* Header - Moderní s glassmorphism */
 .header {
-    background: rgba(18, 18, 24, 0.8);
+    background: rgba(18, 18, 24, 0.9);
     backdrop-filter: blur(20px) saturate(180%);
     -webkit-backdrop-filter: blur(20px) saturate(180%);
-    border-bottom: 1px solid var(--border-color);
-    padding: 16px 0;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 16px 20px;
     position: sticky;
-    top: 0;
+    top: 12px;
     z-index: 1000;
-    box-shadow: var(--shadow-sm);
+    box-shadow: var(--shadow);
+    margin: 12px 0;
 }
 
 .header-content {
@@ -907,9 +909,10 @@ body::before {
 
 /* Footer */
 .footer {
-    margin-top: 40px;
-    padding: 20px 0;
-    border-top: 1px solid var(--border-color);
+    margin: 40px 0 12px;
+    padding: 16px 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
     background: var(--bg-card);
 }
 
@@ -950,9 +953,12 @@ html {
     }
     
     .header {
-        padding: 12px 0;
+        padding: 12px 16px;
+        margin: 8px 0;
+        top: 8px;
+        border-radius: 12px;
     }
-    
+
     .header-content {
         flex-direction: column;
         align-items: stretch;
@@ -1137,7 +1143,13 @@ html {
     }
 
     .header {
-        padding: 10px 0;
+        padding: 10px 12px;
+        border-radius: 10px;
+    }
+
+    .footer {
+        border-radius: 10px;
+        padding: 14px 16px;
     }
 
     .logo {
