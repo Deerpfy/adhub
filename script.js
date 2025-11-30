@@ -123,17 +123,8 @@ function loadViewCountsFromLocalStorage() {
 async function incrementViewCount(toolId) {
     if (!toolId) return;
 
-    // Kontrola, zda už nebyla návštěva zaznamenána v této session
-    const sessionKey = `adhub_viewed_${toolId}`;
-    if (sessionStorage.getItem(sessionKey)) {
-        return; // Již zaznamenáno v této session
-    }
-
     // Inkrementace lokálně
     viewCounts[toolId] = (viewCounts[toolId] || 0) + 1;
-
-    // Označení jako navštívené v této session
-    sessionStorage.setItem(sessionKey, 'true');
 
     // Uložení do localStorage
     localStorage.setItem('adhub_view_counts', JSON.stringify(viewCounts));
