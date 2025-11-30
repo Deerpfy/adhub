@@ -30,9 +30,9 @@ const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com';
 
 const state = {
     pluginConnected: false,
-    pluginId: null,
     pluginVersion: null,
     latestCommit: null,
+    latestManifestVersion: null, // Verze z manifestu na GitHubu
     currentVideoInfo: null,
     currentFormats: null
 };
@@ -202,16 +202,50 @@ async function checkPlugin() {
 }
 
 function clearStalePluginSignals() {
-    // Smaz stare localStorage hodnoty - plugin je nastavi znovu, pokud bezi
-    console.log('[AdHub] Mazem stare localStorage signaly');
-    localStorage.removeItem('adhub_extension_active');
-    localStorage.removeItem('adhub_extension_id');
-    localStorage.removeItem('adhub_extension_version');
-    localStorage.removeItem('adhub_extension_name');
+    // Kontrola timestamp - pokud je starsi nez 60 sekund, plugin uz nebezi
+    const timestamp = localStorage.getItem('adhub_extension_timestamp');
+    const now = Date.now();
+    const maxAge = 60 * 1000; // 60 sekund
+
+    if (timestamp) {
+        const age = now - parseInt(timestamp, 10);
+        if (age > maxAge) {
+            console.log('[AdHub] Plugin timestamp je stary (' + Math.round(age / 1000) + 's), mazem signaly');
+            localStorage.removeItem('adhub_extension_active');
+            localStorage.removeItem('adhub_extension_version');
+            localStorage.removeItem('adhub_extension_name');
+            localStorage.removeItem('adhub_extension_timestamp');
+        } else {
+            console.log('[AdHub] Plugin timestamp je aktualni (' + Math.round(age / 1000) + 's)');
+        }
+    } else {
+        // Zadny timestamp = stare data, smazat
+        console.log('[AdHub] Zadny timestamp, mazem stare signaly');
+        localStorage.removeItem('adhub_extension_active');
+        localStorage.removeItem('adhub_extension_version');
+        localStorage.removeItem('adhub_extension_name');
+    }
 }
 
 function detectPluginViaEvent() {
     return new Promise((resolve) => {
+        // Nejprve zkontroluj localStorage s aktualnim timestamp
+        const timestamp = localStorage.getItem('adhub_extension_timestamp');
+        const now = Date.now();
+        const maxAge = 60 * 1000; // 60 sekund
+
+        if (timestamp && (now - parseInt(timestamp, 10)) < maxAge) {
+            const active = localStorage.getItem('adhub_extension_active');
+            const version = localStorage.getItem('adhub_extension_version');
+
+            if (active === 'true' && version) {
+                console.log('[AdHub] Plugin detekovan z localStorage (timestamp aktualni)');
+                state.pluginVersion = version;
+                resolve(true);
+                return;
+            }
+        }
+
         // Timeout 3 sekundy - pokud plugin neodpovi, neni aktivni
         const timeout = setTimeout(() => {
             console.log('[AdHub] Plugin timeout - neni aktivni');
@@ -226,8 +260,7 @@ function detectPluginViaEvent() {
             window.removeEventListener('adhub-extension-ready', readyHandler);
             window.removeEventListener('adhub-extension-response', responseHandler);
 
-            if (event.detail && event.detail.id) {
-                state.pluginId = event.detail.id;
+            if (event.detail && event.detail.version) {
                 state.pluginVersion = event.detail.version;
             }
             resolve(true);
@@ -239,8 +272,7 @@ function detectPluginViaEvent() {
             window.removeEventListener('adhub-extension-ready', readyHandler);
             window.removeEventListener('adhub-extension-response', responseHandler);
 
-            if (event.detail && event.detail.id) {
-                state.pluginId = event.detail.id;
+            if (event.detail && event.detail.version) {
                 state.pluginVersion = event.detail.version;
             }
             resolve(true);
@@ -262,35 +294,60 @@ function detectPluginViaEvent() {
 function checkPluginVersion() {
     console.log('[AdHub] Kontroluji verzi pluginu...');
 
-    const downloadedCommit = localStorage.getItem('adhub_downloaded_commit');
+    // Porovnej verzi nainstalovaneho pluginu s verzi z manifestu na GitHubu
+    const installedVersion = state.pluginVersion;
+    const latestVersion = state.latestManifestVersion;
 
-    if (!downloadedCommit) {
-        console.log('[AdHub] Zadny stazeny commit v localStorage');
-        hideUpdateNotification();
+    if (!installedVersion) {
+        console.log('[AdHub] Nemame verzi nainstalovaneho pluginu');
+        // Zkontroluj jestli mame stazeny commit - pro install sekci
+        checkDownloadedCommitVersion();
         return;
     }
 
-    if (!state.latestCommit) {
-        console.log('[AdHub] Zatim nemame info o nejnovejsim commitu');
-        // Zkusime pozdeji, az se nacte commit info
+    if (!latestVersion) {
+        console.log('[AdHub] Zatim nemame info o nejnovejsi verzi z GitHubu');
         return;
     }
 
-    const latestShort = state.latestCommit.sha.substring(0, 7);
-    const downloadedShort = downloadedCommit.substring(0, 7);
+    console.log('[AdHub] Porovnani verzi:', { installed: installedVersion, latest: latestVersion });
 
-    console.log('[AdHub] Porovnani verzi:', { downloaded: downloadedShort, latest: latestShort });
+    // Porovnani verzi (semver)
+    const isOutdated = compareVersions(installedVersion, latestVersion) < 0;
 
-    if (downloadedShort !== latestShort) {
+    if (isOutdated) {
         console.log('[AdHub] Je k dispozici nova verze!');
-        showUpdateNotification(downloadedShort, latestShort);
+        showUpdateNotification(installedVersion, latestVersion);
     } else {
         console.log('[AdHub] Plugin je aktualni');
         hideUpdateNotification();
+        showUpToDateBadge();
     }
 }
 
-function showUpdateNotification(oldCommit, newCommit) {
+// Porovnani semver verzi: -1 = a < b, 0 = a == b, 1 = a > b
+function compareVersions(a, b) {
+    const partsA = a.split('.').map(Number);
+    const partsB = b.split('.').map(Number);
+    const len = Math.max(partsA.length, partsB.length);
+
+    for (let i = 0; i < len; i++) {
+        const numA = partsA[i] || 0;
+        const numB = partsB[i] || 0;
+        if (numA < numB) return -1;
+        if (numA > numB) return 1;
+    }
+    return 0;
+}
+
+function showUpToDateBadge() {
+    // Zobraz badge ze plugin je aktualni
+    if (elements.extensionStatusText) {
+        elements.extensionStatusText.innerHTML = 'Plugin aktivni <span class="version-ok">v' + state.pluginVersion + ' (aktualni)</span>';
+    }
+}
+
+function showUpdateNotification(oldVersion, newVersion) {
     // Zobraz banner o dostupne aktualizaci
     let updateBanner = document.getElementById('updateBanner');
 
@@ -298,49 +355,35 @@ function showUpdateNotification(oldCommit, newCommit) {
         updateBanner = document.createElement('div');
         updateBanner.id = 'updateBanner';
         updateBanner.className = 'update-banner';
-        updateBanner.innerHTML = `
-            <div class="update-banner-content">
-                <span class="update-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9"/>
-                    </svg>
-                </span>
-                <div class="update-text">
-                    <strong>Je k dispozici aktualizace!</strong>
-                    <span>Stazena verze: <code>${oldCommit}</code> → Nejnovejsi: <code>${newCommit}</code></span>
-                </div>
-                <button class="btn btn-update" onclick="handleDownloadPlugin('main')">
-                    Aktualizovat
-                </button>
-            </div>
-        `;
     }
 
-    // Vloz banner do spravne sekce podle stavu pluginu
-    // Pokud plugin neni aktivni, vloz do install sekce
-    // Pokud plugin je aktivni, vloz do download sekce
-    const targetSection = state.pluginConnected
-        ? document.getElementById('downloadSection')
-        : document.getElementById('installSection');
+    updateBanner.innerHTML = `
+        <div class="update-banner-content">
+            <span class="update-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </span>
+            <div class="update-text">
+                <strong>Je k dispozici aktualizace!</strong>
+                <span>Tvuj plugin: <code>v${oldVersion}</code> → Nejnovejsi: <code>v${newVersion}</code></span>
+            </div>
+            <button class="btn btn-update" onclick="handleDownloadPlugin('main')">
+                Aktualizovat
+            </button>
+        </div>
+    `;
 
-    if (targetSection && !targetSection.contains(updateBanner)) {
-        // Odeber z predchozi pozice, pokud existuje
-        if (updateBanner.parentNode) {
-            updateBanner.parentNode.removeChild(updateBanner);
-        }
+    // Aktualizuj i status text
+    if (elements.extensionStatusText) {
+        elements.extensionStatusText.innerHTML = 'Plugin aktivni <span class="version-outdated">v' + oldVersion + ' (zastaraly)</span>';
+    }
 
-        // Vloz na zacatek cilove sekce
-        if (state.pluginConnected) {
-            targetSection.insertBefore(updateBanner, targetSection.firstChild);
-        } else {
-            // V install sekci vloz za hero
-            const installHero = targetSection.querySelector('.install-hero');
-            if (installHero && installHero.nextSibling) {
-                targetSection.insertBefore(updateBanner, installHero.nextSibling);
-            } else {
-                targetSection.insertBefore(updateBanner, targetSection.firstChild);
-            }
-        }
+    // Vloz banner za header
+    const container = document.querySelector('.container');
+    const header = document.querySelector('header');
+    if (container && header && !document.getElementById('updateBanner')) {
+        header.after(updateBanner);
     }
 
     updateBanner.style.display = 'block';
@@ -353,13 +396,77 @@ function hideUpdateNotification() {
     }
 }
 
+// Kontrola verze pro uzivatele bez aktivniho pluginu (install sekce)
+function checkDownloadedCommitVersion() {
+    const downloadedCommit = localStorage.getItem('adhub_downloaded_commit');
+
+    if (!downloadedCommit || !state.latestCommit) {
+        return;
+    }
+
+    const latestShort = state.latestCommit.sha.substring(0, 7);
+    const downloadedShort = downloadedCommit.substring(0, 7);
+
+    console.log('[AdHub] Porovnani stazenych verzi:', { downloaded: downloadedShort, latest: latestShort });
+
+    if (downloadedShort !== latestShort) {
+        console.log('[AdHub] Stazena verze je zastarala');
+        showCommitUpdateNotification(downloadedShort, latestShort);
+    }
+}
+
+function showCommitUpdateNotification(oldCommit, newCommit) {
+    let updateBanner = document.getElementById('updateBanner');
+
+    if (!updateBanner) {
+        updateBanner = document.createElement('div');
+        updateBanner.id = 'updateBanner';
+        updateBanner.className = 'update-banner';
+    }
+
+    updateBanner.innerHTML = `
+        <div class="update-banner-content">
+            <span class="update-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </span>
+            <div class="update-text">
+                <strong>Je k dispozici nova verze!</strong>
+                <span>Stazeno: <code>${oldCommit}</code> → Aktualni: <code>${newCommit}</code></span>
+            </div>
+            <button class="btn btn-update" onclick="handleDownloadPlugin('main')">
+                Stahnout novou verzi
+            </button>
+        </div>
+    `;
+
+    // V install sekci vloz za hero
+    const installSection = document.getElementById('installSection');
+    if (installSection && !installSection.contains(updateBanner)) {
+        const installHero = installSection.querySelector('.install-hero');
+        if (installHero && installHero.nextSibling) {
+            installSection.insertBefore(updateBanner, installHero.nextSibling);
+        } else {
+            installSection.insertBefore(updateBanner, installSection.firstChild);
+        }
+    }
+
+    updateBanner.style.display = 'block';
+}
+
 function updatePluginStatus(connected) {
     if (connected) {
         if (elements.extensionStatus) {
             elements.extensionStatus.className = 'extension-status extension-status-on';
         }
         if (elements.extensionStatusText) {
-            elements.extensionStatusText.textContent = 'Plugin aktivni';
+            // Zobraz verzi pokud je dostupna
+            if (state.pluginVersion) {
+                elements.extensionStatusText.innerHTML = 'Plugin aktivni <span class="version-badge-inline">v' + state.pluginVersion + '</span>';
+            } else {
+                elements.extensionStatusText.textContent = 'Plugin aktivni';
+            }
         }
         if (elements.installSection) {
             elements.installSection.style.display = 'none';
@@ -371,7 +478,7 @@ function updatePluginStatus(connected) {
             elements.pluginInfoBar.style.display = 'block';
         }
         if (elements.pluginVersion && state.pluginVersion) {
-            elements.pluginVersion.textContent = state.pluginVersion;
+            elements.pluginVersion.textContent = 'v' + state.pluginVersion;
         }
         if (elements.pluginCommit && state.latestCommit) {
             elements.pluginCommit.textContent = state.latestCommit.sha.substring(0, 7);
@@ -400,68 +507,95 @@ function updatePluginStatus(connected) {
 // ============================================================================
 
 async function loadLatestCommitInfo() {
-    console.log('[AdHub] Nacitam informace o poslednim commitu...');
+    console.log('[AdHub] Nacitam informace o poslednim commitu a verzi...');
 
     try {
-        const url = `${GITHUB_API_BASE}/repos/${GITHUB_REPO}/commits?path=${PLUGIN_PATH}&per_page=1`;
-        const response = await fetch(url);
+        // Nacti commit info a manifest.json paralelne
+        const [commitResponse, manifestResponse] = await Promise.all([
+            fetch(`${GITHUB_API_BASE}/repos/${GITHUB_REPO}/commits?path=${PLUGIN_PATH}&per_page=1`),
+            fetch(`${GITHUB_RAW_BASE}/${GITHUB_REPO}/${GITHUB_BRANCH}/${PLUGIN_PATH}/manifest.json`)
+        ]);
 
-        if (!response.ok) {
-            throw new Error(`GitHub API error: ${response.status}`);
+        // Zpracuj commit info
+        if (commitResponse.ok) {
+            const commits = await commitResponse.json();
+            if (commits.length > 0) {
+                const commit = commits[0];
+                state.latestCommit = commit;
+                console.log('[AdHub] Posledni commit:', commit.sha.substring(0, 7));
+
+                // Aktualizace UI - commit info
+                if (elements.commitLoading) {
+                    elements.commitLoading.style.display = 'none';
+                }
+                if (elements.commitDetails) {
+                    elements.commitDetails.style.display = 'block';
+                }
+                if (elements.latestCommitId) {
+                    elements.latestCommitId.textContent = commit.sha.substring(0, 7);
+                }
+                if (elements.latestCommitDate) {
+                    const date = new Date(commit.commit.author.date);
+                    elements.latestCommitDate.textContent = date.toLocaleDateString('cs-CZ') + ' ' +
+                        date.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+                }
+                if (elements.latestCommitMessage) {
+                    const message = commit.commit.message.split('\n')[0];
+                    elements.latestCommitMessage.textContent = message.substring(0, 60) +
+                        (message.length > 60 ? '...' : '');
+                }
+                if (elements.pluginCommit) {
+                    elements.pluginCommit.textContent = commit.sha.substring(0, 7);
+                }
+                if (elements.commitIdSmall) {
+                    elements.commitIdSmall.textContent = commit.sha.substring(0, 7);
+                }
+            }
         }
 
-        const commits = await response.json();
+        // Zpracuj manifest.json pro verzi
+        if (manifestResponse.ok) {
+            const manifest = await manifestResponse.json();
+            if (manifest.version) {
+                state.latestManifestVersion = manifest.version;
+                console.log('[AdHub] Nejnovejsi verze z manifestu:', manifest.version);
 
-        if (commits.length === 0) {
-            throw new Error('Zadne commity nenalezeny');
-        }
-
-        const commit = commits[0];
-        state.latestCommit = commit;
-
-        console.log('[AdHub] Posledni commit:', commit.sha.substring(0, 7));
-
-        // Aktualizace UI
-        if (elements.commitLoading) {
-            elements.commitLoading.style.display = 'none';
-        }
-        if (elements.commitDetails) {
-            elements.commitDetails.style.display = 'block';
-        }
-        if (elements.latestCommitId) {
-            elements.latestCommitId.textContent = commit.sha.substring(0, 7);
-        }
-        if (elements.latestCommitDate) {
-            const date = new Date(commit.commit.author.date);
-            elements.latestCommitDate.textContent = date.toLocaleDateString('cs-CZ') + ' ' +
-                date.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
-        }
-        if (elements.latestCommitMessage) {
-            const message = commit.commit.message.split('\n')[0]; // Prvni radek
-            elements.latestCommitMessage.textContent = message.substring(0, 60) +
-                (message.length > 60 ? '...' : '');
+                // Aktualizuj UI s verzi
+                updateLatestVersionUI(manifest.version);
+            }
         }
 
-        // Aktualizace plugin info baru
-        if (elements.pluginCommit) {
-            elements.pluginCommit.textContent = commit.sha.substring(0, 7);
-        }
-
-        // Aktualizace commit ID v male karte v sidebaru
-        if (elements.commitIdSmall) {
-            elements.commitIdSmall.textContent = commit.sha.substring(0, 7);
-        }
-
-        // Zkontroluj verzi pluginu (vzdy po nacteni commit info)
-        // Funguje i bez aktivniho pluginu - zobrazuje varovani v install sekci
+        // Zkontroluj verzi pluginu (pokud uz byl detekovan, nebo pro install sekci)
         checkPluginVersion();
 
     } catch (error) {
-        console.error('[AdHub] Chyba pri nacitani commitu:', error);
+        console.error('[AdHub] Chyba pri nacitani informaci:', error);
 
         if (elements.commitLoading) {
             elements.commitLoading.innerHTML = `<span style="color: #ef4444;">Chyba: ${error.message}</span>`;
         }
+    }
+}
+
+function updateLatestVersionUI(version) {
+    // Aktualizuj commit info sekci aby ukazovala i verzi
+    const commitDetails = elements.commitDetails;
+    if (commitDetails && !document.getElementById('latestVersionRow')) {
+        const versionRow = document.createElement('div');
+        versionRow.id = 'latestVersionRow';
+        versionRow.className = 'commit-row';
+        versionRow.innerHTML = `
+            <span class="commit-label">Verze:</span>
+            <code id="latestVersion" class="commit-id version-highlight">v${version}</code>
+        `;
+        commitDetails.insertBefore(versionRow, commitDetails.firstChild);
+    } else if (document.getElementById('latestVersion')) {
+        document.getElementById('latestVersion').textContent = 'v' + version;
+    }
+
+    // Aktualizuj i maly panel v sidebaru
+    if (elements.commitIdSmall) {
+        elements.commitIdSmall.innerHTML = `v${version}`;
     }
 }
 
