@@ -1,15 +1,15 @@
 /**
- * AdHub YouTube Downloader v5.5 - Background Script
+ * AdHub YouTube Downloader v5.6 - Background Script
  *
  * Hybridni rezim:
  * - Zakladni: Prime stahovani pres chrome.downloads (max 720p)
  * - Rozsireny: Native Messaging s yt-dlp/ffmpeg (vse)
  *
- * Nove v5.5:
- * - Automaticke ziskavani cookies pro vekove omezena videa
+ * Nove v5.6:
+ * - Opraveno stahovani - vylepsene format selectory a retry logika
  */
 
-console.log('[AdHub BG] YouTube Downloader v5.5 (Hybrid) loaded');
+console.log('[AdHub BG] YouTube Downloader v5.6 (Hybrid) loaded');
 
 // ============================================================================
 // KONFIGURACE
@@ -56,7 +56,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   switch (request.action) {
     case 'ping':
-      sendResponse({ success: true, version: '5.5', mode: 'hybrid' });
+      sendResponse({ success: true, version: '5.6', mode: 'hybrid' });
       return false;
 
     case 'download':

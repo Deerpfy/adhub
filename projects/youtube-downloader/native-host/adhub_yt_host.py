@@ -1,17 +1,18 @@
 #!/usr/bin/env python3
 """
-AdHub YouTube Downloader - Native Host v6.0
+AdHub YouTube Downloader - Native Host v6.1
 ============================================
 Native Messaging host pro browser extension.
 
-STRATEGIE v6.0:
+STRATEGIE v6.1:
 YouTube vyzaduje JavaScript runtime pro n-challenge.
-Reseni: Automaticky vyzkousime ruzne player clients.
+Reseni: Kombinace ruznych player clients + format selectoru.
 
-Pokus 1: Default (nechat yt-dlp rozhodnout)
-Pokus 2: TV klient (embedded, casto obchazi n-challenge)
-Pokus 3: Web Embedded klient
-Pokus 4: MWeb klient (mobilni web)
+KLICOVE ZMENY v6.1:
+- Opraveny format selectory pro kompatibilitu s ruznymi player klienty
+- Pridane fallback format selectory pri chybe "format not available"
+- Kazda strategie ma vlastni format selector optimalizovany pro dany klient
+- Lepsi error handling a retry logika
 
 Pokud vse selze: Doporucit "Zakladni stahovani" (do 720p)
 """
@@ -30,23 +31,71 @@ import ssl
 # KONFIGURACE
 # ============================================================================
 
-VERSION = '6.0'
-MAX_RETRIES = 4  # Pocet strategii k vyzkouseni
+VERSION = '6.1'
+MAX_RETRIES = 6  # Pocet strategii k vyzkouseni (vice variant)
 RETRY_DELAY = 1  # sekundy - kratsi pro rychlejsi retry
 YTDLP_RELEASES_URL = 'https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest'
 YTDLP_DOWNLOAD_URL = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe'
 
-# Strategie pro retry - kazdy pokus zkusi jinou konfiguraci
-# Ruzne player clients maji ruzne chovani vuci YouTube n-challenge
+# ============================================================================
+# STRATEGIE v6.1 - Kombinace player clients + format selectoru
+# ============================================================================
+# Kazda strategie ma:
+# - player_client: Ktery YouTube klient pouzit (None = default)
+# - format_video: Format selector pro video
+# - format_audio: Format selector pro audio
+# - description: Popis strategie pro ladeni
+#
+# DULEZITE: Ruzne player clients maji ruzne dostupne formaty!
+# - Default/Web: Vse dostupne, ale muze byt n-challenge
+# - TV: Progresivni formaty (video+audio dohromady), bez n-challenge
+# - iOS/Android: Omezene formaty
+# ============================================================================
+
 RETRY_STRATEGIES = [
-    # Pokus 1: Nechat yt-dlp rozhodnout (default)
-    None,
-    # Pokus 2: TV klient - embeddovane prostedi, casto obchazi n-challenge
-    'youtube:player_client=tv',
-    # Pokus 3: Web Embedded - dalsi varianta
-    'youtube:player_client=web_embedded',
-    # Pokus 4: MWeb - mobilni web varianta
-    'youtube:player_client=mweb',
+    # Pokus 1: Default s jednoduchym selectorem (nejspolehlivejsi)
+    {
+        'player_client': None,
+        'format_video': 'bv*+ba/b',  # Best video + best audio, fallback na best
+        'format_audio': 'ba/b',       # Best audio, fallback na best
+        'description': 'Default (auto)'
+    },
+    # Pokus 2: Default s explicitnim merge
+    {
+        'player_client': None,
+        'format_video': 'bestvideo+bestaudio/best',
+        'format_audio': 'bestaudio/best',
+        'description': 'Default (merge)'
+    },
+    # Pokus 3: Web Embedded klient - casto obchazi omezeni
+    {
+        'player_client': 'youtube:player_client=web_embedded',
+        'format_video': 'bv*+ba/b',
+        'format_audio': 'ba/b',
+        'description': 'Web Embedded'
+    },
+    # Pokus 4: TV klient - progresivni formaty (video+audio dohromady)
+    # POZOR: TV klient nema oddelene video/audio, pouzij jednoduchy 'best'
+    {
+        'player_client': 'youtube:player_client=tv',
+        'format_video': 'best',  # TV ma hlavne progresivni formaty
+        'format_audio': 'best',
+        'description': 'TV client'
+    },
+    # Pokus 5: MWeb (mobilni web) - dalsi varianta
+    {
+        'player_client': 'youtube:player_client=mweb',
+        'format_video': 'bv*+ba/b',
+        'format_audio': 'ba/b',
+        'description': 'Mobile Web'
+    },
+    # Pokus 6: Posledni pokus - uplne jednoduchy 'best'
+    {
+        'player_client': None,
+        'format_video': 'best',
+        'format_audio': 'best',
+        'description': 'Fallback (best)'
+    },
 ]
 
 # Defaultni cesty k nastrojum
@@ -376,11 +425,10 @@ def get_cookies_path(cookies_from_extension=None):
 def handle_download(message, strategy_index=0):
     """Stahne video/audio z YouTube s podporou vsech typu videi.
 
-    v6.0: Pri chybe zkusi ruzne strategie (player clients):
-    - Pokus 0: Default (nechat yt-dlp rozhodnout)
-    - Pokus 1: TV klient (embedded, casto obchazi n-challenge)
-    - Pokus 2: Web Embedded klient
-    - Pokus 3: MWeb klient (mobilni web)
+    v6.1: Pri chybe zkusi ruzne strategie (kombinace player clients + format selectoru):
+    - Kazda strategie ma vlastni player_client a format selector
+    - Ruzne player clients maji ruzne dostupne formaty
+    - Fallback strategie pouziva jednoduchy 'best' selector
     """
     url = message.get('url')
     format_type = message.get('format', 'video')  # video nebo audio
@@ -406,22 +454,25 @@ def handle_download(message, strategy_index=0):
     cmd = [ytdlp['path']]
 
     # =========================================================================
-    # v6.0: STRATEGIE PRO OBCHAZENI N-CHALLENGE
+    # v6.1: STRATEGIE - Kombinace player client + format selector
     # =========================================================================
-    # YouTube vyzaduje JavaScript runtime pro reseni n-challenge.
-    # Reseni: Zkusit ruzne player clients - nekteri nevyzaduji n-challenge.
+    # Kazda strategie ma:
+    # - player_client: Ktery YouTube klient pouzit
+    # - format_video/format_audio: Format selector optimalizovany pro klienta
     #
-    # Strategie (viz RETRY_STRATEGIES):
-    # 0: Default (nechat yt-dlp rozhodnout)
-    # 1: TV klient (embedded) - casto obchazi n-challenge
-    # 2: Web Embedded klient
-    # 3: MWeb klient (mobilni web)
+    # DULEZITE: TV klient ma pouze progresivni formaty (video+audio dohromady),
+    # proto pro nej pouzivame jednoduchy 'best' selector.
     # =========================================================================
 
     # Ziskat aktualni strategii
-    current_strategy = None
+    strategy = None
     if strategy_index < len(RETRY_STRATEGIES):
-        current_strategy = RETRY_STRATEGIES[strategy_index]
+        strategy = RETRY_STRATEGIES[strategy_index]
+    else:
+        # Fallback - posledni strategie
+        strategy = RETRY_STRATEGIES[-1]
+
+    strategy_desc = strategy.get('description', f'Strategy {strategy_index}')
 
     cmd.extend([
         '--no-playlist',           # Nestahovat playlisty
@@ -429,9 +480,10 @@ def handle_download(message, strategy_index=0):
         '--no-warnings',           # Potlacit varovani (cleaner output)
     ])
 
-    # Aplikovat strategii (player client) pokud je definovana
-    if current_strategy:
-        cmd.extend(['--extractor-args', current_strategy])
+    # Aplikovat player client ze strategie
+    player_client = strategy.get('player_client')
+    if player_client:
+        cmd.extend(['--extractor-args', player_client])
 
     # Cookies - pouzit JEN kdyz je extension explicitne posle
     # (pro vekove omezena videa kde je uzivatel prihlasen)
@@ -441,9 +493,11 @@ def handle_download(message, strategy_index=0):
         if cookies_path:
             cmd.extend(['--cookies', cookies_path])
 
-    # Format
+    # Format - pouzit selector ze strategie
     if format_type == 'audio' or audio_format:
-        cmd.extend(['-f', 'bestaudio/best'])
+        # Audio format ze strategie
+        audio_selector = strategy.get('format_audio', 'ba/b')
+        cmd.extend(['-f', audio_selector])
 
         if audio_format in ['mp3', 'wav', 'flac', 'ogg', 'm4a', 'aac']:
             cmd.extend(['-x', '--audio-format', audio_format])
@@ -456,15 +510,30 @@ def handle_download(message, strategy_index=0):
                 if ffmpeg_dir:
                     cmd.extend(['--ffmpeg-location', ffmpeg_dir])
     else:
-        # Video
-        if quality and quality != 'best':
-            # Flexibilnejsi format selector - * dovoluje vice kodeku
-            cmd.extend(['-f', f'bestvideo*[height<={quality}]+bestaudio*/bestvideo*+bestaudio*/best'])
-        else:
-            # Nejlepsi kvalita - pouzit * pro maximalni kompatibilitu
-            cmd.extend(['-f', 'bestvideo*+bestaudio*/best'])
+        # Video format ze strategie
+        base_format = strategy.get('format_video', 'bv*+ba/b')
 
-        cmd.extend(['--merge-output-format', 'mp4'])
+        # Aplikovat omezeni kvality pokud je zadano
+        if quality and quality != 'best' and base_format not in ['best', 'b']:
+            # Pro komplexni selectory pridej height filter
+            # Pro jednoduchy 'best' nechej jak je (TV klient)
+            if '+' in base_format:
+                # Napr. 'bv*+ba/b' -> 'bv*[height<=720]+ba/b'
+                parts = base_format.split('+')
+                video_part = parts[0]
+                rest = '+'.join(parts[1:])
+                format_selector = f'{video_part}[height<={quality}]+{rest}'
+            else:
+                format_selector = base_format
+        else:
+            format_selector = base_format
+
+        cmd.extend(['-f', format_selector])
+
+        # Merge a remux nastaveni (pouze pokud neni jednoduchy 'best')
+        if base_format not in ['best', 'b']:
+            cmd.extend(['--merge-output-format', 'mp4'])
+
         cmd.extend(['--remux-video', 'mp4'])  # Zajistit MP4 format
 
         # FFmpeg pro merge
@@ -492,6 +561,7 @@ def handle_download(message, strategy_index=0):
                 'filename': os.path.basename(filename) if filename else 'video.mp4',
                 'filepath': filename or output_dir,
                 'strategy_used': strategy_index,
+                'strategy_desc': strategy_desc,
             }
         else:
             # Ziskat chybu - preferovat stderr, pak stdout
@@ -507,9 +577,13 @@ def handle_download(message, strategy_index=0):
             if not error_msg:
                 error_msg = 'Neznama chyba'
 
-            # v6.0: Zkusit dalsi strategii pokud je k dispozici
+            # v6.1: Zkusit dalsi strategii pokud je k dispozici
+            # Rozhodnout zda retry na zaklade typu chyby
             next_strategy_index = strategy_index + 1
-            if next_strategy_index < len(RETRY_STRATEGIES) and should_retry_error(error_msg):
+            can_retry = next_strategy_index < len(RETRY_STRATEGIES)
+            should_retry = should_retry_error(error_msg)
+
+            if can_retry and should_retry:
                 time.sleep(RETRY_DELAY)
                 return handle_download(message, next_strategy_index)
 
@@ -529,7 +603,8 @@ def handle_download(message, strategy_index=0):
                 'error': friendly_error,
                 'raw_error': debug_hint,
                 'returncode': result.returncode,
-                'strategies_tried': strategies_tried
+                'strategies_tried': strategies_tried,
+                'last_strategy': strategy_desc
             }
 
     except subprocess.TimeoutExpired:
@@ -558,8 +633,13 @@ def extract_filename_from_output(stdout, stderr):
 
 
 def should_retry_error(error_msg):
-    """Urcuje zda by se mela chyba zkusit znovu."""
+    """Urcuje zda by se mela chyba zkusit znovu.
+
+    v6.1: Rozsireno o format-related chyby - ruzne player clients
+    maji ruzne dostupne formaty, takze pri chybe formatu zkusime jiny klient.
+    """
     retryable = [
+        # Sitove chyby
         'HTTP Error 503',
         'HTTP Error 429',  # Rate limiting
         'Connection reset',
@@ -567,24 +647,44 @@ def should_retry_error(error_msg):
         'timed out',
         'Temporary failure',
         'Unable to download',
+        # YouTube anti-bot ochrana
         'n challenge',      # YouTube throttling - retry s jinym klientem
         'challenge solver', # YouTube throttling
+        'nsig',             # N-signature issue
+        # Format chyby - NOVE v6.1
+        'format is not available',   # Hlavni oprava - zkusit jiny klient
+        'requested format',          # Podobna chyba
+        'no suitable format',        # Zadny vhodny format
+        'no video formats',          # Zadne video formaty
+        'no audio formats',          # Zadne audio formaty
+        # Streaming chyby
         'sabr',             # SABR streaming issue
+        'missing a url',    # Chybejici URL
+        # Ostatni
+        'Sign in to confirm',  # Muze pomoct jiny klient
     ]
     error_lower = error_msg.lower()
     return any(err.lower() in error_lower for err in retryable)
 
 
 def parse_error_message(error_msg):
-    """Parsuje chybovou hlasku na uzivatelsky pritelive zpravy."""
+    """Parsuje chybovou hlasku na uzivatelsky pritelive zpravy.
+
+    v6.1: Vylepsene zpravy pro format-related chyby.
+    """
     error_lower = error_msg.lower()
 
     # N challenge - YouTube anti-bot ochrana
-    if 'n challenge' in error_lower or 'challenge solver' in error_lower:
-        return 'YouTube docasna ochrana. Pockejte 30s a zkuste znovu, nebo pouzijte Zakladni stahovani (do 720p)'
+    if 'n challenge' in error_lower or 'challenge solver' in error_lower or 'nsig' in error_lower:
+        return 'YouTube anti-bot ochrana. Pockejte 30s a zkuste znovu, nebo pouzijte Zakladni stahovani (do 720p)'
     # PO Token issue
     elif 'po token' in error_lower or 'gvs po' in error_lower:
         return 'YouTube vyzaduje overeni. Zkuste Zakladni stahovani (do 720p)'
+    # Format chyby - NOVE v6.1
+    elif 'format is not available' in error_lower or 'requested format' in error_lower:
+        return 'Pozadovany format neni dostupny. Zkuste jinou kvalitu nebo Zakladni stahovani'
+    elif 'no suitable format' in error_lower or 'no video format' in error_lower:
+        return 'Zadny vhodny format. Video muze byt omezene. Zkuste Zakladni stahovani'
     # SABR streaming issue
     elif 'sabr' in error_lower or 'missing a url' in error_lower:
         return 'YouTube docasne blokuje. Pockejte 30s a zkuste znovu'
