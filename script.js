@@ -3004,8 +3004,8 @@ function createToolCard(tool) {
             </div>
             <div class="tool-actions">
                 ${tool.url ? `
-                    <button class="btn btn-primary" onclick="openTool('${tool.url}', '${tool.id}')">
-                        🔗 ${t('open')}
+                    <button class="btn-open" onclick="openTool('${tool.url}', '${tool.id}')" title="${t('open')}">
+                        ↗
                     </button>
                 ` : ''}
             </div>
@@ -3041,8 +3041,8 @@ function createLinkCard(link) {
                 ` : ''}
             </div>
             <div class="tool-actions">
-                <button class="btn btn-primary" onclick="openLink('${url}', '${link.id}')">
-                    🔗 ${t('open')}
+                <button class="btn-open" onclick="openLink('${url}', '${link.id}')" title="${t('open')}">
+                    ↗
                 </button>
             </div>
         </div>
