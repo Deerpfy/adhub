@@ -1,6 +1,6 @@
 // AdHUB - Central Hub Script
 // Version management
-const APP_VERSION = '1.0.1';
+const APP_VERSION = '1.0.2';
 
 // ============================================
 // GITHUB API - YouTube Downloader Plugin Version
@@ -305,6 +305,8 @@ const BASE_TRANSLATIONS = {
         link_obs_desc: 'Oficiální stránka s instalátory OBS Studio pro streamování a záznam.',
         link_ytdlp_name: 'yt-dlp Releases',
         link_ytdlp_desc: 'Poslední buildy yt-dlp potřebné pro náš downloader, včetně návodu k instalaci.',
+        link_hibp_name: 'Have I Been Pwned',
+        link_hibp_desc: 'Zkontrolujte, zda vaše e-mailová adresa nebo heslo unikly při úniku dat. Bezpečnostní nástroj od Troye Hunta.',
         translating: 'Překládám...',
         translation_error: 'Chyba překladu',
         search_language: 'Hledat jazyk...',
@@ -358,6 +360,8 @@ const BASE_TRANSLATIONS = {
         link_obs_desc: 'Official OBS Studio installers page for streaming and recording.',
         link_ytdlp_name: 'yt-dlp Releases',
         link_ytdlp_desc: 'Latest yt-dlp builds needed for our downloader, including installation guide.',
+        link_hibp_name: 'Have I Been Pwned',
+        link_hibp_desc: 'Check if your email address or password has been compromised in a data breach. Security tool by Troy Hunt.',
         translating: 'Translating...',
         translation_error: 'Translation error',
         search_language: 'Search language...',
@@ -782,6 +786,16 @@ function getLocalizedConfig() {
                 "url": "https://github.com/yt-dlp/yt-dlp/releases/latest",
                 "type": "external",
                 "tags": ["video", "download"]
+            },
+            {
+                "id": "haveibeenpwned",
+                "name": t('link_hibp_name'),
+                "description": t('link_hibp_desc'),
+                "category": "security",
+                "icon": "🔐",
+                "url": "https://haveibeenpwned.com/",
+                "type": "external",
+                "tags": ["security", "privacy", "breach"]
             }
         ]
     };
