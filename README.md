@@ -2,7 +2,7 @@
 
 A central hub for various tools, utilities and projects. Everything accessible from one place with a modern and clear interface.
 
-![Status](https://img.shields.io/badge/status-active-success) ![License](https://img.shields.io/badge/license-MIT-blue) ![Version](https://img.shields.io/badge/version-1.0.0-purple)
+![Status](https://img.shields.io/badge/status-active-success) ![License](https://img.shields.io/badge/license-MIT-blue) ![Version](https://img.shields.io/badge/version-1.1.0-purple)
 
 ## Features
 
@@ -117,6 +117,33 @@ Professional prompt formatter for AI assistants.
 Sample ordering application demonstrating modern UI/UX principles.
 
 **Status:** ✅ Complete (Demo)
+
+---
+
+## External Links Directory
+
+AdHUB now includes a comprehensive directory of **150+ free web tools** that require no registration. These are curated external links organized into 16 categories:
+
+| Category | Tools | Description |
+|----------|-------|-------------|
+| Security & Privacy | 11 | VirusTotal, SSL Labs, Have I Been Pwned, Am I Unique |
+| File Conversion | 12 | iLovePDF, CloudConvert, TinyPNG, Remove.bg |
+| Developer Tools | 17 | Regex101, JSON Crack, Hoppscotch, CodePen, Crontab.guru |
+| Design & Graphics | 19 | Photopea, Coolors, SVG Repo, Favicon.io, Fontjoy |
+| Text & Writing | 9 | StackEdit, Hemingway Editor, QuillBot, Lipsum |
+| SEO & Web Analysis | 10 | PageSpeed Insights, GTmetrix, Schema Validator |
+| Network & DNS | 9 | MXToolbox, Fast.com, DNSChecker, HackerTarget |
+| Data & Calculation | 9 | Desmos, Calculator.net, RAWGraphs, ChartGo |
+| Compression & Archive | 5 | ezyZip, ZIP Extractor, Unzip-Online |
+| QR Code Generators | 5 | QRCode Monkey, QRStuff, goQR.me |
+| Screenshot & Recording | 6 | ScreenPal, RecordCast, Panopto Express |
+| Temporary Services | 9 | Guerrilla Mail, PrivateBin, WeTransfer, Privnote |
+| AI & Automation | 8 | TinyWow, OCR.space, QuillBot Summarizer |
+| Learning & Reference | 5 | Desmos Graphing, Wolfram Alpha, TypingClub |
+| Productivity | 11 | draw.io, Excalidraw, Pomofocus, ProtectedText |
+| Setup & Utilities | 4 | Ninite, Patch My PC, Winget.run |
+
+All links are accessible directly from the AdHUB interface with search and filtering capabilities.
 
 ---
 
