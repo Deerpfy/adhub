@@ -1,6 +1,6 @@
 // AdHUB - Central Hub Script
 // Version management
-const APP_VERSION = '1.1.0';
+const APP_VERSION = '1.2.0';
 
 // ============================================
 // GITHUB API - YouTube Downloader Plugin Version
@@ -315,6 +315,11 @@ const BASE_TRANSLATIONS = {
         idea_modal_description: 'Máte nápad na novou funkci nebo vylepšení? Připojte se k našemu Discord serveru a sdílejte své nápady v AI kanálu!',
         view_count: 'zobrazení',
         view_count_title: 'zobrazení',
+        // Sections
+        section_our_tools: 'Naše nástroje',
+        section_our_tools_badge: 'Lokální projekty',
+        section_external_links: 'Externí nástroje',
+        section_external_links_badge: 'Bezplatné online služby',
         // Security & Privacy
         link_virustotal_name: 'VirusTotal',
         link_virustotal_desc: 'Skenujte soubory a URL pomocí 70+ antivirových enginů současně.',
@@ -672,6 +677,11 @@ const BASE_TRANSLATIONS = {
         idea_modal_description: 'Have an idea for a new feature or improvement? Join our Discord server and share your ideas in the AI channel!',
         view_count: 'views',
         view_count_title: 'views',
+        // Sections
+        section_our_tools: 'Our Tools',
+        section_our_tools_badge: 'Local projects',
+        section_external_links: 'External Tools',
+        section_external_links_badge: 'Free online services',
         // Security & Privacy
         link_virustotal_name: 'VirusTotal',
         link_virustotal_desc: 'Scan files and URLs with 70+ antivirus engines simultaneously.',
@@ -2914,35 +2924,52 @@ function filterItems() {
 
 // Render tools
 function renderTools() {
-    const grid = document.getElementById('toolsGrid');
+    const toolsGrid = document.getElementById('toolsGrid');
+    const linksGrid = document.getElementById('linksGrid');
+    const toolsSection = document.getElementById('toolsSection');
+    const linksSection = document.getElementById('linksSection');
     const emptyState = document.getElementById('emptyState');
-    
+
     // Re-fetch localized config to get updated translations
     const config = getLocalizedConfig();
     allTools = config.tools || [];
     allLinks = config.links || [];
-    
+
     const filtered = filterItems();
-    
-    if (!grid || !emptyState) return;
-    
-    if (filtered.length === 0) {
-        grid.style.display = 'none';
+
+    if (!toolsGrid || !linksGrid || !emptyState) return;
+
+    // Separate tools and links from filtered items
+    const filteredTools = filtered.filter(item => allTools.includes(item));
+    const filteredLinks = filtered.filter(item => allLinks.includes(item));
+
+    // Check if both are empty
+    if (filteredTools.length === 0 && filteredLinks.length === 0) {
+        if (toolsSection) toolsSection.classList.add('hidden');
+        if (linksSection) linksSection.classList.add('hidden');
         emptyState.style.display = 'block';
         return;
     }
-    
-    grid.style.display = 'grid';
+
     emptyState.style.display = 'none';
-    
-    grid.innerHTML = filtered.map(item => {
-        // Distinguish: tools have id and are in tools array, links have type: "external"
-        if (allTools.includes(item)) {
-            return createToolCard(item);
-        } else {
-            return createLinkCard(item);
-        }
-    }).join('');
+
+    // Render tools section
+    if (filteredTools.length > 0) {
+        if (toolsSection) toolsSection.classList.remove('hidden');
+        toolsGrid.innerHTML = filteredTools.map(item => createToolCard(item)).join('');
+    } else {
+        if (toolsSection) toolsSection.classList.add('hidden');
+        toolsGrid.innerHTML = '';
+    }
+
+    // Render links section
+    if (filteredLinks.length > 0) {
+        if (linksSection) linksSection.classList.remove('hidden');
+        linksGrid.innerHTML = filteredLinks.map(item => createLinkCard(item)).join('');
+    } else {
+        if (linksSection) linksSection.classList.add('hidden');
+        linksGrid.innerHTML = '';
+    }
 }
 
 // Create tool card
