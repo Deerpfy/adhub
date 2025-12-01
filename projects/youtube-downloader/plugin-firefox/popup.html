@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AdHub YouTube Downloader</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: white;
+      width: 380px;
+      min-height: 300px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, #FF6611, #FF3300);
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .header-icon {
+      width: 28px;
+      height: 28px;
+    }
+
+    .header-title {
+      font-size: 16px;
+      font-weight: 600;
+      flex: 1;
+    }
+
+    .header-version {
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    .header-browser {
+      font-size: 9px;
+      background: rgba(255,255,255,0.2);
+      padding: 2px 6px;
+      border-radius: 4px;
+      margin-left: 4px;
+    }
+
+    .content {
+      padding: 16px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      color: #888;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      background: rgba(255,102,17,0.2);
+      color: white;
+    }
+
+    .tab:hover:not(.active) {
+      color: #ccc;
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Status Section */
+    .feature-list {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .feature-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .feature-item:first-child {
+      padding-top: 0;
+    }
+
+    .feature-icon {
+      font-size: 16px;
+      width: 24px;
+      text-align: center;
+    }
+
+    .feature-info {
+      flex: 1;
+    }
+
+    .feature-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+    }
+
+    .feature-desc {
+      font-size: 11px;
+      color: #888;
+      margin-top: 2px;
+    }
+
+    .feature-status {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+
+    .feature-status.ok {
+      background: rgba(34, 197, 94, 0.2);
+      color: #4ade80;
+    }
+
+    .feature-status.missing {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fbbf24;
+    }
+
+    /* Info Box */
+    .info-box {
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      color: #93c5fd;
+      line-height: 1.5;
+    }
+
+    .info-box strong {
+      color: #60a5fa;
+    }
+
+    /* Settings Section */
+    .settings-group {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .settings-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .settings-title .icon {
+      font-size: 16px;
+    }
+
+    .input-group {
+      margin-bottom: 12px;
+    }
+
+    .input-group:last-child {
+      margin-bottom: 0;
+    }
+
+    .input-label {
+      display: block;
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 6px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-field {
+      flex: 1;
+      padding: 10px 12px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      color: white;
+      font-size: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-field:focus {
+      border-color: #FF6611;
+    }
+
+    .input-field::placeholder {
+      color: #555;
+    }
+
+    .input-field.valid {
+      border-color: #22c55e;
+    }
+
+    .input-field.invalid {
+      border-color: #ef4444;
+    }
+
+    .btn {
+      padding: 10px 14px;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #FF6611, #FF3300);
+    }
+
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #FF3300, #CC2200);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.15);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .path-status {
+      font-size: 11px;
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .path-status.valid {
+      color: #4ade80;
+    }
+
+    .path-status.invalid {
+      color: #f87171;
+    }
+
+    /* Instructions */
+    .instructions {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 16px;
+    }
+
+    .instructions-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .instruction-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: #a0a0a0;
+    }
+
+    .instruction-step:last-child {
+      margin-bottom: 0;
+    }
+
+    .step-number {
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(135deg, #FF6611, #FF3300);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .step-text {
+      line-height: 1.4;
+      padding-top: 2px;
+    }
+
+    .step-text a {
+      color: #60a5fa;
+      text-decoration: none;
+    }
+
+    .step-text a:hover {
+      text-decoration: underline;
+    }
+
+    .step-text code {
+      background: rgba(255,255,255,0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 11px;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 10px 16px;
+      background: rgba(0, 0, 0, 0.2);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 11px;
+      color: #666;
+      text-align: center;
+    }
+
+    .footer a {
+      color: #888;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      color: #fff;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #22c55e;
+      color: white;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      opacity: 0;
+      transition: all 0.3s;
+      pointer-events: none;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast.error {
+      background: #ef4444;
+    }
+
+    /* Error Box */
+    .error-box {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 14px;
+      font-size: 12px;
+      color: #fca5a5;
+      line-height: 1.5;
+    }
+
+    .error-box strong {
+      color: #f87171;
+    }
+
+    /* Update Box */
+    .update-box {
+      background: rgba(251, 191, 36, 0.1);
+      border: 1px solid rgba(251, 191, 36, 0.4);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <img src="icons/icon32.png" alt="Logo" class="header-icon">
+    <span class="header-title">YouTube Downloader</span>
+    <span class="header-version">v5.7</span>
+    <span class="header-browser">Firefox</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="status">Status</button>
+    <button class="tab" data-tab="settings">Nastaveni</button>
+    <button class="tab" data-tab="help">Napoveda</button>
+  </div>
+
+  <div class="content">
+    <!-- STATUS TAB -->
+    <div class="tab-content active" id="tab-status">
+      <!-- yt-dlp Update Box -->
+      <div id="ytdlp-update-box" class="update-box" style="display: none;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 18px;">🔄</span>
+          <div style="flex: 1;">
+            <div style="font-weight: 600; color: #fbbf24;">Aktualizace yt-dlp</div>
+            <div id="ytdlp-update-info" style="font-size: 11px; color: #888;">Kontroluji...</div>
+          </div>
+          <button id="ytdlp-update-btn" class="btn btn-primary" style="padding: 6px 12px; font-size: 11px;">Aktualizovat</button>
+        </div>
+      </div>
+
+      <!-- Native Host Error Box -->
+      <div id="native-host-error" class="error-box" style="display: none;">
+        <div id="native-host-error-text">Native Host neni dostupny</div>
+        <div style="margin-top: 8px; font-size: 11px; color: #888;">
+          Extension ID: <code id="extension-id" style="color: #60a5fa; user-select: all;">...</code>
+          <button id="copy-ext-id" class="btn btn-secondary" style="padding: 4px 8px; margin-left: 6px; font-size: 10px;">Kopirovat</button>
+        </div>
+      </div>
+
+      <div class="feature-list">
+        <div class="feature-item">
+          <div class="feature-icon">📥</div>
+          <div class="feature-info">
+            <div class="feature-name">Zakladni stahovani</div>
+            <div class="feature-desc">Video do 720p, audio M4A</div>
+          </div>
+          <span class="feature-status ok">Aktivni</span>
+        </div>
+
+        <div class="feature-item" id="feature-hd">
+          <div class="feature-icon">🎬</div>
+          <div class="feature-info">
+            <div class="feature-name">HD/4K kvalita</div>
+            <div class="feature-desc">1080p, 1440p, 4K video</div>
+          </div>
+          <span class="feature-status missing" id="status-ytdlp">Chybi yt-dlp</span>
+        </div>
+
+        <div class="feature-item" id="feature-convert">
+          <div class="feature-icon">🎵</div>
+          <div class="feature-info">
+            <div class="feature-name">MP3/WAV konverze</div>
+            <div class="feature-desc">Audio ve vsech formatech</div>
+          </div>
+          <span class="feature-status missing" id="status-ffmpeg">Chybi ffmpeg</span>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <strong>Zakladni rezim aktivni!</strong><br>
+        Stahovani funguje ihned. Pro HD kvalitu a MP3 konverzi prejdete do Nastaveni.
+      </div>
+
+      <div class="instructions">
+        <div class="instructions-title">Jak stahovat:</div>
+        <div class="instruction-step">
+          <div class="step-number">1</div>
+          <div class="step-text">Otevrete YouTube video</div>
+        </div>
+        <div class="instruction-step">
+          <div class="step-number">2</div>
+          <div class="step-text">Kliknete na fialove tlacitko <strong>"Stahnout"</strong></div>
+        </div>
+        <div class="instruction-step">
+          <div class="step-number">3</div>
+          <div class="step-text">Vyberte kvalitu a video se stahne</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div class="tab-content" id="tab-settings">
+      <!-- Extension ID - vzdy viditelne -->
+      <div class="settings-group" style="background: linear-gradient(135deg, rgba(255, 102, 17, 0.1), rgba(255, 102, 17, 0.05)); border: 1px solid rgba(255, 102, 17, 0.3);">
+        <div class="settings-title" style="color: #ff9966;">
+          <span class="icon">🔑</span>
+          Extension ID
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <code id="settings-ext-id" style="flex: 1; padding: 10px 12px; background: rgba(0,0,0,0.3); border-radius: 6px; font-size: 11px; color: #ffcc99; user-select: all; word-break: break-all;">Nacitam...</code>
+          <button class="btn btn-secondary" id="copy-ext-id-settings" style="padding: 10px 14px;">Kopirovat</button>
+        </div>
+        <p style="font-size: 11px; color: #666; margin-top: 8px;">
+          Toto ID potrebujete pri instalaci Native Host pro Firefox
+        </p>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-title">
+          <span class="icon">🎬</span>
+          yt-dlp (HD/4K stahovani)
+        </div>
+        <div class="input-group">
+          <label class="input-label">Cesta k yt-dlp:</label>
+          <div class="input-row">
+            <input type="text" class="input-field" id="ytdlp-path" placeholder="/usr/local/bin/yt-dlp nebo ~/.local/bin/yt-dlp">
+            <button class="btn btn-secondary" id="test-ytdlp">Test</button>
+          </div>
+          <div class="path-status" id="ytdlp-status"></div>
+        </div>
+      </div>
+
+      <div class="settings-group">
+        <div class="settings-title">
+          <span class="icon">🎵</span>
+          FFmpeg (audio konverze)
+        </div>
+        <div class="input-group">
+          <label class="input-label">Cesta k ffmpeg:</label>
+          <div class="input-row">
+            <input type="text" class="input-field" id="ffmpeg-path" placeholder="/usr/local/bin/ffmpeg nebo ~/.local/bin/ffmpeg">
+            <button class="btn btn-secondary" id="test-ffmpeg">Test</button>
+          </div>
+          <div class="path-status" id="ffmpeg-status"></div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px;">
+        <button class="btn btn-secondary" id="autodetect-paths" style="flex: 1;">Autodetekce</button>
+        <button class="btn btn-primary" id="save-settings" style="flex: 1;">Ulozit nastaveni</button>
+      </div>
+    </div>
+
+    <!-- HELP TAB -->
+    <div class="tab-content" id="tab-help">
+      <!-- AUTOMATICKA INSTALACE -->
+      <div class="settings-group" style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.1), rgba(34, 197, 94, 0.05)); border: 1px solid rgba(34, 197, 94, 0.3);">
+        <div class="settings-title" style="color: #4ade80;">
+          <span class="icon">🚀</span>
+          Automaticka instalace (doporuceno)
+        </div>
+        <p style="font-size: 12px; color: #a0a0a0; margin-bottom: 12px; line-height: 1.5;">
+          Stahne a nainstaluje yt-dlp, ffmpeg a Native Host automaticky. Staci spustit skript a restartovat Firefox.
+        </p>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-primary" id="download-installer-win" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span>🪟</span> Windows
+          </button>
+          <button class="btn btn-primary" id="download-installer-unix" style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <span>🐧</span> Linux/Mac
+          </button>
+        </div>
+        <p style="font-size: 11px; color: #666; margin-top: 8px;">
+          Windows: Dvakrat kliknete na <strong>.bat</strong> soubor<br>
+          Linux/Mac: <code style="color: #4ade80;">chmod +x adhub-install-firefox.sh && ./adhub-install-firefox.sh</code>
+        </p>
+      </div>
+
+      <div class="instructions">
+        <div class="instructions-title">Manualni instalace:</div>
+        <div class="instruction-step">
+          <div class="step-number">1</div>
+          <div class="step-text">
+            <strong>yt-dlp:</strong> <a href="https://github.com/yt-dlp/yt-dlp/releases" target="_blank">github.com/yt-dlp</a>
+          </div>
+        </div>
+        <div class="instruction-step">
+          <div class="step-number">2</div>
+          <div class="step-text">
+            <strong>ffmpeg:</strong> <a href="https://ffmpeg.org/download.html" target="_blank">ffmpeg.org</a>
+          </div>
+        </div>
+        <div class="instruction-step">
+          <div class="step-number">3</div>
+          <div class="step-text">
+            Spustte Firefox install skript z native-host slozky
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box">
+        <strong>Po instalaci:</strong><br>
+        1. Restartujte Firefox<br>
+        2. Cesty by mely byt detekovany automaticky<br>
+        3. Pokud ne, zadejte je rucne v Nastaveni
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    AdHub (Firefox) &bull; <a href="https://deerpfy.github.io/adhub/" target="_blank">deerpfy.github.io/adhub</a>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

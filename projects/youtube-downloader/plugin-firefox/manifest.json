@@ -1,0 +1,83 @@
+{
+  "manifest_version": 2,
+  "name": "AdHub YouTube Downloader",
+  "version": "5.7.0",
+  "description": "Stahujte YouTube videa primo v prohlizeci jednim kliknutim. Tlacitko primo pod videem.",
+  "author": "AdHub",
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "youtube-downloader@adhub.cz",
+      "strict_min_version": "91.0"
+    }
+  },
+
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    },
+    "default_title": "YouTube Downloader"
+  },
+
+  "permissions": [
+    "activeTab",
+    "storage",
+    "downloads",
+    "nativeMessaging",
+    "cookies",
+    "https://www.youtube.com/*",
+    "https://youtube.com/*",
+    "https://m.youtube.com/*",
+    "https://music.youtube.com/*",
+    "https://*.googlevideo.com/*",
+    "https://*.ytimg.com/*",
+    "https://*.youtube.com/*",
+    "http://127.0.0.1:8765/*",
+    "http://localhost:8765/*"
+  ],
+
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*",
+        "https://youtube.com/*",
+        "https://m.youtube.com/*",
+        "https://music.youtube.com/*"
+      ],
+      "js": ["content.js"],
+      "css": ["youtube-ui.css"],
+      "run_at": "document_idle",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "https://deerpfy.github.io/adhub/*",
+        "https://deerpfy.github.io/adhub"
+      ],
+      "js": ["adhub-bridge.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    }
+  ],
+
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": false
+  },
+
+  "web_accessible_resources": [
+    "youtube-ui.css",
+    "icons/*"
+  ]
+}
