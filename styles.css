@@ -643,6 +643,7 @@ body::before {
     border: 1.5px solid var(--border-color);
     border-radius: 14px;
     padding: 16px;
+    padding-bottom: 52px; /* Space for the arrow button */
     transition: var(--transition-slow);
     cursor: pointer;
     position: relative;
@@ -811,7 +812,6 @@ body::before {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 12px;
     flex-wrap: wrap;
 }
 
@@ -859,13 +859,60 @@ body::before {
     font-weight: 500;
 }
 
+/* Tool card actions - subtle arrow in corner */
 .tool-actions {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-    flex-wrap: wrap;
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
 }
 
+/* Open button - subtle arrow style */
+.btn-open {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: none;
+    border-radius: 10px;
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.btn-open:hover {
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--primary-light);
+    transform: scale(1.1);
+}
+
+.btn-open:active {
+    transform: scale(0.95);
+}
+
+/* Tool card hover shows arrow more prominently */
+.tool-card:hover .btn-open {
+    background: rgba(139, 92, 246, 0.2);
+    color: var(--primary-light);
+}
+
+/* Link card uses different accent color */
+.tool-card.link .btn-open:hover {
+    background: rgba(236, 72, 153, 0.15);
+    color: #f472b6;
+}
+
+.tool-card.link:hover .btn-open {
+    background: rgba(236, 72, 153, 0.2);
+    color: #f472b6;
+}
+
+/* Legacy btn styles for other buttons */
 .btn {
     padding: 8px 14px;
     border: none;
@@ -880,8 +927,6 @@ body::before {
     gap: 5px;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
-    flex: 1;
-    min-width: 90px;
 }
 
 .btn:active {
@@ -1195,19 +1240,13 @@ html {
     .tool-description {
         font-size: 0.78rem;
     }
-    
-    .tool-actions {
-        flex-direction: column;
-        gap: 6px;
+
+    /* Open button - slightly larger on mobile for touch */
+    .btn-open {
+        width: 40px;
+        height: 40px;
     }
 
-    .btn {
-        width: 100%;
-        padding: 10px 14px;
-        font-size: 0.8rem;
-        min-width: auto;
-    }
-    
     .empty-state {
         padding: 40px 20px;
     }
