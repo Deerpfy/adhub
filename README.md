@@ -2,7 +2,7 @@
 
 A central hub for various tools, utilities and projects. Everything accessible from one place with a modern and clear interface.
 
-![Status](https://img.shields.io/badge/status-active-success) ![License](https://img.shields.io/badge/license-MIT-blue) ![Version](https://img.shields.io/badge/version-1.1.0-purple)
+![Status](https://img.shields.io/badge/status-active-success) ![License](https://img.shields.io/badge/license-MIT-blue) ![Version](https://img.shields.io/badge/version-1.2.0-purple)
 
 ## Features
 

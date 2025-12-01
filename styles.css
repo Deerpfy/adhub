@@ -561,12 +561,81 @@ body::before {
     transform: translateY(-2px);
 }
 
+/* Content Sections - Oddělení nástrojů a odkazů */
+.content-section {
+    margin-bottom: 32px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+    padding: 16px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    flex-wrap: wrap;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.section-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.section-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Naše nástroje - fialová */
+.tools-section .section-header {
+    border-left: 4px solid var(--primary-color);
+    background: linear-gradient(90deg, rgba(139, 92, 246, 0.1) 0%, var(--bg-card) 100%);
+}
+
+.our-tools-badge {
+    background: rgba(139, 92, 246, 0.15);
+    color: var(--primary-light);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+}
+
+/* Externí odkazy - růžová/magenta */
+.links-section .section-header {
+    border-left: 4px solid var(--secondary-color);
+    background: linear-gradient(90deg, rgba(236, 72, 153, 0.1) 0%, var(--bg-card) 100%);
+}
+
+.external-links-badge {
+    background: rgba(236, 72, 153, 0.15);
+    color: #f472b6;
+    border: 1px solid rgba(236, 72, 153, 0.3);
+}
+
+/* Skrytí prázdných sekcí */
+.content-section.hidden {
+    display: none;
+}
+
 /* Tools Grid - Moderní karty */
 .tools-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
     gap: 16px;
-    margin-bottom: 40px;
 }
 
 .tool-card {
@@ -1075,6 +1144,26 @@ html {
     .tools-grid {
         grid-template-columns: 1fr;
         gap: 12px;
+    }
+
+    .section-header {
+        padding: 12px 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .section-title {
+        font-size: 1.1rem;
+    }
+
+    .section-icon {
+        font-size: 1.3rem;
+    }
+
+    .section-badge {
+        font-size: 0.75rem;
+        padding: 5px 12px;
     }
     
     .tool-card {
