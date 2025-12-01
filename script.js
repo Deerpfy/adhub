@@ -3183,10 +3183,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // Populate language list
     updateLanguageList();
-    
-    // Apply initial translations
-    setLanguage(currentLanguage);
-    
+
+    // Apply initial translations (must await for proper rendering)
+    await setLanguage(currentLanguage);
+
     // Search
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
