@@ -196,7 +196,7 @@ $manifestPath = $nh.Replace("\","\\") + "\\adhub_yt_host.bat"
 # Firefox pouziva addon ID jako allowed_extensions
 $mf = '{"name":"com.adhub.ytdownloader","description":"AdHub YouTube Downloader (Firefox)","path":"' + $manifestPath + '","type":"stdio","allowed_extensions":["' + $FIREFOX_ADDON_ID + '"]}'
 
-$manifestFile = "$nh\com.adhub.ytdownloader.firefox.json"
+$manifestFile = "$nh\com.adhub.ytdownloader.json"
 Set-Content -Path $manifestFile -Value $mf -Encoding UTF8
 Write-Host "    OK: $manifestFile" -ForegroundColor Cyan
 Write-Host "    Addon ID: $FIREFOX_ADDON_ID" -ForegroundColor Cyan
