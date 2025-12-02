@@ -26,7 +26,7 @@ Browser extension for Chrome/Edge/Brave enabling download of YouTube videos and 
 - Auto-update extension loader
 - No external server required
 
-**Status:** ✅ Complete
+**Status:** 🚧 Under Repair (temporarily inactive)
 
 ### Multistream Chat Panel
 Unified chat for streamers - displays chat from Twitch, Kick and YouTube in one place.
@@ -39,7 +39,7 @@ Unified chat for streamers - displays chat from Twitch, Kick and YouTube in one 
 - Customizable appearance
 - OBS overlay support
 
-**Status:** ✅ Complete
+**Status:** 🚧 Under Repair (temporarily inactive)
 
 ### PDF Editor
 Full-featured PDF editor running 100% client-side in browser.
