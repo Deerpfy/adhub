@@ -132,6 +132,17 @@
                     creative: { name: 'Creative Writing', desc: 'Stories, content, copywriting', context: 'Focus on creativity, engaging narrative, and vivid language. Be original and expressive.' },
                     analysis: { name: 'Analysis', desc: 'Research, compare, evaluate', context: 'Provide thorough analysis with evidence-based reasoning. Consider multiple perspectives and cite sources where applicable.' },
                     explanation: { name: 'Explanation', desc: 'Teach or clarify concepts', context: 'Explain clearly for the target audience. Use analogies and examples to make complex concepts accessible.' },
+                    // New categories from 2025 usage research
+                    email: { name: 'Professional Email', desc: 'Business communication, outreach', context: 'Write professional, clear, and effective email communication. Consider tone, structure, and call-to-action.' },
+                    academic: { name: 'Academic Writing', desc: 'Research papers, essays, citations', context: 'Follow academic standards. Use proper structure, citations, and evidence-based arguments.' },
+                    data: { name: 'Data & Spreadsheets', desc: 'Excel formulas, SQL, data analysis', context: 'Focus on accurate data manipulation. Provide formulas, queries, or scripts with clear explanations.' },
+                    marketing: { name: 'Marketing & SEO', desc: 'Ads, social media, SEO content', context: 'Create engaging, conversion-focused content. Optimize for target audience and platform requirements.' },
+                    summarization: { name: 'Summarization', desc: 'Condense documents, key points', context: 'Extract key information clearly and concisely. Maintain accuracy while reducing length.' },
+                    image_gen: { name: 'Image Generation', desc: 'DALL-E, Midjourney, Stable Diffusion', context: 'Craft detailed visual descriptions. Include style, mood, composition, and specific artistic elements.' },
+                    translation: { name: 'Translation', desc: 'Language translation, localization', context: 'Translate accurately while preserving meaning, tone, and cultural context.' },
+                    business: { name: 'Business Documents', desc: 'Reports, proposals, presentations', context: 'Create professional business documents with clear structure, data-driven insights, and actionable recommendations.' },
+                    customer_service: { name: 'Customer Service', desc: 'Support responses, FAQs', context: 'Provide helpful, empathetic, and solution-oriented customer responses.' },
+                    productivity: { name: 'Productivity', desc: 'Planning, organization, goals', context: 'Help with personal organization, goal setting, and task management. Be practical and actionable.' },
                 },
                 fields: {
                     role: { label: 'Role / Persona', placeholder: 'e.g., an expert technical writer' },
@@ -295,6 +306,17 @@
                     creative: { name: 'Kreativní psaní', desc: 'Příběhy, obsah, copywriting', context: 'Zaměř se na kreativitu, poutavý příběh a živý jazyk. Buď originální a expresivní.' },
                     analysis: { name: 'Analýza', desc: 'Výzkum, porovnání, hodnocení', context: 'Poskytni důkladnou analýzu s argumentací založenou na důkazech. Zvaž více perspektiv a uveď zdroje, kde je to vhodné.' },
                     explanation: { name: 'Vysvětlení', desc: 'Výuka nebo objasnění konceptů', context: 'Vysvětli jasně pro cílové publikum. Použij analogie a příklady, aby byly složité koncepty srozumitelné.' },
+                    // Nové kategorie z výzkumu využití 2025
+                    email: { name: 'Profesionální email', desc: 'Obchodní komunikace, oslovení', context: 'Piš profesionální, jasnou a efektivní emailovou komunikaci. Zvaž tón, strukturu a výzvu k akci.' },
+                    academic: { name: 'Akademické psaní', desc: 'Výzkumné práce, eseje, citace', context: 'Dodržuj akademické standardy. Používej správnou strukturu, citace a argumenty podložené důkazy.' },
+                    data: { name: 'Data a tabulky', desc: 'Excel vzorce, SQL, analýza dat', context: 'Zaměř se na přesnou práci s daty. Poskytni vzorce, dotazy nebo skripty s jasnými vysvětleními.' },
+                    marketing: { name: 'Marketing a SEO', desc: 'Reklamy, sociální sítě, SEO obsah', context: 'Vytvoř poutavý obsah zaměřený na konverzi. Optimalizuj pro cílové publikum a požadavky platformy.' },
+                    summarization: { name: 'Sumarizace', desc: 'Shrnutí dokumentů, klíčové body', context: 'Extrahuj klíčové informace jasně a stručně. Zachovej přesnost při zkrácení délky.' },
+                    image_gen: { name: 'Generování obrázků', desc: 'DALL-E, Midjourney, Stable Diffusion', context: 'Vytvoř detailní vizuální popisy. Zahrň styl, náladu, kompozici a specifické umělecké prvky.' },
+                    translation: { name: 'Překlad', desc: 'Jazykový překlad, lokalizace', context: 'Překládej přesně se zachováním významu, tónu a kulturního kontextu.' },
+                    business: { name: 'Obchodní dokumenty', desc: 'Reporty, návrhy, prezentace', context: 'Vytvoř profesionální obchodní dokumenty s jasnou strukturou, daty podloženými poznatky a akčními doporučeními.' },
+                    customer_service: { name: 'Zákaznická podpora', desc: 'Odpovědi podpory, FAQ', context: 'Poskytni užitečné, empatické a na řešení orientované odpovědi zákazníkům.' },
+                    productivity: { name: 'Produktivita', desc: 'Plánování, organizace, cíle', context: 'Pomoz s osobní organizací, stanovením cílů a správou úkolů. Buď praktický a akční.' },
                 },
                 fields: {
                     role: { label: 'Role / Persona', placeholder: 'např. expert na technické psaní' },
@@ -541,13 +563,17 @@
         // ==================== SHARE CODE SYSTEM ====================
         // Generate share code from prompt data (using LZ-String URI encoding)
         const ALL_METHODS = ['cot', 'zeroshot', 'fewshot', 'tot', 'selfconsistency', 'react', 'risen', 'emotion', 'plansolve', 'selfask', 'pal', 'selfrefine', 'stepback', 'analogical', 'rar'];
+        // Template and target indices for share code encoding
+        const ALL_TEMPLATES = ['general', 'coding', 'creative', 'analysis', 'explanation', 'email', 'academic', 'data', 'marketing', 'summarization', 'image_gen', 'translation', 'business', 'customer_service', 'productivity'];
+        const ALL_TARGETS = ['claude', 'gpt', 'gemini', 'llama', 'mistral', 'cohere', 'general'];
+
         const generateShareCode = (promptData) => {
             try {
                 // Get all language codes from AVAILABLE_LANGUAGES
                 const langs = AVAILABLE_LANGUAGES.map(l => l.code);
                 const minimal = {
-                    t: ['general', 'coding', 'creative', 'analysis', 'explanation'].indexOf(promptData.template),
-                    a: ['claude', 'gpt', 'general'].indexOf(promptData.target),
+                    t: ALL_TEMPLATES.indexOf(promptData.template),
+                    a: ALL_TARGETS.indexOf(promptData.target),
                     m: promptData.selectedMethods.map(m => ALL_METHODS.indexOf(m)).filter(i => i >= 0),
                     l: langs.indexOf(promptData.lang),
                     f: promptData.fields,
@@ -571,15 +597,13 @@
                 if (!json) return null;
 
                 const minimal = JSON.parse(json);
-                const templates = ['general', 'coding', 'creative', 'analysis', 'explanation'];
-                const targets = ['claude', 'gpt', 'general'];
                 const fileTypes = ['none', 'excel', 'csv', 'json', 'table'];
                 // Get all language codes from AVAILABLE_LANGUAGES
                 const langs = AVAILABLE_LANGUAGES.map(l => l.code);
 
                 return {
-                    template: templates[minimal.t] || 'general',
-                    target: targets[minimal.a] || 'claude',
+                    template: ALL_TEMPLATES[minimal.t] || 'general',
+                    target: ALL_TARGETS[minimal.a] || 'claude',
                     selectedMethods: (minimal.m || []).map(i => ALL_METHODS[i]).filter(Boolean),
                     lang: langs[minimal.l] || 'en',
                     fields: minimal.f || { role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '' },
@@ -607,7 +631,25 @@
         };
 
         // ==================== TEMPLATE ICONS ====================
-        const templateIcons = { general: 'FileText', coding: 'Code', creative: 'Pencil', analysis: 'Lightbulb', explanation: 'MessageSquare' };
+        // Extended with 10 new categories based on 2024-2025 AI usage research
+        const templateIcons = {
+            general: 'FileText',
+            coding: 'Code',
+            creative: 'Pencil',
+            analysis: 'Lightbulb',
+            explanation: 'MessageSquare',
+            // New categories from usage research (2025)
+            email: 'Mail',              // Professional Email & Communication - 5.5%+ usage
+            academic: 'GraduationCap',  // Academic & Research Writing - 2nd largest use case
+            data: 'Table',              // Data & Spreadsheet Tasks - 55% efficiency gains
+            marketing: 'Megaphone',     // Marketing & SEO Content - 77% industry adoption
+            summarization: 'FileSearch', // Document Summarization
+            image_gen: 'Image',         // Image Generation Prompts - 2%→7% growth
+            translation: 'Languages',   // Translation & Language - 44% business interest
+            business: 'Briefcase',      // Business Documents & Reports
+            customer_service: 'HeadsetIcon', // Customer Service Responses - 56% adoption
+            productivity: 'ListTodo'    // Personal Productivity & Planning - 70% non-work usage
+        };
 
         // ==================== METHOD-CATEGORY MAPPING ====================
         // Defines which methods are recommended for each prompt category
@@ -617,7 +659,18 @@
             coding: ['emotion', 'pal', 'cot', 'fewshot', 'zeroshot', 'tot', 'selfconsistency', 'react', 'plansolve', 'selfrefine'],
             creative: ['emotion', 'fewshot', 'analogical', 'selfrefine', 'rar'],
             analysis: ['emotion', 'fewshot', 'cot', 'zeroshot', 'tot', 'selfconsistency', 'react', 'plansolve', 'selfask', 'stepback'],
-            explanation: ['emotion', 'fewshot', 'zeroshot', 'selfask', 'stepback', 'analogical', 'rar']
+            explanation: ['emotion', 'fewshot', 'zeroshot', 'selfask', 'stepback', 'analogical', 'rar'],
+            // New categories from 2025 research
+            email: ['emotion', 'fewshot', 'rar', 'risen'],
+            academic: ['emotion', 'fewshot', 'cot', 'selfask', 'stepback', 'selfrefine'],
+            data: ['emotion', 'pal', 'cot', 'fewshot', 'plansolve'],
+            marketing: ['emotion', 'fewshot', 'analogical', 'selfrefine', 'rar'],
+            summarization: ['emotion', 'cot', 'zeroshot', 'stepback'],
+            image_gen: ['fewshot', 'analogical', 'rar'],
+            translation: ['emotion', 'fewshot', 'rar', 'selfrefine'],
+            business: ['emotion', 'fewshot', 'risen', 'cot', 'plansolve'],
+            customer_service: ['emotion', 'fewshot', 'rar', 'risen'],
+            productivity: ['emotion', 'plansolve', 'risen', 'zeroshot']
         };
         const methodIcons = {
             cot: 'Brain',
@@ -820,86 +873,181 @@
             const selectedTemplate = t.templates[template];
             const TemplateIcon = templateIcons[template];
 
+            // ==================== AI MODEL FORMATTERS ====================
+            // Format helpers for different AI models based on 2025 research
+            const formatters = {
+                // Claude: XML tags, extended thinking support
+                claude: {
+                    wrap: (tag, content) => `<${tag}>\n${content}\n</${tag}>`,
+                    role: (role, p) => `${p.youAre} ${role}.`,
+                    section: (label, content) => `<${label.toLowerCase().replace(/\s+/g, '_')}>\n${content}\n</${label.toLowerCase().replace(/\s+/g, '_')}>`
+                },
+                // GPT: Markdown structure, literal instructions
+                gpt: {
+                    wrap: (tag, content) => `**${tag}:**\n${content}`,
+                    role: (role, p) => `${p.actAs} ${role}.`,
+                    section: (label, content) => `**${label}:**\n${content}`
+                },
+                // Gemini: XML or Markdown consistently, context first
+                gemini: {
+                    wrap: (tag, content) => `## ${tag}\n${content}`,
+                    role: (role, p) => `# Role\nYou are ${role}.`,
+                    section: (label, content) => `## ${label}\n${content}`
+                },
+                // Llama: Special tokens format
+                llama: {
+                    wrap: (tag, content) => `[${tag.toUpperCase()}]\n${content}\n[/${tag.toUpperCase()}]`,
+                    role: (role, p) => `<|begin_of_text|><|start_header_id|>system<|end_header_id|>\nYou are ${role}.<|eot_id|>`,
+                    section: (label, content) => `[${label.toUpperCase()}]\n${content}`
+                },
+                // Mistral: [INST]/[/INST] tokens
+                mistral: {
+                    wrap: (tag, content) => `[INST] ${tag}: ${content} [/INST]`,
+                    role: (role, p) => `[INST] You are ${role}. [/INST]`,
+                    section: (label, content) => `${label}: ${content}`
+                },
+                // Cohere: Task & Context, Style Guide format
+                cohere: {
+                    wrap: (tag, content) => `## ${tag}\n${content}`,
+                    role: (role, p) => `## Task & Context\nYou are ${role}.`,
+                    section: (label, content) => `## ${label}\n${content}`
+                },
+                // General: Universal plain format
+                general: {
+                    wrap: (tag, content) => `${tag}:\n${content}`,
+                    role: (role, p) => `${p.role}: ${role}`,
+                    section: (label, content) => `${label}: ${content}`
+                }
+            };
+
+            // Get formatter for current target
+            const fmt = formatters[target] || formatters.general;
+
             // Generate formatted prompt with color sections
             const promptSections = useMemo(() => {
                 const sections = [];
                 const p = t.promptParts;
+                const f = formatters[target] || formatters.general;
 
+                // Role section
                 if (fields.role) {
-                    sections.push({ type: 'role', text: target === 'claude' ? `${p.youAre} ${fields.role}.` : target === 'gpt' ? `${p.actAs} ${fields.role}.` : `${p.role}: ${fields.role}` });
+                    sections.push({ type: 'role', text: f.role(fields.role, p) });
                 }
+
+                // Emotion prompt (works well across all models)
                 if (selectedMethods.includes('emotion')) {
                     sections.push({ type: 'methods', text: p.emotion });
                 }
+
+                // Context section - Gemini prefers context first
                 if (fields.context) {
-                    sections.push({ type: 'context', text: target === 'claude' ? `<context>\n${fields.context}\n</context>` : `**${p.context}:**\n${fields.context}` });
+                    if (target === 'claude') {
+                        sections.push({ type: 'context', text: `<context>\n${fields.context}\n</context>` });
+                    } else if (target === 'cohere') {
+                        sections.push({ type: 'context', text: `## Task & Context\n${fields.context}` });
+                    } else if (target === 'gemini') {
+                        sections.push({ type: 'context', text: `## Context\n${fields.context}\n\nBased on the information above:` });
+                    } else if (target === 'llama') {
+                        sections.push({ type: 'context', text: `<|start_header_id|>user<|end_header_id|>\nContext: ${fields.context}<|eot_id|>` });
+                    } else if (target === 'mistral') {
+                        sections.push({ type: 'context', text: `[INST] Context: ${fields.context} [/INST]` });
+                    } else {
+                        sections.push({ type: 'context', text: f.section(p.context, fields.context) });
+                    }
                 }
+
+                // Task section
                 if (fields.task) {
-                    sections.push({ type: 'task', text: target === 'claude' ? `<task>\n${fields.task}\n</task>` : target === 'gpt' ? `**${p.task}:**\n${fields.task}` : `${p.task}: ${fields.task}` });
+                    if (target === 'claude') {
+                        sections.push({ type: 'task', text: `<task>\n${fields.task}\n</task>` });
+                    } else if (target === 'llama') {
+                        sections.push({ type: 'task', text: `<|start_header_id|>user<|end_header_id|>\n${fields.task}<|eot_id|><|start_header_id|>assistant<|end_header_id|>` });
+                    } else if (target === 'mistral') {
+                        sections.push({ type: 'task', text: `[INST] ${fields.task} [/INST]` });
+                    } else if (target === 'cohere') {
+                        sections.push({ type: 'task', text: `## Task & Context\n${fields.task}` });
+                    } else {
+                        sections.push({ type: 'task', text: f.section(p.task, fields.task) });
+                    }
                 }
-                if (selectedMethods.includes('cot')) {
-                    sections.push({ type: 'methods', text: target === 'claude' ? `<instructions>\n${p.cotInstructions}\n</instructions>` : `**Instructions:** ${p.cotSimple}` });
+
+                // Method-specific instructions
+                const addMethodSection = (methodId, claudeTag, content, simpleContent) => {
+                    if (selectedMethods.includes(methodId)) {
+                        if (target === 'claude') {
+                            sections.push({ type: 'methods', text: `<${claudeTag}>\n${content}\n</${claudeTag}>` });
+                        } else if (target === 'cohere') {
+                            sections.push({ type: 'methods', text: `## Style Guide\n${simpleContent}` });
+                        } else {
+                            sections.push({ type: 'methods', text: f.section(methodId.charAt(0).toUpperCase() + methodId.slice(1), simpleContent) });
+                        }
+                    }
+                };
+
+                addMethodSection('cot', 'instructions', p.cotInstructions, p.cotSimple);
+                addMethodSection('zeroshot', 'thinking', p.zeroshotTrigger, p.zeroshotSimple);
+                addMethodSection('tot', 'reasoning_approach', p.totExperts, p.totSimple);
+                addMethodSection('selfconsistency', 'verification', p.scVerify, p.scSimple);
+                addMethodSection('react', 'approach', p.reactCycle, p.reactSimple);
+                addMethodSection('plansolve', 'planning', p.plansolveInstructions, p.plansolveSimple);
+                addMethodSection('selfask', 'self_questioning', p.selfaskInstructions, p.selfaskSimple);
+                addMethodSection('pal', 'code_solution', p.palInstructions, p.palSimple);
+                addMethodSection('selfrefine', 'iterative_improvement', p.selfrefineInstructions, p.selfrefineSimple);
+                addMethodSection('stepback', 'abstraction', p.stepbackInstructions, p.stepbackSimple);
+                addMethodSection('analogical', 'analogical_reasoning', p.analogicalInstructions, p.analogicalSimple);
+                addMethodSection('rar', 'clarification', p.rarInstructions, p.rarSimple);
+
+                // Constraints/Steps
+                if (fields.constraints) {
+                    const steps = selectedMethods.includes('risen')
+                        ? fields.constraints.split('\n').map((s, i) => `${i + 1}. ${s}`).join('\n')
+                        : fields.constraints;
+                    const label = selectedMethods.includes('risen') ? p.stepsFollow : p.constraints;
+
+                    if (target === 'claude') {
+                        const tag = selectedMethods.includes('risen') ? 'steps' : 'constraints';
+                        sections.push({ type: 'constraints', text: `<${tag}>\n${selectedMethods.includes('risen') ? label + ':\n' : ''}${steps}\n</${tag}>` });
+                    } else if (target === 'cohere') {
+                        sections.push({ type: 'constraints', text: `## Style Guide\n${steps}` });
+                    } else {
+                        sections.push({ type: 'constraints', text: f.section(label, steps) });
+                    }
                 }
-                if (selectedMethods.includes('zeroshot')) {
-                    sections.push({ type: 'methods', text: target === 'claude' ? `<thinking>\n${p.zeroshotTrigger}\n</thinking>` : `**Approach:** ${p.zeroshotSimple}` });
-                }
-                if (selectedMethods.includes('tot')) {
-                    sections.push({ type: 'methods', text: target === 'claude' ? `<reasoning_approach>\n${p.totExperts}\n</reasoning_approach>` : `**Multi-path:** ${p.totSimple}` });
-                }
-                if (selectedMethods.includes('selfconsistency')) {
-                    sections.push({ type: 'methods', text: target === 'claude' ? `<verification>\n${p.scVerify}\n</verification>` : `**Self-verification:** ${p.scSimple}` });
-                }
-                if (selectedMethods.includes('react')) {
-                    sections.push({ type: 'methods', text: target === 'claude' ? `<approach>\n${p.reactCycle}\n</approach>` : `**ReAct:** ${p.reactSimple}` });
-                }
-                if (selectedMethods.includes('plansolve')) {
-                    sections.push({ type: 'methods', text: target === 'claude' ? `<planning>\n${p.plansolveInstructions}\n</planning>` : `**Plan-and-Solve:** ${p.plansolveSimple}` });
-                }
-                if (selectedMethods.includes('selfask')) {
-                    sections.push({ type: 'methods', text: target === 'claude' ? `<self_questioning>\n${p.selfaskInstructions}\n</self_questioning>` : `**Self-Ask:** ${p.selfaskSimple}` });
-                }
-                if (selectedMethods.includes('pal')) {
-                    sections.push({ type: 'methods', text: target === 'claude' ? `<code_solution>\n${p.palInstructions}\n</code_solution>` : `**Program-Aided:** ${p.palSimple}` });
-                }
-                if (selectedMethods.includes('selfrefine')) {
-                    sections.push({ type: 'methods', text: target === 'claude' ? `<iterative_improvement>\n${p.selfrefineInstructions}\n</iterative_improvement>` : `**Self-Refine:** ${p.selfrefineSimple}` });
-                }
-                if (selectedMethods.includes('stepback')) {
-                    sections.push({ type: 'methods', text: target === 'claude' ? `<abstraction>\n${p.stepbackInstructions}\n</abstraction>` : `**Step-Back:** ${p.stepbackSimple}` });
-                }
-                if (selectedMethods.includes('analogical')) {
-                    sections.push({ type: 'methods', text: target === 'claude' ? `<analogical_reasoning>\n${p.analogicalInstructions}\n</analogical_reasoning>` : `**Analogical:** ${p.analogicalSimple}` });
-                }
-                if (selectedMethods.includes('rar')) {
-                    sections.push({ type: 'methods', text: target === 'claude' ? `<clarification>\n${p.rarInstructions}\n</clarification>` : `**Rephrase:** ${p.rarSimple}` });
-                }
-                if (selectedMethods.includes('risen') && fields.constraints) {
-                    const steps = fields.constraints.split('\n').map((s, i) => `${i + 1}. ${s}`).join('\n');
-                    sections.push({ type: 'constraints', text: target === 'claude' ? `<steps>\n${p.stepsFollow}:\n${steps}\n</steps>` : `**${p.stepsFollow}:**\n${steps}` });
-                } else if (fields.constraints) {
-                    sections.push({ type: 'constraints', text: target === 'claude' ? `<constraints>\n${fields.constraints}\n</constraints>` : `**${p.constraints}:**\n${fields.constraints}` });
-                }
-                // Use structured examples if available, otherwise fall back to plain examples field
+
+                // Examples section
                 const examplesContent = generateFormattedExamples || fields.examples;
                 if (examplesContent) {
-                    if (selectedMethods.includes('fewshot')) {
-                        sections.push({ type: 'examples', text: target === 'claude' ? `<examples>\n${p.examplesIntro}\n\n${examplesContent}\n\n${p.examplesFollow}\n</examples>` : `**Few-shot:**\n${p.fewshotIntro}\n\n${examplesContent}\n\n${p.fewshotFollow}` });
+                    const intro = selectedMethods.includes('fewshot') ? `${p.examplesIntro}\n\n${examplesContent}\n\n${p.examplesFollow}` : examplesContent;
+                    if (target === 'claude') {
+                        sections.push({ type: 'examples', text: `<examples>\n${intro}\n</examples>` });
                     } else {
-                        sections.push({ type: 'examples', text: target === 'claude' ? `<examples>\n${examplesContent}\n</examples>` : `**Examples:**\n${examplesContent}` });
+                        sections.push({ type: 'examples', text: f.section('Examples', intro) });
                     }
                 }
+
+                // Output format
                 if (fields.outputFormat) {
-                    if (selectedMethods.includes('risen')) {
-                        sections.push({ type: 'format', text: target === 'claude' ? `<expectations>\n${fields.outputFormat}\n</expectations>` : `**${p.expectations}:**\n${fields.outputFormat}` });
+                    const label = selectedMethods.includes('risen') ? p.expectations : p.outputFormat;
+                    if (target === 'claude') {
+                        const tag = selectedMethods.includes('risen') ? 'expectations' : 'output_format';
+                        sections.push({ type: 'format', text: `<${tag}>\n${fields.outputFormat}\n</${tag}>` });
+                    } else if (target === 'cohere') {
+                        sections.push({ type: 'format', text: `## Style Guide\nOutput format: ${fields.outputFormat}` });
                     } else {
-                        sections.push({ type: 'format', text: target === 'claude' ? `<output_format>\n${fields.outputFormat}\n</output_format>` : `**${p.outputFormat}:**\n${fields.outputFormat}` });
+                        sections.push({ type: 'format', text: f.section(label, fields.outputFormat) });
                     }
                 }
-                // Add template-specific context/guidance
+
+                // Template-specific context/guidance
                 const templateContext = t.templates[template]?.context;
                 if (templateContext) {
-                    sections.push({ type: 'template', text: target === 'claude' ? `<approach>\n${templateContext}\n</approach>` : `**Approach:** ${templateContext}` });
+                    if (target === 'claude') {
+                        sections.push({ type: 'template', text: `<approach>\n${templateContext}\n</approach>` });
+                    } else {
+                        sections.push({ type: 'template', text: f.section('Approach', templateContext) });
+                    }
                 }
+
                 return sections;
             }, [fields, target, selectedMethods, t, template, generateFormattedExamples]);
 
@@ -1079,7 +1227,17 @@
                 }
             }, []);
 
-            const aiTargets = [{ id: 'claude', name: 'Claude' }, { id: 'gpt', name: 'ChatGPT' }, { id: 'general', name: 'Any AI' }];
+            // AI Models with their specific formatting preferences (based on 2025 research)
+            // Each model has unique prompting requirements per the .md guide
+            const aiTargets = [
+                { id: 'claude', name: 'Claude', color: '#D97706', icon: '🧡', desc: 'XML tags, extended thinking' },
+                { id: 'gpt', name: 'ChatGPT', color: '#10A37F', icon: '💚', desc: 'Markdown, literal instructions' },
+                { id: 'gemini', name: 'Gemini', color: '#4285F4', icon: '💙', desc: 'XML or Markdown, context first' },
+                { id: 'llama', name: 'Llama', color: '#0668E1', icon: '🦙', desc: 'Special tokens format' },
+                { id: 'mistral', name: 'Mistral', color: '#FF7000', icon: '🌪️', desc: '[INST] tokens, objective measures' },
+                { id: 'cohere', name: 'Cohere', color: '#D946EF', icon: '🔮', desc: 'Task & Context, Style Guide' },
+                { id: 'general', name: 'Any AI', color: '#6B7280', icon: '🤖', desc: 'Universal format' }
+            ];
 
             return (
                 <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4 md:p-6">
@@ -1328,35 +1486,68 @@
                             {/* Input Panel */}
                             <div className="lg:col-span-2 space-y-4">
                                 {/* Template & Target */}
-                                <div className="flex gap-3">
-                                    <div className="relative flex-1">
-                                        <button onClick={() => setShowTemplates(!showTemplates)} className="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white">
-                                            <div className="flex items-center gap-2">
-                                                <Icon name={TemplateIcon} size={16} className="text-amber-400" />
-                                                <span className="text-sm">{selectedTemplate?.name}</span>
-                                            </div>
-                                            <Icon name="ChevronDown" size={16} className={`transition-transform ${showTemplates ? 'rotate-180' : ''}`} />
-                                        </button>
-                                        {showTemplates && (
-                                            <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-lg overflow-hidden z-10 shadow-xl">
-                                                {Object.entries(t.templates).map(([key, val]) => (
-                                                    <button key={key} onClick={() => { setTemplate(key); setShowTemplates(false); }}
-                                                        className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-700 ${template === key ? 'bg-slate-700' : ''}`}>
-                                                        <Icon name={templateIcons[key]} size={16} className="text-amber-400" />
-                                                        <div className="text-left">
-                                                            <div className="text-white text-sm">{val.name}</div>
-                                                            <div className="text-slate-400 text-xs">{val.desc}</div>
-                                                        </div>
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        )}
+                                {/* Category Selector */}
+                                <div className="relative">
+                                    <button onClick={() => setShowTemplates(!showTemplates)} className="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white">
+                                        <div className="flex items-center gap-2">
+                                            <Icon name={TemplateIcon} size={16} className="text-amber-400" />
+                                            <span className="text-sm">{selectedTemplate?.name}</span>
+                                        </div>
+                                        <Icon name="ChevronDown" size={16} className={`transition-transform ${showTemplates ? 'rotate-180' : ''}`} />
+                                    </button>
+                                    {showTemplates && (
+                                        <div className="absolute top-full left-0 right-0 mt-1 bg-slate-800 border border-slate-700 rounded-lg overflow-hidden z-10 shadow-xl max-h-[400px] overflow-y-auto">
+                                            {Object.entries(t.templates).map(([key, val]) => (
+                                                <button key={key} onClick={() => { setTemplate(key); setShowTemplates(false); }}
+                                                    className={`w-full flex items-center gap-3 px-4 py-2.5 hover:bg-slate-700 ${template === key ? 'bg-slate-700' : ''}`}>
+                                                    <Icon name={templateIcons[key] || 'FileText'} size={16} className="text-amber-400" />
+                                                    <div className="text-left">
+                                                        <div className="text-white text-sm">{val.name}</div>
+                                                        <div className="text-slate-400 text-xs">{val.desc}</div>
+                                                    </div>
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* AI Model Hotbar - Visual cards with brand colors */}
+                                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
+                                            <Icon name="Cpu" size={14} className="text-amber-400" />
+                                            {lang === 'cs' ? 'Optimalizovat pro AI model' : 'Optimize for AI model'}
+                                        </span>
+                                        <span className="text-xs text-slate-500">
+                                            {aiTargets.find(a => a.id === target)?.desc}
+                                        </span>
                                     </div>
-                                    <div className="flex bg-slate-800 border border-slate-700 rounded-lg p-1">
+                                    <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
                                         {aiTargets.map(ai => (
-                                            <button key={ai.id} onClick={() => setTarget(ai.id)}
-                                                className={`px-2 py-1.5 rounded-md text-xs font-medium transition-colors ${target === ai.id ? 'bg-amber-500 text-slate-900' : 'text-slate-400 hover:text-white'}`}>
-                                                {ai.name}
+                                            <button
+                                                key={ai.id}
+                                                onClick={() => setTarget(ai.id)}
+                                                className={`relative flex flex-col items-center justify-center p-2 rounded-lg transition-all ${
+                                                    target === ai.id
+                                                        ? 'ring-2 ring-offset-1 ring-offset-slate-800 shadow-lg'
+                                                        : 'hover:bg-slate-700/50 opacity-70 hover:opacity-100'
+                                                }`}
+                                                style={{
+                                                    backgroundColor: target === ai.id ? `${ai.color}20` : 'transparent',
+                                                    borderColor: target === ai.id ? ai.color : 'transparent',
+                                                    ringColor: target === ai.id ? ai.color : 'transparent'
+                                                }}
+                                                title={ai.desc}
+                                            >
+                                                <span className="text-lg mb-0.5">{ai.icon}</span>
+                                                <span className={`text-[10px] font-medium ${target === ai.id ? 'text-white' : 'text-slate-400'}`}>
+                                                    {ai.name}
+                                                </span>
+                                                {target === ai.id && (
+                                                    <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-500 border-2 border-slate-800">
+                                                        <Icon name="Check" size={8} className="text-white absolute top-0.5 left-0.5" />
+                                                    </div>
+                                                )}
                                             </button>
                                         ))}
                                     </div>
