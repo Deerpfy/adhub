@@ -1316,8 +1316,8 @@ Prompt k analýze:
 
                 for (const model of freeModels) {
                     try {
-                        // Hugging Face Inference API via CORS proxy
-                        const apiUrl = `https://api-inference.huggingface.co/models/${model}`;
+                        // Hugging Face Router API via CORS proxy (new endpoint)
+                        const apiUrl = `https://router.huggingface.co/hf-inference/models/${model}`;
                         const response = await fetch(
                             corsProxy + encodeURIComponent(apiUrl),
                             {
