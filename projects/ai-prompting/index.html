@@ -666,6 +666,122 @@ Prompt k analýze:
             return <span ref={ref} className={`inline-flex items-center justify-center ${className}`}></span>;
         };
 
+        // ==================== AI MODEL ICONS COMPONENT ====================
+        // Custom SVG icons for each AI model - designed in AdHub style
+        const AIModelIcon = ({ model, size = 20, color = "currentColor" }) => {
+            const icons = {
+                // Claude (Anthropic) - Stylized 'A' with neural network aesthetic
+                claude: (
+                    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" fill={color} fillOpacity="0.15"/>
+                        <path d="M12 4C12 4 7 8 7 13C7 16 9 18 12 18C15 18 17 16 17 13C17 8 12 4 12 4Z"
+                              fill={color} fillOpacity="0.3"/>
+                        <path d="M12 6L8 16H10L11 13H13L14 16H16L12 6Z" fill={color}/>
+                        <circle cx="12" cy="10" r="1.5" fill={color} fillOpacity="0.8"/>
+                    </svg>
+                ),
+                // ChatGPT (OpenAI) - Iconic spiral/flower pattern
+                gpt: (
+                    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" fill={color} fillOpacity="0.15"/>
+                        <path d="M12 4C14.5 4 16.5 5.5 17.5 7.5C19.5 8.5 20.5 10.5 20 13C20.5 15.5 19 17.5 17 18.5C16 20.5 14 21.5 11.5 21C9 21.5 7 20 6 18C4 17 3 15 3.5 12.5C3 10 4.5 8 6.5 7C7.5 5 9.5 4 12 4Z"
+                              fill={color} fillOpacity="0.2"/>
+                        <path d="M12 7V12M12 12L16 10M12 12L16 15M12 12L8 15M12 12L8 10M12 12V17"
+                              stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+                        <circle cx="12" cy="12" r="2" fill={color}/>
+                    </svg>
+                ),
+                // Gemini (Google) - Twin stars representing Gemini constellation
+                gemini: (
+                    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" fill={color} fillOpacity="0.15"/>
+                        <path d="M8 6L9.5 10L6 11L9.5 12L8 16L10 13L12 16L14 13L16 16L14.5 12L18 11L14.5 10L16 6L14 9L12 6L10 9L8 6Z"
+                              fill={color}/>
+                        <circle cx="8" cy="8" r="1.5" fill={color} fillOpacity="0.6"/>
+                        <circle cx="16" cy="8" r="1.5" fill={color} fillOpacity="0.6"/>
+                        <path d="M8 18C8 18 10 16 12 16C14 16 16 18 16 18" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                ),
+                // Llama (Meta) - Stylized llama head silhouette
+                llama: (
+                    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" fill={color} fillOpacity="0.15"/>
+                        <path d="M8 5C8 5 6 6 6 9C6 11 7 12 7 14C7 16 6 18 8 19C10 20 12 19 13 18C14 19 16 19 17 18C18 17 18 15 17 14C17 12 18 10 17 8C16 6 14 5 12 6C10 5 9 5 8 5Z"
+                              fill={color} fillOpacity="0.3"/>
+                        <ellipse cx="10" cy="5" rx="1.5" ry="2.5" fill={color}/>
+                        <ellipse cx="14" cy="5" rx="1.5" ry="2.5" fill={color}/>
+                        <circle cx="9" cy="10" r="1" fill={color}/>
+                        <circle cx="13" cy="10" r="1" fill={color}/>
+                        <ellipse cx="11" cy="13" rx="2" ry="1" fill={color} fillOpacity="0.5"/>
+                    </svg>
+                ),
+                // Mistral - Wind spiral / tornado pattern
+                mistral: (
+                    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" fill={color} fillOpacity="0.15"/>
+                        <path d="M6 8H14C16 8 17 9 17 10C17 11 16 12 14 12H8" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+                        <path d="M6 12H16C18 12 19 13 19 14C19 15 18 16 16 16H10" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+                        <path d="M6 16H12C14 16 15 17 15 18C15 19 14 20 12 20H8" stroke={color} strokeWidth="2" strokeLinecap="round"/>
+                        <circle cx="6" cy="8" r="1" fill={color}/>
+                        <circle cx="6" cy="12" r="1" fill={color}/>
+                        <circle cx="6" cy="16" r="1" fill={color}/>
+                    </svg>
+                ),
+                // Cohere - Connected nodes showing coherence/connection
+                cohere: (
+                    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" fill={color} fillOpacity="0.15"/>
+                        <path d="M12 6L17 9M12 6L7 9M12 6V11M17 9V15M17 9L12 11M7 9V15M7 9L12 11M17 15L12 18M7 15L12 18M12 11V18"
+                              stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+                        <circle cx="12" cy="6" r="2" fill={color}/>
+                        <circle cx="17" cy="9" r="2" fill={color}/>
+                        <circle cx="7" cy="9" r="2" fill={color}/>
+                        <circle cx="17" cy="15" r="2" fill={color}/>
+                        <circle cx="7" cy="15" r="2" fill={color}/>
+                        <circle cx="12" cy="18" r="2" fill={color}/>
+                        <circle cx="12" cy="11" r="1.5" fill={color} fillOpacity="0.6"/>
+                    </svg>
+                ),
+                // Grok (xAI) - X symbol with lightning bolt
+                grok: (
+                    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" fill={color} fillOpacity="0.15"/>
+                        <path d="M7 7L17 17M17 7L7 17" stroke={color} strokeWidth="2.5" strokeLinecap="round"/>
+                        <path d="M12 4L10 10H14L12 16" stroke="#FFD700" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                ),
+                // DeepSeek - Magnifying glass with depth layers
+                deepseek: (
+                    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" fill={color} fillOpacity="0.15"/>
+                        <circle cx="10" cy="10" r="5" stroke={color} strokeWidth="2"/>
+                        <path d="M14 14L19 19" stroke={color} strokeWidth="2.5" strokeLinecap="round"/>
+                        <circle cx="10" cy="10" r="3" fill={color} fillOpacity="0.2"/>
+                        <circle cx="10" cy="10" r="1.5" fill={color} fillOpacity="0.4"/>
+                        <circle cx="10" cy="10" r="0.5" fill={color}/>
+                    </svg>
+                ),
+                // General AI - Universal brain/circuit pattern
+                general: (
+                    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" fill={color} fillOpacity="0.15"/>
+                        <path d="M12 4C8 4 5 7 5 11C5 13 6 15 7 16C7 17 7 18 7 19H10C10 18 10 17 10 16H14C14 17 14 18 14 19H17C17 18 17 17 17 16C18 15 19 13 19 11C19 7 16 4 12 4Z"
+                              fill={color} fillOpacity="0.3"/>
+                        <circle cx="9" cy="10" r="1.5" fill={color}/>
+                        <circle cx="15" cy="10" r="1.5" fill={color}/>
+                        <path d="M9 14C9 14 10.5 15 12 15C13.5 15 15 14 15 14" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+                        <path d="M12 4V2M7 6L5.5 4.5M17 6L18.5 4.5" stroke={color} strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                )
+            };
+
+            return (
+                <span className="inline-flex items-center justify-center">
+                    {icons[model] || icons.general}
+                </span>
+            );
+        };
+
         // ==================== AUTO-RESIZE TEXTAREA COMPONENT ====================
         // Textarea s automatickým rozšířením podle obsahu a manuálním resize
         const AutoResizeTextarea = ({ value, onChange, placeholder, className = "", minRows = 2, maxRows = 8, ...props }) => {
@@ -2077,7 +2193,9 @@ Prompt k analýze:
                                                 }}
                                                 title={ai.desc}
                                             >
-                                                <span className="text-lg mb-0.5">{ai.icon}</span>
+                                                <span className="mb-0.5">
+                                                    <AIModelIcon model={ai.id} size={24} color={ai.color} />
+                                                </span>
                                                 <span className={`text-[10px] font-medium ${target === ai.id ? 'text-white' : 'text-slate-400'}`}>
                                                     {ai.name}
                                                 </span>
