@@ -282,6 +282,42 @@
                     generating: 'Generating...',
                     tip: 'Tip: The code contains all your settings. Share it via message or email!',
                 },
+                // Prompt verification feature - uses free AI API to analyze prompt
+                verify: {
+                    title: 'Verify Prompt',
+                    button: 'Verify with AI',
+                    buttonShort: 'Verify',
+                    analyzing: 'Analyzing prompt...',
+                    result: 'AI Analysis',
+                    close: 'Close',
+                    retry: 'Retry',
+                    noPrompt: 'Create a prompt first to verify it',
+                    apiSettings: 'API Settings',
+                    apiProvider: 'AI Provider',
+                    apiKey: 'API Key',
+                    apiKeyPlaceholder: 'Enter your free API key',
+                    apiKeyHelp: 'Get a free API key from:',
+                    geminiLink: 'Google AI Studio (Gemini)',
+                    groqLink: 'Groq Console',
+                    saveKey: 'Save Key',
+                    keyRequired: 'API key is required',
+                    keySaved: 'API key saved!',
+                    errorGeneric: 'Error analyzing prompt. Please try again.',
+                    errorNetwork: 'Network error. Check your connection.',
+                    errorApiKey: 'Invalid API key. Please check and try again.',
+                    understanding: 'How AI understands your prompt:',
+                    prePrompt: `You are an expert prompt analyst. Analyze the following prompt and explain briefly:
+1. **Task Understanding**: What task is being requested?
+2. **Role/Persona**: What role should the AI take?
+3. **Context**: What background information is provided?
+4. **Constraints**: What requirements or limitations are specified?
+5. **Expected Output**: What format/type of response is expected?
+
+Be concise but clear. Use bullet points. Respond in the same language as the prompt.
+
+Prompt to analyze:
+`,
+                },
                 preview: 'Formatted Prompt',
                 copy: 'Copy',
                 copied: 'Copied!',
@@ -455,6 +491,42 @@
                     importError: 'Neplatný sdílecí kód',
                     generating: 'Generuji...',
                     tip: 'Tip: Kód obsahuje všechna tvá nastavení. Sdílej ho přes zprávu nebo email!',
+                },
+                // Funkce verifikace promptu - používá bezplatné AI API k analýze promptu
+                verify: {
+                    title: 'Ověřit prompt',
+                    button: 'Ověřit pomocí AI',
+                    buttonShort: 'Ověřit',
+                    analyzing: 'Analyzuji prompt...',
+                    result: 'AI Analýza',
+                    close: 'Zavřít',
+                    retry: 'Zkusit znovu',
+                    noPrompt: 'Nejprve vytvoř prompt k ověření',
+                    apiSettings: 'Nastavení API',
+                    apiProvider: 'Poskytovatel AI',
+                    apiKey: 'API klíč',
+                    apiKeyPlaceholder: 'Zadej svůj bezplatný API klíč',
+                    apiKeyHelp: 'Získej bezplatný API klíč z:',
+                    geminiLink: 'Google AI Studio (Gemini)',
+                    groqLink: 'Groq Console',
+                    saveKey: 'Uložit klíč',
+                    keyRequired: 'API klíč je povinný',
+                    keySaved: 'API klíč uložen!',
+                    errorGeneric: 'Chyba při analýze promptu. Zkus to znovu.',
+                    errorNetwork: 'Chyba sítě. Zkontroluj připojení.',
+                    errorApiKey: 'Neplatný API klíč. Zkontroluj ho a zkus znovu.',
+                    understanding: 'Jak AI rozumí tvému promptu:',
+                    prePrompt: `Jsi expertní analytik promptů. Analyzuj následující prompt a stručně vysvětli:
+1. **Pochopení úkolu**: Jaký úkol je požadován?
+2. **Role/Persona**: Jakou roli by měla AI zaujmout?
+3. **Kontext**: Jaké informace o pozadí jsou poskytnuty?
+4. **Omezení**: Jaké požadavky nebo limity jsou specifikovány?
+5. **Očekávaný výstup**: Jaký formát/typ odpovědi se očekává?
+
+Buď stručný, ale jasný. Použij odrážky. Odpověz ve stejném jazyce jako prompt.
+
+Prompt k analýze:
+`,
                 },
                 preview: 'Formátovaný prompt',
                 copy: 'Kopírovat',
@@ -808,6 +880,16 @@
 
             // Model-specific features state - tracks which optional features are enabled for each model
             const [selectedFeatures, setSelectedFeatures] = useState({});
+
+            // Verification feature states
+            const [showVerifyModal, setShowVerifyModal] = useState(false);
+            const [showApiSettingsModal, setShowApiSettingsModal] = useState(false);
+            const [verifyResult, setVerifyResult] = useState('');
+            const [verifyLoading, setVerifyLoading] = useState(false);
+            const [verifyError, setVerifyError] = useState('');
+            const [apiProvider, setApiProvider] = useState(() => localStorage.getItem('ai-prompt-api-provider') || 'gemini');
+            const [apiKey, setApiKey] = useState(() => localStorage.getItem('ai-prompt-api-key') || '');
+            const [tempApiKey, setTempApiKey] = useState('');
 
             const [fields, setFields] = useState({
                 role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '',
@@ -1192,6 +1274,122 @@
                 return promptSections.map(s => s.text).join('\n\n').trim();
             }, [promptSections]);
 
+            // ==================== VERIFICATION API FUNCTIONS ====================
+            // Verify prompt using free AI API (Gemini or Groq)
+            const verifyPromptWithAI = async () => {
+                if (!formattedPrompt) {
+                    showNotification(t.verify?.noPrompt || 'Create a prompt first');
+                    return;
+                }
+
+                if (!apiKey) {
+                    setShowApiSettingsModal(true);
+                    return;
+                }
+
+                setVerifyLoading(true);
+                setVerifyError('');
+                setVerifyResult('');
+                setShowVerifyModal(true);
+
+                const prePrompt = t.verify?.prePrompt || 'Analyze this prompt:\n';
+                const fullPrompt = prePrompt + formattedPrompt;
+
+                try {
+                    let response;
+
+                    if (apiProvider === 'gemini') {
+                        // Google Gemini API (free tier: 1500 req/day)
+                        response = await fetch(
+                            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+                            {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    contents: [{ parts: [{ text: fullPrompt }] }],
+                                    generationConfig: {
+                                        temperature: 0.4,
+                                        maxOutputTokens: 1024
+                                    }
+                                })
+                            }
+                        );
+
+                        if (!response.ok) {
+                            const errorData = await response.json().catch(() => ({}));
+                            if (response.status === 400 || response.status === 403) {
+                                throw new Error('apiKey');
+                            }
+                            throw new Error(errorData.error?.message || 'API error');
+                        }
+
+                        const data = await response.json();
+                        const result = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+                        setVerifyResult(result);
+
+                    } else if (apiProvider === 'groq') {
+                        // Groq API (free tier: 1000 req/day, very fast)
+                        response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${apiKey}`
+                            },
+                            body: JSON.stringify({
+                                model: 'llama-3.1-8b-instant',
+                                messages: [{ role: 'user', content: fullPrompt }],
+                                temperature: 0.4,
+                                max_tokens: 1024
+                            })
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json().catch(() => ({}));
+                            if (response.status === 401) {
+                                throw new Error('apiKey');
+                            }
+                            throw new Error(errorData.error?.message || 'API error');
+                        }
+
+                        const data = await response.json();
+                        const result = data.choices?.[0]?.message?.content || '';
+                        setVerifyResult(result);
+                    }
+                } catch (error) {
+                    console.error('Verify error:', error);
+                    if (error.message === 'apiKey') {
+                        setVerifyError(t.verify?.errorApiKey || 'Invalid API key');
+                    } else if (error.name === 'TypeError' || error.message.includes('network')) {
+                        setVerifyError(t.verify?.errorNetwork || 'Network error');
+                    } else {
+                        setVerifyError(t.verify?.errorGeneric || 'Error analyzing prompt');
+                    }
+                } finally {
+                    setVerifyLoading(false);
+                }
+            };
+
+            // Save API settings
+            const saveApiSettings = () => {
+                if (!tempApiKey.trim()) {
+                    showNotification(t.verify?.keyRequired || 'API key is required');
+                    return;
+                }
+                setApiKey(tempApiKey.trim());
+                localStorage.setItem('ai-prompt-api-key', tempApiKey.trim());
+                localStorage.setItem('ai-prompt-api-provider', apiProvider);
+                setShowApiSettingsModal(false);
+                showNotification(t.verify?.keySaved || 'API key saved!');
+                // Auto-trigger verification after saving
+                setTimeout(() => verifyPromptWithAI(), 100);
+            };
+
+            // Open API settings modal
+            const openApiSettings = () => {
+                setTempApiKey(apiKey);
+                setShowApiSettingsModal(true);
+            };
+
             const copyToClipboard = async () => {
                 await navigator.clipboard.writeText(formattedPrompt);
                 setCopied(true);
@@ -1499,6 +1697,189 @@
                                         {t.share.importBtn}
                                     </button>
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* API Settings Modal */}
+                    {showApiSettingsModal && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowApiSettingsModal(false)}>
+                            <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 w-[420px] max-w-[95vw]" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Icon name="Settings" size={20} className="text-amber-400" />
+                                        {t.verify?.apiSettings || 'API Settings'}
+                                    </h3>
+                                    <button onClick={() => setShowApiSettingsModal(false)} className="text-slate-400 hover:text-white">
+                                        <Icon name="X" size={20} />
+                                    </button>
+                                </div>
+
+                                {/* Provider Selection */}
+                                <div className="mb-4">
+                                    <label className="block text-sm text-slate-300 mb-2">
+                                        {t.verify?.apiProvider || 'AI Provider'}
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setApiProvider('gemini')}
+                                            className={`flex-1 px-4 py-3 rounded-lg border transition-all flex items-center justify-center gap-2 ${
+                                                apiProvider === 'gemini'
+                                                    ? 'bg-blue-500/20 border-blue-500 text-blue-400'
+                                                    : 'bg-slate-700 border-slate-600 text-slate-300 hover:border-slate-500'
+                                            }`}
+                                        >
+                                            <span className="text-lg">💎</span>
+                                            <span className="font-medium">Gemini</span>
+                                        </button>
+                                        <button
+                                            onClick={() => setApiProvider('groq')}
+                                            className={`flex-1 px-4 py-3 rounded-lg border transition-all flex items-center justify-center gap-2 ${
+                                                apiProvider === 'groq'
+                                                    ? 'bg-orange-500/20 border-orange-500 text-orange-400'
+                                                    : 'bg-slate-700 border-slate-600 text-slate-300 hover:border-slate-500'
+                                            }`}
+                                        >
+                                            <span className="text-lg">⚡</span>
+                                            <span className="font-medium">Groq</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* API Key Input */}
+                                <div className="mb-4">
+                                    <label className="block text-sm text-slate-300 mb-2">
+                                        {t.verify?.apiKey || 'API Key'}
+                                    </label>
+                                    <input
+                                        type="password"
+                                        value={tempApiKey}
+                                        onChange={e => setTempApiKey(e.target.value)}
+                                        placeholder={t.verify?.apiKeyPlaceholder || 'Enter your free API key'}
+                                        className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                        autoFocus
+                                    />
+                                </div>
+
+                                {/* Help Links */}
+                                <div className="mb-4 p-3 bg-slate-700/50 rounded-lg">
+                                    <p className="text-xs text-slate-400 mb-2">
+                                        {t.verify?.apiKeyHelp || 'Get a free API key from:'}
+                                    </p>
+                                    <div className="flex flex-col gap-1">
+                                        <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer"
+                                            className="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1">
+                                            <Icon name="ExternalLink" size={12} />
+                                            {t.verify?.geminiLink || 'Google AI Studio (Gemini)'}
+                                        </a>
+                                        <a href="https://console.groq.com/keys" target="_blank" rel="noopener noreferrer"
+                                            className="text-xs text-orange-400 hover:text-orange-300 flex items-center gap-1">
+                                            <Icon name="ExternalLink" size={12} />
+                                            {t.verify?.groqLink || 'Groq Console'}
+                                        </a>
+                                    </div>
+                                </div>
+
+                                {/* Save Button */}
+                                <button
+                                    onClick={saveApiSettings}
+                                    disabled={!tempApiKey.trim()}
+                                    className="w-full px-4 py-2.5 bg-amber-500 text-slate-900 rounded-lg hover:bg-amber-400 font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    <Icon name="Check" size={18} />
+                                    {t.verify?.saveKey || 'Save Key'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Verification Result Modal */}
+                    {showVerifyModal && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowVerifyModal(false)}>
+                            <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 w-[550px] max-w-[95vw] max-h-[85vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Icon name="Brain" size={20} className="text-purple-400" />
+                                        {t.verify?.result || 'AI Analysis'}
+                                    </h3>
+                                    <div className="flex items-center gap-2">
+                                        <button
+                                            onClick={openApiSettings}
+                                            className="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg"
+                                            title={t.verify?.apiSettings || 'API Settings'}
+                                        >
+                                            <Icon name="Settings" size={18} />
+                                        </button>
+                                        <button onClick={() => setShowVerifyModal(false)} className="text-slate-400 hover:text-white">
+                                            <Icon name="X" size={20} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Loading State */}
+                                {verifyLoading && (
+                                    <div className="flex flex-col items-center justify-center py-12">
+                                        <div className="w-12 h-12 border-4 border-slate-600 border-t-amber-400 rounded-full animate-spin mb-4"></div>
+                                        <p className="text-slate-400">{t.verify?.analyzing || 'Analyzing prompt...'}</p>
+                                    </div>
+                                )}
+
+                                {/* Error State */}
+                                {verifyError && !verifyLoading && (
+                                    <div className="flex flex-col items-center justify-center py-8">
+                                        <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4">
+                                            <Icon name="AlertCircle" size={32} className="text-red-400" />
+                                        </div>
+                                        <p className="text-red-400 mb-4 text-center">{verifyError}</p>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={openApiSettings}
+                                                className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 flex items-center gap-2"
+                                            >
+                                                <Icon name="Settings" size={16} />
+                                                {t.verify?.apiSettings || 'Settings'}
+                                            </button>
+                                            <button
+                                                onClick={verifyPromptWithAI}
+                                                className="px-4 py-2 bg-amber-500 text-slate-900 rounded-lg hover:bg-amber-400 font-medium flex items-center gap-2"
+                                            >
+                                                <Icon name="RefreshCw" size={16} />
+                                                {t.verify?.retry || 'Retry'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Result Content */}
+                                {verifyResult && !verifyLoading && (
+                                    <div className="flex-1 overflow-y-auto">
+                                        <p className="text-xs text-slate-500 mb-2 flex items-center gap-1">
+                                            <Icon name="Sparkles" size={12} />
+                                            {t.verify?.understanding || 'How AI understands your prompt:'}
+                                        </p>
+                                        <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-4 prose prose-invert prose-sm max-w-none">
+                                            <div className="text-slate-200 text-sm whitespace-pre-wrap leading-relaxed"
+                                                dangerouslySetInnerHTML={{
+                                                    __html: verifyResult
+                                                        .replace(/\*\*(.*?)\*\*/g, '<strong class="text-amber-400">$1</strong>')
+                                                        .replace(/\n/g, '<br />')
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Footer */}
+                                {!verifyLoading && (verifyResult || verifyError) && (
+                                    <div className="mt-4 pt-4 border-t border-slate-700 flex justify-end">
+                                        <button
+                                            onClick={() => setShowVerifyModal(false)}
+                                            className="px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600"
+                                        >
+                                            {t.verify?.close || 'Close'}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -2035,9 +2416,24 @@
                                     )}
                                 </div>
                                 {formattedPrompt && (
-                                    <div className="mt-3 flex justify-between text-xs text-slate-500">
-                                        <span>{t.optimizedFor} {aiTargets.find(a => a.id === target)?.name}</span>
-                                        <span>{formattedPrompt.length} {t.chars}</span>
+                                    <div className="mt-3 flex flex-col gap-3">
+                                        <div className="flex justify-between text-xs text-slate-500">
+                                            <span>{t.optimizedFor} {aiTargets.find(a => a.id === target)?.name}</span>
+                                            <span>{formattedPrompt.length} {t.chars}</span>
+                                        </div>
+                                        {/* Verify with AI Button */}
+                                        <button
+                                            onClick={verifyPromptWithAI}
+                                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-lg font-medium text-sm transition-all shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40"
+                                        >
+                                            <Icon name="Brain" size={18} />
+                                            {t.verify?.button || 'Verify with AI'}
+                                            {apiKey && (
+                                                <span className="text-[10px] opacity-70 ml-1">
+                                                    ({apiProvider === 'gemini' ? '💎' : '⚡'})
+                                                </span>
+                                            )}
+                                        </button>
                                     </div>
                                 )}
                             </div>
