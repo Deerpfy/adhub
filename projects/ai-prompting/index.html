@@ -56,6 +56,36 @@
         .bg-check-pink { background: rgba(236, 72, 153, 0.15); border-color: rgba(236, 72, 153, 0.3); }
         .bg-check-yellow { background: rgba(234, 179, 8, 0.15); border-color: rgba(234, 179, 8, 0.3); }
         .bg-check-red { background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); }
+
+        /* Auto-resize textarea styles */
+        .auto-resize-textarea {
+            min-height: 60px;
+            max-height: 200px;
+            overflow-y: auto;
+            transition: height 0.1s ease-out;
+        }
+        .auto-resize-textarea:focus {
+            max-height: 300px;
+        }
+        /* Visual resize handle indicator */
+        .auto-resize-textarea {
+            resize: vertical;
+        }
+        /* Resize handle styling for better visibility */
+        .resize-handle-container {
+            position: relative;
+        }
+        .resize-handle-container::after {
+            content: '';
+            position: absolute;
+            right: 4px;
+            bottom: 4px;
+            width: 10px;
+            height: 10px;
+            background: linear-gradient(135deg, transparent 50%, rgba(251,191,36,0.3) 50%);
+            pointer-events: none;
+            border-radius: 2px;
+        }
     </style>
     <script>
         tailwind.config = {
@@ -437,6 +467,63 @@
                 }
             }, [name, size]);
             return <span ref={ref} className={`inline-flex items-center justify-center ${className}`}></span>;
+        };
+
+        // ==================== AUTO-RESIZE TEXTAREA COMPONENT ====================
+        // Textarea s automatickým rozšířením podle obsahu a manuálním resize
+        const AutoResizeTextarea = ({ value, onChange, placeholder, className = "", minRows = 2, maxRows = 8, ...props }) => {
+            const textareaRef = useRef(null);
+
+            // Funkce pro automatické nastavení výšky
+            const adjustHeight = useCallback(() => {
+                const textarea = textareaRef.current;
+                if (!textarea) return;
+
+                // Reset height to auto to get the correct scrollHeight
+                textarea.style.height = 'auto';
+
+                // Vypočítej min a max výšku na základě řádků
+                const lineHeight = parseInt(getComputedStyle(textarea).lineHeight) || 20;
+                const paddingY = parseInt(getComputedStyle(textarea).paddingTop) + parseInt(getComputedStyle(textarea).paddingBottom) || 16;
+                const minHeight = lineHeight * minRows + paddingY;
+                const maxHeight = lineHeight * maxRows + paddingY;
+
+                // Nastav novou výšku
+                const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
+                textarea.style.height = `${newHeight}px`;
+            }, [minRows, maxRows]);
+
+            // Adjustovat výšku při změně hodnoty
+            useEffect(() => {
+                adjustHeight();
+            }, [value, adjustHeight]);
+
+            // Adjustovat výšku při mount
+            useEffect(() => {
+                adjustHeight();
+                // Také adjustovat při resize okna
+                window.addEventListener('resize', adjustHeight);
+                return () => window.removeEventListener('resize', adjustHeight);
+            }, [adjustHeight]);
+
+            const handleChange = (e) => {
+                onChange(e);
+                // Malé zpoždění pro správné měření
+                setTimeout(adjustHeight, 0);
+            };
+
+            return (
+                <div className="resize-handle-container">
+                    <textarea
+                        ref={textareaRef}
+                        value={value}
+                        onChange={handleChange}
+                        placeholder={placeholder}
+                        className={`auto-resize-textarea ${className}`}
+                        {...props}
+                    />
+                </div>
+            );
         };
 
         // ==================== LOCALSTORAGE DATABASE ====================
@@ -1094,7 +1181,7 @@
                                     onChange={e => setImportCode(e.target.value)}
                                     placeholder={t.share.importPlaceholder}
                                     rows={4}
-                                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white mb-4 focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono text-sm"
+                                    className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white mb-4 focus:outline-none focus:ring-2 focus:ring-amber-500 font-mono text-sm resize-y min-h-[100px] max-h-[200px]"
                                     autoFocus
                                 />
                                 <div className="flex gap-2">
@@ -1292,8 +1379,14 @@
                                                 <input type="text" value={fields[key]} onChange={e => updateField(key, e.target.value)} placeholder={field.placeholder}
                                                     className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm" />
                                             ) : (
-                                                <textarea value={fields[key]} onChange={e => updateField(key, e.target.value)} placeholder={field.placeholder} rows={2}
-                                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 resize-none text-sm" />
+                                                <AutoResizeTextarea
+                                                    value={fields[key]}
+                                                    onChange={e => updateField(key, e.target.value)}
+                                                    placeholder={field.placeholder}
+                                                    minRows={2}
+                                                    maxRows={key === 'task' ? 10 : 6}
+                                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm"
+                                                />
                                             )}
                                         </div>
                                     ))}
@@ -1352,7 +1445,7 @@
                                                             ? (lang === 'cs' ? 'Data řádku (odděl hodnoty znakem |)...' : 'Row data (separate values with |)...')
                                                             : (t.examplesSection?.rowPlaceholder || 'Example row data...')}
                                                         rows={2}
-                                                        className="flex-1 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
+                                                        className="flex-1 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-y min-h-[44px] max-h-[150px]"
                                                     />
                                                     {exampleRows.length > 1 && (
                                                         <button
@@ -1388,12 +1481,13 @@
                                                 <label className="block text-xs text-slate-400 mb-1">
                                                     {lang === 'cs' ? 'Nebo zadej příklady volným textem:' : 'Or enter examples as free text:'}
                                                 </label>
-                                                <textarea
+                                                <AutoResizeTextarea
                                                     value={fields.examples}
                                                     onChange={e => updateField('examples', e.target.value)}
                                                     placeholder={selectedMethods.includes('fewshot') ? t.fields.fewshot.placeholder : t.fields.examples.placeholder}
-                                                    rows={2}
-                                                    className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-none"
+                                                    minRows={2}
+                                                    maxRows={6}
+                                                    className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                                                 />
                                             </div>
                                         )}
