@@ -35,6 +35,7 @@
         .color-examples { border-left: 3px solid #eab308; padding-left: 8px; background: rgba(234, 179, 8, 0.1); }
         .color-methods { border-left: 3px solid #ef4444; padding-left: 8px; background: rgba(239, 68, 68, 0.1); }
         .color-template { border-left: 3px solid #14b8a6; padding-left: 8px; background: rgba(20, 184, 166, 0.1); }
+        .color-features { border-left: 3px solid #06b6d4; padding-left: 8px; background: rgba(6, 182, 212, 0.1); }
         .dot-purple { background: #a855f7; }
         .dot-blue { background: #3b82f6; }
         .dot-green { background: #22c55e; }
@@ -200,6 +201,52 @@
                     stepback: { name: 'Step-Back Prompting', citation: 'Google DeepMind 2023', tip: 'Abstract to high-level principles first. +27% on TimeQA.' },
                     analogical: { name: 'Analogical Prompting', citation: 'DeepMind + Stanford 2023', tip: 'Generate own relevant examples. +5% over 0-shot CoT.' },
                     rar: { name: 'Rephrase & Respond', citation: 'UCLA 2023', tip: 'Rephrase question before answering. Reduces ambiguity.' },
+                },
+                // Model-specific features (2025) - optional capabilities per AI model
+                modelFeatures: {
+                    title: 'Model Features',
+                    subtitle: 'Optional model-specific capabilities',
+                    none: 'No special features',
+                    claude: {
+                        extended_thinking: { name: 'Extended Thinking', desc: 'Deep reasoning mode for complex problems', promptTag: 'Enable extended thinking for deep analysis.' },
+                        research: { name: 'Research (Web)', desc: 'Access real-time web information', promptTag: 'Use web search to find current information.' },
+                        artifacts: { name: 'Artifacts', desc: 'Create interactive components', promptTag: 'Create an artifact for this output.' },
+                        analysis: { name: 'Analysis Tool', desc: 'Execute code for data analysis', promptTag: 'Use the analysis tool to process data.' },
+                    },
+                    gpt: {
+                        web_browsing: { name: 'Web Browsing', desc: 'Search the web for information', promptTag: 'Search the web for current information.' },
+                        dalle: { name: 'DALL-E', desc: 'Generate images', promptTag: 'Generate an image using DALL-E.' },
+                        code_interpreter: { name: 'Code Interpreter', desc: 'Execute Python code', promptTag: 'Use Code Interpreter to execute code.' },
+                        canvas: { name: 'Canvas', desc: 'Collaborative editing mode', promptTag: 'Use Canvas for collaborative editing.' },
+                        memory: { name: 'Memory', desc: 'Remember context across chats', promptTag: 'Remember this for future conversations.' },
+                    },
+                    gemini: {
+                        google_search: { name: 'Google Search', desc: 'Real-time web search', promptTag: 'Search Google for current information.' },
+                        code_execution: { name: 'Code Execution', desc: 'Run Python code', promptTag: 'Execute code to solve this problem.' },
+                        deep_research: { name: 'Deep Research', desc: 'Comprehensive research mode', promptTag: 'Conduct deep research on this topic.' },
+                    },
+                    llama: {
+                        code_llama: { name: 'Code Mode', desc: 'Optimized for coding tasks', promptTag: 'Focus on code generation and analysis.' },
+                    },
+                    mistral: {
+                        code_mode: { name: 'Code Mode', desc: 'Optimized coding responses', promptTag: 'Optimize for code generation.' },
+                        function_calling: { name: 'Function Calling', desc: 'Structured tool use', promptTag: 'Use function calling for structured output.' },
+                    },
+                    cohere: {
+                        rag: { name: 'RAG Mode', desc: 'Retrieval-augmented generation', promptTag: 'Use retrieval-augmented generation.' },
+                        web_search: { name: 'Web Search', desc: 'Search for information', promptTag: 'Search the web for relevant information.' },
+                    },
+                    grok: {
+                        realtime: { name: 'Real-time Data', desc: 'Access live X/Twitter data', promptTag: 'Use real-time data from X/Twitter.' },
+                        think: { name: 'Think Mode', desc: 'Extended reasoning', promptTag: 'Enable deep thinking mode.' },
+                        deepsearch: { name: 'DeepSearch', desc: 'Comprehensive web search', promptTag: 'Use DeepSearch for comprehensive results.' },
+                    },
+                    deepseek: {
+                        deep_think: { name: 'Deep Think (R1)', desc: 'Advanced reasoning mode', promptTag: 'Enable Deep Think mode for complex reasoning.' },
+                        code_mode: { name: 'Code Mode', desc: 'Optimized for programming', promptTag: 'Focus on code generation and analysis.' },
+                        search: { name: 'Web Search', desc: 'Search for information', promptTag: 'Search the web for current information.' },
+                    },
+                    general: {},
                 },
                 database: {
                     title: 'Saved Prompts',
@@ -450,6 +497,52 @@
                     examplesIntro: 'Zde jsou příklady očekávaného formátu vstup-výstup:', examplesFollow: 'Následuj tyto vzory pro svou odpověď.',
                     fewshotIntro: 'Uč se z těchto příkladů:', fewshotFollow: 'Aplikuj stejný vzor na současný úkol.',
                     outputFormat: 'Očekávaný formát výstupu', expectations: 'Očekávaný výsledek',
+                },
+                // Funkce specifické pro modely (2025) - volitelné schopnosti pro každý AI model
+                modelFeatures: {
+                    title: 'Funkce modelu',
+                    subtitle: 'Volitelné schopnosti specifické pro model',
+                    none: 'Žádné speciální funkce',
+                    claude: {
+                        extended_thinking: { name: 'Rozšířené myšlení', desc: 'Režim hlubokého uvažování pro složité problémy', promptTag: 'Zapni rozšířené myšlení pro hlubokou analýzu.' },
+                        research: { name: 'Výzkum (Web)', desc: 'Přístup k aktuálním informacím z webu', promptTag: 'Použij webové vyhledávání pro aktuální informace.' },
+                        artifacts: { name: 'Artefakty', desc: 'Vytvoření interaktivních komponent', promptTag: 'Vytvoř artefakt pro tento výstup.' },
+                        analysis: { name: 'Analytický nástroj', desc: 'Spouštění kódu pro analýzu dat', promptTag: 'Použij analytický nástroj pro zpracování dat.' },
+                    },
+                    gpt: {
+                        web_browsing: { name: 'Prohlížení webu', desc: 'Vyhledávání informací na webu', promptTag: 'Vyhledej na webu aktuální informace.' },
+                        dalle: { name: 'DALL-E', desc: 'Generování obrázků', promptTag: 'Vygeneruj obrázek pomocí DALL-E.' },
+                        code_interpreter: { name: 'Interpret kódu', desc: 'Spouštění Python kódu', promptTag: 'Použij Interpret kódu pro spuštění kódu.' },
+                        canvas: { name: 'Plátno', desc: 'Režim spolupráce na editaci', promptTag: 'Použij Plátno pro spolupráci na editaci.' },
+                        memory: { name: 'Paměť', desc: 'Pamatování kontextu mezi chaty', promptTag: 'Zapamatuj si toto pro budoucí konverzace.' },
+                    },
+                    gemini: {
+                        google_search: { name: 'Google vyhledávání', desc: 'Vyhledávání na webu v reálném čase', promptTag: 'Vyhledej na Googlu aktuální informace.' },
+                        code_execution: { name: 'Spouštění kódu', desc: 'Spouštění Python kódu', promptTag: 'Spusť kód k vyřešení tohoto problému.' },
+                        deep_research: { name: 'Hluboký výzkum', desc: 'Režim komplexního výzkumu', promptTag: 'Proveď hluboký výzkum na toto téma.' },
+                    },
+                    llama: {
+                        code_llama: { name: 'Režim kódu', desc: 'Optimalizováno pro úlohy s kódem', promptTag: 'Zaměř se na generování a analýzu kódu.' },
+                    },
+                    mistral: {
+                        code_mode: { name: 'Režim kódu', desc: 'Optimalizované odpovědi s kódem', promptTag: 'Optimalizuj pro generování kódu.' },
+                        function_calling: { name: 'Volání funkcí', desc: 'Strukturované použití nástrojů', promptTag: 'Použij volání funkcí pro strukturovaný výstup.' },
+                    },
+                    cohere: {
+                        rag: { name: 'RAG režim', desc: 'Generování s využitím vyhledávání', promptTag: 'Použij generování s využitím vyhledávání.' },
+                        web_search: { name: 'Webové vyhledávání', desc: 'Vyhledávání informací', promptTag: 'Vyhledej na webu relevantní informace.' },
+                    },
+                    grok: {
+                        realtime: { name: 'Data v reálném čase', desc: 'Přístup k živým datům z X/Twitter', promptTag: 'Použij data v reálném čase z X/Twitter.' },
+                        think: { name: 'Režim myšlení', desc: 'Rozšířené uvažování', promptTag: 'Zapni režim hlubokého myšlení.' },
+                        deepsearch: { name: 'DeepSearch', desc: 'Komplexní webové vyhledávání', promptTag: 'Použij DeepSearch pro komplexní výsledky.' },
+                    },
+                    deepseek: {
+                        deep_think: { name: 'Deep Think (R1)', desc: 'Pokročilý režim uvažování', promptTag: 'Zapni režim Deep Think pro složité uvažování.' },
+                        code_mode: { name: 'Režim kódu', desc: 'Optimalizováno pro programování', promptTag: 'Zaměř se na generování a analýzu kódu.' },
+                        search: { name: 'Webové vyhledávání', desc: 'Vyhledávání informací', promptTag: 'Vyhledej na webu aktuální informace.' },
+                    },
+                    general: {},
                 },
                 checklist: {
                     title: 'X-krokový kontrolní seznam promptu',
@@ -713,6 +806,9 @@
             const [showColors, setShowColors] = useState(true);
             const [showAllMethods, setShowAllMethods] = useState(false);
 
+            // Model-specific features state - tracks which optional features are enabled for each model
+            const [selectedFeatures, setSelectedFeatures] = useState({});
+
             const [fields, setFields] = useState({
                 role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '',
             });
@@ -758,6 +854,20 @@
             const toggleMethod = (methodId) => setSelectedMethods(prev =>
                 prev.includes(methodId) ? prev.filter(m => m !== methodId) : [...prev, methodId]
             );
+
+            // Toggle model-specific features
+            const toggleFeature = (featureId) => {
+                setSelectedFeatures(prev => {
+                    const currentFeatures = prev[target] || [];
+                    const newFeatures = currentFeatures.includes(featureId)
+                        ? currentFeatures.filter(f => f !== featureId)
+                        : [...currentFeatures, featureId];
+                    return { ...prev, [target]: newFeatures };
+                });
+            };
+
+            // Get features for current target model
+            const currentModelFeatures = selectedFeatures[target] || [];
 
             // Helper functions for dynamic example rows
             const addExampleRow = () => {
@@ -1048,8 +1158,34 @@
                     }
                 }
 
+                // Model-specific features (2025) - optional capabilities
+                const activeFeatures = selectedFeatures[target] || [];
+                if (activeFeatures.length > 0) {
+                    const featureTranslations = t.modelFeatures?.[target] || {};
+                    const featureInstructions = activeFeatures
+                        .map(featureId => featureTranslations[featureId]?.promptTag)
+                        .filter(Boolean);
+
+                    if (featureInstructions.length > 0) {
+                        const featuresText = featureInstructions.join('\n');
+                        if (target === 'claude') {
+                            sections.push({ type: 'features', text: `<model_capabilities>\n${featuresText}\n</model_capabilities>` });
+                        } else if (target === 'gpt') {
+                            sections.push({ type: 'features', text: `## Special Instructions\n${featuresText}` });
+                        } else if (target === 'gemini') {
+                            sections.push({ type: 'features', text: `## Model Features\n${featuresText}` });
+                        } else if (target === 'grok') {
+                            sections.push({ type: 'features', text: `## Grok Capabilities\n${featuresText}` });
+                        } else if (target === 'deepseek') {
+                            sections.push({ type: 'features', text: `## DeepSeek Features\n${featuresText}` });
+                        } else {
+                            sections.push({ type: 'features', text: f.section('Model Features', featuresText) });
+                        }
+                    }
+                }
+
                 return sections;
-            }, [fields, target, selectedMethods, t, template, generateFormattedExamples]);
+            }, [fields, target, selectedMethods, t, template, generateFormattedExamples, selectedFeatures]);
 
             // Plain text version for copying
             const formattedPrompt = useMemo(() => {
@@ -1071,6 +1207,8 @@
                     template, target, fields, selectedMethods, lang,
                     // Include enhanced examples data
                     exampleFileType, exampleHeaders, exampleRows,
+                    // Include model-specific features
+                    selectedFeatures,
                     createdAt: editingId ? savedPrompts.find(p => p.id === editingId)?.createdAt : new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
                 };
@@ -1098,6 +1236,8 @@
                 setExampleFileType(prompt.exampleFileType || 'none');
                 setExampleHeaders(prompt.exampleHeaders || '');
                 setExampleRows(prompt.exampleRows || [{ id: 1, content: '' }]);
+                // Load model-specific features
+                setSelectedFeatures(prompt.selectedFeatures || {});
                 setShowDatabase(false);
             };
 
@@ -1168,7 +1308,9 @@
                 const promptData = {
                     template, target, selectedMethods, lang, fields,
                     // Include enhanced examples data
-                    exampleFileType, exampleHeaders, exampleRows
+                    exampleFileType, exampleHeaders, exampleRows,
+                    // Include model-specific features
+                    selectedFeatures
                 };
                 const code = generateShareCode(promptData);
                 if (code) {
@@ -1197,6 +1339,8 @@
                     setExampleFileType(decoded.exampleFileType || 'none');
                     setExampleHeaders(decoded.exampleHeaders || '');
                     setExampleRows(decoded.exampleRows || [{ id: 1, content: '' }]);
+                    // Load model-specific features
+                    setSelectedFeatures(decoded.selectedFeatures || {});
                     setShowImportModal(false);
                     setImportCode('');
                     showNotification(t.share.importSuccess);
@@ -1220,6 +1364,8 @@
                         setExampleFileType(decoded.exampleFileType || 'none');
                         setExampleHeaders(decoded.exampleHeaders || '');
                         setExampleRows(decoded.exampleRows || [{ id: 1, content: '' }]);
+                        // Load model-specific features
+                        setSelectedFeatures(decoded.selectedFeatures || {});
                         showNotification(t.share.importSuccess);
                         // Clean URL
                         window.history.replaceState({}, '', window.location.pathname);
@@ -1230,13 +1376,15 @@
             // AI Models with their specific formatting preferences (based on 2025 research)
             // Each model has unique prompting requirements per the .md guide
             const aiTargets = [
-                { id: 'claude', name: 'Claude', color: '#D97706', icon: '🧡', desc: 'XML tags, extended thinking' },
-                { id: 'gpt', name: 'ChatGPT', color: '#10A37F', icon: '💚', desc: 'Markdown, literal instructions' },
-                { id: 'gemini', name: 'Gemini', color: '#4285F4', icon: '💙', desc: 'XML or Markdown, context first' },
-                { id: 'llama', name: 'Llama', color: '#0668E1', icon: '🦙', desc: 'Special tokens format' },
-                { id: 'mistral', name: 'Mistral', color: '#FF7000', icon: '🌪️', desc: '[INST] tokens, objective measures' },
-                { id: 'cohere', name: 'Cohere', color: '#D946EF', icon: '🔮', desc: 'Task & Context, Style Guide' },
-                { id: 'general', name: 'Any AI', color: '#6B7280', icon: '🤖', desc: 'Universal format' }
+                { id: 'claude', name: 'Claude', color: '#D97706', icon: '🧡', desc: 'XML tags, extended thinking', features: ['extended_thinking', 'research', 'artifacts', 'analysis'] },
+                { id: 'gpt', name: 'ChatGPT', color: '#10A37F', icon: '💚', desc: 'Markdown, literal instructions', features: ['web_browsing', 'dalle', 'code_interpreter', 'canvas', 'memory'] },
+                { id: 'gemini', name: 'Gemini', color: '#4285F4', icon: '💙', desc: 'XML or Markdown, context first', features: ['google_search', 'code_execution', 'deep_research'] },
+                { id: 'llama', name: 'Llama', color: '#0668E1', icon: '🦙', desc: 'Special tokens format', features: ['code_llama'] },
+                { id: 'mistral', name: 'Mistral', color: '#FF7000', icon: '🌪️', desc: '[INST] tokens, objective measures', features: ['code_mode', 'function_calling'] },
+                { id: 'cohere', name: 'Cohere', color: '#D946EF', icon: '🔮', desc: 'Task & Context, Style Guide', features: ['rag', 'web_search'] },
+                { id: 'grok', name: 'Grok', color: '#000000', icon: '⚡', desc: 'Real-time X data, Think mode', features: ['realtime', 'think', 'deepsearch'] },
+                { id: 'deepseek', name: 'DeepSeek', color: '#4D6BFE', icon: '🔍', desc: 'Deep Think R1, Code', features: ['deep_think', 'code_mode', 'search'] },
+                { id: 'general', name: 'Any AI', color: '#6B7280', icon: '🤖', desc: 'Universal format', features: [] }
             ];
 
             return (
@@ -1522,7 +1670,7 @@
                                             {aiTargets.find(a => a.id === target)?.desc}
                                         </span>
                                     </div>
-                                    <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
+                                    <div className="grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-1.5">
                                         {aiTargets.map(ai => (
                                             <button
                                                 key={ai.id}
@@ -1551,6 +1699,58 @@
                                             </button>
                                         ))}
                                     </div>
+
+                                    {/* Model Features - Optional capabilities for each AI model */}
+                                    {(() => {
+                                        const currentTarget = aiTargets.find(a => a.id === target);
+                                        const availableFeatures = currentTarget?.features || [];
+                                        const featureTranslations = t.modelFeatures?.[target] || {};
+
+                                        if (availableFeatures.length === 0) return null;
+
+                                        return (
+                                            <div className="mt-3 pt-3 border-t border-slate-700/50">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <Icon name="Sparkles" size={12} className="text-amber-400" />
+                                                    <span className="text-[10px] text-slate-400">
+                                                        {t.modelFeatures?.title || 'Model Features'}
+                                                    </span>
+                                                    {currentModelFeatures.length > 0 && (
+                                                        <span className="text-[10px] px-1.5 py-0.5 bg-amber-500/20 text-amber-400 rounded">
+                                                            {currentModelFeatures.length} active
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-wrap gap-1.5">
+                                                    {availableFeatures.map(featureId => {
+                                                        const feature = featureTranslations[featureId];
+                                                        if (!feature) return null;
+                                                        const isActive = currentModelFeatures.includes(featureId);
+                                                        return (
+                                                            <button
+                                                                key={featureId}
+                                                                onClick={() => toggleFeature(featureId)}
+                                                                className={`px-2 py-1 rounded text-[10px] font-medium transition-all ${
+                                                                    isActive
+                                                                        ? 'text-white shadow-sm'
+                                                                        : 'bg-slate-700/50 text-slate-400 hover:bg-slate-700 hover:text-slate-300'
+                                                                }`}
+                                                                style={{
+                                                                    backgroundColor: isActive ? `${currentTarget.color}40` : undefined,
+                                                                    borderColor: isActive ? currentTarget.color : 'transparent',
+                                                                    border: isActive ? `1px solid ${currentTarget.color}` : '1px solid transparent'
+                                                                }}
+                                                                title={feature.desc}
+                                                            >
+                                                                {isActive && <Icon name="Check" size={10} className="inline mr-1" />}
+                                                                {feature.name}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        );
+                                    })()}
                                 </div>
 
                                 {/* Input Fields */}
