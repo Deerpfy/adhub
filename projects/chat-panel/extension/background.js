@@ -12,9 +12,10 @@ console.log('[AdHub Chat Reader] Background service worker started');
 // ============================================================================
 
 const state = {
-  activeSessions: new Map(), // videoId -> { tabId, channelName, startTime }
+  activeSessions: new Map(), // videoId -> { tabId, windowId, channelName, startTime }
   connectedPorts: new Set(), // Ports from AdHub pages
   messageQueue: [], // Fronta zprav pro pripadne odpojene prijemce
+  backgroundWindowId: null, // ID skrytého okna pro chat taby
 };
 
 // ============================================================================
@@ -133,22 +134,55 @@ async function openYouTubeChat(videoId, channelName) {
     }
   }
 
-  // Otevri novy tab s chatem
   const chatUrl = `https://www.youtube.com/live_chat?v=${videoId}&embed_domain=deerpfy.github.io`;
 
   try {
+    // Vytvor nebo pouzij existujici minimalizovane okno
+    let windowId = state.backgroundWindowId;
+
+    // Zkontroluj jestli okno jeste existuje
+    if (windowId) {
+      try {
+        await chrome.windows.get(windowId);
+      } catch (e) {
+        windowId = null;
+        state.backgroundWindowId = null;
+      }
+    }
+
+    // Vytvor nove minimalizovane okno pokud neexistuje
+    if (!windowId) {
+      const newWindow = await chrome.windows.create({
+        url: 'about:blank',
+        type: 'popup',
+        width: 400,
+        height: 300,
+        focused: false,
+      });
+
+      windowId = newWindow.id;
+      state.backgroundWindowId = windowId;
+
+      // Minimalizuj okno hned po vytvoreni
+      await chrome.windows.update(windowId, { state: 'minimized' });
+      console.log('[AdHub Chat Reader] Created background window:', windowId);
+    }
+
+    // Otevri tab v minimalizovanem okne
     const tab = await chrome.tabs.create({
       url: chatUrl,
-      active: false, // Otevri na pozadi
+      windowId: windowId,
+      active: false,
     });
 
     state.activeSessions.set(videoId, {
       tabId: tab.id,
+      windowId: windowId,
       channelName: channelName || '',
       startTime: Date.now(),
     });
 
-    console.log('[AdHub Chat Reader] Opened chat in tab:', tab.id);
+    console.log('[AdHub Chat Reader] Opened chat in background tab:', tab.id);
     return { success: true, tabId: tab.id };
   } catch (error) {
     console.error('[AdHub Chat Reader] Error opening chat:', error);
@@ -193,5 +227,22 @@ chrome.tabs.onRemoved.addListener((tabId) => {
       });
       break;
     }
+  }
+});
+
+// Sleduj zavreni background okna
+chrome.windows.onRemoved.addListener((windowId) => {
+  if (windowId === state.backgroundWindowId) {
+    console.log('[AdHub Chat Reader] Background window was closed');
+    state.backgroundWindowId = null;
+
+    // Oznac vsechny sessions jako odpojene
+    for (const [videoId, session] of state.activeSessions) {
+      broadcastToAdHub({
+        type: 'youtube-chat-disconnected',
+        videoId: videoId,
+      });
+    }
+    state.activeSessions.clear();
   }
 });
