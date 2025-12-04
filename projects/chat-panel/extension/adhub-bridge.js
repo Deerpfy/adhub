@@ -160,7 +160,7 @@
 
       case 'youtube-chat-connected':
         window.dispatchEvent(new CustomEvent('adhub-youtube-chat-connected', {
-          detail: { videoId: request.videoId },
+          detail: { videoId: request.videoId, channelName: request.channelName },
         }));
         break;
 

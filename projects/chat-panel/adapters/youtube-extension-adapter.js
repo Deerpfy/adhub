@@ -230,8 +230,12 @@ class YouTubeExtensionAdapter extends BaseAdapter {
 
     _handleConnected(event) {
         if (event.detail?.videoId === this.videoId) {
+            const channelName = event.detail?.channelName;
+            if (channelName) {
+                this.channelName = channelName;
+            }
             this._setState('connected');
-            this.emit('connect');
+            this.emit('connect', { channelName: channelName || null });
         }
     }
 

@@ -360,12 +360,19 @@ async function addChannel(platform, channel, options = {}) {
     hideWelcomeScreen();
 
     // Event listenery
-    adapter.on('connect', () => {
+    adapter.on('connect', (data) => {
         channelData.state = 'connected';
+
+        // Pokud přišel channelName (např. z YouTube extension), aktualizovat displayName
+        if (data?.channelName && platform.startsWith('youtube')) {
+            channelData.displayName = data.channelName;
+            updateChannelItemName(channelId, data.channelName);
+        }
+
         updateChannelItemState(channelId, 'connected');
         updateConnectionStatus();
         updateIframeSection();
-        showToast(`Připojeno k ${channel}`, 'success');
+        showToast(`Připojeno k ${channelData.displayName || channel}`, 'success');
         saveChannels();
     });
 
@@ -512,6 +519,19 @@ function updateChannelItemState(channelId, state) {
     const element = document.querySelector(`[data-channel-id="${channelId}"]`);
     if (element) {
         element.className = `channel-item ${state}`;
+    }
+}
+
+/**
+ * Aktualizace názvu kanálu v UI
+ */
+function updateChannelItemName(channelId, name) {
+    const element = document.querySelector(`[data-channel-id="${channelId}"]`);
+    if (element) {
+        const nameEl = element.querySelector('.channel-name');
+        if (nameEl) {
+            nameEl.textContent = name;
+        }
     }
 }
 
