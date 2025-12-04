@@ -217,7 +217,8 @@ class YouTubeExtensionAdapter extends BaseAdapter {
         // Konvertuj do standardniho formatu
         const standardMessage = {
             id: message.id,
-            platform: 'youtube',
+            platform: 'youtube-extension',
+            channel: this.videoId,
             author: message.author,
             content: message.content,
             emotes: message.emotes,
