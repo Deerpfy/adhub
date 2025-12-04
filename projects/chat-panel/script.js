@@ -1130,13 +1130,17 @@ async function downloadChatReaderExtension() {
     const progressText = document.getElementById('extProgressText');
 
     try {
-        // Seznam souboru k stazeni
+        // Seznam souboru k stazeni (vcetne PNG ikon)
         const files = [
-            'manifest.json',
-            'content-script.js',
-            'background.js',
-            'adhub-bridge.js',
-            'icons/icon.svg',
+            { path: 'manifest.json', binary: false },
+            { path: 'content-script.js', binary: false },
+            { path: 'background.js', binary: false },
+            { path: 'adhub-bridge.js', binary: false },
+            { path: 'icons/icon.svg', binary: false },
+            { path: 'icons/icon16.png', binary: true },
+            { path: 'icons/icon32.png', binary: true },
+            { path: 'icons/icon48.png', binary: true },
+            { path: 'icons/icon128.png', binary: true },
         ];
 
         const zip = new JSZip();
@@ -1144,21 +1148,26 @@ async function downloadChatReaderExtension() {
         let loaded = 0;
 
         for (const file of files) {
-            progressText.textContent = `Stahuji ${file}...`;
+            progressText.textContent = `Stahuji ${file.path}...`;
             progressBar.style.width = `${(loaded / total) * 100}%`;
 
-            const url = `${GITHUB_RAW_BASE}/${GITHUB_REPO}/${GITHUB_BRANCH}/${EXTENSION_PATH}/${file}`;
+            const url = `${GITHUB_RAW_BASE}/${GITHUB_REPO}/${GITHUB_BRANCH}/${EXTENSION_PATH}/${file.path}`;
 
             try {
                 const response = await fetch(url);
                 if (response.ok) {
-                    const content = await response.text();
-                    zip.file(file, content);
+                    if (file.binary) {
+                        const content = await response.arrayBuffer();
+                        zip.file(file.path, content);
+                    } else {
+                        const content = await response.text();
+                        zip.file(file.path, content);
+                    }
                 } else {
-                    console.warn(`[Extension Download] Failed to fetch ${file}:`, response.status);
+                    console.warn(`[Extension Download] Failed to fetch ${file.path}:`, response.status);
                 }
             } catch (e) {
-                console.warn(`[Extension Download] Error fetching ${file}:`, e);
+                console.warn(`[Extension Download] Error fetching ${file.path}:`, e);
             }
 
             loaded++;
