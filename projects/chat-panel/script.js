@@ -1031,6 +1031,60 @@ const GITHUB_REPO = 'Deerpfy/adhub';
 const GITHUB_BRANCH = 'main';
 const EXTENSION_PATH = 'projects/chat-panel/extension';
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com';
+const GITHUB_API_BASE = 'https://api.github.com';
+const EXTENSION_COMMIT_KEY = 'adhub_chat_reader_commit';
+
+/**
+ * Ziska posledni commit pro extension slozku z GitHub API
+ * @returns {Promise<{sha: string, shortSha: string, message: string, date: string}|null>}
+ */
+async function getLatestExtensionCommit() {
+    try {
+        const url = `${GITHUB_API_BASE}/repos/${GITHUB_REPO}/commits?path=${EXTENSION_PATH}&per_page=1`;
+        const response = await fetch(url);
+        if (!response.ok) {
+            console.warn('[Extension] Cannot fetch commits:', response.status);
+            return null;
+        }
+        const commits = await response.json();
+        if (commits.length === 0) return null;
+
+        const commit = commits[0];
+        return {
+            sha: commit.sha,
+            shortSha: commit.sha.substring(0, 7),
+            message: commit.commit.message.split('\n')[0],
+            date: new Date(commit.commit.committer.date).toLocaleDateString('cs-CZ'),
+        };
+    } catch (e) {
+        console.warn('[Extension] Error fetching commits:', e);
+        return null;
+    }
+}
+
+/**
+ * Ziska ulozeny commit z localStorage (stazena verze)
+ */
+function getStoredExtensionCommit() {
+    try {
+        const stored = localStorage.getItem(EXTENSION_COMMIT_KEY);
+        if (stored) {
+            return JSON.parse(stored);
+        }
+    } catch (e) {}
+    return null;
+}
+
+/**
+ * Ulozi commit do localStorage (pri stazeni)
+ */
+function storeExtensionCommit(commitInfo) {
+    try {
+        localStorage.setItem(EXTENSION_COMMIT_KEY, JSON.stringify(commitInfo));
+    } catch (e) {
+        console.warn('[Extension] Cannot store commit info:', e);
+    }
+}
 
 /**
  * Kontrola YouTube Chat Reader extension
@@ -1042,6 +1096,7 @@ async function checkYouTubeExtension() {
     const downloadHint = document.getElementById('extensionDownloadHint');
     const downloadBtnText = document.getElementById('downloadExtensionBtnText');
     const versionInfo = document.getElementById('extensionVersionInfo');
+    const commitInfo = document.getElementById('extensionCommitInfo');
     const submitBtn = document.getElementById('youtubeExtSubmit');
 
     if (!statusBox) return;
@@ -1051,19 +1106,27 @@ async function checkYouTubeExtension() {
     statusIcon.textContent = '?';
     statusText.innerHTML = 'Kontroluji extension...';
     if (submitBtn) submitBtn.disabled = true;
+    if (commitInfo) commitInfo.classList.add('hidden');
 
-    // Nacti nejnovejsi verzi z GitHubu
+    // Nacti nejnovejsi verzi a commit z GitHubu paralelne
     let latestVersion = null;
-    try {
-        const manifestUrl = `${GITHUB_RAW_BASE}/${GITHUB_REPO}/${GITHUB_BRANCH}/${EXTENSION_PATH}/manifest.json`;
-        const response = await fetch(manifestUrl);
-        if (response.ok) {
-            const manifest = await response.json();
-            latestVersion = manifest.version;
-        }
-    } catch (e) {
-        console.warn('[Extension Check] Cannot fetch latest version:', e);
+    let latestCommit = null;
+
+    const [versionResult, commitResult] = await Promise.allSettled([
+        fetch(`${GITHUB_RAW_BASE}/${GITHUB_REPO}/${GITHUB_BRANCH}/${EXTENSION_PATH}/manifest.json`)
+            .then(r => r.ok ? r.json() : null),
+        getLatestExtensionCommit(),
+    ]);
+
+    if (versionResult.status === 'fulfilled' && versionResult.value) {
+        latestVersion = versionResult.value.version;
     }
+    if (commitResult.status === 'fulfilled') {
+        latestCommit = commitResult.value;
+    }
+
+    // Ziskej ulozeny commit (stazena verze)
+    const storedCommit = getStoredExtensionCommit();
 
     try {
         // Zkontroluj zda je YouTubeExtensionAdapter definovan
@@ -1106,6 +1169,30 @@ async function checkYouTubeExtension() {
             if (versionInfo) versionInfo.classList.add('hidden');
             if (submitBtn) submitBtn.disabled = true;
         }
+
+        // Zobraz commit info
+        if (commitInfo && latestCommit) {
+            const hasUpdate = storedCommit && storedCommit.sha !== latestCommit.sha;
+            let commitHtml = '';
+
+            if (storedCommit) {
+                commitHtml += `<span class="commit-label">Stazeno:</span> <code class="commit-sha">${storedCommit.shortSha}</code>`;
+                if (hasUpdate) {
+                    commitHtml += ` <span class="commit-arrow">→</span> `;
+                }
+            }
+
+            if (!storedCommit || hasUpdate) {
+                commitHtml += `<span class="commit-label">Nejnovejsi:</span> <code class="commit-sha ${hasUpdate ? 'new' : ''}">${latestCommit.shortSha}</code>`;
+            }
+
+            if (latestCommit.message) {
+                commitHtml += `<span class="commit-message" title="${escapeHtml(latestCommit.message)}">${escapeHtml(latestCommit.message.substring(0, 40))}${latestCommit.message.length > 40 ? '...' : ''}</span>`;
+            }
+
+            commitInfo.innerHTML = commitHtml;
+            commitInfo.classList.remove('hidden');
+        }
     } catch (error) {
         console.error('[Extension Check] Error:', error);
         statusBox.className = 'extension-status-box unavailable';
@@ -1114,6 +1201,7 @@ async function checkYouTubeExtension() {
         if (downloadHint) downloadHint.textContent = 'Stahnout rozsireni:';
         if (downloadBtnText) downloadBtnText.textContent = latestVersion ? `Stahnout v${latestVersion}` : 'Stahnout Extension';
         if (versionInfo) versionInfo.classList.add('hidden');
+        if (commitInfo) commitInfo.classList.add('hidden');
         if (submitBtn) submitBtn.disabled = true;
     }
 }
@@ -1168,6 +1256,10 @@ async function downloadChatReaderExtension() {
     const progressText = document.getElementById('extProgressText');
 
     try {
+        // Ziskej nejnovejsi commit pred stazenim
+        progressText.textContent = 'Ziskavam informace o verzi...';
+        const latestCommit = await getLatestExtensionCommit();
+
         // Seznam souboru k stazeni (vcetne PNG ikon)
         const files = [
             { path: 'manifest.json', binary: false },
@@ -1225,10 +1317,19 @@ async function downloadChatReaderExtension() {
         a.click();
         URL.revokeObjectURL(downloadUrl);
 
+        // Uloz commit info pri uspesnem stazeni
+        if (latestCommit) {
+            storeExtensionCommit(latestCommit);
+            console.log('[Extension Download] Stored commit:', latestCommit.shortSha);
+        }
+
         progressText.textContent = 'Hotovo! Rozbalte ZIP a nahrajte do chrome://extensions';
         progressBar.style.width = '100%';
 
         showToast('Extension stazena! Rozbalte a nahrajte do prohlizece.', 'success');
+
+        // Obnov zobrazeni commit info
+        setTimeout(() => checkYouTubeExtension(), 500);
 
     } catch (error) {
         console.error('[Extension Download] Error:', error);
