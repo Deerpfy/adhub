@@ -976,3 +976,154 @@ a:hover {
     white-space: nowrap;
     border: 0;
 }
+
+/* YouTube Iframe Section */
+.iframe-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius);
+    margin-bottom: 16px;
+}
+
+.youtube-iframe-container {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.iframe-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.iframe-platform-badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 6px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.iframe-platform-badge.youtube {
+    background: var(--youtube-color);
+    color: white;
+}
+
+.iframe-channel-name {
+    flex: 1;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.iframe-live-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    background: var(--error);
+    color: white;
+    border-radius: 10px;
+    animation: pulse 2s infinite;
+}
+
+.iframe-wrapper {
+    position: relative;
+    width: 100%;
+    height: 400px;
+    background: #000;
+}
+
+.youtube-chat-iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+/* Chat area with iframe - split layout */
+.chat-container.has-iframe {
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-container.has-iframe .iframe-section {
+    flex-shrink: 0;
+    max-height: 50%;
+}
+
+.chat-container.has-iframe .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Multiple iframes - grid layout */
+.iframe-section.multi {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 12px;
+}
+
+.iframe-section.multi .youtube-iframe-container {
+    min-height: 300px;
+}
+
+.iframe-section.multi .iframe-wrapper {
+    height: 300px;
+}
+
+/* YouTube mode selector in form */
+.youtube-mode-selector {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.youtube-mode-btn {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 8px;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    border-radius: var(--border-radius);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: inherit;
+    font-size: 0.8rem;
+}
+
+.youtube-mode-btn:hover {
+    border-color: var(--border-light);
+    color: var(--text-primary);
+}
+
+.youtube-mode-btn.active {
+    border-color: var(--youtube-color);
+    background: rgba(255, 0, 0, 0.1);
+    color: var(--text-primary);
+}
+
+.youtube-mode-btn .mode-icon {
+    font-size: 1.5rem;
+}
+
+.youtube-mode-btn .mode-name {
+    font-weight: 500;
+}
+
+.youtube-mode-btn .mode-hint {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+}

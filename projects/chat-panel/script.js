@@ -121,18 +121,51 @@ function initEventListeners() {
         }
     });
 
+    // YouTube mode selector
+    document.querySelectorAll('.youtube-mode-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const mode = e.currentTarget.dataset.mode;
+
+            // Update button states
+            document.querySelectorAll('.youtube-mode-btn').forEach(b => {
+                b.classList.toggle('active', b.dataset.mode === mode);
+            });
+
+            // Show/hide appropriate fields
+            document.getElementById('youtubeIframeFields').classList.toggle('hidden', mode !== 'iframe');
+            document.getElementById('youtubeApiFields').classList.toggle('hidden', mode !== 'api');
+        });
+    });
+
     document.getElementById('youtubeForm').addEventListener('submit', (e) => {
         e.preventDefault();
-        const videoId = document.getElementById('youtubeVideoId').value.trim();
-        const apiKey = document.getElementById('youtubeApiKey').value.trim();
 
-        if (videoId && apiKey) {
-            AppState.youtubeApiKey = apiKey;
-            addChannel('youtube', videoId, { apiKey });
-            closeModal(DOM.addChannelModal);
-            document.getElementById('youtubeVideoId').value = '';
+        // Determine which mode is active
+        const isIframeMode = document.querySelector('.youtube-mode-btn[data-mode="iframe"]').classList.contains('active');
+
+        if (isIframeMode) {
+            // Iframe mode
+            const channel = document.getElementById('youtubeChannel').value.trim();
+            if (channel) {
+                addChannel('youtube-iframe', channel);
+                closeModal(DOM.addChannelModal);
+                document.getElementById('youtubeChannel').value = '';
+            } else {
+                showToast('Vyplňte kanál nebo video ID', 'error');
+            }
         } else {
-            showToast('Vyplňte Video ID a API klíč', 'error');
+            // API mode
+            const videoId = document.getElementById('youtubeVideoId').value.trim();
+            const apiKey = document.getElementById('youtubeApiKey').value.trim();
+
+            if (videoId && apiKey) {
+                AppState.youtubeApiKey = apiKey;
+                addChannel('youtube', videoId, { apiKey });
+                closeModal(DOM.addChannelModal);
+                document.getElementById('youtubeVideoId').value = '';
+            } else {
+                showToast('Vyplňte Video ID a API klíč', 'error');
+            }
         }
     });
 
@@ -227,6 +260,9 @@ async function addChannel(platform, channel, options = {}) {
                     apiKey: options.apiKey || AppState.youtubeApiKey,
                 });
                 break;
+            case 'youtube-iframe':
+                adapter = new YouTubeIframeAdapter({ channel });
+                break;
             default:
                 throw new Error(`Neznámá platforma: ${platform}`);
         }
@@ -257,6 +293,7 @@ async function addChannel(platform, channel, options = {}) {
         channelData.state = 'connected';
         updateChannelItemState(channelId, 'connected');
         updateConnectionStatus();
+        updateIframeSection();
         showToast(`Připojeno k ${channel}`, 'success');
         saveChannels();
     });
@@ -265,6 +302,7 @@ async function addChannel(platform, channel, options = {}) {
         channelData.state = 'disconnected';
         updateChannelItemState(channelId, 'disconnected');
         updateConnectionStatus();
+        updateIframeSection();
     });
 
     adapter.on('error', (error) => {
@@ -303,11 +341,18 @@ function removeChannel(channelId) {
 
     // Aktualizovat stav
     updateConnectionStatus();
+    updateIframeSection();
     saveChannels();
 
     // Zobrazit welcome screen pokud není žádný kanál
     if (AppState.channels.size === 0) {
         showWelcomeScreen();
+    }
+
+    // Odstranit prázdnou iframe sekci
+    const iframeSection = DOM.chatContainer.querySelector('.iframe-section');
+    if (iframeSection && iframeSection.children.length === 0) {
+        iframeSection.remove();
     }
 
     showToast(`Kanál ${channelData.channel} odstraněn`, 'info');
@@ -375,6 +420,7 @@ function getPlatformIcon(platform) {
                 <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm2.5 16.5l-3-3-3 3H6l4.5-4.5L6 7.5h2.5l3 3 3-3H17l-4.5 4.5L17 16.5h-2.5z"/>
             </svg>`;
         case 'youtube':
+        case 'youtube-iframe':
             return `<svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
             </svg>`;
@@ -633,6 +679,23 @@ function hideWelcomeScreen() {
 }
 
 /**
+ * Aktualizace stavu iframe sekce
+ */
+function updateIframeSection() {
+    const hasIframe = Array.from(AppState.channels.values())
+        .some(c => c.platform === 'youtube-iframe');
+
+    DOM.chatContainer.classList.toggle('has-iframe', hasIframe);
+
+    // Aktualizovat počet iframes v sekci
+    const iframeSection = DOM.chatContainer.querySelector('.iframe-section');
+    if (iframeSection) {
+        const iframeCount = iframeSection.querySelectorAll('.youtube-iframe-container').length;
+        iframeSection.classList.toggle('multi', iframeCount > 1);
+    }
+}
+
+/**
  * Přepnutí tématu
  */
 function toggleTheme() {
@@ -784,7 +847,8 @@ function loadSavedChannels() {
         if (saved) {
             const channels = JSON.parse(saved);
             for (const ch of channels) {
-                // YouTube kanály nepřidávat automaticky (potřebují API klíč)
+                // YouTube API kanály nepřidávat automaticky (potřebují API klíč)
+                // YouTube iframe kanály načíst
                 if (ch.platform !== 'youtube') {
                     addChannel(ch.platform, ch.channel);
                 }
