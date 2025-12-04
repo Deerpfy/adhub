@@ -137,10 +137,10 @@ async function openYouTubeChat(videoId, channelName) {
   const chatUrl = `https://www.youtube.com/live_chat?v=${videoId}&embed_domain=deerpfy.github.io`;
 
   try {
-    // Vytvor nebo pouzij existujici minimalizovane okno
+    let tabId;
     let windowId = state.backgroundWindowId;
 
-    // Zkontroluj jestli okno jeste existuje
+    // Zkontroluj jestli background okno jeste existuje
     if (windowId) {
       try {
         await chrome.windows.get(windowId);
@@ -150,10 +150,18 @@ async function openYouTubeChat(videoId, channelName) {
       }
     }
 
-    // Vytvor nove minimalizovane okno pokud neexistuje
-    if (!windowId) {
+    if (windowId) {
+      // Pouzij existujici minimalizovane okno
+      const tab = await chrome.tabs.create({
+        url: chatUrl,
+        windowId: windowId,
+        active: false,
+      });
+      tabId = tab.id;
+    } else {
+      // Vytvor nove okno primo s chat URL
       const newWindow = await chrome.windows.create({
-        url: 'about:blank',
+        url: chatUrl,
         type: 'popup',
         width: 400,
         height: 300,
@@ -162,28 +170,22 @@ async function openYouTubeChat(videoId, channelName) {
 
       windowId = newWindow.id;
       state.backgroundWindowId = windowId;
+      tabId = newWindow.tabs[0].id;
 
-      // Minimalizuj okno hned po vytvoreni
-      await chrome.windows.update(windowId, { state: 'minimized' });
-      console.log('[AdHub Chat Reader] Created background window:', windowId);
+      // Minimalizuj okno OKAMZITE
+      chrome.windows.update(windowId, { state: 'minimized' });
+      console.log('[AdHub Chat Reader] Created minimized background window:', windowId);
     }
 
-    // Otevri tab v minimalizovanem okne
-    const tab = await chrome.tabs.create({
-      url: chatUrl,
-      windowId: windowId,
-      active: false,
-    });
-
     state.activeSessions.set(videoId, {
-      tabId: tab.id,
+      tabId: tabId,
       windowId: windowId,
       channelName: channelName || '',
       startTime: Date.now(),
     });
 
-    console.log('[AdHub Chat Reader] Opened chat in background tab:', tab.id);
-    return { success: true, tabId: tab.id };
+    console.log('[AdHub Chat Reader] Opened chat in background tab:', tabId);
+    return { success: true, tabId: tabId };
   } catch (error) {
     console.error('[AdHub Chat Reader] Error opening chat:', error);
     return { success: false, error: error.message };
