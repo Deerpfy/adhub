@@ -32,7 +32,8 @@ class KickAdapter extends BaseAdapter {
         });
 
         // Pusher konfigurace (veřejné hodnoty z kick.com)
-        this.pusherKey = 'eb1d5f283081a78b932c';
+        // Aktualizováno: Prosinec 2024
+        this.pusherKey = '32cbd69e4b950bf97679';
         this.pusherCluster = 'us2';
         this.ws = null;
 
@@ -281,7 +282,7 @@ class KickAdapter extends BaseAdapter {
      */
     async _connectPusher() {
         return new Promise((resolve, reject) => {
-            const wsUrl = `wss://ws-${this.pusherCluster}.pusher.com/app/${this.pusherKey}?protocol=7&client=js&version=8.3.0&flash=false`;
+            const wsUrl = `wss://ws-${this.pusherCluster}.pusher.com/app/${this.pusherKey}?protocol=7&client=js&version=8.4.0-rc2&flash=false`;
 
             this.ws = new WebSocket(wsUrl);
 
