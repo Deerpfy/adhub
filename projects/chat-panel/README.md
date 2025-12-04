@@ -1,221 +1,198 @@
-# Chat Panel - Unified Streaming Chat
+# AdHub Multistream Chat v2
 
-![Status](https://img.shields.io/badge/status-complete-success) ![License](https://img.shields.io/badge/license-MIT-blue)
+Jednotné webové rozhraní pro zobrazení chatů z více streamovacích platforem.
 
-Lokálně hostovaná webová aplikace pro zobrazení a správu chatů z různých streamovacích platforem (Twitch, YouTube, Kick) v jednom panelovém rozhraní.
-
-## Funkce
-
-- ✅ Přidávání více chat zdrojů najednou
-- ✅ Podpora pro Twitch, YouTube, Kick a další platformy
-- ✅ **Dva zobrazení stylu**:
-  - **Streamlabs Style**: Vlastní chat renderer s animacemi (podporuje Twitch, Kick)
-  - **Iframe Style**: Klasické iframe zobrazení (podporuje všechny platformy)
-- ✅ **Dva režimy zobrazení**:
-  - **Rozdělené**: Každý chat v samostatném panelu
-  - **Sjednocené**: Všechny chaty v jednom zobrazení
-- ✅ Ukládání nastavení do localStorage (přetrvá i po zavření prohlížeče)
-- ✅ Moderní a responzivní design
-- ✅ Snadné přidávání a odebírání chatů
-- ✅ Streamlabs-style animace a transparentní pozadí
-
-## Použití
-
-### 🚀 Rychlý start (Backend Server - Doporučeno)
-
-1. **Spusťte backend server:**
-   ```bash
-   cd chat-panel/server
-   npm install
-   npm start
-   ```
-   Server poběží na `http://localhost:3001`
-   
-   **Nechte tento terminál otevřený!**
-
-2. **Otevřete frontend:**
-   
-   **Možnost A - Nejjednodušší:**
-   - Dvojklikněte na `chat-panel/index.html`
-   - Nebo klikněte pravým tlačítkem → "Otevřít pomocí" → vyberte prohlížeč
-   
-   **Možnost B - Pomocí Node.js:**
-   ```bash
-   cd chat-panel
-   npx http-server -p 8000
-   ```
-   Pak otevřete: `http://localhost:8000`
-   
-   **Možnost C - Windows PowerShell:**
-   ```powershell
-   cd chat-panel
-   start index.html
-   ```
-   
-   ⚠️ **Python NENÍ potřeba!** Byl zmíněn jen jako alternativa.
-
-3. **Přidejte chaty:**
-   - Klikněte na "Přidat Chat"
-   - Pro **Twitch**: Zadejte URL kanálu, např. `https://www.twitch.tv/gamezense` nebo jen `gamezense`
-   - Pro **Kick**: Zadejte URL kanálu, např. `https://kick.com/username` nebo jen `username`
-   - Vyberte "Streamlabs" režim
-
-### Spuštění bez backend serveru (Iframe režim)
-
-1. Otevřete soubor `index.html` v prohlížeči (např. Chrome, Firefox, Edge)
-   - Můžete jednoduše dvojkliknout na soubor `index.html`
-   - Nebo použít lokální webový server (doporučeno pro lepší funkčnost)
-
-### Lokální webový server (doporučeno)
-
-Pro nejlepší funkčnost, zejména kvůli iframe a bezpečnostním pravidlům, použijte lokální server:
-
-#### Python 3
-```bash
-cd chat-panel
-python -m http.server 8000
-```
-Pak otevřete: `http://localhost:8000`
-
-#### Node.js (s http-server)
-```bash
-npx http-server chat-panel -p 8000
-```
-Pak otevřete: `http://localhost:8000`
-
-#### PHP
-```bash
-cd chat-panel
-php -S localhost:8000
-```
-Pak otevřete: `http://localhost:8000`
-
-### Přidávání chat zdrojů
-
-#### Pro Streamlabs režim (s backend serverem):
-1. **Ujistěte se, že backend server běží** (viz výše)
-2. Klikněte na tlačítko **"Přidat Chat"**
-3. Zadejte **URL kanálu nebo jen název kanálu**:
-   - **Twitch**: `https://www.twitch.tv/gamezense` nebo jen `gamezense`
-   - **Kick**: `https://kick.com/username` nebo jen `username`
-4. Volitelně zadejte název chatu
-5. Vyberte platformu
-6. Klikněte na **"Přidat"**
-7. Chat se automaticky připojí přes backend server
-
-#### Pro Iframe režim (bez backend serveru):
-1. Klikněte na tlačítko **"Přidat Chat"**
-2. Zadejte URL chatu nebo kanálu:
-   - **Twitch**: `https://www.twitch.tv/popout/USERNAME/chat`
-     - ⚠️ **Důležité**: Twitch má bezpečnostní omezení, které může blokovat vložení chatu do iframe
-   - **YouTube**: URL z live streamu (aplikace automaticky vytvoří chat URL)
-   - **Kick**: `https://kick.com/USERNAME/chatroom`
-     - ⚠️ **Poznámka**: Kick chat historie se může načítat až po připojení k aktivnímu live streamu
-3. Volitelně zadejte název chatu
-4. Vyberte platformu
-5. Klikněte na **"Přidat"**
-
-### ⚠️ Omezení Twitch chatu
-
-Twitch má bezpečnostní omezení (X-Frame-Options), které může zabránit vložení chatu přímo do webové stránky. Pokud se Twitch chat nenačte:
-
-1. **Použijte OBS Browser Source**:
-   - Přidejte Browser Source v OBS
-   - Zadejte URL: `https://www.twitch.tv/popout/USERNAME/chat`
-   
-2. **Otevřete v novém okně**:
-   - Aplikace zobrazí odkaz pro otevření chatu v novém okně
-
-3. **Alternativní řešení**:
-   - Použijte oficiální Twitch aplikaci
-   - Nebo použijte chat overlay aplikaci (např. StreamLabs Chat, StreamElements)
-
-### ⚠️ Poznámky k Kick chatu
-
-Kick chat může mít následující omezení:
-
-- **Historie chatu**: Kick chat historie se načítá obvykle až když je stream aktivní (live)
-- **"Page not found" chyba**: Aplikace automaticky zkusí alternativní URL formát pokud chatroom endpoint nefunguje
-- **OBS Browser Source**: Pro nejlepší výsledky použijte OBS Browser Source s URL: `https://kick.com/USERNAME/chatroom`
-
-### Příklady URL
-
-**Twitch:**
-```
-https://www.twitch.tv/popout/ninja/chat
-```
-
-**YouTube:**
-```
-https://www.youtube.com/watch?v=dQw4w9WgXcQ
-```
-(aplikace automaticky převede na chat URL)
-
-**Kick:**
-```
-https://kick.com/xqc/chatroom
-```
-
-### Klávesové zkratky
-
-- `Ctrl/Cmd + N` - Otevřít dialog pro přidání chatu
-- `ESC` - Zavřít dialog
-
-### Režimy zobrazení
-
-#### Styl zobrazení (Streamlabs / Iframe)
-- **Streamlabs Style**: Vlastní renderer chatu s animacemi, transparentním pozadím a barevnými uživatelskými jmény
-  - Podporuje: **Twitch** (přes TMI.js), **Kick** (částečně)
-  - Vlastní styl podobný Streamlabs Chat overlay
-  - Plynulé animace při příchodu zpráv
-- **Iframe Style**: Klasické iframe zobrazení
-  - Podporuje všechny platformy
-  - Zobrazuje oficiální chat z platformy
-
-Přepínání pomocí tlačítka **"Streamlabs / Iframe"**.
-
-#### Režim layoutu (Sjednocený / Rozdělený)
-- **Rozdělený režim**: Každý chat je zobrazen v samostatném panelu vedle sebe
-- **Sjednocený režim**: Všechny chaty jsou zobrazeny pod sebou v jednom sloupci
-
-Přepínání pomocí tlačítka **"Sjednocený / Rozdělený"**.
-
-## Odebrání chatů
-
-- Klikněte na tlačítko **"×"** v pravém horním rohu každého chatu pro jeho odebrání
-- Tlačítko **"Vymazat Vše"** odstraní všechny chaty najednou
-
-## Poznámky
-
-- Nastavení se automaticky ukládají do localStorage prohlížeče
-- Některé chaty mohou mít omezení kvůli bezpečnostním pravidlům (CORS, X-Frame-Options)
-- Pro nejlepší funkčnost používejte lokální webový server místo otevírání souboru přímo
+**Verze 2.0** - Kompletně přepracovaná verze, která funguje **100% v prohlížeči bez serveru**.
 
 ## Podporované platformy
 
-- ✅ Twitch
-- ✅ YouTube
-- ✅ Kick
-- ✅ Vlastní chat URL (jakékoliv URL které lze zobrazit v iframe)
+| Platforma | Stav | Poznámka |
+|-----------|------|----------|
+| **Twitch** | ✅ Plná podpora | IRC WebSocket, badges, emotes |
+| **Kick** | ✅ Plná podpora | Pusher WebSocket, badges, emotes |
+| **YouTube** | ✅ Plná podpora | Data API v3, vyžaduje API klíč |
 
-## Struktura souborů
+## Rychlý start
+
+1. Otevřete `index.html` v prohlížeči
+2. Klikněte na **"Přidat"**
+3. Vyberte platformu a zadejte název kanálu
+4. Hotovo! Chat se zobrazí automaticky.
+
+```
+Žádná instalace není potřeba.
+Žádný server není potřeba.
+Stačí otevřít index.html.
+```
+
+## Funkce
+
+### Základní
+- 🔗 Připojení k více kanálům současně
+- 🎨 Moderní dark/light téma
+- 📱 Responzivní design
+- 💾 Automatické ukládání nastavení
+- 🔄 Automatické reconnect při odpojení
+
+### Chat
+- 🏷️ Badge uživatelů (broadcaster, mod, vip, sub)
+- 😀 Zobrazení emotes
+- 🎨 Barevná jména uživatelů
+- ⏱️ Časové značky
+- 📏 Kompaktní režim
+
+### Nastavení
+- Export/import konfigurace
+- Maximální počet zpráv
+- Velikost písma
+- Zobrazení/skrytí elementů
+
+## Architektura
+
+```
+┌─────────────────────────────────────────────┐
+│           Browser (index.html)              │
+│  ┌─────────────────────────────────────┐   │
+│  │            script.js                 │   │
+│  │         (Main Controller)            │   │
+│  └────────────┬────────────────────────┘   │
+│               │                             │
+│  ┌────────────┼────────────────────────┐   │
+│  │            │                         │   │
+│  ▼            ▼            ▼            │   │
+│ Twitch     Kick       YouTube           │   │
+│ Adapter    Adapter    Adapter           │   │
+│  │            │            │            │   │
+│  │ IRC WS     │ Pusher WS  │ HTTP API   │   │
+│  └────────────┼────────────┼────────────┘   │
+└──────────────┬┼────────────┼────────────────┘
+               ││            │
+               ▼▼            ▼
+         Twitch IRC    Pusher.com    YouTube API
+           Server       (Kick)         Server
+```
+
+## Platformy - detaily
+
+### Twitch
+
+- **Připojení**: IRC WebSocket (anonymní)
+- **Formát**: `wss://irc-ws.chat.twitch.tv:443`
+- **Autentizace**: Není potřeba (justinfan)
+- **Omezení**: Pouze čtení (bez odesílání zpráv)
+
+**Zadejte**: Název kanálu (např. `gamezense`)
+
+### Kick
+
+- **Připojení**: Pusher WebSocket
+- **Formát**: `wss://ws-us2.pusher.com/app/...`
+- **Autentizace**: Není potřeba
+- **Omezení**: Pouze čtení
+
+**Zadejte**: Název kanálu (např. `xqc`)
+
+### YouTube
+
+- **Připojení**: YouTube Data API v3
+- **Metoda**: HTTP polling
+- **Autentizace**: Vyžaduje API klíč
+
+**Zadejte**:
+- Video/Stream ID (z URL: `youtube.com/watch?v=ID`)
+- YouTube API klíč ([získat zde](https://console.cloud.google.com/apis/credentials))
+
+## Soubory
 
 ```
 chat-panel/
-├── index.html      # Hlavní HTML soubor
-├── styles.css      # Styly aplikace
-├── script.js       # JavaScript funkcionalita
-└── README.md       # Tato dokumentace
+├── index.html          # Hlavní HTML
+├── styles.css          # CSS styly
+├── script.js           # Hlavní logika
+├── adapters/
+│   ├── base-adapter.js     # Základní třída
+│   ├── twitch-adapter.js   # Twitch IRC
+│   ├── kick-adapter.js     # Kick Pusher
+│   └── youtube-adapter.js  # YouTube API
+├── README.md           # Tato dokumentace
+└── v1-archive/         # Archiv původní verze
 ```
 
-## Technické detaily
+## Rozdíly oproti v1
 
-- Čistý HTML/CSS/JavaScript (žádné externí závislosti)
-- Použití localStorage pro perzistenci dat
-- Responzivní design podporující mobilní zařízení
-- Moderní CSS Grid layout pro flexibilní zobrazení panelů
+| Vlastnost | v1 | v2 |
+|-----------|----|----|
+| Server | Vyžadován (Node.js) | Není potřeba |
+| Instalace | `npm install` | Žádná |
+| Spuštění | `npm start` | Otevřít HTML |
+| Závislosti | tmi.js, ws, express... | Žádné |
+| Kick připojení | HTTP polling přes server | Přímý Pusher WS |
+| Twitch připojení | tmi.js přes server | Přímý IRC WS |
 
----
+## Omezení
 
-**Součást projektu [AdHUB](../../index.html)** | [Zpět na hub](../../index.html)
+### Obecná
+- **Pouze čtení** - Nelze odesílat zprávy (vyžadovalo by autentizaci)
+- **CORS** - Některá API nelze volat přímo z browseru
 
+### YouTube
+- Vyžaduje API klíč (bezplatný, ale s limity)
+- API quota: ~10,000 jednotek/den
+- Funguje pouze pro **živé** streamy
+
+### Kick
+- Používá neoficiální Pusher endpoint
+- Může se změnit bez varování
+
+## Vývoj
+
+### Přidání nové platformy
+
+1. Vytvořte nový adapter v `adapters/`
+2. Dědí z `BaseAdapter`
+3. Implementujte `connect()`, `disconnect()`, `normalizeMessage()`
+4. Přidejte formulář do `index.html`
+5. Přidejte handler do `script.js`
+
+### Normalizovaný formát zprávy
+
+```javascript
+{
+  id: 'unique-message-id',
+  platform: 'twitch|kick|youtube',
+  channel: 'channel-name',
+  author: {
+    id: 'user-id',
+    username: 'user_name',
+    displayName: 'Display Name',
+    color: '#FF0000',
+    badges: [{ type, id, url, title }],
+    roles: { broadcaster, moderator, vip, subscriber }
+  },
+  content: 'Message text',
+  emotes: [{ id, name, url, start, end }],
+  timestamp: Date,
+  raw: { /* original data */ }
+}
+```
+
+## Changelog
+
+### v2.0.0 (2024-12-04)
+- Kompletní přepracování
+- Odstranění závislosti na serveru
+- Přímé WebSocket připojení
+- Nový design
+- Podpora dark/light tématu
+
+### v1.x (archivováno)
+- Původní verze s Node.js serverem
+- Viz `v1-archive/`
+
+## Licence
+
+MIT
+
+## Autor
+
+Deerpfy - [github.com/Deerpfy/adhub](https://github.com/Deerpfy/adhub)
