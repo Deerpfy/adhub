@@ -1001,7 +1001,9 @@ async function checkYouTubeExtension() {
     const statusBox = document.getElementById('extensionStatusBox');
     const statusIcon = document.getElementById('extensionStatusIcon');
     const statusText = document.getElementById('extensionStatusText');
-    const downloadSection = document.getElementById('extensionDownloadSection');
+    const downloadHint = document.getElementById('extensionDownloadHint');
+    const downloadBtnText = document.getElementById('downloadExtensionBtnText');
+    const versionInfo = document.getElementById('extensionVersionInfo');
     const submitBtn = document.getElementById('youtubeExtSubmit');
 
     if (!statusBox) return;
@@ -1010,8 +1012,20 @@ async function checkYouTubeExtension() {
     statusBox.className = 'extension-status-box checking';
     statusIcon.textContent = '?';
     statusText.innerHTML = 'Kontroluji extension...';
-    downloadSection?.classList.add('hidden');
     if (submitBtn) submitBtn.disabled = true;
+
+    // Nacti nejnovejsi verzi z GitHubu
+    let latestVersion = null;
+    try {
+        const manifestUrl = `${GITHUB_RAW_BASE}/${GITHUB_REPO}/${GITHUB_BRANCH}/${EXTENSION_PATH}/manifest.json`;
+        const response = await fetch(manifestUrl);
+        if (response.ok) {
+            const manifest = await response.json();
+            latestVersion = manifest.version;
+        }
+    } catch (e) {
+        console.warn('[Extension Check] Cannot fetch latest version:', e);
+    }
 
     try {
         // Zkontroluj zda je YouTubeExtensionAdapter definovan
@@ -1022,16 +1036,36 @@ async function checkYouTubeExtension() {
         const result = await YouTubeExtensionAdapter.checkExtension();
 
         if (result.available) {
+            const installedVersion = result.version || '?';
+            const isOutdated = latestVersion && installedVersion !== '?' &&
+                               compareVersions(installedVersion, latestVersion) < 0;
+
             statusBox.className = 'extension-status-box available';
             statusIcon.textContent = '✓';
-            statusText.innerHTML = `Extension aktivni <span class="version">v${result.version || '?'}</span>`;
-            downloadSection?.classList.add('hidden');
+
+            if (isOutdated) {
+                statusText.innerHTML = `Extension aktivni <span class="version outdated">v${installedVersion} (zastarala)</span>`;
+                if (downloadHint) downloadHint.textContent = 'K dispozici je nova verze:';
+                if (downloadBtnText) downloadBtnText.textContent = `Aktualizovat na v${latestVersion}`;
+                if (versionInfo) {
+                    versionInfo.innerHTML = `Vase verze: <strong>v${installedVersion}</strong> → Nejnovejsi: <strong>v${latestVersion}</strong>`;
+                    versionInfo.classList.remove('hidden');
+                }
+            } else {
+                statusText.innerHTML = `Extension aktivni <span class="version">v${installedVersion}</span>`;
+                if (downloadHint) downloadHint.textContent = 'Stahnout znovu nebo aktualizovat:';
+                if (downloadBtnText) downloadBtnText.textContent = latestVersion ? `Stahnout v${latestVersion}` : 'Stahnout Extension';
+                if (versionInfo) versionInfo.classList.add('hidden');
+            }
+
             if (submitBtn) submitBtn.disabled = false;
         } else {
             statusBox.className = 'extension-status-box unavailable';
             statusIcon.textContent = '✕';
             statusText.innerHTML = 'Extension neni nainstalovana';
-            downloadSection?.classList.remove('hidden');
+            if (downloadHint) downloadHint.textContent = 'Pro pouziti Extension rezimu nainstalujte rozsireni:';
+            if (downloadBtnText) downloadBtnText.textContent = latestVersion ? `Stahnout v${latestVersion}` : 'Stahnout Extension';
+            if (versionInfo) versionInfo.classList.add('hidden');
             if (submitBtn) submitBtn.disabled = true;
         }
     } catch (error) {
@@ -1039,9 +1073,28 @@ async function checkYouTubeExtension() {
         statusBox.className = 'extension-status-box unavailable';
         statusIcon.textContent = '!';
         statusText.innerHTML = 'Nelze zkontrolovat extension';
-        downloadSection?.classList.remove('hidden');
+        if (downloadHint) downloadHint.textContent = 'Stahnout rozsireni:';
+        if (downloadBtnText) downloadBtnText.textContent = latestVersion ? `Stahnout v${latestVersion}` : 'Stahnout Extension';
+        if (versionInfo) versionInfo.classList.add('hidden');
         if (submitBtn) submitBtn.disabled = true;
     }
+}
+
+/**
+ * Porovnani semver verzi: -1 = a < b, 0 = a == b, 1 = a > b
+ */
+function compareVersions(a, b) {
+    const partsA = a.split('.').map(Number);
+    const partsB = b.split('.').map(Number);
+    const len = Math.max(partsA.length, partsB.length);
+
+    for (let i = 0; i < len; i++) {
+        const numA = partsA[i] || 0;
+        const numB = partsB[i] || 0;
+        if (numA < numB) return -1;
+        if (numA > numB) return 1;
+    }
+    return 0;
 }
 
 /**

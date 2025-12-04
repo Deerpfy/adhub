@@ -185,16 +185,17 @@
                             </span>
                         </div>
                         <button type="submit" class="btn btn-primary btn-block" data-mode="extension" id="youtubeExtSubmit">Pripojit k chatu</button>
-                        <div class="extension-download-section hidden" id="extensionDownloadSection">
-                            <p class="extension-download-hint">Pro pouziti Extension rezimu je potreba nainstalovat rozsireni:</p>
+                        <div class="extension-download-section" id="extensionDownloadSection">
+                            <p class="extension-download-hint" id="extensionDownloadHint">Stahnout nebo aktualizovat rozsireni:</p>
                             <button type="button" class="btn btn-secondary btn-block" id="downloadExtensionBtn">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
                                     <polyline points="7 10 12 15 17 10"/>
                                     <line x1="12" y1="15" x2="12" y2="3"/>
                                 </svg>
-                                Stahnout AdHub Chat Reader Extension
+                                <span id="downloadExtensionBtnText">Stahnout AdHub Chat Reader Extension</span>
                             </button>
+                            <p class="extension-version-info hidden" id="extensionVersionInfo"></p>
                         </div>
                     </div>
 
