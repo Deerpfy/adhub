@@ -126,7 +126,8 @@ class YouTubeExtensionAdapter extends BaseAdapter {
         const extensionStatus = await YouTubeExtensionAdapter.checkExtension();
 
         if (!extensionStatus.available) {
-            this._emitError(new Error('YouTube Chat Reader extension neni nainstalovana'));
+            this._setState({ connecting: false, error: 'Extension not found' });
+            this.emit('error', { message: 'YouTube Chat Reader extension neni nainstalovana', code: 'EXTENSION_NOT_FOUND' });
             return;
         }
 
@@ -149,7 +150,8 @@ class YouTubeExtensionAdapter extends BaseAdapter {
                 throw new Error(response.error || 'Failed to open chat');
             }
         } catch (error) {
-            this._emitError(error);
+            this._setState({ connecting: false, error: error.message });
+            this.emit('error', { message: error.message, code: 'CONNECTION_ERROR' });
         }
     }
 
