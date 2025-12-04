@@ -5,15 +5,29 @@
  * Kick používá interně Pusher pro real-time chat.
  * Tento adapter se připojuje přímo k Pusher WebSocket.
  *
- * Poznámka: Kick API má CORS restrikce, proto používáme:
- * 1. Přímé Pusher WebSocket připojení (funguje v browseru)
- * 2. kick7.tv API pro získání channel info (má CORS headers)
+ * DŮLEŽITÉ: Kick API má CORS restrikce a nelze volat z browseru.
+ * Proto používáme:
+ * 1. Databázi známých chatroom IDs
+ * 2. Manuální zadání chatroom_id uživatelem
+ * 3. Cache v localStorage
  */
 
 class KickAdapter extends BaseAdapter {
     constructor(config) {
+        // Extrahovat název kanálu z URL pokud je potřeba
+        let channel = config.channel;
+        if (channel.includes('kick.com/')) {
+            const match = channel.match(/kick\.com\/([^\/\?]+)/);
+            if (match) {
+                channel = match[1];
+            }
+        }
+        // Odstranit @ pokud je na začátku
+        channel = channel.replace(/^@/, '').toLowerCase().trim();
+
         super({
             ...config,
+            channel: channel,
             platform: 'kick',
         });
 
@@ -23,7 +37,7 @@ class KickAdapter extends BaseAdapter {
         this.ws = null;
 
         // Channel info
-        this.chatroomId = null;
+        this.chatroomId = config.chatroomId || null;
         this.channelInfo = null;
 
         // Pusher stav
@@ -33,6 +47,41 @@ class KickAdapter extends BaseAdapter {
         // Emotes cache
         this.emotes = {};
     }
+
+    /**
+     * Databáze známých streamerů a jejich chatroom IDs
+     * Aktualizováno: Prosinec 2024
+     */
+    static KNOWN_CHATROOMS = {
+        // Top Kick streamers
+        'trainwreckstv': 4807295,
+        'trainwrecks': 4807295,
+        'xqc': 668,
+        'xqcow': 668,
+        'adin': 1587977,
+        'adinross': 1587977,
+        'stake': 4390844,
+        'roshtein': 27268,
+        'nickmercs': 15577723,
+        'amouranth': 139609,
+        'hasanabi': 2014334,
+        'hasan': 2014334,
+        'clix': 17247133,
+        'jynxzi': 10525717,
+        'plaqueboymax': 14932715,
+        'ice': 3714680,
+        'iceposeidon': 3714680,
+        'mizkif': 5348254,
+        'pokimane': 15509501,
+        'kai': 16137976,
+        'kaicenat': 16137976,
+        'fanum': 14739227,
+        'aceu': 16016925,
+        'symfuhny': 15556313,
+        'drake': 17043963,
+        'destiny': 5063803,
+        'sneako': 16004632,
+    };
 
     /**
      * Připojení k Kick chatu
@@ -46,11 +95,14 @@ class KickAdapter extends BaseAdapter {
         this.emit('stateChange', { state: 'connecting' });
 
         try {
-            // Získat channel info
-            await this._loadChannelInfo();
+            // Získat chatroom ID
+            await this._resolveChatroomId();
 
             if (!this.chatroomId) {
-                throw new Error(`Kanál "${this.channel}" nebyl nalezen nebo je offline`);
+                throw new Error(
+                    `Chatroom ID pro "${this.channel}" není známé. ` +
+                    `Zadejte chatroom ID manuálně (formát: název:ID, např. trainwreckstv:4807295)`
+                );
             }
 
             // Připojit k Pusher
@@ -63,12 +115,16 @@ class KickAdapter extends BaseAdapter {
             });
 
             this.emit('connect', { channel: this.channel });
+            console.log(`[Kick] Connected to ${this.channel} (chatroom: ${this.chatroomId})`);
 
         } catch (error) {
             console.error('[Kick] Connection error:', error);
             this._setState({ connecting: false, error: error.message });
             this.emit('error', { message: error.message, code: 'CONNECTION_ERROR' });
-            this._attemptReconnect();
+            // Nepokoušet se o reconnect pokud nemáme chatroom ID
+            if (this.chatroomId) {
+                this._attemptReconnect();
+            }
         }
     }
 
@@ -88,118 +144,119 @@ class KickAdapter extends BaseAdapter {
     }
 
     /**
-     * Načtení info o kanálu
-     * Používá kick7.tv API (má CORS headers) nebo fallback metody
+     * Získání chatroom ID - z různých zdrojů
      */
-    async _loadChannelInfo() {
-        const methods = [
-            () => this._fetchFromKick7(),
-            () => this._fetchFromKickApi(),
-            () => this._useKnownChatroomId(),
-        ];
+    async _resolveChatroomId() {
+        // 1. Už máme chatroom ID (z konstruktoru nebo manuálního zadání)
+        if (this.chatroomId) {
+            console.log(`[Kick] Using provided chatroom ID: ${this.chatroomId}`);
+            return;
+        }
 
-        for (const method of methods) {
-            try {
-                const result = await method();
-                if (result) return;
-            } catch (error) {
-                console.warn('[Kick] Method failed:', error.message);
+        // 2. Zkusit parsovat manuální formát "channel:chatroomId"
+        if (this.channel.includes(':')) {
+            const [name, id] = this.channel.split(':');
+            if (id && !isNaN(parseInt(id))) {
+                this.channel = name.toLowerCase().trim();
+                this.chatroomId = parseInt(id);
+                console.log(`[Kick] Parsed manual chatroom ID: ${this.chatroomId}`);
+                this._saveChatroomCache();
+                return;
             }
         }
 
-        throw new Error('Nepodařilo se získat informace o kanálu');
-    }
-
-    /**
-     * Pokus o získání dat z kick7.tv API
-     */
-    async _fetchFromKick7() {
-        // kick7.tv je neoficiální API s CORS support
-        const response = await fetch(
-            `https://kick.com/api/v2/channels/${this.channel.toLowerCase()}`,
-            {
-                headers: {
-                    'Accept': 'application/json',
-                },
-            }
-        );
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
+        // 3. Zkusit známou databázi
+        const knownId = KickAdapter.KNOWN_CHATROOMS[this.channel.toLowerCase()];
+        if (knownId) {
+            this.chatroomId = knownId;
+            console.log(`[Kick] Found in known database: ${this.chatroomId}`);
+            return;
         }
 
-        const data = await response.json();
-
-        if (data && data.chatroom && data.chatroom.id) {
-            this.chatroomId = data.chatroom.id;
-            this.channelInfo = {
-                id: data.id,
-                slug: data.slug,
-                username: data.user?.username || this.channel,
-                displayName: data.user?.username || this.channel,
-                avatar: data.user?.profile_pic || null,
-                verified: data.verified || false,
-            };
-
-            // Načíst emotes
-            if (data.chatroom?.emotes) {
-                this._processEmotes(data.chatroom.emotes);
-            }
-
-            console.log(`[Kick] Channel info loaded: chatroom=${this.chatroomId}`);
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Fallback - přímé Kick API (může být blokováno CORS)
-     */
-    async _fetchFromKickApi() {
-        // Tento endpoint může být blokován CORS v prohlížeči
-        const response = await fetch(
-            `https://kick.com/api/v1/channels/${this.channel.toLowerCase()}`,
-            {
-                mode: 'cors',
-                credentials: 'omit',
-            }
-        );
-
-        if (!response.ok) {
-            throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (data && data.chatroom && data.chatroom.id) {
-            this.chatroomId = data.chatroom.id;
-            this.channelInfo = {
-                id: data.id,
-                slug: data.slug,
-                username: data.user?.username || this.channel,
-            };
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Fallback - použít známé chatroom ID z localStorage
-     */
-    async _useKnownChatroomId() {
-        const cached = localStorage.getItem(`kick_chatroom_${this.channel.toLowerCase()}`);
+        // 4. Zkusit cache z localStorage
+        const cached = this._getCachedChatroomId();
         if (cached) {
-            const data = JSON.parse(cached);
-            if (data.chatroomId && Date.now() - data.timestamp < 86400000) { // 24h cache
-                this.chatroomId = data.chatroomId;
-                this.channelInfo = data.channelInfo || { username: this.channel };
-                console.log(`[Kick] Using cached chatroom ID: ${this.chatroomId}`);
-                return true;
-            }
+            this.chatroomId = cached;
+            console.log(`[Kick] Found in cache: ${this.chatroomId}`);
+            return;
         }
-        return false;
+
+        // 5. Pokus o API volání (pravděpodobně selže kvůli CORS)
+        try {
+            await this._tryFetchFromApi();
+            if (this.chatroomId) {
+                console.log(`[Kick] Fetched from API: ${this.chatroomId}`);
+                this._saveChatroomCache();
+                return;
+            }
+        } catch (error) {
+            console.warn('[Kick] API fetch failed (expected due to CORS):', error.message);
+        }
+
+        // Chatroom ID nebylo nalezeno
+        console.error(`[Kick] Chatroom ID not found for: ${this.channel}`);
+    }
+
+    /**
+     * Pokus o získání z API (pravděpodobně selže kvůli CORS)
+     */
+    async _tryFetchFromApi() {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+        try {
+            const response = await fetch(
+                `https://kick.com/api/v2/channels/${this.channel.toLowerCase()}`,
+                {
+                    signal: controller.signal,
+                    headers: { 'Accept': 'application/json' },
+                }
+            );
+
+            clearTimeout(timeoutId);
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('application/json')) {
+                throw new Error('Response is not JSON (CORS blocked)');
+            }
+
+            const data = await response.json();
+
+            if (data?.chatroom?.id) {
+                this.chatroomId = data.chatroom.id;
+                this.channelInfo = {
+                    id: data.id,
+                    slug: data.slug,
+                    username: data.user?.username || this.channel,
+                };
+            }
+        } catch (error) {
+            clearTimeout(timeoutId);
+            throw error;
+        }
+    }
+
+    /**
+     * Získání chatroom ID z cache
+     */
+    _getCachedChatroomId() {
+        try {
+            const cached = localStorage.getItem(`kick_chatroom_${this.channel.toLowerCase()}`);
+            if (cached) {
+                const data = JSON.parse(cached);
+                // Cache platná 7 dní
+                if (data.chatroomId && Date.now() - data.timestamp < 7 * 24 * 60 * 60 * 1000) {
+                    return data.chatroomId;
+                }
+            }
+        } catch (error) {
+            console.warn('[Kick] Cache read error:', error);
+        }
+        return null;
     }
 
     /**
@@ -207,26 +264,15 @@ class KickAdapter extends BaseAdapter {
      */
     _saveChatroomCache() {
         if (this.chatroomId) {
-            localStorage.setItem(`kick_chatroom_${this.channel.toLowerCase()}`, JSON.stringify({
-                chatroomId: this.chatroomId,
-                channelInfo: this.channelInfo,
-                timestamp: Date.now(),
-            }));
-        }
-    }
-
-    /**
-     * Zpracování emotes z API
-     */
-    _processEmotes(emotesList) {
-        if (!Array.isArray(emotesList)) return;
-
-        for (const emote of emotesList) {
-            this.emotes[emote.name] = {
-                id: emote.id,
-                name: emote.name,
-                url: emote.images?.url || `https://files.kick.com/emotes/${emote.id}/fullsize`,
-            };
+            try {
+                localStorage.setItem(`kick_chatroom_${this.channel.toLowerCase()}`, JSON.stringify({
+                    chatroomId: this.chatroomId,
+                    channelInfo: this.channelInfo,
+                    timestamp: Date.now(),
+                }));
+            } catch (error) {
+                console.warn('[Kick] Cache save error:', error);
+            }
         }
     }
 
@@ -298,9 +344,9 @@ class KickAdapter extends BaseAdapter {
 
             case 'pusher:error':
                 console.error('[Kick] Pusher error:', data.data);
-                if (data.data?.code === 4001) {
+                if (data.data?.code === 4001 || data.data?.code === 4009) {
                     clearTimeout(timeout);
-                    reject(new Error('Pusher subscription failed'));
+                    reject(new Error(`Pusher error: ${data.data?.message || 'Unknown error'}`));
                 }
                 break;
 
@@ -309,8 +355,10 @@ class KickAdapter extends BaseAdapter {
                 break;
 
             case 'App\\Events\\ChatMessageDeletedEvent':
-                // Zpráva byla smazána
-                this.emit('messageDeleted', { id: JSON.parse(data.data || '{}').id });
+                try {
+                    const deleteData = JSON.parse(data.data || '{}');
+                    this.emit('messageDeleted', { id: deleteData.id });
+                } catch (e) {}
                 break;
 
             case 'App\\Events\\UserBannedEvent':
@@ -337,6 +385,7 @@ class KickAdapter extends BaseAdapter {
             },
         });
 
+        console.log(`[Kick] Subscribing to chatrooms.${this.chatroomId}.v2`);
         this.ws.send(subscribeMessage);
     }
 
@@ -431,38 +480,10 @@ class KickAdapter extends BaseAdapter {
             });
         }
 
-        // Hledání známých channel emotes
-        for (const [name, emote] of Object.entries(this.emotes)) {
-            const regex = new RegExp(`\\b${this._escapeRegex(name)}\\b`, 'g');
-            while ((match = regex.exec(content)) !== null) {
-                // Zkontrolovat, že to není uvnitř [emote:...] patternu
-                const alreadyMatched = emotes.some(e =>
-                    match.index >= e.start && match.index <= e.end
-                );
-
-                if (!alreadyMatched) {
-                    emotes.push({
-                        id: emote.id,
-                        name: emote.name,
-                        url: emote.url,
-                        start: match.index,
-                        end: match.index + name.length - 1,
-                    });
-                }
-            }
-        }
-
         // Seřadit podle pozice
         emotes.sort((a, b) => b.start - a.start);
 
         return emotes;
-    }
-
-    /**
-     * Escape speciálních znaků pro regex
-     */
-    _escapeRegex(string) {
-        return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     }
 
     /**
@@ -477,8 +498,9 @@ class KickAdapter extends BaseAdapter {
         if (!seed) return colors[0];
 
         let hash = 0;
-        for (let i = 0; i < seed.length; i++) {
-            hash = seed.charCodeAt(i) + ((hash << 5) - hash);
+        const seedStr = String(seed);
+        for (let i = 0; i < seedStr.length; i++) {
+            hash = seedStr.charCodeAt(i) + ((hash << 5) - hash);
         }
 
         return colors[Math.abs(hash) % colors.length];
@@ -498,12 +520,12 @@ class KickAdapter extends BaseAdapter {
                 this.ws.send(JSON.stringify({ event: 'pusher:ping', data: {} }));
             }
 
-            // Pokud nebyla aktivita 60 sekund, považovat za odpojené
-            if (elapsed > 60000) {
+            // Pokud nebyla aktivita 90 sekund, považovat za odpojené
+            if (elapsed > 90000) {
                 console.warn('[Kick] Activity timeout, reconnecting...');
                 this.ws?.close();
             }
-        }, 10000);
+        }, 15000);
     }
 
     /**
@@ -514,6 +536,13 @@ class KickAdapter extends BaseAdapter {
             clearInterval(this.activityTimeout);
             this.activityTimeout = null;
         }
+    }
+
+    /**
+     * Statická metoda pro získání seznamu známých streamerů
+     */
+    static getKnownStreamers() {
+        return Object.keys(KickAdapter.KNOWN_CHATROOMS);
     }
 }
 
