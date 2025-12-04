@@ -37,96 +37,10 @@
   }
 
   /**
-   * Extrahuje název kanálu z YouTube live chat stránky
-   */
-  function extractChannelName() {
-    // Zkusit různé selektory kde může být název kanálu
-    const selectors = [
-      'yt-live-chat-header-renderer #channel-name yt-formatted-string',
-      'yt-live-chat-header-renderer #channel-name',
-      'yt-live-chat-header-renderer #owner-name',
-      '#owner-name yt-formatted-string',
-      '#owner-name',
-      '#channel-name yt-formatted-string',
-      '#channel-name',
-      'yt-live-chat-header-renderer a[href*="/channel/"]',
-      'yt-live-chat-header-renderer a[href*="/@"]',
-      '.yt-live-chat-header-renderer #author-name',
-      '#author-name',
-    ];
-
-    for (const selector of selectors) {
-      const element = document.querySelector(selector);
-      if (element?.textContent?.trim()) {
-        const name = element.textContent.trim();
-        if (name && name.length > 0 && name.length < 100) {
-          console.log('[AdHub Chat Reader] Found channel name via selector:', selector, '=', name);
-          return name;
-        }
-      }
-    }
-
-    // Zkusit najít odkaz na kanál a extrahovat jméno z něj
-    const channelLinks = document.querySelectorAll('a[href*="/@"], a[href*="/channel/"]');
-    for (const link of channelLinks) {
-      const name = link.textContent?.trim();
-      if (name && name.length > 0 && name.length < 100 && !name.includes('http')) {
-        console.log('[AdHub Chat Reader] Found channel name via link:', name);
-        return name;
-      }
-    }
-
-    // Zkusit z document title
-    const title = document.title;
-    if (title && !title.includes('YouTube') && title.length < 100) {
-      const cleanTitle = title.replace(' - Live Chat', '').replace('Live chat replay', '').trim();
-      if (cleanTitle) {
-        console.log('[AdHub Chat Reader] Found channel name via title:', cleanTitle);
-        return cleanTitle;
-      }
-    }
-
-    console.log('[AdHub Chat Reader] Could not find channel name');
-    return null;
-  }
-
-  /**
-   * Pokusí se extrahovat název kanálu s opakováním
-   */
-  function extractChannelNameWithRetry(maxAttempts = 5, delay = 1000) {
-    let attempts = 0;
-
-    function tryExtract() {
-      attempts++;
-      const name = extractChannelName();
-
-      if (name) {
-        state.channelName = name;
-        // Poslat aktualizaci do background
-        chrome.runtime.sendMessage({
-          action: 'chatConnected',
-          videoId: state.videoId,
-          channelName: name,
-        }).catch(() => {});
-        return;
-      }
-
-      if (attempts < maxAttempts) {
-        setTimeout(tryExtract, delay);
-      } else {
-        // Poslední pokus - zkusit oEmbed API
-        fetchChannelNameFromOEmbed();
-      }
-    }
-
-    tryExtract();
-  }
-
-  /**
-   * Získá název kanálu z YouTube oEmbed API
+   * Získá název kanálu z YouTube oEmbed API (primární a nejspolehlivější metoda)
    */
   async function fetchChannelNameFromOEmbed() {
-    if (!state.videoId) return;
+    if (!state.videoId) return null;
 
     try {
       const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${state.videoId}&format=json`);
@@ -134,16 +48,31 @@
         const data = await response.json();
         if (data.author_name) {
           console.log('[AdHub Chat Reader] Got channel name from oEmbed:', data.author_name);
-          state.channelName = data.author_name;
-          chrome.runtime.sendMessage({
-            action: 'chatConnected',
-            videoId: state.videoId,
-            channelName: data.author_name,
-          }).catch(() => {});
+          return data.author_name;
         }
       }
     } catch (error) {
       console.log('[AdHub Chat Reader] Failed to fetch from oEmbed:', error);
+    }
+    return null;
+  }
+
+  /**
+   * Načte a aktualizuje název kanálu
+   */
+  async function loadChannelName() {
+    if (!state.videoId) return;
+
+    // Použít oEmbed API jako primární zdroj (spolehlivé)
+    const channelName = await fetchChannelNameFromOEmbed();
+
+    if (channelName) {
+      state.channelName = channelName;
+      chrome.runtime.sendMessage({
+        action: 'chatConnected',
+        videoId: state.videoId,
+        channelName: channelName,
+      }).catch(() => {});
     }
   }
 
@@ -323,22 +252,17 @@
     });
 
     state.isActive = true;
+    console.log('[AdHub Chat Reader] Observer started for video:', state.videoId);
 
-    // Extrahuj název kanálu
-    state.channelName = extractChannelName();
-    console.log('[AdHub Chat Reader] Observer started, channel:', state.channelName);
-
-    // Informuj background script
+    // Informuj background script (bez názvu kanálu - pošleme později)
     chrome.runtime.sendMessage({
       action: 'chatConnected',
       videoId: state.videoId,
-      channelName: state.channelName,
+      channelName: null,
     });
 
-    // Pokud se název kanálu nepodařilo získat, zkusit oEmbed API ihned
-    if (!state.channelName) {
-      fetchChannelNameFromOEmbed();
-    }
+    // Načti název kanálu z oEmbed API (spolehlivé)
+    loadChannelName();
   }
 
   function stopObserving() {
