@@ -9,9 +9,16 @@ class YouTubeExtensionAdapter extends BaseAdapter {
     static EXTENSION_CHECK_TIMEOUT = 3000;
 
     constructor(options) {
-        super('youtube-extension', options);
+        // Extrahovat video ID z URL pokud je potřeba
+        const videoId = YouTubeExtensionAdapter._extractVideoIdStatic(options.channel);
 
-        this.videoId = this._extractVideoId(options.channel);
+        super({
+            ...options,
+            channel: videoId,
+            platform: 'youtube-extension',
+        });
+
+        this.videoId = videoId;
         this.channelName = options.channelName || options.channel;
         this.requestCounter = 0;
         this.pendingRequests = new Map();
@@ -27,6 +34,42 @@ class YouTubeExtensionAdapter extends BaseAdapter {
     // =========================================================================
     // STATIC METHODS - Extension detection
     // =========================================================================
+
+    /**
+     * Statická metoda pro extrakci video ID (použita v konstruktoru)
+     */
+    static _extractVideoIdStatic(input) {
+        if (!input) return null;
+
+        // Uz je to video ID
+        if (/^[a-zA-Z0-9_-]{11}$/.test(input)) {
+            return input;
+        }
+
+        // URL
+        try {
+            const url = new URL(input.includes('://') ? input : `https://${input}`);
+
+            // youtube.com/watch?v=ID
+            if (url.searchParams.has('v')) {
+                return url.searchParams.get('v');
+            }
+
+            // youtube.com/live/ID
+            const liveMatch = url.pathname.match(/\/live\/([a-zA-Z0-9_-]+)/);
+            if (liveMatch) {
+                return liveMatch[1];
+            }
+
+            // youtu.be/ID
+            if (url.hostname === 'youtu.be') {
+                return url.pathname.slice(1);
+            }
+        } catch (e) {}
+
+        // Vrat jako je
+        return input;
+    }
 
     /**
      * Zkontroluje zda je extension nainstalovana a aktivni
@@ -119,14 +162,15 @@ class YouTubeExtensionAdapter extends BaseAdapter {
     // =========================================================================
 
     async connect() {
-        this._setState('connecting');
+        this._setState({ connecting: true, error: null });
         console.log('[YouTubeExtensionAdapter] Connecting to:', this.videoId);
 
         // Zkontroluj extension
         const extensionStatus = await YouTubeExtensionAdapter.checkExtension();
 
         if (!extensionStatus.available) {
-            this._emitError(new Error('YouTube Chat Reader extension neni nainstalovana'));
+            this._setState({ connecting: false, error: 'Extension not installed' });
+            this.emit('error', { message: 'YouTube Chat Reader extension neni nainstalovana', code: 'EXTENSION_NOT_FOUND' });
             return;
         }
 
@@ -149,7 +193,9 @@ class YouTubeExtensionAdapter extends BaseAdapter {
                 throw new Error(response.error || 'Failed to open chat');
             }
         } catch (error) {
-            this._emitError(error);
+            console.error('[YouTubeExtensionAdapter] Connection error:', error);
+            this._setState({ connecting: false, error: error.message });
+            this.emit('error', { message: error.message, code: 'CONNECTION_ERROR' });
         }
     }
 
@@ -166,46 +212,13 @@ class YouTubeExtensionAdapter extends BaseAdapter {
             videoId: this.videoId,
         }).catch(() => {});
 
-        this._setState('disconnected');
+        this._setState({ connected: false, connecting: false });
         this.emit('disconnect');
     }
 
     // =========================================================================
     // PRIVATE METHODS
     // =========================================================================
-
-    _extractVideoId(input) {
-        if (!input) return null;
-
-        // Uz je to video ID
-        if (/^[a-zA-Z0-9_-]{11}$/.test(input)) {
-            return input;
-        }
-
-        // URL
-        try {
-            const url = new URL(input.includes('://') ? input : `https://${input}`);
-
-            // youtube.com/watch?v=ID
-            if (url.searchParams.has('v')) {
-                return url.searchParams.get('v');
-            }
-
-            // youtube.com/live/ID
-            const liveMatch = url.pathname.match(/\/live\/([a-zA-Z0-9_-]+)/);
-            if (liveMatch) {
-                return liveMatch[1];
-            }
-
-            // youtu.be/ID
-            if (url.hostname === 'youtu.be') {
-                return url.pathname.slice(1);
-            }
-        } catch (e) {}
-
-        // Vrat jako je
-        return input;
-    }
 
     _handleMessage(event) {
         const message = event.detail;
@@ -229,14 +242,14 @@ class YouTubeExtensionAdapter extends BaseAdapter {
 
     _handleConnected(event) {
         if (event.detail?.videoId === this.videoId) {
-            this._setState('connected');
+            this._setState({ connected: true, connecting: false, reconnectAttempts: 0 });
             this.emit('connect');
         }
     }
 
     _handleDisconnected(event) {
         if (event.detail?.videoId === this.videoId) {
-            this._setState('disconnected');
+            this._setState({ connected: false, connecting: false });
             this.emit('disconnect');
         }
     }
