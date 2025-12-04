@@ -252,6 +252,35 @@ function initEventListeners() {
 // =============================================================================
 
 /**
+ * Extrahuje zobrazované jméno z kanálu/URL
+ */
+function extractDisplayName(platform, channel) {
+    // Pro Twitch a Kick je channel přímo username
+    if (platform === 'twitch' || platform === 'kick') {
+        return channel;
+    }
+
+    // Pro YouTube extrahovat z URL nebo použít videoId
+    if (platform.startsWith('youtube')) {
+        // Pokud je to URL, zkusit extrahovat
+        if (channel.includes('youtube.com') || channel.includes('youtu.be')) {
+            // Zkusit extrahovat video ID z URL
+            const urlMatch = channel.match(/(?:v=|\/live\/|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+            if (urlMatch) {
+                return `YT:${urlMatch[1].substring(0, 8)}...`;
+            }
+        }
+        // Pokud je to krátké ID, použít ho
+        if (channel.length <= 15) {
+            return channel;
+        }
+        return `YT:${channel.substring(0, 8)}...`;
+    }
+
+    return channel;
+}
+
+/**
  * Přidání nového kanálu
  */
 async function addChannel(platform, channel, options = {}) {
@@ -298,6 +327,7 @@ async function addChannel(platform, channel, options = {}) {
         id: channelId,
         platform,
         channel,
+        displayName: extractDisplayName(platform, channel),
         adapter,
         state: 'connecting',
     };
@@ -401,7 +431,7 @@ function renderChannelItem(channelData) {
             ${getPlatformIcon(channelData.platform)}
         </div>
         <div class="channel-info">
-            <div class="channel-name">${escapeHtml(channelData.channel)}</div>
+            <div class="channel-name">${escapeHtml(channelData.displayName || channelData.channel)}</div>
             <div class="channel-platform">${platformDisplay}</div>
         </div>
         <div class="channel-status"></div>
@@ -524,16 +554,26 @@ function renderMessage(message) {
         DOM.chatContainer.appendChild(messagesContainer);
     }
 
+    // Zjistit display name kanálu
+    const channelId = `${message.platform}-${message.channel.toLowerCase()}`;
+    const channelData = AppState.channels.get(channelId);
+    const channelDisplayName = channelData?.displayName || message.channel;
+    const basePlatform = message.platform.split('-')[0]; // twitch, kick, youtube
+
     const messageEl = document.createElement('div');
-    messageEl.className = `chat-message ${AppState.settings.compactMode ? 'compact' : ''}`;
+    messageEl.className = `chat-message platform-${basePlatform} ${AppState.settings.compactMode ? 'compact' : ''}`;
     messageEl.dataset.messageId = message.id;
 
     let html = '';
 
-    // Platform badge
-    if (AppState.settings.showPlatformBadges) {
-        html += `<span class="message-platform-badge ${message.platform}">${message.platform.charAt(0).toUpperCase()}</span>`;
-    }
+    // Streamer label (ikona platformy + název kanálu)
+    html += `<div class="message-streamer-label ${basePlatform}">`;
+    html += `<span class="streamer-icon">${getPlatformIcon(message.platform)}</span>`;
+    html += `<span class="streamer-name">${escapeHtml(channelDisplayName)}</span>`;
+    html += '</div>';
+
+    // Message body
+    html += '<div class="message-body">';
 
     // Timestamp
     if (AppState.settings.showTimestamps) {
@@ -570,7 +610,8 @@ function renderMessage(message) {
     }
 
     html += `<span class="message-text">${content}</span>`;
-    html += '</span>';
+    html += '</span>'; // Close message-content
+    html += '</div>'; // Close message-body
 
     messageEl.innerHTML = html;
     messagesContainer.appendChild(messageEl);
