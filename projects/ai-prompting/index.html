@@ -446,8 +446,8 @@ Prompt to analyze:
                             content: 'Your formatted prompt appears here. Review it to ensure it captures your intent.',
                         },
                         actions: {
-                            title: 'Copy or Verify',
-                            content: 'Copy your prompt to use with AI, or click "Verify with AI" to get feedback on your prompt quality!',
+                            title: 'Save, Copy or Verify',
+                            content: 'Use these buttons to: create New prompt, Save your work, Copy the prompt, or Verify it with AI for feedback!',
                         },
                     },
                     completed: {
@@ -719,8 +719,8 @@ Prompt k analýze:
                             content: 'Váš formátovaný prompt se zobrazuje zde. Zkontrolujte, zda zachycuje váš záměr.',
                         },
                         actions: {
-                            title: 'Kopírujte nebo ověřte',
-                            content: 'Zkopírujte prompt pro použití s AI, nebo klikněte na "Ověřit pomocí AI" pro zpětnou vazbu!',
+                            title: 'Uložte, kopírujte nebo ověřte',
+                            content: 'Použijte tato tlačítka: Nový prompt, Uložit práci, Kopírovat prompt, nebo Ověřit pomocí AI pro zpětnou vazbu!',
                         },
                     },
                     completed: {
@@ -1225,9 +1225,9 @@ Prompt k analýze:
                 { id: 'role', target: 'field-role', position: 'right' },
                 { id: 'task', target: 'field-task', position: 'right' },
                 { id: 'context', target: 'field-context', position: 'right' },
+                { id: 'actions', target: 'action-buttons', position: 'bottom' },
                 { id: 'methods', target: 'methods-section', position: 'left' },
                 { id: 'preview', target: 'preview-section', position: 'left' },
-                { id: 'actions', target: 'action-buttons', position: 'left' },
             ];
 
             const [fields, setFields] = useState({
@@ -2919,13 +2919,52 @@ Prompt k analýze:
                                 </div>
 
                                 {/* Action Buttons */}
-                                <div className="flex gap-2">
-                                    <button onClick={resetForm} className="flex items-center gap-2 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 text-sm">
+                                <div id="action-buttons" className={`flex flex-wrap gap-2 ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'action-buttons' ? 'tutorial-highlight' : ''}`}>
+                                    <button onClick={resetForm} className="flex items-center gap-2 px-3 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 text-sm">
                                         <Icon name="Plus" size={16} /> {t.newPrompt}
                                     </button>
                                     <button onClick={() => { setEditingId(null); setPromptName(''); setSaveModalOpen(true); }} disabled={!formattedPrompt}
-                                        className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 disabled:opacity-50 text-sm font-medium">
+                                        className="flex items-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-500 disabled:opacity-50 text-sm font-medium">
                                         <Icon name="Save" size={16} /> {t.database.save}
+                                    </button>
+                                    {/* Copy Button */}
+                                    <button
+                                        onClick={() => {
+                                            copyToClipboard();
+                                            if (tutorialActive && tutorialSteps[tutorialStep]?.id === 'actions') {
+                                                setTimeout(() => {
+                                                    setTutorialActive(false);
+                                                    setNotification(t.tutorial?.completed?.message || 'Tutorial completed!');
+                                                    setTimeout(() => setNotification(''), 3000);
+                                                }, 500);
+                                            }
+                                        }}
+                                        disabled={!formattedPrompt}
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${formattedPrompt ? 'bg-amber-500 text-slate-900 hover:bg-amber-400' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}
+                                    >
+                                        <Icon name={copied ? "Check" : "Copy"} size={16} />
+                                        {copied ? t.copied : t.copy}
+                                    </button>
+                                    {/* Verify Button */}
+                                    <button
+                                        onClick={() => {
+                                            verifyPromptWithAI();
+                                            if (tutorialActive && tutorialSteps[tutorialStep]?.id === 'actions') {
+                                                setTimeout(() => {
+                                                    setTutorialActive(false);
+                                                    setNotification(t.tutorial?.completed?.message || 'Tutorial completed!');
+                                                    setTimeout(() => setNotification(''), 3000);
+                                                }, 500);
+                                            }
+                                        }}
+                                        disabled={!formattedPrompt}
+                                        className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${formattedPrompt ? 'bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white shadow-lg shadow-purple-500/25' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}
+                                    >
+                                        <Icon name="Brain" size={16} />
+                                        {t.verify?.buttonShort || 'Verify'}
+                                        {formattedPrompt && (
+                                            <span className="text-[10px] bg-green-500/30 text-green-300 px-1.5 py-0.5 rounded">FREE</span>
+                                        )}
                                     </button>
                                 </div>
                             </div>
@@ -3048,53 +3087,9 @@ Prompt k analýze:
                                     )}
                                 </div>
                                 {formattedPrompt && (
-                                    <div id="action-buttons" className={`mt-3 flex flex-col gap-3 ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'action-buttons' ? 'tutorial-highlight' : ''}`}>
-                                        <div className="flex justify-between text-xs text-slate-500">
-                                            <span>{t.optimizedFor} {aiTargets.find(a => a.id === target)?.name}</span>
-                                            <span>{formattedPrompt.length} {t.chars}</span>
-                                        </div>
-                                        {/* Action buttons row - Copy and Verify side by side */}
-                                        <div className="flex gap-2">
-                                            {/* Copy Button */}
-                                            <button
-                                                onClick={() => {
-                                                    copyToClipboard();
-                                                    // Auto-finish tutorial if on last step
-                                                    if (tutorialActive && tutorialSteps[tutorialStep]?.id === 'actions') {
-                                                        setTimeout(() => {
-                                                            setTutorialActive(false);
-                                                            setNotification(t.tutorial?.completed?.message || 'Tutorial completed!');
-                                                            setTimeout(() => setNotification(''), 3000);
-                                                        }, 500);
-                                                    }
-                                                }}
-                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-900 rounded-lg font-medium text-sm transition-all"
-                                            >
-                                                <Icon name={copied ? "Check" : "Copy"} size={18} />
-                                                {copied ? t.copied : t.copy}
-                                            </button>
-                                            {/* Verify with AI Button - FREE, no API key required! */}
-                                            <button
-                                                onClick={() => {
-                                                    verifyPromptWithAI();
-                                                    // Auto-finish tutorial if on last step
-                                                    if (tutorialActive && tutorialSteps[tutorialStep]?.id === 'actions') {
-                                                        setTimeout(() => {
-                                                            setTutorialActive(false);
-                                                            setNotification(t.tutorial?.completed?.message || 'Tutorial completed!');
-                                                            setTimeout(() => setNotification(''), 3000);
-                                                        }, 500);
-                                                    }
-                                                }}
-                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-lg font-medium text-sm transition-all shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40"
-                                            >
-                                                <Icon name="Brain" size={18} />
-                                                {t.verify?.buttonShort || 'Verify'}
-                                                <span className="text-[10px] bg-green-500/30 text-green-300 px-1.5 py-0.5 rounded ml-1">
-                                                    FREE
-                                                </span>
-                                            </button>
-                                        </div>
+                                    <div className="mt-3 flex justify-between text-xs text-slate-500">
+                                        <span>{t.optimizedFor} {aiTargets.find(a => a.id === target)?.name}</span>
+                                        <span>{formattedPrompt.length} {t.chars}</span>
                                     </div>
                                 )}
                             </div>
