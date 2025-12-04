@@ -139,9 +139,12 @@
                 <!-- Kick Form -->
                 <form class="platform-form hidden" id="kickForm">
                     <div class="form-group">
-                        <label for="kickChannel">Název kanálu</label>
-                        <input type="text" id="kickChannel" placeholder="např. xqc" autocomplete="off">
-                        <span class="input-hint">Zadejte jméno Kick kanálu bez URL</span>
+                        <label for="kickChannel">Název kanálu nebo chatroom ID</label>
+                        <input type="text" id="kickChannel" placeholder="např. trainwreckstv nebo xqc:668" autocomplete="off">
+                        <span class="input-hint">
+                            Známé kanály: xqc, trainwreckstv, adinross, stake, roshtein, nickmercs...<br>
+                            Pro ostatní zadejte: <strong>název:chatroomID</strong> (např. streamer:12345)
+                        </span>
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Připojit k chatu</button>
                 </form>
