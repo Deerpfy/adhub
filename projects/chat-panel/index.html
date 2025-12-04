@@ -153,26 +153,59 @@
                 <form class="platform-form hidden" id="youtubeForm">
                     <!-- Mode selector -->
                     <div class="youtube-mode-selector">
+                        <button type="button" class="youtube-mode-btn" data-mode="extension">
+                            <span class="mode-icon">🧩</span>
+                            <span class="mode-name">Extension</span>
+                            <span class="mode-hint">Kombinovany chat</span>
+                        </button>
                         <button type="button" class="youtube-mode-btn active" data-mode="iframe">
                             <span class="mode-icon">📺</span>
                             <span class="mode-name">Iframe</span>
-                            <span class="mode-hint">Bez API klíče</span>
+                            <span class="mode-hint">Samostatny panel</span>
                         </button>
                         <button type="button" class="youtube-mode-btn" data-mode="api">
                             <span class="mode-icon">🔌</span>
                             <span class="mode-name">API</span>
-                            <span class="mode-hint">Vyžaduje klíč</span>
+                            <span class="mode-hint">Vyzaduje klic</span>
                         </button>
+                    </div>
+
+                    <!-- Extension mode fields -->
+                    <div class="youtube-mode-fields hidden" id="youtubeExtensionFields">
+                        <div class="extension-status-box" id="extensionStatusBox">
+                            <div class="extension-status-icon" id="extensionStatusIcon">?</div>
+                            <div class="extension-status-text" id="extensionStatusText">Kontroluji extension...</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="youtubeExtChannel">Video URL nebo ID</label>
+                            <input type="text" id="youtubeExtChannel" placeholder="youtube.com/watch?v=... nebo video ID" autocomplete="off">
+                            <span class="input-hint">
+                                Zadejte URL nebo ID ziveho streamu.<br>
+                                <strong>Vyhoda:</strong> Zpravy se zobrazi spolecne s Twitch/Kick
+                            </span>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block" data-mode="extension" id="youtubeExtSubmit">Pripojit k chatu</button>
+                        <div class="extension-download-section hidden" id="extensionDownloadSection">
+                            <p class="extension-download-hint">Pro pouziti Extension rezimu je potreba nainstalovat rozsireni:</p>
+                            <button type="button" class="btn btn-secondary btn-block" id="downloadExtensionBtn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                Stahnout AdHub Chat Reader Extension
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Iframe mode fields -->
                     <div class="youtube-mode-fields" id="youtubeIframeFields">
                         <div class="form-group">
-                            <label for="youtubeChannel">Kanál nebo Video ID</label>
-                            <input type="text" id="youtubeChannel" placeholder="např. @MrBeast, UC..., nebo video ID" autocomplete="off">
+                            <label for="youtubeChannel">Kanal nebo Video ID</label>
+                            <input type="text" id="youtubeChannel" placeholder="napr. @MrBeast, UC..., nebo video ID" autocomplete="off">
                             <span class="input-hint">
                                 Zadejte: @handle, channel ID (UC...), video ID, nebo celou URL<br>
-                                <strong>Pozor:</strong> Iframe zobrazí chat v samostatném panelu
+                                <strong>Pozor:</strong> Iframe zobrazi chat v samostatnem panelu
                             </span>
                         </div>
                         <button type="submit" class="btn btn-primary btn-block" data-mode="iframe">Zobrazit chat (iframe)</button>
@@ -182,18 +215,18 @@
                     <div class="youtube-mode-fields hidden" id="youtubeApiFields">
                         <div class="form-group">
                             <label for="youtubeVideoId">Video/Stream ID</label>
-                            <input type="text" id="youtubeVideoId" placeholder="např. dQw4w9WgXcQ" autocomplete="off">
+                            <input type="text" id="youtubeVideoId" placeholder="napr. dQw4w9WgXcQ" autocomplete="off">
                             <span class="input-hint">ID videa z URL: youtube.com/watch?v=<strong>ID</strong></span>
                         </div>
                         <div class="form-group">
-                            <label for="youtubeApiKey">YouTube API klíč</label>
+                            <label for="youtubeApiKey">YouTube API klic</label>
                             <input type="password" id="youtubeApiKey" placeholder="AIza..." autocomplete="off">
                             <span class="input-hint">
-                                <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Získat API klíč</a>
-                                - klíč je uložen pouze lokálně
+                                <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Ziskat API klic</a>
+                                - klic je ulozen pouze lokalne
                             </span>
                         </div>
-                        <button type="submit" class="btn btn-primary btn-block" data-mode="api">Připojit k chatu (API)</button>
+                        <button type="submit" class="btn btn-primary btn-block" data-mode="api">Pripojit k chatu (API)</button>
                     </div>
                 </form>
             </div>
@@ -275,6 +308,8 @@
     <script src="adapters/kick-adapter.js"></script>
     <script src="adapters/youtube-adapter.js"></script>
     <script src="adapters/youtube-iframe-adapter.js"></script>
+    <script src="adapters/youtube-extension-adapter.js"></script>
+    <script src="jszip.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>

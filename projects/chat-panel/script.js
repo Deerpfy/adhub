@@ -123,7 +123,7 @@ function initEventListeners() {
 
     // YouTube mode selector
     document.querySelectorAll('.youtube-mode-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
+        btn.addEventListener('click', async (e) => {
             const mode = e.currentTarget.dataset.mode;
 
             // Update button states
@@ -134,16 +134,35 @@ function initEventListeners() {
             // Show/hide appropriate fields
             document.getElementById('youtubeIframeFields').classList.toggle('hidden', mode !== 'iframe');
             document.getElementById('youtubeApiFields').classList.toggle('hidden', mode !== 'api');
+            document.getElementById('youtubeExtensionFields').classList.toggle('hidden', mode !== 'extension');
+
+            // Check extension status when extension mode is selected
+            if (mode === 'extension') {
+                await checkYouTubeExtension();
+            }
         });
     });
+
+    // Download extension button
+    document.getElementById('downloadExtensionBtn')?.addEventListener('click', downloadChatReaderExtension);
 
     document.getElementById('youtubeForm').addEventListener('submit', (e) => {
         e.preventDefault();
 
         // Determine which mode is active
-        const isIframeMode = document.querySelector('.youtube-mode-btn[data-mode="iframe"]').classList.contains('active');
+        const activeMode = document.querySelector('.youtube-mode-btn.active')?.dataset.mode || 'iframe';
 
-        if (isIframeMode) {
+        if (activeMode === 'extension') {
+            // Extension mode
+            const channel = document.getElementById('youtubeExtChannel').value.trim();
+            if (channel) {
+                addChannel('youtube-extension', channel);
+                closeModal(DOM.addChannelModal);
+                document.getElementById('youtubeExtChannel').value = '';
+            } else {
+                showToast('Vyplnte video URL nebo ID', 'error');
+            }
+        } else if (activeMode === 'iframe') {
             // Iframe mode
             const channel = document.getElementById('youtubeChannel').value.trim();
             if (channel) {
@@ -151,7 +170,7 @@ function initEventListeners() {
                 closeModal(DOM.addChannelModal);
                 document.getElementById('youtubeChannel').value = '';
             } else {
-                showToast('Vyplňte kanál nebo video ID', 'error');
+                showToast('Vyplnte kanal nebo video ID', 'error');
             }
         } else {
             // API mode
@@ -164,7 +183,7 @@ function initEventListeners() {
                 closeModal(DOM.addChannelModal);
                 document.getElementById('youtubeVideoId').value = '';
             } else {
-                showToast('Vyplňte Video ID a API klíč', 'error');
+                showToast('Vyplnte Video ID a API klic', 'error');
             }
         }
     });
@@ -263,8 +282,11 @@ async function addChannel(platform, channel, options = {}) {
             case 'youtube-iframe':
                 adapter = new YouTubeIframeAdapter({ channel });
                 break;
+            case 'youtube-extension':
+                adapter = new YouTubeExtensionAdapter({ channel });
+                break;
             default:
-                throw new Error(`Neznámá platforma: ${platform}`);
+                throw new Error(`Neznama platforma: ${platform}`);
         }
     } catch (error) {
         showToast(`Chyba při vytváření adapteru: ${error.message}`, 'error');
@@ -421,6 +443,7 @@ function getPlatformIcon(platform) {
             </svg>`;
         case 'youtube':
         case 'youtube-iframe':
+        case 'youtube-extension':
             return `<svg viewBox="0 0 24 24" fill="currentColor">
                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
             </svg>`;
@@ -963,6 +986,161 @@ function clearAllData() {
 }
 
 // =============================================================================
+// YOUTUBE EXTENSION
+// =============================================================================
+
+const GITHUB_REPO = 'Deerpfy/adhub';
+const GITHUB_BRANCH = 'main';
+const EXTENSION_PATH = 'projects/chat-panel/extension';
+const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com';
+
+/**
+ * Kontrola YouTube Chat Reader extension
+ */
+async function checkYouTubeExtension() {
+    const statusBox = document.getElementById('extensionStatusBox');
+    const statusIcon = document.getElementById('extensionStatusIcon');
+    const statusText = document.getElementById('extensionStatusText');
+    const downloadSection = document.getElementById('extensionDownloadSection');
+    const submitBtn = document.getElementById('youtubeExtSubmit');
+
+    if (!statusBox) return;
+
+    // Reset stavu
+    statusBox.className = 'extension-status-box checking';
+    statusIcon.textContent = '?';
+    statusText.innerHTML = 'Kontroluji extension...';
+    downloadSection?.classList.add('hidden');
+    if (submitBtn) submitBtn.disabled = true;
+
+    try {
+        // Zkontroluj zda je YouTubeExtensionAdapter definovan
+        if (typeof YouTubeExtensionAdapter === 'undefined') {
+            throw new Error('Adapter not loaded');
+        }
+
+        const result = await YouTubeExtensionAdapter.checkExtension();
+
+        if (result.available) {
+            statusBox.className = 'extension-status-box available';
+            statusIcon.textContent = '✓';
+            statusText.innerHTML = `Extension aktivni <span class="version">v${result.version || '?'}</span>`;
+            downloadSection?.classList.add('hidden');
+            if (submitBtn) submitBtn.disabled = false;
+        } else {
+            statusBox.className = 'extension-status-box unavailable';
+            statusIcon.textContent = '✕';
+            statusText.innerHTML = 'Extension neni nainstalovana';
+            downloadSection?.classList.remove('hidden');
+            if (submitBtn) submitBtn.disabled = true;
+        }
+    } catch (error) {
+        console.error('[Extension Check] Error:', error);
+        statusBox.className = 'extension-status-box unavailable';
+        statusIcon.textContent = '!';
+        statusText.innerHTML = 'Nelze zkontrolovat extension';
+        downloadSection?.classList.remove('hidden');
+        if (submitBtn) submitBtn.disabled = true;
+    }
+}
+
+/**
+ * Stazeni Chat Reader extension jako ZIP
+ */
+async function downloadChatReaderExtension() {
+    const downloadBtn = document.getElementById('downloadExtensionBtn');
+    const downloadSection = document.getElementById('extensionDownloadSection');
+
+    if (!downloadBtn) return;
+
+    // Zobraz progress
+    const originalContent = downloadBtn.innerHTML;
+    downloadBtn.disabled = true;
+    downloadBtn.innerHTML = 'Stahuji...';
+
+    // Pridej progress element
+    let progressEl = downloadSection.querySelector('.extension-download-progress');
+    if (!progressEl) {
+        progressEl = document.createElement('div');
+        progressEl.className = 'extension-download-progress';
+        progressEl.innerHTML = `
+            <div class="extension-progress-bar-bg">
+                <div class="extension-progress-bar" id="extProgressBar"></div>
+            </div>
+            <div class="extension-progress-text" id="extProgressText">Pripravuji...</div>
+        `;
+        downloadSection.appendChild(progressEl);
+    }
+    progressEl.classList.remove('hidden');
+
+    const progressBar = document.getElementById('extProgressBar');
+    const progressText = document.getElementById('extProgressText');
+
+    try {
+        // Seznam souboru k stazeni
+        const files = [
+            'manifest.json',
+            'content-script.js',
+            'background.js',
+            'adhub-bridge.js',
+            'icons/icon.svg',
+        ];
+
+        const zip = new JSZip();
+        const total = files.length;
+        let loaded = 0;
+
+        for (const file of files) {
+            progressText.textContent = `Stahuji ${file}...`;
+            progressBar.style.width = `${(loaded / total) * 100}%`;
+
+            const url = `${GITHUB_RAW_BASE}/${GITHUB_REPO}/${GITHUB_BRANCH}/${EXTENSION_PATH}/${file}`;
+
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    const content = await response.text();
+                    zip.file(file, content);
+                } else {
+                    console.warn(`[Extension Download] Failed to fetch ${file}:`, response.status);
+                }
+            } catch (e) {
+                console.warn(`[Extension Download] Error fetching ${file}:`, e);
+            }
+
+            loaded++;
+        }
+
+        progressText.textContent = 'Generuji ZIP...';
+        progressBar.style.width = '90%';
+
+        // Generuj ZIP
+        const blob = await zip.generateAsync({ type: 'blob' });
+
+        // Stahni
+        const downloadUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = 'adhub-chat-reader-extension.zip';
+        a.click();
+        URL.revokeObjectURL(downloadUrl);
+
+        progressText.textContent = 'Hotovo! Rozbalte ZIP a nahrajte do chrome://extensions';
+        progressBar.style.width = '100%';
+
+        showToast('Extension stazena! Rozbalte a nahrajte do prohlizece.', 'success');
+
+    } catch (error) {
+        console.error('[Extension Download] Error:', error);
+        progressText.textContent = `Chyba: ${error.message}`;
+        showToast('Chyba pri stahovani extension', 'error');
+    } finally {
+        downloadBtn.disabled = false;
+        downloadBtn.innerHTML = originalContent;
+    }
+}
+
+// =============================================================================
 // DEBUG
 // =============================================================================
 
@@ -971,5 +1149,7 @@ window.AdHubChat = {
     addChannel,
     removeChannel,
     showToast,
+    checkYouTubeExtension,
+    downloadChatReaderExtension,
     version: '2.0.0',
 };
