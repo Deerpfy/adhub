@@ -151,20 +151,50 @@
 
                 <!-- YouTube Form -->
                 <form class="platform-form hidden" id="youtubeForm">
-                    <div class="form-group">
-                        <label for="youtubeVideoId">Video/Stream ID</label>
-                        <input type="text" id="youtubeVideoId" placeholder="např. dQw4w9WgXcQ" autocomplete="off">
-                        <span class="input-hint">ID videa z URL: youtube.com/watch?v=<strong>ID</strong></span>
+                    <!-- Mode selector -->
+                    <div class="youtube-mode-selector">
+                        <button type="button" class="youtube-mode-btn active" data-mode="iframe">
+                            <span class="mode-icon">📺</span>
+                            <span class="mode-name">Iframe</span>
+                            <span class="mode-hint">Bez API klíče</span>
+                        </button>
+                        <button type="button" class="youtube-mode-btn" data-mode="api">
+                            <span class="mode-icon">🔌</span>
+                            <span class="mode-name">API</span>
+                            <span class="mode-hint">Vyžaduje klíč</span>
+                        </button>
                     </div>
-                    <div class="form-group">
-                        <label for="youtubeApiKey">YouTube API klíč</label>
-                        <input type="password" id="youtubeApiKey" placeholder="AIza..." autocomplete="off">
-                        <span class="input-hint">
-                            <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Získat API klíč</a>
-                            - klíč je uložen pouze lokálně
-                        </span>
+
+                    <!-- Iframe mode fields -->
+                    <div class="youtube-mode-fields" id="youtubeIframeFields">
+                        <div class="form-group">
+                            <label for="youtubeChannel">Kanál nebo Video ID</label>
+                            <input type="text" id="youtubeChannel" placeholder="např. @MrBeast, UC..., nebo video ID" autocomplete="off">
+                            <span class="input-hint">
+                                Zadejte: @handle, channel ID (UC...), video ID, nebo celou URL<br>
+                                <strong>Pozor:</strong> Iframe zobrazí chat v samostatném panelu
+                            </span>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block" data-mode="iframe">Zobrazit chat (iframe)</button>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-block">Připojit k chatu</button>
+
+                    <!-- API mode fields -->
+                    <div class="youtube-mode-fields hidden" id="youtubeApiFields">
+                        <div class="form-group">
+                            <label for="youtubeVideoId">Video/Stream ID</label>
+                            <input type="text" id="youtubeVideoId" placeholder="např. dQw4w9WgXcQ" autocomplete="off">
+                            <span class="input-hint">ID videa z URL: youtube.com/watch?v=<strong>ID</strong></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="youtubeApiKey">YouTube API klíč</label>
+                            <input type="password" id="youtubeApiKey" placeholder="AIza..." autocomplete="off">
+                            <span class="input-hint">
+                                <a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Získat API klíč</a>
+                                - klíč je uložen pouze lokálně
+                            </span>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block" data-mode="api">Připojit k chatu (API)</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -244,6 +274,7 @@
     <script src="adapters/twitch-adapter.js"></script>
     <script src="adapters/kick-adapter.js"></script>
     <script src="adapters/youtube-adapter.js"></script>
+    <script src="adapters/youtube-iframe-adapter.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
