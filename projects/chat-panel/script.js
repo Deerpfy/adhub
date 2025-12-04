@@ -255,8 +255,27 @@ function initEventListeners() {
  * Extrahuje zobrazované jméno z kanálu/URL
  */
 function extractDisplayName(platform, channel) {
-    // Pro Twitch a Kick je channel přímo username
-    if (platform === 'twitch' || platform === 'kick') {
+    // Pro Twitch - extrahovat username z URL
+    if (platform === 'twitch') {
+        // https://www.twitch.tv/username nebo https://twitch.tv/username
+        if (channel.includes('twitch.tv')) {
+            const match = channel.match(/twitch\.tv\/([a-zA-Z0-9_]+)/);
+            if (match) {
+                return match[1];
+            }
+        }
+        return channel;
+    }
+
+    // Pro Kick - extrahovat username z URL
+    if (platform === 'kick') {
+        // https://kick.com/username
+        if (channel.includes('kick.com')) {
+            const match = channel.match(/kick\.com\/([a-zA-Z0-9_-]+)/);
+            if (match) {
+                return match[1];
+            }
+        }
         return channel;
     }
 
