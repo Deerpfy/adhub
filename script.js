@@ -315,6 +315,7 @@ const BASE_TRANSLATIONS = {
         idea_modal_description: 'Máte nápad na novou funkci nebo vylepšení? Připojte se k našemu Discord serveru a sdílejte své nápady v AI kanálu!',
         view_count: 'zobrazení',
         view_count_title: 'zobrazení',
+        top_clicked_title: 'Nejproklikávanější položka',
         // Sections
         section_our_tools: 'Naše nástroje',
         section_our_tools_badge: 'Lokální projekty',
@@ -677,6 +678,7 @@ const BASE_TRANSLATIONS = {
         idea_modal_description: 'Have an idea for a new feature or improvement? Join our Discord server and share your ideas in the AI channel!',
         view_count: 'views',
         view_count_title: 'views',
+        top_clicked_title: 'Most clicked item',
         // Sections
         section_our_tools: 'Our Tools',
         section_our_tools_badge: 'Local projects',
@@ -2940,8 +2942,17 @@ function renderTools() {
     if (!toolsGrid || !linksGrid || !emptyState) return;
 
     // Separate tools and links from filtered items
-    const filteredTools = filtered.filter(item => allTools.includes(item));
-    const filteredLinks = filtered.filter(item => allLinks.includes(item));
+    let filteredTools = filtered.filter(item => allTools.includes(item));
+    let filteredLinks = filtered.filter(item => allLinks.includes(item));
+
+    // Seřazení podle počtu prokliků (nejvíce první)
+    const sortByViewCount = (a, b) => getViewCount(b.id) - getViewCount(a.id);
+    filteredTools = filteredTools.sort(sortByViewCount);
+    filteredLinks = filteredLinks.sort(sortByViewCount);
+
+    // Určení top 3 položek (kombinovaně ze všech nástrojů a odkazů)
+    const allItemsSorted = [...filteredTools, ...filteredLinks].sort(sortByViewCount);
+    const top3Ids = allItemsSorted.slice(0, 3).map(item => item.id);
 
     // Check if both are empty
     if (filteredTools.length === 0 && filteredLinks.length === 0) {
@@ -2956,7 +2967,7 @@ function renderTools() {
     // Render tools section
     if (filteredTools.length > 0) {
         if (toolsSection) toolsSection.classList.remove('hidden');
-        toolsGrid.innerHTML = filteredTools.map(item => createToolCard(item)).join('');
+        toolsGrid.innerHTML = filteredTools.map(item => createToolCard(item, top3Ids)).join('');
     } else {
         if (toolsSection) toolsSection.classList.add('hidden');
         toolsGrid.innerHTML = '';
@@ -2965,7 +2976,7 @@ function renderTools() {
     // Render links section
     if (filteredLinks.length > 0) {
         if (linksSection) linksSection.classList.remove('hidden');
-        linksGrid.innerHTML = filteredLinks.map(item => createLinkCard(item)).join('');
+        linksGrid.innerHTML = filteredLinks.map(item => createLinkCard(item, top3Ids)).join('');
     } else {
         if (linksSection) linksSection.classList.add('hidden');
         linksGrid.innerHTML = '';
@@ -2973,13 +2984,16 @@ function renderTools() {
 }
 
 // Create tool card
-function createToolCard(tool) {
+function createToolCard(tool, top3Ids = []) {
     const isLocalFile = tool.type === 'local' || !tool.url.startsWith('http');
     const isYouTubeDownloader = tool.id === 'youtube-downloader';
     const viewCount = getViewCount(tool.id);
+    const isTop3 = top3Ids.includes(tool.id);
+    const topRank = top3Ids.indexOf(tool.id) + 1; // 1, 2, nebo 3
 
     return `
-        <div class="tool-card" data-id="${tool.id}" data-type="tool">
+        <div class="tool-card${isTop3 ? ' top-clicked' : ''}" data-id="${tool.id}" data-type="tool">
+            ${isTop3 ? `<span class="top-badge" title="${t('top_clicked_title')}">⭐ TOP ${topRank}</span>` : ''}
             <div class="tool-header">
                 <div class="tool-title">
                     <span class="tool-icon">${tool.icon || '🔧'}</span>
@@ -3014,12 +3028,15 @@ function createToolCard(tool) {
 }
 
 // Create link card
-function createLinkCard(link) {
+function createLinkCard(link, top3Ids = []) {
     const url = link.type === 'local' ? link.url : link.url;
     const viewCount = getViewCount(link.id);
+    const isTop3 = top3Ids.includes(link.id);
+    const topRank = top3Ids.indexOf(link.id) + 1; // 1, 2, nebo 3
 
     return `
-        <div class="tool-card link" data-id="${link.id}" data-type="link">
+        <div class="tool-card link${isTop3 ? ' top-clicked' : ''}" data-id="${link.id}" data-type="link">
+            ${isTop3 ? `<span class="top-badge" title="${t('top_clicked_title')}">⭐ TOP ${topRank}</span>` : ''}
             <div class="tool-header">
                 <div class="tool-title">
                     <span class="tool-icon">${link.icon || '🔗'}</span>
