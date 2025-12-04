@@ -132,21 +132,19 @@ async function getOrCreateBackgroundWindow() {
     }
   }
 
-  // Vytvor nove minimalizovane okno
+  // Vytvor nove okno a hned ho minimalizuj
   const window = await chrome.windows.create({
     url: 'about:blank',
     type: 'popup',
     width: 400,
     height: 600,
-    left: -2000, // Posun mimo obrazovku
-    top: 0,
   });
 
-  // Minimalizuj okno po vytvoreni
-  try {
-    await chrome.windows.update(window.id, { state: 'minimized' });
-  } catch (e) {
-    console.warn('[AdHub Chat Reader] Could not minimize window:', e);
+  // Minimalizuj okno hned po vytvoreni
+  if (window.id) {
+    await chrome.windows.update(window.id, { state: 'minimized' }).catch(e => {
+      console.warn('[AdHub Chat Reader] Could not minimize window:', e);
+    });
   }
 
   state.backgroundWindowId = window.id;
