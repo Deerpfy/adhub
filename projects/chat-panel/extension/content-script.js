@@ -36,6 +36,34 @@
     return url.searchParams.get('v');
   }
 
+  /**
+   * Extrahuje název kanálu z YouTube live chat stránky
+   */
+  function extractChannelName() {
+    // Zkusit různé selektory kde může být název kanálu
+    const selectors = [
+      'yt-live-chat-header-renderer #channel-name',
+      'yt-live-chat-header-renderer #owner-name',
+      '#owner-name',
+      '#channel-name',
+    ];
+
+    for (const selector of selectors) {
+      const element = document.querySelector(selector);
+      if (element?.textContent?.trim()) {
+        return element.textContent.trim();
+      }
+    }
+
+    // Zkusit z document title
+    const title = document.title;
+    if (title && !title.includes('YouTube')) {
+      return title.replace(' - Live Chat', '').trim();
+    }
+
+    return null;
+  }
+
   // ============================================================================
   // PARSOVANI ZPRAV
   // ============================================================================
@@ -212,12 +240,16 @@
     });
 
     state.isActive = true;
-    console.log('[AdHub Chat Reader] Observer started');
+
+    // Extrahuj název kanálu
+    state.channelName = extractChannelName();
+    console.log('[AdHub Chat Reader] Observer started, channel:', state.channelName);
 
     // Informuj background script
     chrome.runtime.sendMessage({
       action: 'chatConnected',
       videoId: state.videoId,
+      channelName: state.channelName,
     });
   }
 

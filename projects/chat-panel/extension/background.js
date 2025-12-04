@@ -33,7 +33,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       break;
 
     case 'chatConnected':
-      handleChatConnected(request.videoId, sender);
+      handleChatConnected(request.videoId, request.channelName, sender);
       sendResponse({ success: true });
       break;
 
@@ -87,11 +87,13 @@ function handleChatMessage(message, sender) {
   });
 }
 
-function handleChatConnected(videoId, sender) {
+function handleChatConnected(videoId, channelName, sender) {
+  console.log('[AdHub Chat Reader] Chat connected:', videoId, 'channel:', channelName);
+
   if (sender.tab) {
     state.activeSessions.set(videoId, {
       tabId: sender.tab.id,
-      channelName: '',
+      channelName: channelName || '',
       startTime: Date.now(),
     });
   }
@@ -99,6 +101,7 @@ function handleChatConnected(videoId, sender) {
   broadcastToAdHub({
     type: 'youtube-chat-connected',
     videoId: videoId,
+    channelName: channelName || '',
   });
 }
 
