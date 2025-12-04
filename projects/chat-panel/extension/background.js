@@ -1,0 +1,197 @@
+/**
+ * AdHub YouTube Chat Reader - Background Service Worker
+ *
+ * Relay zprav mezi content scripty a AdHub strankama.
+ * Spravuje aktivni chat sessions.
+ */
+
+console.log('[AdHub Chat Reader] Background service worker started');
+
+// ============================================================================
+// STAV
+// ============================================================================
+
+const state = {
+  activeSessions: new Map(), // videoId -> { tabId, channelName, startTime }
+  connectedPorts: new Set(), // Ports from AdHub pages
+  messageQueue: [], // Fronta zprav pro pripadne odpojene prijemce
+};
+
+// ============================================================================
+// MESSAGE HANDLING
+// ============================================================================
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log('[AdHub Chat Reader] Received message:', request.action, 'from:', sender.tab?.id || 'extension');
+
+  switch (request.action) {
+    // Od content scriptu (YouTube chat)
+    case 'chatMessage':
+      handleChatMessage(request.message, sender);
+      sendResponse({ received: true });
+      break;
+
+    case 'chatConnected':
+      handleChatConnected(request.videoId, sender);
+      sendResponse({ success: true });
+      break;
+
+    // Od AdHub stranky
+    case 'openYouTubeChat':
+      openYouTubeChat(request.videoId, request.channelName)
+        .then(result => sendResponse(result))
+        .catch(err => sendResponse({ success: false, error: err.message }));
+      return true; // Async response
+
+    case 'closeYouTubeChat':
+      closeYouTubeChat(request.videoId)
+        .then(result => sendResponse(result))
+        .catch(err => sendResponse({ success: false, error: err.message }));
+      return true;
+
+    case 'getActiveSessions':
+      sendResponse({
+        sessions: Array.from(state.activeSessions.entries()).map(([videoId, data]) => ({
+          videoId,
+          channelName: data.channelName,
+          startTime: data.startTime,
+        })),
+      });
+      break;
+
+    case 'ping':
+      sendResponse({ pong: true, version: chrome.runtime.getManifest().version });
+      break;
+
+    case 'getVersion':
+      sendResponse({ version: chrome.runtime.getManifest().version });
+      break;
+
+    default:
+      sendResponse({ error: 'Unknown action' });
+  }
+
+  return false;
+});
+
+// ============================================================================
+// CHAT MESSAGE RELAY
+// ============================================================================
+
+function handleChatMessage(message, sender) {
+  // Broadcast zpravy na vsechny AdHub stranky
+  broadcastToAdHub({
+    type: 'youtube-chat-message',
+    message: message,
+  });
+}
+
+function handleChatConnected(videoId, sender) {
+  if (sender.tab) {
+    state.activeSessions.set(videoId, {
+      tabId: sender.tab.id,
+      channelName: '',
+      startTime: Date.now(),
+    });
+  }
+
+  broadcastToAdHub({
+    type: 'youtube-chat-connected',
+    videoId: videoId,
+  });
+}
+
+function broadcastToAdHub(data) {
+  // Posli vsem pripojenym AdHub strankam
+  chrome.tabs.query({ url: ['https://deerpfy.github.io/adhub/*'] }, (tabs) => {
+    tabs.forEach(tab => {
+      chrome.tabs.sendMessage(tab.id, data).catch(() => {
+        // Tab uz neexistuje nebo neni pripraven
+      });
+    });
+  });
+}
+
+// ============================================================================
+// OTEVIRANI YOUTUBE CHATU
+// ============================================================================
+
+async function openYouTubeChat(videoId, channelName) {
+  console.log('[AdHub Chat Reader] Opening YouTube chat for:', videoId);
+
+  // Zkontroluj jestli uz neni otevreny
+  if (state.activeSessions.has(videoId)) {
+    const session = state.activeSessions.get(videoId);
+    // Zkontroluj jestli tab jeste existuje
+    try {
+      await chrome.tabs.get(session.tabId);
+      console.log('[AdHub Chat Reader] Chat already open in tab:', session.tabId);
+      return { success: true, tabId: session.tabId, alreadyOpen: true };
+    } catch (e) {
+      // Tab uz neexistuje, odstran session
+      state.activeSessions.delete(videoId);
+    }
+  }
+
+  // Otevri novy tab s chatem
+  const chatUrl = `https://www.youtube.com/live_chat?v=${videoId}&embed_domain=deerpfy.github.io`;
+
+  try {
+    const tab = await chrome.tabs.create({
+      url: chatUrl,
+      active: false, // Otevri na pozadi
+    });
+
+    state.activeSessions.set(videoId, {
+      tabId: tab.id,
+      channelName: channelName || '',
+      startTime: Date.now(),
+    });
+
+    console.log('[AdHub Chat Reader] Opened chat in tab:', tab.id);
+    return { success: true, tabId: tab.id };
+  } catch (error) {
+    console.error('[AdHub Chat Reader] Error opening chat:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+async function closeYouTubeChat(videoId) {
+  console.log('[AdHub Chat Reader] Closing YouTube chat for:', videoId);
+
+  const session = state.activeSessions.get(videoId);
+  if (!session) {
+    return { success: false, error: 'Session not found' };
+  }
+
+  try {
+    await chrome.tabs.remove(session.tabId);
+    state.activeSessions.delete(videoId);
+    return { success: true };
+  } catch (error) {
+    // Tab uz mozna neexistuje
+    state.activeSessions.delete(videoId);
+    return { success: true, note: 'Tab was already closed' };
+  }
+}
+
+// ============================================================================
+// TAB CLEANUP
+// ============================================================================
+
+chrome.tabs.onRemoved.addListener((tabId) => {
+  // Odstran session pokud byl tab zavren
+  for (const [videoId, session] of state.activeSessions) {
+    if (session.tabId === tabId) {
+      state.activeSessions.delete(videoId);
+      console.log('[AdHub Chat Reader] Removed session for closed tab:', videoId);
+
+      // Informuj AdHub stranky
+      broadcastToAdHub({
+        type: 'youtube-chat-disconnected',
+        videoId: videoId,
+      });
+      break;
+    }
+  }
+});
