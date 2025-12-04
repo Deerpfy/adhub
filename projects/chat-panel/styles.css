@@ -414,8 +414,19 @@ a:hover {
     background: var(--error);
 }
 
-.channel-remove {
+/* Channel Actions */
+.channel-actions {
+    display: flex;
+    gap: 4px;
     opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.channel-item:hover .channel-actions {
+    opacity: 1;
+}
+
+.channel-action-btn {
     padding: 4px;
     background: transparent;
     border: none;
@@ -423,15 +434,34 @@ a:hover {
     cursor: pointer;
     border-radius: 4px;
     transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.channel-item:hover .channel-remove {
-    opacity: 1;
+.channel-action-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.channel-reconnect:hover {
+    background: var(--success);
+    color: white;
 }
 
 .channel-remove:hover {
     background: var(--error);
     color: white;
+}
+
+/* Reconnect animation */
+.channel-item.connecting .channel-reconnect svg {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 /* Chat Area */
