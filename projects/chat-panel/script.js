@@ -582,24 +582,27 @@ function renderMessage(message) {
 function replaceEmotes(text, emotes) {
     if (!emotes || emotes.length === 0) return escapeHtml(text);
 
-    // Seřadit od konce (emotes jsou už seřazené v adapteru)
-    let result = text;
-    const replacements = [];
+    // Seřadit emotes podle pozice (od začátku)
+    const sortedEmotes = [...emotes].sort((a, b) => a.start - b.start);
 
-    for (const emote of emotes) {
-        const emoteName = text.substring(emote.start, emote.end + 1);
-        replacements.push({
-            start: emote.start,
-            end: emote.end,
-            html: `<img class="message-emote" src="${escapeHtml(emote.url)}" alt="${escapeHtml(emote.name)}" title="${escapeHtml(emote.name)}">`,
-        });
+    let result = '';
+    let lastEnd = 0;
+
+    for (const emote of sortedEmotes) {
+        // Přidat text před tímto emotem (escapovaný)
+        if (emote.start > lastEnd) {
+            result += escapeHtml(text.substring(lastEnd, emote.start));
+        }
+
+        // Přidat emote obrázek
+        result += `<img class="message-emote" src="${escapeHtml(emote.url)}" alt="${escapeHtml(emote.name)}" title="${escapeHtml(emote.name)}">`;
+
+        lastEnd = emote.end + 1;
     }
 
-    // Aplikovat replacements od konce
-    for (const r of replacements) {
-        const before = result.substring(0, r.start);
-        const after = result.substring(r.end + 1);
-        result = escapeHtml(before) + r.html + escapeHtml(after);
+    // Přidat zbývající text za posledním emotem (escapovaný)
+    if (lastEnd < text.length) {
+        result += escapeHtml(text.substring(lastEnd));
     }
 
     return result;
