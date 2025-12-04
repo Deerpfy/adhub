@@ -555,9 +555,10 @@ function renderMessage(message) {
     }
 
     // Zjistit display name kanálu
-    const channelId = `${message.platform}-${message.channel.toLowerCase()}`;
+    const channelName = message.channel || 'unknown';
+    const channelId = `${message.platform}-${channelName.toLowerCase()}`;
     const channelData = AppState.channels.get(channelId);
-    const channelDisplayName = channelData?.displayName || message.channel;
+    const channelDisplayName = channelData?.displayName || channelName;
     const basePlatform = message.platform.split('-')[0]; // twitch, kick, youtube
 
     const messageEl = document.createElement('div');
