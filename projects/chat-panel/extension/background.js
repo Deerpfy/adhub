@@ -12,9 +12,10 @@ console.log('[AdHub Chat Reader] Background service worker started');
 // ============================================================================
 
 const state = {
-  activeSessions: new Map(), // videoId -> { tabId, channelName, startTime }
+  activeSessions: new Map(), // videoId -> { tabId, windowId, channelName, startTime }
   connectedPorts: new Set(), // Ports from AdHub pages
   messageQueue: [], // Fronta zprav pro pripadne odpojene prijemce
+  backgroundWindowId: null, // ID skryteho okna pro vsechny chaty
 };
 
 // ============================================================================
@@ -116,6 +117,42 @@ function broadcastToAdHub(data) {
 // OTEVIRANI YOUTUBE CHATU
 // ============================================================================
 
+/**
+ * Ziskani nebo vytvoreni skryteho okna pro chat taby
+ */
+async function getOrCreateBackgroundWindow() {
+  // Zkontroluj jestli okno jeste existuje
+  if (state.backgroundWindowId) {
+    try {
+      await chrome.windows.get(state.backgroundWindowId);
+      return state.backgroundWindowId;
+    } catch (e) {
+      // Okno uz neexistuje
+      state.backgroundWindowId = null;
+    }
+  }
+
+  // Vytvor nove minimalizovane okno
+  const window = await chrome.windows.create({
+    url: 'about:blank',
+    type: 'popup',
+    state: 'minimized',
+    width: 400,
+    height: 600,
+    focused: false,
+  });
+
+  state.backgroundWindowId = window.id;
+  console.log('[AdHub Chat Reader] Created background window:', window.id);
+
+  // Zavri prazdny tab
+  if (window.tabs && window.tabs[0]) {
+    await chrome.tabs.remove(window.tabs[0].id).catch(() => {});
+  }
+
+  return window.id;
+}
+
 async function openYouTubeChat(videoId, channelName) {
   console.log('[AdHub Chat Reader] Opening YouTube chat for:', videoId);
 
@@ -133,23 +170,28 @@ async function openYouTubeChat(videoId, channelName) {
     }
   }
 
-  // Otevri novy tab s chatem
+  // Ziskej nebo vytvor skryte okno
+  const windowId = await getOrCreateBackgroundWindow();
+
+  // Otevri novy tab s chatem ve skrytem okne
   const chatUrl = `https://www.youtube.com/live_chat?v=${videoId}&embed_domain=deerpfy.github.io`;
 
   try {
     const tab = await chrome.tabs.create({
       url: chatUrl,
-      active: false, // Otevri na pozadi
+      windowId: windowId,
+      active: false,
     });
 
     state.activeSessions.set(videoId, {
       tabId: tab.id,
+      windowId: windowId,
       channelName: channelName || '',
       startTime: Date.now(),
     });
 
-    console.log('[AdHub Chat Reader] Opened chat in tab:', tab.id);
-    return { success: true, tabId: tab.id };
+    console.log('[AdHub Chat Reader] Opened chat in background tab:', tab.id);
+    return { success: true, tabId: tab.id, windowId: windowId };
   } catch (error) {
     console.error('[AdHub Chat Reader] Error opening chat:', error);
     return { success: false, error: error.message };
@@ -167,16 +209,21 @@ async function closeYouTubeChat(videoId) {
   try {
     await chrome.tabs.remove(session.tabId);
     state.activeSessions.delete(videoId);
+
+    // Zavri background okno pokud je prazdne
+    await cleanupBackgroundWindowIfEmpty();
+
     return { success: true };
   } catch (error) {
     // Tab uz mozna neexistuje
     state.activeSessions.delete(videoId);
+    await cleanupBackgroundWindowIfEmpty();
     return { success: true, note: 'Tab was already closed' };
   }
 }
 
 // ============================================================================
-// TAB CLEANUP
+// TAB & WINDOW CLEANUP
 // ============================================================================
 
 chrome.tabs.onRemoved.addListener((tabId) => {
@@ -194,4 +241,52 @@ chrome.tabs.onRemoved.addListener((tabId) => {
       break;
     }
   }
+
+  // Pokud nezbyly zadne sessions, zavri background okno
+  cleanupBackgroundWindowIfEmpty();
 });
+
+chrome.windows.onRemoved.addListener((windowId) => {
+  // Pokud bylo zavreno background okno, vymaz vsechny sessions z neho
+  if (windowId === state.backgroundWindowId) {
+    console.log('[AdHub Chat Reader] Background window closed');
+    state.backgroundWindowId = null;
+
+    // Oznac vsechny sessions jako odpojene
+    for (const [videoId, session] of state.activeSessions) {
+      if (session.windowId === windowId) {
+        state.activeSessions.delete(videoId);
+        broadcastToAdHub({
+          type: 'youtube-chat-disconnected',
+          videoId: videoId,
+        });
+      }
+    }
+  }
+});
+
+/**
+ * Zavre background okno pokud neobsahuje zadne aktivni sessions
+ */
+async function cleanupBackgroundWindowIfEmpty() {
+  if (!state.backgroundWindowId) return;
+
+  // Zkontroluj jestli jsou nejake aktivni sessions
+  let hasActiveSessions = false;
+  for (const [, session] of state.activeSessions) {
+    if (session.windowId === state.backgroundWindowId) {
+      hasActiveSessions = true;
+      break;
+    }
+  }
+
+  if (!hasActiveSessions) {
+    try {
+      await chrome.windows.remove(state.backgroundWindowId);
+      console.log('[AdHub Chat Reader] Closed empty background window');
+    } catch (e) {
+      // Okno uz mozna neexistuje
+    }
+    state.backgroundWindowId = null;
+  }
+}

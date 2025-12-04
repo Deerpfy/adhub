@@ -393,22 +393,39 @@ function renderChannelItem(channelData) {
     item.className = `channel-item ${channelData.state}`;
     item.dataset.channelId = channelData.id;
 
+    // Zobrazit kratsi nazev platformy
+    const platformDisplay = channelData.platform.replace('youtube-', 'yt-');
+
     item.innerHTML = `
-        <div class="channel-icon ${channelData.platform}">
+        <div class="channel-icon ${channelData.platform.split('-')[0]}">
             ${getPlatformIcon(channelData.platform)}
         </div>
         <div class="channel-info">
             <div class="channel-name">${escapeHtml(channelData.channel)}</div>
-            <div class="channel-platform">${channelData.platform}</div>
+            <div class="channel-platform">${platformDisplay}</div>
         </div>
         <div class="channel-status"></div>
-        <button class="channel-remove" title="Odebrat kanál">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"></line>
-                <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
-        </button>
+        <div class="channel-actions">
+            <button class="channel-action-btn channel-reconnect" title="Obnovit spojeni">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M23 4v6h-6"></path>
+                    <path d="M1 20v-6h6"></path>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+            </button>
+            <button class="channel-action-btn channel-remove" title="Odebrat kanal">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+        </div>
     `;
+
+    item.querySelector('.channel-reconnect').addEventListener('click', (e) => {
+        e.stopPropagation();
+        reconnectChannel(channelData.id);
+    });
 
     item.querySelector('.channel-remove').addEventListener('click', (e) => {
         e.stopPropagation();
@@ -416,6 +433,27 @@ function renderChannelItem(channelData) {
     });
 
     DOM.channelList.appendChild(item);
+}
+
+/**
+ * Obnoveni spojeni kanalu
+ */
+function reconnectChannel(channelId) {
+    const channelData = AppState.channels.get(channelId);
+    if (!channelData) return;
+
+    console.log('[Reconnect] Reconnecting channel:', channelId);
+
+    // Odpojit
+    channelData.adapter.disconnect();
+    channelData.state = 'connecting';
+    updateChannelItemState(channelId, 'connecting');
+
+    // Znovu pripojit
+    setTimeout(() => {
+        channelData.adapter.connect();
+        showToast(`Obnovuji ${channelData.channel}...`, 'info');
+    }, 500);
 }
 
 /**
