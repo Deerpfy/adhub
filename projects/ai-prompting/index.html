@@ -1214,18 +1214,20 @@ Prompt k analýze:
             const [showTutorialConfirm, setShowTutorialConfirm] = useState(false);
             const [tutorialActive, setTutorialActive] = useState(false);
             const [tutorialStep, setTutorialStep] = useState(0);
+            const prevTemplateRef = useRef(null);
+            const prevTargetRef = useRef(null);
 
             // Tutorial steps configuration
             const tutorialSteps = [
                 { id: 'welcome', target: null, position: 'center' },
-                { id: 'template', target: 'template-selector', position: 'bottom' },
-                { id: 'aiModel', target: 'ai-model-selector', position: 'bottom' },
+                { id: 'template', target: 'template-selector', position: 'right' },
+                { id: 'aiModel', target: 'ai-model-selector', position: 'right' },
                 { id: 'role', target: 'field-role', position: 'right' },
                 { id: 'task', target: 'field-task', position: 'right' },
                 { id: 'context', target: 'field-context', position: 'right' },
-                { id: 'methods', target: 'methods-section', position: 'top' },
+                { id: 'methods', target: 'methods-section', position: 'left' },
                 { id: 'preview', target: 'preview-section', position: 'left' },
-                { id: 'actions', target: 'action-buttons', position: 'top' },
+                { id: 'actions', target: 'action-buttons', position: 'left' },
             ];
 
             const [fields, setFields] = useState({
@@ -1263,6 +1265,55 @@ Prompt k analýze:
             useEffect(() => {
                 localStorage.setItem('ai-prompt-lang', lang);
             }, [lang]);
+
+            // Auto-advance tutorial when user selects template
+            useEffect(() => {
+                // Only advance if template actually changed (not initial render)
+                if (tutorialActive && tutorialSteps[tutorialStep]?.id === 'template' && prevTemplateRef.current !== null && prevTemplateRef.current !== template) {
+                    // User selected a template, advance to next step
+                    const timer = setTimeout(() => {
+                        setTutorialStep(prev => prev + 1);
+                        const nextTarget = tutorialSteps[tutorialStep + 1]?.target;
+                        if (nextTarget) {
+                            document.getElementById(nextTarget)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }, 400);
+                    return () => clearTimeout(timer);
+                }
+                prevTemplateRef.current = template;
+            }, [template, tutorialActive, tutorialStep]);
+
+            // Auto-advance tutorial when user selects AI model
+            useEffect(() => {
+                // Only advance if target actually changed (not initial render)
+                if (tutorialActive && tutorialSteps[tutorialStep]?.id === 'aiModel' && prevTargetRef.current !== null && prevTargetRef.current !== target) {
+                    // User selected an AI model, advance to next step
+                    const timer = setTimeout(() => {
+                        setTutorialStep(prev => prev + 1);
+                        const nextTarget = tutorialSteps[tutorialStep + 1]?.target;
+                        if (nextTarget) {
+                            document.getElementById(nextTarget)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                    }, 400);
+                    return () => clearTimeout(timer);
+                }
+                prevTargetRef.current = target;
+            }, [target, tutorialActive, tutorialStep]);
+
+            // Auto-scroll to tutorial target element when step changes
+            useEffect(() => {
+                if (tutorialActive && tutorialStep > 0) {
+                    const currentTarget = tutorialSteps[tutorialStep]?.target;
+                    if (currentTarget) {
+                        const element = document.getElementById(currentTarget);
+                        if (element) {
+                            setTimeout(() => {
+                                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }, 100);
+                        }
+                    }
+                }
+            }, [tutorialStep, tutorialActive]);
 
             const showNotification = (msg) => {
                 setNotification(msg);
@@ -2272,9 +2323,11 @@ Prompt k analýze:
                                 const targetElement = currentStep?.target ? document.getElementById(currentStep.target) : null;
                                 const rect = targetElement?.getBoundingClientRect();
 
-                                // Calculate tooltip position
+                                // Calculate tooltip position with viewport bounds checking
                                 let tooltipStyle = {};
                                 let pointerStyle = {};
+                                const tooltipWidth = 320;
+                                const tooltipHeight = 250;
 
                                 if (currentStep?.position === 'center' || !rect) {
                                     tooltipStyle = {
@@ -2283,52 +2336,72 @@ Prompt k analýze:
                                         transform: 'translate(-50%, -50%)'
                                     };
                                 } else {
-                                    const scrollY = window.scrollY || window.pageYOffset;
-                                    const scrollX = window.scrollX || window.pageXOffset;
+                                    // Use fixed positioning relative to viewport
+                                    const viewportHeight = window.innerHeight;
+                                    const viewportWidth = window.innerWidth;
 
-                                    switch (currentStep.position) {
+                                    // Calculate center of target element in viewport
+                                    const targetCenterY = rect.top + rect.height / 2;
+                                    const targetCenterX = rect.left + rect.width / 2;
+
+                                    // Determine best position based on available space
+                                    let position = currentStep.position;
+
+                                    // Check if there's enough space in the preferred position
+                                    if (position === 'left' && rect.left < tooltipWidth + 40) {
+                                        position = 'right';
+                                    }
+                                    if (position === 'right' && viewportWidth - rect.right < tooltipWidth + 40) {
+                                        position = 'bottom';
+                                    }
+
+                                    switch (position) {
                                         case 'bottom':
                                             tooltipStyle = {
-                                                top: `${rect.bottom + scrollY + 20}px`,
-                                                left: `${rect.left + scrollX + rect.width / 2}px`,
-                                                transform: 'translateX(-50%)'
+                                                position: 'fixed',
+                                                top: `${Math.min(rect.bottom + 20, viewportHeight - tooltipHeight - 20)}px`,
+                                                left: `${Math.max(20, Math.min(targetCenterX - tooltipWidth / 2, viewportWidth - tooltipWidth - 20))}px`,
                                             };
                                             pointerStyle = {
-                                                top: `${rect.bottom + scrollY + 5}px`,
-                                                left: `${rect.left + scrollX + rect.width / 2}px`,
+                                                position: 'fixed',
+                                                top: `${rect.bottom + 5}px`,
+                                                left: `${targetCenterX}px`,
                                             };
                                             break;
                                         case 'top':
                                             tooltipStyle = {
-                                                bottom: `${window.innerHeight - rect.top - scrollY + 20}px`,
-                                                left: `${rect.left + scrollX + rect.width / 2}px`,
-                                                transform: 'translateX(-50%)'
+                                                position: 'fixed',
+                                                top: `${Math.max(20, rect.top - tooltipHeight - 20)}px`,
+                                                left: `${Math.max(20, Math.min(targetCenterX - tooltipWidth / 2, viewportWidth - tooltipWidth - 20))}px`,
                                             };
                                             pointerStyle = {
-                                                top: `${rect.top + scrollY - 40}px`,
-                                                left: `${rect.left + scrollX + rect.width / 2}px`,
+                                                position: 'fixed',
+                                                top: `${rect.top - 40}px`,
+                                                left: `${targetCenterX}px`,
                                             };
                                             break;
                                         case 'right':
                                             tooltipStyle = {
-                                                top: `${rect.top + scrollY + rect.height / 2}px`,
-                                                left: `${rect.right + scrollX + 20}px`,
-                                                transform: 'translateY(-50%)'
+                                                position: 'fixed',
+                                                top: `${Math.max(20, Math.min(targetCenterY - tooltipHeight / 2, viewportHeight - tooltipHeight - 20))}px`,
+                                                left: `${rect.right + 20}px`,
                                             };
                                             pointerStyle = {
-                                                top: `${rect.top + scrollY + rect.height / 2}px`,
-                                                left: `${rect.right + scrollX + 5}px`,
+                                                position: 'fixed',
+                                                top: `${targetCenterY}px`,
+                                                left: `${rect.right + 5}px`,
                                             };
                                             break;
                                         case 'left':
                                             tooltipStyle = {
-                                                top: `${rect.top + scrollY + rect.height / 2}px`,
-                                                right: `${window.innerWidth - rect.left - scrollX + 20}px`,
-                                                transform: 'translateY(-50%)'
+                                                position: 'fixed',
+                                                top: `${Math.max(20, Math.min(targetCenterY - tooltipHeight / 2, viewportHeight - tooltipHeight - 20))}px`,
+                                                left: `${Math.max(20, rect.left - tooltipWidth - 20)}px`,
                                             };
                                             pointerStyle = {
-                                                top: `${rect.top + scrollY + rect.height / 2}px`,
-                                                left: `${rect.left + scrollX - 40}px`,
+                                                position: 'fixed',
+                                                top: `${targetCenterY}px`,
+                                                left: `${rect.left - 40}px`,
                                             };
                                             break;
                                     }
