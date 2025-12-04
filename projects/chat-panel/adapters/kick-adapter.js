@@ -7,47 +7,27 @@
  *
  * DŮLEŽITÉ: Kick API má CORS restrikce a nelze volat z browseru.
  * Proto používáme:
- * 1. Databázi známých chatroom IDs
- * 2. Manuální zadání chatroom_id uživatelem
- * 3. Cache v localStorage
+ * 1. Automatickou detekci Pusher API klíče
+ * 2. Databázi známých chatroom IDs
+ * 3. Manuální zadání chatroom_id uživatelem
+ * 4. Cache v localStorage
  */
 
 class KickAdapter extends BaseAdapter {
-    constructor(config) {
-        // Extrahovat název kanálu z URL pokud je potřeba
-        let channel = config.channel;
-        if (channel.includes('kick.com/')) {
-            const match = channel.match(/kick\.com\/([^\/\?]+)/);
-            if (match) {
-                channel = match[1];
-            }
-        }
-        // Odstranit @ pokud je na začátku
-        channel = channel.replace(/^@/, '').toLowerCase().trim();
+    /**
+     * Seznam známých Pusher API klíčů (historické + aktuální)
+     * Kick občas mění klíče, proto máme zálohy
+     */
+    static PUSHER_KEYS = [
+        '32cbd69e4b950bf97679',  // Aktuální (Prosinec 2024)
+        'eb1d5f283081a78b932c',  // Předchozí
+        'c5f8c0a3a2b5c0a3a2b5',  // Záloha
+    ];
 
-        super({
-            ...config,
-            channel: channel,
-            platform: 'kick',
-        });
-
-        // Pusher konfigurace (veřejné hodnoty z kick.com)
-        // Aktualizováno: Prosinec 2024
-        this.pusherKey = '32cbd69e4b950bf97679';
-        this.pusherCluster = 'us2';
-        this.ws = null;
-
-        // Channel info
-        this.chatroomId = config.chatroomId || null;
-        this.channelInfo = null;
-
-        // Pusher stav
-        this.activityTimeout = null;
-        this.lastActivity = Date.now();
-
-        // Emotes cache
-        this.emotes = {};
-    }
+    /**
+     * Možné Pusher clustery
+     */
+    static PUSHER_CLUSTERS = ['us2', 'us3', 'eu', 'ap1'];
 
     /**
      * Databáze známých streamerů a jejich chatroom IDs
@@ -84,6 +64,41 @@ class KickAdapter extends BaseAdapter {
         'sneako': 16004632,
     };
 
+    constructor(config) {
+        // Extrahovat název kanálu z URL pokud je potřeba
+        let channel = config.channel;
+        if (channel.includes('kick.com/')) {
+            const match = channel.match(/kick\.com\/([^\/\?]+)/);
+            if (match) {
+                channel = match[1];
+            }
+        }
+        // Odstranit @ pokud je na začátku
+        channel = channel.replace(/^@/, '').toLowerCase().trim();
+
+        super({
+            ...config,
+            channel: channel,
+            platform: 'kick',
+        });
+
+        // Pusher konfigurace - bude nastavena automaticky
+        this.pusherKey = null;
+        this.pusherCluster = null;
+        this.ws = null;
+
+        // Channel info
+        this.chatroomId = config.chatroomId || null;
+        this.channelInfo = null;
+
+        // Pusher stav
+        this.activityTimeout = null;
+        this.lastActivity = Date.now();
+
+        // Emotes cache
+        this.emotes = {};
+    }
+
     /**
      * Připojení k Kick chatu
      */
@@ -96,7 +111,7 @@ class KickAdapter extends BaseAdapter {
         this.emit('stateChange', { state: 'connecting' });
 
         try {
-            // Získat chatroom ID
+            // 1. Získat chatroom ID
             await this._resolveChatroomId();
 
             if (!this.chatroomId) {
@@ -106,8 +121,8 @@ class KickAdapter extends BaseAdapter {
                 );
             }
 
-            // Připojit k Pusher
-            await this._connectPusher();
+            // 2. Najít funkční Pusher konfiguraci
+            await this._findWorkingPusherConfig();
 
             this._setState({
                 connected: true,
@@ -116,14 +131,14 @@ class KickAdapter extends BaseAdapter {
             });
 
             this.emit('connect', { channel: this.channel });
-            console.log(`[Kick] Connected to ${this.channel} (chatroom: ${this.chatroomId})`);
+            console.log(`[Kick] Connected to ${this.channel} (chatroom: ${this.chatroomId}, key: ${this.pusherKey})`);
 
         } catch (error) {
             console.error('[Kick] Connection error:', error);
             this._setState({ connecting: false, error: error.message });
             this.emit('error', { message: error.message, code: 'CONNECTION_ERROR' });
             // Nepokoušet se o reconnect pokud nemáme chatroom ID
-            if (this.chatroomId) {
+            if (this.chatroomId && this.pusherKey) {
                 this._attemptReconnect();
             }
         }
@@ -142,6 +157,208 @@ class KickAdapter extends BaseAdapter {
 
         await super.disconnect();
         this.emit('disconnect', { channel: this.channel });
+    }
+
+    /**
+     * Automatická detekce funkčního Pusher API klíče
+     * Zkouší různé kombinace klíčů a clusterů
+     */
+    async _findWorkingPusherConfig() {
+        // 1. Zkusit cached konfiguraci
+        const cached = this._getCachedPusherConfig();
+        if (cached) {
+            console.log(`[Kick] Trying cached Pusher config: ${cached.key}@${cached.cluster}`);
+            try {
+                await this._testPusherConfig(cached.key, cached.cluster);
+                this.pusherKey = cached.key;
+                this.pusherCluster = cached.cluster;
+                console.log(`[Kick] Cached config works!`);
+                return;
+            } catch (error) {
+                console.warn(`[Kick] Cached config failed:`, error.message);
+            }
+        }
+
+        // 2. Zkusit všechny kombinace klíčů a clusterů
+        for (const key of KickAdapter.PUSHER_KEYS) {
+            for (const cluster of KickAdapter.PUSHER_CLUSTERS) {
+                console.log(`[Kick] Testing Pusher config: ${key}@${cluster}`);
+                try {
+                    await this._testPusherConfig(key, cluster);
+                    this.pusherKey = key;
+                    this.pusherCluster = cluster;
+                    this._savePusherConfig(key, cluster);
+                    console.log(`[Kick] Found working config: ${key}@${cluster}`);
+                    return;
+                } catch (error) {
+                    console.warn(`[Kick] Config ${key}@${cluster} failed:`, error.message);
+                }
+            }
+        }
+
+        throw new Error(
+            'Nepodařilo se najít funkční Pusher konfiguraci. ' +
+            'Kick pravděpodobně změnil API klíč. ' +
+            'Navštivte kick.com, otevřete DevTools (F12) → Network → filtrujte "pusher" ' +
+            'a najděte nový klíč v URL.'
+        );
+    }
+
+    /**
+     * Test Pusher konfigurace - zkusí se připojit a odebírat
+     */
+    async _testPusherConfig(key, cluster) {
+        return new Promise((resolve, reject) => {
+            const wsUrl = `wss://ws-${cluster}.pusher.com/app/${key}?protocol=7&client=js&version=8.4.0-rc2&flash=false`;
+            const testWs = new WebSocket(wsUrl);
+
+            const timeout = setTimeout(() => {
+                testWs.close();
+                reject(new Error('Connection timeout'));
+            }, 8000);
+
+            let connectionEstablished = false;
+
+            testWs.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+
+                    if (data.event === 'pusher:connection_established') {
+                        connectionEstablished = true;
+                        // Zkusit odebírat chatroom
+                        testWs.send(JSON.stringify({
+                            event: 'pusher:subscribe',
+                            data: {
+                                auth: '',
+                                channel: `chatrooms.${this.chatroomId}.v2`,
+                            },
+                        }));
+                    }
+
+                    if (data.event === 'pusher_internal:subscription_succeeded') {
+                        clearTimeout(timeout);
+                        // Úspěch! Uložit WebSocket pro další použití
+                        this.ws = testWs;
+                        this._setupWebSocketHandlers(testWs);
+                        resolve();
+                    }
+
+                    if (data.event === 'pusher:error') {
+                        clearTimeout(timeout);
+                        testWs.close();
+                        reject(new Error(data.data?.message || 'Pusher error'));
+                    }
+                } catch (error) {
+                    // Ignorovat parse errors
+                }
+            };
+
+            testWs.onerror = () => {
+                clearTimeout(timeout);
+                reject(new Error('WebSocket error'));
+            };
+
+            testWs.onclose = (event) => {
+                clearTimeout(timeout);
+                if (!connectionEstablished) {
+                    reject(new Error(`Connection closed: ${event.code}`));
+                }
+            };
+        });
+    }
+
+    /**
+     * Nastavení WebSocket handlerů po úspěšném připojení
+     */
+    _setupWebSocketHandlers(ws) {
+        ws.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                this._handlePusherEvent(data);
+            } catch (error) {
+                console.error('[Kick] Error parsing Pusher message:', error);
+            }
+        };
+
+        ws.onclose = (event) => {
+            console.log('[Kick] Pusher WebSocket closed:', event.code);
+            this._clearActivityTimeout();
+
+            if (this.state.connected) {
+                this._setState({ connected: false });
+                this.emit('disconnect', { channel: this.channel });
+                this._attemptReconnect();
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('[Kick] Pusher WebSocket error:', error);
+        };
+
+        this._savePusherConfig(this.pusherKey, this.pusherCluster);
+        this._startActivityTimeout();
+    }
+
+    /**
+     * Zpracování Pusher eventů
+     */
+    _handlePusherEvent(data) {
+        this.lastActivity = Date.now();
+
+        switch (data.event) {
+            case 'App\\Events\\ChatMessageEvent':
+                this._handleChatMessage(data.data);
+                break;
+
+            case 'App\\Events\\ChatMessageDeletedEvent':
+                try {
+                    const deleteData = JSON.parse(data.data || '{}');
+                    this.emit('messageDeleted', { id: deleteData.id });
+                } catch (e) {}
+                break;
+
+            case 'App\\Events\\UserBannedEvent':
+                // Uživatel byl zabanován
+                break;
+
+            case 'pusher:pong':
+                // Activity refresh
+                break;
+
+            case 'pusher:error':
+                console.error('[Kick] Pusher error:', data.data);
+                break;
+        }
+    }
+
+    /**
+     * Získání cached Pusher konfigurace
+     */
+    _getCachedPusherConfig() {
+        try {
+            const cached = localStorage.getItem('kick_pusher_config');
+            if (cached) {
+                const data = JSON.parse(cached);
+                // Cache platná 24 hodin
+                if (data.key && data.cluster && Date.now() - data.timestamp < 24 * 60 * 60 * 1000) {
+                    return { key: data.key, cluster: data.cluster };
+                }
+            }
+        } catch (error) {}
+        return null;
+    }
+
+    /**
+     * Uložení Pusher konfigurace do cache
+     */
+    _savePusherConfig(key, cluster) {
+        try {
+            localStorage.setItem('kick_pusher_config', JSON.stringify({
+                key,
+                cluster,
+                timestamp: Date.now(),
+            }));
+        } catch (error) {}
     }
 
     /**
@@ -275,119 +492,6 @@ class KickAdapter extends BaseAdapter {
                 console.warn('[Kick] Cache save error:', error);
             }
         }
-    }
-
-    /**
-     * Připojení k Pusher WebSocket
-     */
-    async _connectPusher() {
-        return new Promise((resolve, reject) => {
-            const wsUrl = `wss://ws-${this.pusherCluster}.pusher.com/app/${this.pusherKey}?protocol=7&client=js&version=8.4.0-rc2&flash=false`;
-
-            this.ws = new WebSocket(wsUrl);
-
-            const timeout = setTimeout(() => {
-                reject(new Error('Pusher connection timeout'));
-                this.ws.close();
-            }, 15000);
-
-            this.ws.onopen = () => {
-                console.log('[Kick] Pusher WebSocket connected');
-            };
-
-            this.ws.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    this._handlePusherEvent(data, resolve, reject, timeout);
-                } catch (error) {
-                    console.error('[Kick] Error parsing Pusher message:', error);
-                }
-            };
-
-            this.ws.onerror = (error) => {
-                console.error('[Kick] Pusher WebSocket error:', error);
-                clearTimeout(timeout);
-                reject(new Error('WebSocket error'));
-            };
-
-            this.ws.onclose = (event) => {
-                console.log('[Kick] Pusher WebSocket closed:', event.code);
-                this._clearActivityTimeout();
-
-                if (this.state.connected) {
-                    this._setState({ connected: false });
-                    this.emit('disconnect', { channel: this.channel });
-                    this._attemptReconnect();
-                }
-            };
-        });
-    }
-
-    /**
-     * Zpracování Pusher eventů
-     */
-    _handlePusherEvent(data, resolve, reject, timeout) {
-        this.lastActivity = Date.now();
-
-        switch (data.event) {
-            case 'pusher:connection_established':
-                console.log('[Kick] Pusher connection established');
-                this._subscribeToChatroom();
-                break;
-
-            case 'pusher_internal:subscription_succeeded':
-                console.log('[Kick] Subscribed to chatroom');
-                clearTimeout(timeout);
-                this._saveChatroomCache();
-                this._startActivityTimeout();
-                resolve();
-                break;
-
-            case 'pusher:error':
-                console.error('[Kick] Pusher error:', data.data);
-                if (data.data?.code === 4001 || data.data?.code === 4009) {
-                    clearTimeout(timeout);
-                    reject(new Error(`Pusher error: ${data.data?.message || 'Unknown error'}`));
-                }
-                break;
-
-            case 'App\\Events\\ChatMessageEvent':
-                this._handleChatMessage(data.data);
-                break;
-
-            case 'App\\Events\\ChatMessageDeletedEvent':
-                try {
-                    const deleteData = JSON.parse(data.data || '{}');
-                    this.emit('messageDeleted', { id: deleteData.id });
-                } catch (e) {}
-                break;
-
-            case 'App\\Events\\UserBannedEvent':
-                // Uživatel byl zabanován
-                break;
-
-            case 'pusher:pong':
-                // Activity refresh
-                break;
-        }
-    }
-
-    /**
-     * Subscribe na chatroom kanál
-     */
-    _subscribeToChatroom() {
-        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-
-        const subscribeMessage = JSON.stringify({
-            event: 'pusher:subscribe',
-            data: {
-                auth: '',
-                channel: `chatrooms.${this.chatroomId}.v2`,
-            },
-        });
-
-        console.log(`[Kick] Subscribing to chatrooms.${this.chatroomId}.v2`);
-        this.ws.send(subscribeMessage);
     }
 
     /**
@@ -544,6 +648,34 @@ class KickAdapter extends BaseAdapter {
      */
     static getKnownStreamers() {
         return Object.keys(KickAdapter.KNOWN_CHATROOMS);
+    }
+
+    /**
+     * Statická metoda pro přidání nového Pusher klíče
+     */
+    static addPusherKey(key) {
+        if (!KickAdapter.PUSHER_KEYS.includes(key)) {
+            KickAdapter.PUSHER_KEYS.unshift(key); // Přidat na začátek
+            console.log(`[Kick] Added new Pusher key: ${key}`);
+        }
+    }
+
+    /**
+     * Statická metoda pro vyčištění cache
+     */
+    static clearCache() {
+        try {
+            localStorage.removeItem('kick_pusher_config');
+            // Vyčistit všechny chatroom cache
+            for (const key of Object.keys(localStorage)) {
+                if (key.startsWith('kick_chatroom_')) {
+                    localStorage.removeItem(key);
+                }
+            }
+            console.log('[Kick] Cache cleared');
+        } catch (error) {
+            console.error('[Kick] Error clearing cache:', error);
+        }
     }
 }
 
