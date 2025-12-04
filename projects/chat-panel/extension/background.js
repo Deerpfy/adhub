@@ -132,20 +132,15 @@ async function getOrCreateBackgroundWindow() {
     }
   }
 
-  // Vytvor nove okno a hned ho minimalizuj
+  // Vytvor nove minimalizovane okno
   const window = await chrome.windows.create({
     url: 'about:blank',
     type: 'popup',
+    state: 'minimized',
     width: 400,
     height: 600,
+    focused: false,
   });
-
-  // Minimalizuj okno hned po vytvoreni
-  if (window.id) {
-    await chrome.windows.update(window.id, { state: 'minimized' }).catch(e => {
-      console.warn('[AdHub Chat Reader] Could not minimize window:', e);
-    });
-  }
 
   state.backgroundWindowId = window.id;
   console.log('[AdHub Chat Reader] Created background window:', window.id);
