@@ -8,8 +8,20 @@
 
 class TwitchAdapter extends BaseAdapter {
     constructor(config) {
+        // Extrahovat název kanálu z URL pokud je potřeba
+        let channel = config.channel;
+        if (channel.includes('twitch.tv/')) {
+            const match = channel.match(/twitch\.tv\/([^\/\?]+)/);
+            if (match) {
+                channel = match[1];
+            }
+        }
+        // Odstranit @ pokud je na začátku
+        channel = channel.replace(/^@/, '').toLowerCase().trim();
+
         super({
             ...config,
+            channel: channel,
             platform: 'twitch',
         });
 
@@ -17,17 +29,16 @@ class TwitchAdapter extends BaseAdapter {
         this.ws = null;
         this.wsUrl = 'wss://irc-ws.chat.twitch.tv:443';
 
-        // Badge cache
+        // Badge cache (volitelné - chat funguje i bez nich)
         this.globalBadges = {};
         this.channelBadges = {};
-        this.channelId = null;
-
-        // Emote sets
-        this.globalEmotes = {};
 
         // Ping/Pong
         this.pingTimer = null;
         this.pongTimeout = null;
+
+        // Connection state
+        this.joinConfirmed = false;
     }
 
     /**
@@ -42,13 +53,7 @@ class TwitchAdapter extends BaseAdapter {
         this.emit('stateChange', { state: 'connecting' });
 
         try {
-            // Načíst badge a info o kanálu paralelně
-            await Promise.all([
-                this._loadGlobalBadges(),
-                this._loadChannelInfo(),
-            ]);
-
-            // Připojit k IRC
+            // Připojit k IRC (badges jsou volitelné, nenačítáme je)
             await this._connectIrc();
 
             this._setState({
@@ -58,6 +63,7 @@ class TwitchAdapter extends BaseAdapter {
             });
 
             this.emit('connect', { channel: this.channel });
+            console.log(`[Twitch] Connected to #${this.channel}`);
 
         } catch (error) {
             console.error('[Twitch] Connection error:', error);
@@ -87,21 +93,23 @@ class TwitchAdapter extends BaseAdapter {
      */
     async _connectIrc() {
         return new Promise((resolve, reject) => {
+            this.joinConfirmed = false;
             this.ws = new WebSocket(this.wsUrl);
 
             const timeout = setTimeout(() => {
-                reject(new Error('Connection timeout'));
-                this.ws.close();
-            }, 10000);
+                if (!this.joinConfirmed) {
+                    reject(new Error('Connection timeout - kanál možná neexistuje'));
+                    this.ws.close();
+                }
+            }, 15000);
 
             this.ws.onopen = () => {
-                console.log('[Twitch] WebSocket connected');
+                console.log('[Twitch] WebSocket connected, authenticating...');
 
-                // Anonymní přihlášení
+                // Anonymní přihlášení - pořadí je důležité!
                 this.ws.send('CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership');
                 this.ws.send('PASS SCHMOOPIIE');
                 this.ws.send(`NICK justinfan${Math.floor(Math.random() * 80000 + 1000)}`);
-                this.ws.send(`JOIN #${this.channel.toLowerCase()}`);
             };
 
             this.ws.onmessage = (event) => {
@@ -110,17 +118,36 @@ class TwitchAdapter extends BaseAdapter {
                 for (const message of messages) {
                     if (!message) continue;
 
+                    // Debug log
+                    // console.log('[Twitch IRC]', message);
+
                     // PING/PONG
                     if (message.startsWith('PING')) {
-                        this.ws.send('PONG :tmi.twitch.tv');
+                        this.ws.send(message.replace('PING', 'PONG'));
                         continue;
                     }
 
-                    // Úspěšné připojení
-                    if (message.includes('366')) {
+                    // Úspěšná autentizace (001 = Welcome)
+                    if (message.includes(' 001 ')) {
+                        console.log('[Twitch] Authenticated, joining channel...');
+                        this.ws.send(`JOIN #${this.channel}`);
+                        continue;
+                    }
+
+                    // Úspěšné připojení ke kanálu (366 = End of /NAMES list)
+                    if (message.includes(' 366 ')) {
+                        console.log('[Twitch] Joined channel successfully');
+                        this.joinConfirmed = true;
                         clearTimeout(timeout);
                         this._startPingTimer();
                         resolve();
+                        continue;
+                    }
+
+                    // Chyba - kanál neexistuje nebo je zabanovaný
+                    if (message.includes(' 403 ') || message.includes('NOTICE') && message.includes('suspended')) {
+                        clearTimeout(timeout);
+                        reject(new Error(`Kanál #${this.channel} neexistuje nebo je nedostupný`));
                         continue;
                     }
 
@@ -128,17 +155,25 @@ class TwitchAdapter extends BaseAdapter {
                     if (message.includes('PRIVMSG')) {
                         this._handlePrivmsg(message);
                     }
+
+                    // PONG odpověď
+                    if (message.startsWith('PONG') || message.includes('PONG')) {
+                        if (this.pongTimeout) {
+                            clearTimeout(this.pongTimeout);
+                            this.pongTimeout = null;
+                        }
+                    }
                 }
             };
 
             this.ws.onerror = (error) => {
                 console.error('[Twitch] WebSocket error:', error);
                 clearTimeout(timeout);
-                reject(new Error('WebSocket error'));
+                reject(new Error('WebSocket connection error'));
             };
 
-            this.ws.onclose = () => {
-                console.log('[Twitch] WebSocket closed');
+            this.ws.onclose = (event) => {
+                console.log('[Twitch] WebSocket closed:', event.code, event.reason);
                 this._clearPingTimer();
 
                 if (this.state.connected) {
@@ -170,22 +205,29 @@ class TwitchAdapter extends BaseAdapter {
      * Parsování IRC zprávy
      */
     _parseIrcMessage(raw) {
+        // Parsování tagů
         const tagMatch = raw.match(/^@([^ ]+) /);
         const tags = {};
 
         if (tagMatch) {
             tagMatch[1].split(';').forEach(tag => {
-                const [key, value] = tag.split('=');
-                tags[key] = value || '';
+                const idx = tag.indexOf('=');
+                if (idx !== -1) {
+                    const key = tag.substring(0, idx);
+                    const value = tag.substring(idx + 1);
+                    tags[key] = value || '';
+                }
             });
         }
 
-        const messageMatch = raw.match(/PRIVMSG #\w+ :(.+)$/);
+        // Parsování obsahu zprávy - podporuje speciální znaky v názvu kanálu
+        const messageMatch = raw.match(/PRIVMSG #([^ ]+) :(.+)$/);
         if (!messageMatch) return null;
 
         return {
             tags,
-            content: messageMatch[1],
+            channel: messageMatch[1],
+            content: messageMatch[2],
         };
     }
 
@@ -210,7 +252,7 @@ class TwitchAdapter extends BaseAdapter {
         };
 
         // Barva jména
-        let color = tags.color || this._generateColor(tags['display-name'] || tags['user-id']);
+        let color = tags.color || this._generateColor(tags['display-name'] || tags['user-id'] || 'anonymous');
 
         return {
             id: tags.id || `twitch-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -218,7 +260,7 @@ class TwitchAdapter extends BaseAdapter {
             channel: this.channel,
             author: {
                 id: tags['user-id'] || '',
-                username: tags['display-name']?.toLowerCase() || '',
+                username: (tags['display-name'] || 'Anonymous').toLowerCase(),
                 displayName: tags['display-name'] || 'Anonymous',
                 color: color,
                 badges: badges,
@@ -240,27 +282,48 @@ class TwitchAdapter extends BaseAdapter {
         const badges = [];
         const badgePairs = badgesStr.split(',');
 
+        // Známé badge URL (statické)
+        const badgeUrls = {
+            'broadcaster': 'https://static-cdn.jtvnw.net/badges/v1/5527c58c-fb7d-422d-b71b-f309dcb85cc1/2',
+            'moderator': 'https://static-cdn.jtvnw.net/badges/v1/3267646d-33f0-4b17-b3df-f923a41db1d0/2',
+            'vip': 'https://static-cdn.jtvnw.net/badges/v1/b817aba4-fad8-49e2-b88a-7cc744f6a20e/2',
+            'subscriber': 'https://static-cdn.jtvnw.net/badges/v1/5d9f2208-5dd8-11e7-8513-2ff4adfae661/2',
+            'premium': 'https://static-cdn.jtvnw.net/badges/v1/bbbe0db0-a598-423e-86d0-f9fb98ca1933/2',
+            'partner': 'https://static-cdn.jtvnw.net/badges/v1/d12a2e27-16f6-41d0-ab77-b780518f00a3/2',
+            'verified': 'https://static-cdn.jtvnw.net/badges/v1/d12a2e27-16f6-41d0-ab77-b780518f00a3/2',
+        };
+
         for (const pair of badgePairs) {
             const [type, version] = pair.split('/');
             if (!type) continue;
 
-            // Hledání v channel badges
-            let badgeInfo = this.channelBadges[type]?.[version];
-
-            // Fallback na global badges
-            if (!badgeInfo) {
-                badgeInfo = this.globalBadges[type]?.[version];
-            }
-
             badges.push({
                 type: type,
                 id: `${type}/${version}`,
-                url: badgeInfo?.image_url_1x || badgeInfo?.image_url_2x || '',
-                title: badgeInfo?.title || type,
+                url: badgeUrls[type] || '',
+                title: this._getBadgeTitle(type),
             });
         }
 
         return badges;
+    }
+
+    /**
+     * Získání názvu badge
+     */
+    _getBadgeTitle(type) {
+        const titles = {
+            'broadcaster': 'Broadcaster',
+            'moderator': 'Moderator',
+            'vip': 'VIP',
+            'subscriber': 'Subscriber',
+            'premium': 'Twitch Prime',
+            'partner': 'Partner',
+            'verified': 'Verified',
+            'bits': 'Bits',
+            'sub-gifter': 'Sub Gifter',
+        };
+        return titles[type] || type;
     }
 
     /**
@@ -307,55 +370,14 @@ class TwitchAdapter extends BaseAdapter {
             '#5F9EA0', '#1E90FF', '#FF69B4', '#8A2BE2', '#00FF7F',
         ];
 
+        if (!seed) return colors[0];
+
         let hash = 0;
         for (let i = 0; i < seed.length; i++) {
             hash = seed.charCodeAt(i) + ((hash << 5) - hash);
         }
 
         return colors[Math.abs(hash) % colors.length];
-    }
-
-    /**
-     * Načtení globálních badges z Twitch API
-     */
-    async _loadGlobalBadges() {
-        try {
-            // Používáme veřejný endpoint bez autentizace
-            const response = await fetch('https://badges.twitch.tv/v1/badges/global/display');
-
-            if (!response.ok) {
-                console.warn('[Twitch] Failed to load global badges');
-                return;
-            }
-
-            const data = await response.json();
-            this.globalBadges = data.badge_sets || {};
-
-            console.log('[Twitch] Global badges loaded');
-
-        } catch (error) {
-            console.warn('[Twitch] Error loading global badges:', error);
-        }
-    }
-
-    /**
-     * Načtení info o kanálu a channel badges
-     */
-    async _loadChannelInfo() {
-        try {
-            // Pro channel badges potřebujeme channel ID
-            // Zkusíme získat z veřejného API
-            const response = await fetch(`https://badges.twitch.tv/v1/badges/channels/${this.channel}/display`);
-
-            if (response.ok) {
-                const data = await response.json();
-                this.channelBadges = data.badge_sets || {};
-                console.log('[Twitch] Channel badges loaded');
-            }
-
-        } catch (error) {
-            console.warn('[Twitch] Error loading channel info:', error);
-        }
     }
 
     /**
@@ -374,7 +396,7 @@ class TwitchAdapter extends BaseAdapter {
                     this.ws.close();
                 }, 10000);
             }
-        }, 300000); // 5 minut
+        }, 240000); // 4 minuty (Twitch vyžaduje PING každých 5 minut)
     }
 
     /**
