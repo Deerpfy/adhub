@@ -36,46 +36,6 @@
     return url.searchParams.get('v');
   }
 
-  /**
-   * Získá název kanálu z YouTube oEmbed API (primární a nejspolehlivější metoda)
-   */
-  async function fetchChannelNameFromOEmbed() {
-    if (!state.videoId) return null;
-
-    try {
-      const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${state.videoId}&format=json`);
-      if (response.ok) {
-        const data = await response.json();
-        if (data.author_name) {
-          console.log('[AdHub Chat Reader] Got channel name from oEmbed:', data.author_name);
-          return data.author_name;
-        }
-      }
-    } catch (error) {
-      console.log('[AdHub Chat Reader] Failed to fetch from oEmbed:', error);
-    }
-    return null;
-  }
-
-  /**
-   * Načte a aktualizuje název kanálu
-   */
-  async function loadChannelName() {
-    if (!state.videoId) return;
-
-    // Použít oEmbed API jako primární zdroj (spolehlivé)
-    const channelName = await fetchChannelNameFromOEmbed();
-
-    if (channelName) {
-      state.channelName = channelName;
-      chrome.runtime.sendMessage({
-        action: 'chatConnected',
-        videoId: state.videoId,
-        channelName: channelName,
-      }).catch(() => {});
-    }
-  }
-
   // ============================================================================
   // PARSOVANI ZPRAV
   // ============================================================================
@@ -254,15 +214,12 @@
     state.isActive = true;
     console.log('[AdHub Chat Reader] Observer started for video:', state.videoId);
 
-    // Informuj background script (bez názvu kanálu - pošleme později)
+    // Informuj background script - ten si stáhne název kanálu z oEmbed API
     chrome.runtime.sendMessage({
       action: 'chatConnected',
       videoId: state.videoId,
       channelName: null,
     });
-
-    // Načti název kanálu z oEmbed API (spolehlivé)
-    loadChannelName();
   }
 
   function stopObserving() {

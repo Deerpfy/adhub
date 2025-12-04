@@ -87,13 +87,19 @@ function handleChatMessage(message, sender) {
   });
 }
 
-function handleChatConnected(videoId, channelName, sender) {
+async function handleChatConnected(videoId, channelName, sender) {
   console.log('[AdHub Chat Reader] Chat connected:', videoId, 'channel:', channelName);
+
+  // Pokud nemáme název kanálu, získat ho z oEmbed API
+  let finalChannelName = channelName;
+  if (!finalChannelName) {
+    finalChannelName = await fetchChannelNameFromOEmbed(videoId);
+  }
 
   if (sender.tab) {
     state.activeSessions.set(videoId, {
       tabId: sender.tab.id,
-      channelName: channelName || '',
+      channelName: finalChannelName || '',
       startTime: Date.now(),
     });
   }
@@ -101,8 +107,29 @@ function handleChatConnected(videoId, channelName, sender) {
   broadcastToAdHub({
     type: 'youtube-chat-connected',
     videoId: videoId,
-    channelName: channelName || '',
+    channelName: finalChannelName || '',
   });
+}
+
+/**
+ * Získá název kanálu z YouTube oEmbed API
+ */
+async function fetchChannelNameFromOEmbed(videoId) {
+  if (!videoId) return null;
+
+  try {
+    const response = await fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.author_name) {
+        console.log('[AdHub Chat Reader] Got channel name from oEmbed:', data.author_name);
+        return data.author_name;
+      }
+    }
+  } catch (error) {
+    console.log('[AdHub Chat Reader] Failed to fetch from oEmbed:', error);
+  }
+  return null;
 }
 
 function broadcastToAdHub(data) {
