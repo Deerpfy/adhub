@@ -3060,17 +3060,48 @@ Prompt k analýze:
                                             <span>{t.optimizedFor} {aiTargets.find(a => a.id === target)?.name}</span>
                                             <span>{formattedPrompt.length} {t.chars}</span>
                                         </div>
-                                        {/* Verify with AI Button - FREE, no API key required! */}
-                                        <button
-                                            onClick={verifyPromptWithAI}
-                                            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-lg font-medium text-sm transition-all shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40"
-                                        >
-                                            <Icon name="Brain" size={18} />
-                                            {t.verify?.button || 'Verify with AI'}
-                                            <span className="text-[10px] bg-green-500/30 text-green-300 px-1.5 py-0.5 rounded ml-1">
-                                                FREE
-                                            </span>
-                                        </button>
+                                        {/* Action buttons row - Copy and Verify side by side */}
+                                        <div className="flex gap-2">
+                                            {/* Copy Button */}
+                                            <button
+                                                onClick={() => {
+                                                    copyToClipboard();
+                                                    // Auto-finish tutorial if on last step
+                                                    if (tutorialActive && tutorialSteps[tutorialStep]?.id === 'actions') {
+                                                        setTimeout(() => {
+                                                            setTutorialActive(false);
+                                                            setNotification(t.tutorial?.completed?.message || 'Tutorial completed!');
+                                                            setTimeout(() => setNotification(''), 3000);
+                                                        }, 500);
+                                                    }
+                                                }}
+                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-900 rounded-lg font-medium text-sm transition-all"
+                                            >
+                                                <Icon name={copied ? "Check" : "Copy"} size={18} />
+                                                {copied ? t.copied : t.copy}
+                                            </button>
+                                            {/* Verify with AI Button - FREE, no API key required! */}
+                                            <button
+                                                onClick={() => {
+                                                    verifyPromptWithAI();
+                                                    // Auto-finish tutorial if on last step
+                                                    if (tutorialActive && tutorialSteps[tutorialStep]?.id === 'actions') {
+                                                        setTimeout(() => {
+                                                            setTutorialActive(false);
+                                                            setNotification(t.tutorial?.completed?.message || 'Tutorial completed!');
+                                                            setTimeout(() => setNotification(''), 3000);
+                                                        }, 500);
+                                                    }
+                                                }}
+                                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-lg font-medium text-sm transition-all shadow-lg shadow-purple-500/25 hover:shadow-purple-500/40"
+                                            >
+                                                <Icon name="Brain" size={18} />
+                                                {t.verify?.buttonShort || 'Verify'}
+                                                <span className="text-[10px] bg-green-500/30 text-green-300 px-1.5 py-0.5 rounded ml-1">
+                                                    FREE
+                                                </span>
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
                             </div>
