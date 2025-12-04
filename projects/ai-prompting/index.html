@@ -87,6 +87,81 @@
             pointer-events: none;
             border-radius: 2px;
         }
+
+        /* Tutorial animations and styles */
+        @keyframes tutorial-pulse {
+            0%, 100% {
+                box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.4), 0 0 0 8px rgba(251, 191, 36, 0.2);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 0 8px rgba(251, 191, 36, 0.6), 0 0 0 16px rgba(251, 191, 36, 0.3);
+                transform: scale(1.02);
+            }
+        }
+        @keyframes tutorial-pointer-bounce {
+            0%, 100% { transform: translate(-50%, -100%) translateY(0); }
+            50% { transform: translate(-50%, -100%) translateY(-10px); }
+        }
+        @keyframes tutorial-fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes tutorial-spotlight {
+            0%, 100% { opacity: 0.95; }
+            50% { opacity: 0.85; }
+        }
+        .tutorial-highlight {
+            animation: tutorial-pulse 1.5s ease-in-out infinite;
+            position: relative;
+            z-index: 1001;
+            border-radius: 8px;
+        }
+        .tutorial-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            animation: tutorial-spotlight 2s ease-in-out infinite;
+        }
+        .tutorial-tooltip {
+            position: fixed;
+            z-index: 1002;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 2px solid #fbbf24;
+            border-radius: 12px;
+            padding: 16px 20px;
+            max-width: 320px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), 0 0 30px rgba(251, 191, 36, 0.3);
+            animation: tutorial-fade-in 0.3s ease-out;
+        }
+        .tutorial-pointer {
+            position: fixed;
+            z-index: 1003;
+            font-size: 32px;
+            animation: tutorial-pointer-bounce 0.8s ease-in-out infinite;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+        }
+        .tutorial-step-indicator {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-top: 12px;
+        }
+        .tutorial-step-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #475569;
+            transition: all 0.3s ease;
+        }
+        .tutorial-step-dot.active {
+            background: #fbbf24;
+            transform: scale(1.3);
+        }
+        .tutorial-step-dot.completed {
+            background: #22c55e;
+        }
     </style>
     <script>
         tailwind.config = {
@@ -323,6 +398,64 @@ Be concise but clear. Use bullet points. Respond in the same language as the pro
 Prompt to analyze:
 `,
                 },
+                // Tutorial/Guide feature translations
+                tutorial: {
+                    title: 'Interactive Tutorial',
+                    button: 'Tutorial',
+                    buttonTooltip: 'Learn how to use AI Prompt Formatter',
+                    confirmTitle: 'Start Tutorial?',
+                    confirmMessage: 'Would you like to start an interactive tutorial that will guide you through creating your first prompt?',
+                    confirmStart: 'Start Tutorial',
+                    confirmCancel: 'Cancel',
+                    skipBtn: 'Skip',
+                    nextBtn: 'Next',
+                    prevBtn: 'Back',
+                    finishBtn: 'Finish',
+                    stepOf: 'Step {current} of {total}',
+                    steps: {
+                        welcome: {
+                            title: 'Welcome to AI Prompt Formatter!',
+                            content: 'This tutorial will guide you through creating an effective AI prompt. Follow along and learn how to use each section.',
+                        },
+                        template: {
+                            title: 'Choose a Template',
+                            content: 'First, select a template that matches your task. Templates provide optimized settings for different use cases like coding, creative writing, or analysis.',
+                        },
+                        aiModel: {
+                            title: 'Select AI Model',
+                            content: 'Choose which AI model you will use. Each model has different formatting preferences and special features.',
+                        },
+                        role: {
+                            title: 'Define the Role',
+                            content: 'Describe WHO the AI should be. For example: "an expert Python developer" or "a creative marketing specialist".',
+                        },
+                        task: {
+                            title: 'Describe Your Task',
+                            content: 'This is the most important field! Clearly describe WHAT you want the AI to do. Be specific and detailed.',
+                        },
+                        context: {
+                            title: 'Add Context',
+                            content: 'Provide background information that helps the AI understand the situation better.',
+                        },
+                        methods: {
+                            title: 'Choose Methods (Optional)',
+                            content: 'Select research-backed prompting methods like Chain-of-Thought for complex reasoning tasks.',
+                        },
+                        preview: {
+                            title: 'Review Your Prompt',
+                            content: 'Your formatted prompt appears here. Review it to ensure it captures your intent.',
+                        },
+                        actions: {
+                            title: 'Copy or Verify',
+                            content: 'Copy your prompt to use with AI, or click "Verify with AI" to get feedback on your prompt quality!',
+                        },
+                    },
+                    completed: {
+                        title: 'Tutorial Complete!',
+                        message: 'You now know how to create effective AI prompts. Try it yourself!',
+                        tip: 'Tip: You can always restart this tutorial by clicking the tutorial button.',
+                    },
+                },
                 preview: 'Formatted Prompt',
                 copy: 'Copy',
                 copied: 'Copied!',
@@ -537,6 +670,64 @@ Buď stručný, ale jasný. Použij odrážky. Odpověz ve stejném jazyce jako 
 
 Prompt k analýze:
 `,
+                },
+                // Tutoriál/Průvodce - české překlady
+                tutorial: {
+                    title: 'Interaktivní tutoriál',
+                    button: 'Tutoriál',
+                    buttonTooltip: 'Naučte se používat AI Prompt Formatter',
+                    confirmTitle: 'Spustit tutoriál?',
+                    confirmMessage: 'Chcete spustit interaktivní tutoriál, který vás provede vytvořením prvního promptu?',
+                    confirmStart: 'Spustit tutoriál',
+                    confirmCancel: 'Zrušit',
+                    skipBtn: 'Přeskočit',
+                    nextBtn: 'Další',
+                    prevBtn: 'Zpět',
+                    finishBtn: 'Dokončit',
+                    stepOf: 'Krok {current} z {total}',
+                    steps: {
+                        welcome: {
+                            title: 'Vítejte v AI Prompt Formatter!',
+                            content: 'Tento tutoriál vás provede vytvořením efektivního AI promptu. Sledujte a naučte se používat každou sekci.',
+                        },
+                        template: {
+                            title: 'Vyberte šablonu',
+                            content: 'Nejprve vyberte šablonu, která odpovídá vašemu úkolu. Šablony poskytují optimalizovaná nastavení pro různé případy použití.',
+                        },
+                        aiModel: {
+                            title: 'Vyberte AI model',
+                            content: 'Zvolte, který AI model budete používat. Každý model má jiné preferencí formátování a speciální funkce.',
+                        },
+                        role: {
+                            title: 'Definujte roli',
+                            content: 'Popište, KÝM by AI měla být. Například: "expert na Python" nebo "kreativní marketingový specialista".',
+                        },
+                        task: {
+                            title: 'Popište úkol',
+                            content: 'Toto je nejdůležitější pole! Jasně popište, CO má AI udělat. Buďte konkrétní a detailní.',
+                        },
+                        context: {
+                            title: 'Přidejte kontext',
+                            content: 'Poskytněte informace o pozadí, které pomohou AI lépe pochopit situaci.',
+                        },
+                        methods: {
+                            title: 'Vyberte metody (volitelné)',
+                            content: 'Vyberte výzkumem podložené metody promptingu jako Chain-of-Thought pro komplexní uvažování.',
+                        },
+                        preview: {
+                            title: 'Zkontrolujte prompt',
+                            content: 'Váš formátovaný prompt se zobrazuje zde. Zkontrolujte, zda zachycuje váš záměr.',
+                        },
+                        actions: {
+                            title: 'Kopírujte nebo ověřte',
+                            content: 'Zkopírujte prompt pro použití s AI, nebo klikněte na "Ověřit pomocí AI" pro zpětnou vazbu!',
+                        },
+                    },
+                    completed: {
+                        title: 'Tutoriál dokončen!',
+                        message: 'Nyní víte, jak vytvořit efektivní AI prompty. Vyzkoušejte to sami!',
+                        tip: 'Tip: Tutoriál můžete kdykoli spustit znovu kliknutím na tlačítko tutoriálu.',
+                    },
                 },
                 preview: 'Formátovaný prompt',
                 copy: 'Kopírovat',
@@ -1018,6 +1209,24 @@ Prompt k analýze:
             const [apiProvider, setApiProvider] = useState(() => localStorage.getItem('ai-prompt-api-provider') || 'gemini');
             const [apiKey, setApiKey] = useState(() => localStorage.getItem('ai-prompt-api-key') || '');
             const [tempApiKey, setTempApiKey] = useState('');
+
+            // Tutorial feature states
+            const [showTutorialConfirm, setShowTutorialConfirm] = useState(false);
+            const [tutorialActive, setTutorialActive] = useState(false);
+            const [tutorialStep, setTutorialStep] = useState(0);
+
+            // Tutorial steps configuration
+            const tutorialSteps = [
+                { id: 'welcome', target: null, position: 'center' },
+                { id: 'template', target: 'template-selector', position: 'bottom' },
+                { id: 'aiModel', target: 'ai-model-selector', position: 'bottom' },
+                { id: 'role', target: 'field-role', position: 'right' },
+                { id: 'task', target: 'field-task', position: 'right' },
+                { id: 'context', target: 'field-context', position: 'right' },
+                { id: 'methods', target: 'methods-section', position: 'top' },
+                { id: 'preview', target: 'preview-section', position: 'left' },
+                { id: 'actions', target: 'action-buttons', position: 'top' },
+            ];
 
             const [fields, setFields] = useState({
                 role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '',
@@ -2009,6 +2218,226 @@ Prompt k analýze:
                         </div>
                     )}
 
+                    {/* Tutorial Confirm Modal */}
+                    {showTutorialConfirm && (
+                        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShowTutorialConfirm(false)}>
+                            <div className="bg-slate-800 p-6 rounded-xl border border-amber-500/50 w-96 shadow-2xl shadow-amber-500/20" onClick={e => e.stopPropagation()}>
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center">
+                                        <Icon name="GraduationCap" size={24} className="text-amber-400" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-white">{t.tutorial?.confirmTitle || 'Start Tutorial?'}</h3>
+                                    </div>
+                                </div>
+                                <p className="text-slate-300 text-sm mb-6">
+                                    {t.tutorial?.confirmMessage || 'Would you like to start an interactive tutorial that will guide you through creating your first prompt?'}
+                                </p>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={() => setShowTutorialConfirm(false)}
+                                        className="flex-1 px-4 py-2.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 font-medium"
+                                    >
+                                        {t.tutorial?.confirmCancel || 'Cancel'}
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setShowTutorialConfirm(false);
+                                            setTutorialStep(0);
+                                            setTutorialActive(true);
+                                            // Reset form to show tutorial with clean slate
+                                            setFields({ role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '' });
+                                            setSelectedMethods([]);
+                                        }}
+                                        className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-900 rounded-lg hover:from-amber-400 hover:to-orange-400 font-medium flex items-center justify-center gap-2"
+                                    >
+                                        <Icon name="Play" size={16} />
+                                        {t.tutorial?.confirmStart || 'Start Tutorial'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Tutorial Overlay */}
+                    {tutorialActive && (
+                        <>
+                            {/* Dark overlay */}
+                            <div className="tutorial-overlay" onClick={() => setTutorialActive(false)} />
+
+                            {/* Tutorial tooltip */}
+                            {(() => {
+                                const currentStep = tutorialSteps[tutorialStep];
+                                const stepData = t.tutorial?.steps?.[currentStep?.id] || {};
+                                const targetElement = currentStep?.target ? document.getElementById(currentStep.target) : null;
+                                const rect = targetElement?.getBoundingClientRect();
+
+                                // Calculate tooltip position
+                                let tooltipStyle = {};
+                                let pointerStyle = {};
+
+                                if (currentStep?.position === 'center' || !rect) {
+                                    tooltipStyle = {
+                                        top: '50%',
+                                        left: '50%',
+                                        transform: 'translate(-50%, -50%)'
+                                    };
+                                } else {
+                                    const scrollY = window.scrollY || window.pageYOffset;
+                                    const scrollX = window.scrollX || window.pageXOffset;
+
+                                    switch (currentStep.position) {
+                                        case 'bottom':
+                                            tooltipStyle = {
+                                                top: `${rect.bottom + scrollY + 20}px`,
+                                                left: `${rect.left + scrollX + rect.width / 2}px`,
+                                                transform: 'translateX(-50%)'
+                                            };
+                                            pointerStyle = {
+                                                top: `${rect.bottom + scrollY + 5}px`,
+                                                left: `${rect.left + scrollX + rect.width / 2}px`,
+                                            };
+                                            break;
+                                        case 'top':
+                                            tooltipStyle = {
+                                                bottom: `${window.innerHeight - rect.top - scrollY + 20}px`,
+                                                left: `${rect.left + scrollX + rect.width / 2}px`,
+                                                transform: 'translateX(-50%)'
+                                            };
+                                            pointerStyle = {
+                                                top: `${rect.top + scrollY - 40}px`,
+                                                left: `${rect.left + scrollX + rect.width / 2}px`,
+                                            };
+                                            break;
+                                        case 'right':
+                                            tooltipStyle = {
+                                                top: `${rect.top + scrollY + rect.height / 2}px`,
+                                                left: `${rect.right + scrollX + 20}px`,
+                                                transform: 'translateY(-50%)'
+                                            };
+                                            pointerStyle = {
+                                                top: `${rect.top + scrollY + rect.height / 2}px`,
+                                                left: `${rect.right + scrollX + 5}px`,
+                                            };
+                                            break;
+                                        case 'left':
+                                            tooltipStyle = {
+                                                top: `${rect.top + scrollY + rect.height / 2}px`,
+                                                right: `${window.innerWidth - rect.left - scrollX + 20}px`,
+                                                transform: 'translateY(-50%)'
+                                            };
+                                            pointerStyle = {
+                                                top: `${rect.top + scrollY + rect.height / 2}px`,
+                                                left: `${rect.left + scrollX - 40}px`,
+                                            };
+                                            break;
+                                    }
+                                }
+
+                                return (
+                                    <>
+                                        {/* Pointer */}
+                                        {currentStep?.position !== 'center' && rect && (
+                                            <div className="tutorial-pointer" style={pointerStyle}>👆</div>
+                                        )}
+
+                                        {/* Tooltip */}
+                                        <div className="tutorial-tooltip" style={tooltipStyle}>
+                                            <div className="flex items-start gap-3 mb-3">
+                                                <div className="w-10 h-10 bg-amber-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                                                    <Icon name="GraduationCap" size={20} className="text-amber-400" />
+                                                </div>
+                                                <div>
+                                                    <h4 className="text-white font-bold text-base">{stepData.title || 'Tutorial'}</h4>
+                                                    <p className="text-slate-300 text-sm mt-1">{stepData.content || ''}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Step indicator */}
+                                            <div className="tutorial-step-indicator">
+                                                {tutorialSteps.map((_, idx) => (
+                                                    <div
+                                                        key={idx}
+                                                        className={`tutorial-step-dot ${idx === tutorialStep ? 'active' : idx < tutorialStep ? 'completed' : ''}`}
+                                                    />
+                                                ))}
+                                            </div>
+
+                                            {/* Navigation buttons */}
+                                            <div className="flex justify-between items-center mt-4 pt-3 border-t border-slate-700">
+                                                <button
+                                                    onClick={() => setTutorialActive(false)}
+                                                    className="text-xs text-slate-500 hover:text-slate-300"
+                                                >
+                                                    {t.tutorial?.skipBtn || 'Skip'}
+                                                </button>
+                                                <div className="flex gap-2">
+                                                    {tutorialStep > 0 && (
+                                                        <button
+                                                            onClick={() => {
+                                                                setTutorialStep(prev => prev - 1);
+                                                                const prevTarget = tutorialSteps[tutorialStep - 1]?.target;
+                                                                if (prevTarget) {
+                                                                    document.getElementById(prevTarget)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                                }
+                                                            }}
+                                                            className="px-3 py-1.5 bg-slate-700 text-white rounded-lg text-sm hover:bg-slate-600"
+                                                        >
+                                                            {t.tutorial?.prevBtn || 'Back'}
+                                                        </button>
+                                                    )}
+                                                    {tutorialStep < tutorialSteps.length - 1 ? (
+                                                        <button
+                                                            onClick={() => {
+                                                                setTutorialStep(prev => prev + 1);
+                                                                const nextTarget = tutorialSteps[tutorialStep + 1]?.target;
+                                                                if (nextTarget) {
+                                                                    document.getElementById(nextTarget)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                                                }
+                                                            }}
+                                                            className="px-3 py-1.5 bg-amber-500 text-slate-900 rounded-lg text-sm font-medium hover:bg-amber-400 flex items-center gap-1"
+                                                        >
+                                                            {t.tutorial?.nextBtn || 'Next'}
+                                                            <Icon name="ChevronRight" size={14} />
+                                                        </button>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => {
+                                                                setTutorialActive(false);
+                                                                // Fill in example data
+                                                                setFields({
+                                                                    role: lang === 'cs' ? 'zkušený programátor v Pythonu' : 'an experienced Python developer',
+                                                                    task: lang === 'cs' ? 'Napiš funkci, která kontroluje, zda je číslo prvočíslo. Funkce by měla být efektivní a dobře zdokumentovaná.' : 'Write a function that checks if a number is prime. The function should be efficient and well-documented.',
+                                                                    context: lang === 'cs' ? 'Toto je pro vzdělávací projekt pro začátečníky.' : 'This is for an educational project for beginners.',
+                                                                    constraints: '',
+                                                                    outputFormat: '',
+                                                                    examples: ''
+                                                                });
+                                                                setNotification(t.tutorial?.completed?.message || 'Tutorial completed!');
+                                                                setTimeout(() => setNotification(''), 3000);
+                                                            }}
+                                                            className="px-4 py-1.5 bg-green-500 text-white rounded-lg text-sm font-medium hover:bg-green-400 flex items-center gap-1"
+                                                        >
+                                                            <Icon name="Check" size={14} />
+                                                            {t.tutorial?.finishBtn || 'Finish'}
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+
+                                            {/* Step counter */}
+                                            <div className="text-center mt-2 text-xs text-slate-500">
+                                                {(t.tutorial?.stepOf || 'Step {current} of {total}')
+                                                    .replace('{current}', tutorialStep + 1)
+                                                    .replace('{total}', tutorialSteps.length)}
+                                            </div>
+                                        </div>
+                                    </>
+                                );
+                            })()}
+                        </>
+                    )}
+
                     {/* Database Panel */}
                     {showDatabase && (
                         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowDatabase(false)}>
@@ -2088,6 +2517,16 @@ Prompt k analýze:
                             </div>
 
                             <div className="flex items-center gap-2">
+                                {/* Tutorial Button */}
+                                <button
+                                    onClick={() => setShowTutorialConfirm(true)}
+                                    className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/50 rounded-lg text-white hover:from-amber-500/30 hover:to-orange-500/30 transition-all"
+                                    title={t.tutorial?.buttonTooltip || 'Tutorial'}
+                                >
+                                    <Icon name="GraduationCap" size={16} className="text-amber-400" />
+                                    <span className="hidden sm:inline text-sm text-amber-300">{t.tutorial?.button || 'Tutorial'}</span>
+                                </button>
+
                                 {/* Share Button */}
                                 <button onClick={openShareModal} disabled={!formattedPrompt} className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 disabled:opacity-50" title={t.share.title}>
                                     <Icon name="Share2" size={16} className="text-green-400" />
@@ -2141,7 +2580,7 @@ Prompt k analýze:
                             <div className="lg:col-span-2 space-y-4">
                                 {/* Template & Target */}
                                 {/* Category Selector */}
-                                <div className="relative">
+                                <div id="template-selector" className={`relative ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'template-selector' ? 'tutorial-highlight' : ''}`}>
                                     <button onClick={() => setShowTemplates(!showTemplates)} className="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white">
                                         <div className="flex items-center gap-2">
                                             <Icon name={TemplateIcon} size={16} className="text-amber-400" />
@@ -2166,7 +2605,7 @@ Prompt k analýze:
                                 </div>
 
                                 {/* AI Model Hotbar - Visual cards with brand colors */}
-                                <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
+                                <div id="ai-model-selector" className={`bg-slate-800/50 border border-slate-700 rounded-lg p-3 ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'ai-model-selector' ? 'tutorial-highlight' : ''}`}>
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="text-xs font-medium text-slate-400 flex items-center gap-1.5">
                                             <Icon name="Cpu" size={14} className="text-amber-400" />
@@ -2270,7 +2709,7 @@ Prompt k analýze:
                                         { key: 'constraints', field: selectedMethods.includes('risen') ? t.fields.steps : t.fields.constraints },
                                         { key: 'outputFormat', field: selectedMethods.includes('risen') ? t.fields.expectations : t.fields.outputFormat },
                                     ].map(({ key, field, required }) => (
-                                        <div key={key}>
+                                        <div key={key} id={`field-${key}`} className={tutorialActive && tutorialSteps[tutorialStep]?.target === `field-${key}` ? 'tutorial-highlight' : ''}>
                                             <label className="block text-sm font-medium text-slate-300 mb-1.5">
                                                 {field.label} {required && <span className="text-amber-400">{t.required}</span>}
                                             </label>
@@ -2419,7 +2858,7 @@ Prompt k analýze:
                             </div>
 
                             {/* Methods Panel - with category-based recommendations */}
-                            <div className="lg:col-span-1">
+                            <div id="methods-section" className={`lg:col-span-1 ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'methods-section' ? 'tutorial-highlight' : ''}`}>
                                 <div className="flex items-center justify-between mb-3">
                                     <h3 className="text-sm font-medium text-slate-300">{t.methods.title}</h3>
                                 </div>
@@ -2513,7 +2952,7 @@ Prompt k analýze:
                             </div>
 
                             {/* Preview Panel */}
-                            <div className="lg:col-span-2 flex flex-col">
+                            <div id="preview-section" className={`lg:col-span-2 flex flex-col ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'preview-section' ? 'tutorial-highlight' : ''}`}>
                                 <div className="flex items-center justify-between mb-3">
                                     <div className="flex items-center gap-3">
                                         <h2 className="text-sm font-medium text-slate-300">{t.preview}</h2>
@@ -2543,7 +2982,7 @@ Prompt k analýze:
                                     )}
                                 </div>
                                 {formattedPrompt && (
-                                    <div className="mt-3 flex flex-col gap-3">
+                                    <div id="action-buttons" className={`mt-3 flex flex-col gap-3 ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'action-buttons' ? 'tutorial-highlight' : ''}`}>
                                         <div className="flex justify-between text-xs text-slate-500">
                                             <span>{t.optimizedFor} {aiTargets.find(a => a.id === target)?.name}</span>
                                             <span>{formattedPrompt.length} {t.chars}</span>
