@@ -2993,13 +2993,13 @@ function createToolCard(tool, top3Ids = []) {
 
     return `
         <div class="tool-card${isTop3 ? ' top-clicked' : ''}" data-id="${tool.id}" data-type="tool">
-            ${isTop3 ? `<span class="top-badge" title="${t('top_clicked_title')}">⭐ TOP ${topRank}</span>` : ''}
             <div class="tool-header">
                 <div class="tool-title">
                     <span class="tool-icon">${tool.icon || '🔧'}</span>
                     <span class="tool-name">${escapeHtml(tool.name)}</span>
                 </div>
                 <div class="tool-badges">
+                    ${isTop3 ? `<span class="tool-badge top-badge" title="${t('top_clicked_title')}">⭐ TOP ${topRank}</span>` : ''}
                     <span class="tool-badge view-count-badge" title="${viewCount} ${t('view_count_title')}">
                         👁️ <span data-view-count="${tool.id}">${formatViewCount(viewCount)}</span>
                     </span>
@@ -3036,13 +3036,13 @@ function createLinkCard(link, top3Ids = []) {
 
     return `
         <div class="tool-card link${isTop3 ? ' top-clicked' : ''}" data-id="${link.id}" data-type="link">
-            ${isTop3 ? `<span class="top-badge" title="${t('top_clicked_title')}">⭐ TOP ${topRank}</span>` : ''}
             <div class="tool-header">
                 <div class="tool-title">
                     <span class="tool-icon">${link.icon || '🔗'}</span>
                     <span class="tool-name">${escapeHtml(link.name)}</span>
                 </div>
                 <div class="tool-badges">
+                    ${isTop3 ? `<span class="tool-badge top-badge" title="${t('top_clicked_title')}">⭐ TOP ${topRank}</span>` : ''}
                     <span class="tool-badge view-count-badge" title="${viewCount} ${t('view_count_title')}">
                         👁️ <span data-view-count="${link.id}">${formatViewCount(viewCount)}</span>
                     </span>
