@@ -1447,7 +1447,7 @@ function clearAllData() {
 // =============================================================================
 
 const GITHUB_REPO = 'Deerpfy/adhub';
-const GITHUB_BRANCH = 'claude/multistream-chat-platform-01JPcUvEwSPUKJNusSFqrbsr';
+const GITHUB_BRANCH = 'main';
 const EXTENSION_PATH = 'projects/chat-panel/extension';
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com';
 const GITHUB_API_BASE = 'https://api.github.com';
@@ -1732,11 +1732,12 @@ async function downloadChatReaderExtension() {
         // Generuj ZIP
         const blob = await zip.generateAsync({ type: 'blob' });
 
-        // Stahni
+        // Stahni - nazev souboru s commit ID
         const downloadUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = downloadUrl;
-        a.download = 'adhub-chat-reader-extension.zip';
+        const commitSuffix = latestCommit ? `-${latestCommit.shortSha}` : '';
+        a.download = `adhub-multistream-chat-extension${commitSuffix}.zip`;
         a.click();
         URL.revokeObjectURL(downloadUrl);
 
@@ -2098,21 +2099,48 @@ function initExtensionStatusIndicator() {
     // Check extension status
     checkExtensionStatus().then(status => {
         updateExtensionStatusDot(status);
+        // Update AppState when extension is detected
+        if (status.installed) {
+            AppState.modExtension.available = true;
+            AppState.modExtension.version = status.version;
+        }
     });
 
     // Listen for extension ready events
     window.addEventListener('adhub-extension-ready', (e) => {
-        updateExtensionStatusDot({ installed: true, version: e.detail?.version });
+        const status = { installed: true, version: e.detail?.version };
+        updateExtensionStatusDot(status);
+        AppState.modExtension.available = true;
+        AppState.modExtension.version = e.detail?.version;
+        rerenderMessages(); // Refresh mod buttons
     });
 
     window.addEventListener('adhub-chat-reader-ready', (e) => {
-        updateExtensionStatusDot({ installed: true, version: e.detail?.version });
+        const status = { installed: true, version: e.detail?.version };
+        updateExtensionStatusDot(status);
+        AppState.modExtension.available = true;
+        AppState.modExtension.version = e.detail?.version;
+        rerenderMessages(); // Refresh mod buttons
+    });
+
+    // Listen for mod extension ready event
+    window.addEventListener('adhub-mod-extension-ready', (e) => {
+        const status = { installed: true, version: e.detail?.version };
+        updateExtensionStatusDot(status);
+        AppState.modExtension.available = true;
+        AppState.modExtension.version = e.detail?.version;
+        rerenderMessages(); // Refresh mod buttons
     });
 
     // Periodic check
     setInterval(() => {
         checkExtensionStatus().then(status => {
             updateExtensionStatusDot(status);
+            if (status.installed && !AppState.modExtension.available) {
+                AppState.modExtension.available = true;
+                AppState.modExtension.version = status.version;
+                rerenderMessages();
+            }
         });
     }, 30000);
 }

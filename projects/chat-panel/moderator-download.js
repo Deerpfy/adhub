@@ -7,8 +7,29 @@ const GITHUB_REPO = 'Deerpfy/adhub';
 const GITHUB_BRANCH = 'main';
 const EXTENSION_PATH = 'projects/chat-panel/extension';
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com';
+const GITHUB_API_BASE = 'https://api.github.com';
 
 document.getElementById('downloadBtn').addEventListener('click', downloadExtension);
+
+/**
+ * Get latest commit for extension folder
+ */
+async function getLatestCommit() {
+    try {
+        const url = `${GITHUB_API_BASE}/repos/${GITHUB_REPO}/commits?path=${EXTENSION_PATH}&per_page=1`;
+        const response = await fetch(url);
+        if (!response.ok) return null;
+        const commits = await response.json();
+        if (commits.length === 0) return null;
+        return {
+            sha: commits[0].sha,
+            shortSha: commits[0].sha.substring(0, 7)
+        };
+    } catch (e) {
+        console.warn('Failed to get commit info:', e);
+        return null;
+    }
+}
 
 async function downloadExtension() {
     const btn = document.getElementById('downloadBtn');
@@ -31,6 +52,9 @@ async function downloadExtension() {
     document.head.appendChild(style);
 
     try {
+        // Get latest commit for filename
+        const commitInfo = await getLatestCommit();
+
         const files = [
             { path: 'manifest.json', binary: false },
             { path: 'background.js', binary: false },
@@ -72,7 +96,9 @@ async function downloadExtension() {
         const downloadUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = downloadUrl;
-        a.download = 'adhub-multistream-chat-extension.zip';
+        // Include commit ID in filename
+        const commitSuffix = commitInfo ? `-${commitInfo.shortSha}` : '';
+        a.download = `adhub-multistream-chat-extension${commitSuffix}.zip`;
         a.click();
         URL.revokeObjectURL(downloadUrl);
 
