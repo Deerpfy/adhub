@@ -188,7 +188,18 @@ function initEventListeners() {
  * Inicializace MiniSearch indexu
  */
 function initSearchIndex() {
-    searchIndex = new MiniSearch({
+    // MiniSearch UMD může být exportován jako MiniSearch.default nebo přímo MiniSearch
+    const MiniSearchClass = (typeof MiniSearch !== 'undefined')
+        ? (MiniSearch.default || MiniSearch)
+        : null;
+
+    if (!MiniSearchClass) {
+        console.error('MiniSearch library not loaded');
+        updateStatus('Error: Search library not loaded', 'error');
+        return;
+    }
+
+    searchIndex = new MiniSearchClass({
         fields: ['text'],           // Pole pro vyhledávání
         storeFields: ['text', 'pageNum', 'fileName', 'fileId'],  // Pole k uložení
         searchOptions: {
