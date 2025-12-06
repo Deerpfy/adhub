@@ -797,6 +797,10 @@ a:hover {
     color: var(--text-muted);
     font-size: 0.75rem;
     flex-shrink: 0;
+    min-width: 38px;
+    margin-right: 8px;
+    font-family: 'SFMono-Regular', 'Consolas', 'Liberation Mono', monospace;
+    font-variant-numeric: tabular-nums;
     align-self: flex-start;
     margin-top: 2px;
 }
