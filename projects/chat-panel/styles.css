@@ -1524,3 +1524,141 @@ a:hover {
     text-overflow: ellipsis;
     max-width: 200px;
 }
+
+/* ==========================================================================
+   MODERATOR EXTENSION STYLES
+   ========================================================================== */
+
+/* Indikator moderatora v hlavicce */
+.mod-extension-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: var(--bg-tertiary);
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: var(--transition-fast);
+    border: 1px solid var(--border-color);
+}
+
+.mod-extension-indicator:hover {
+    background: var(--bg-hover);
+}
+
+.mod-extension-indicator.active {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(145, 71, 255, 0.2) 100%);
+    border-color: rgba(139, 92, 246, 0.4);
+    color: #a78bfa;
+}
+
+.mod-extension-indicator.inactive {
+    color: var(--text-muted);
+}
+
+.mod-indicator-icon {
+    font-size: 1rem;
+}
+
+/* Moderacni tlacitka u zprav */
+.message-mod-actions {
+    display: none;
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    gap: 4px;
+    background: var(--bg-secondary);
+    padding: 4px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    z-index: 10;
+}
+
+.chat-message:hover .message-mod-actions {
+    display: flex;
+}
+
+.mod-action-btn {
+    width: 26px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-hover);
+    border: none;
+    border-radius: 4px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition-fast);
+    padding: 0;
+}
+
+.mod-action-btn svg {
+    width: 14px;
+    height: 14px;
+}
+
+.mod-action-btn:hover {
+    transform: scale(1.1);
+}
+
+/* Delete tlacitko */
+.mod-action-btn.mod-delete:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #f87171;
+}
+
+/* Timeout tlacitko */
+.mod-action-btn.mod-timeout:hover {
+    background: rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+}
+
+/* Ban tlacitko */
+.mod-action-btn.mod-ban:hover {
+    background: rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+}
+
+/* Smazana zprava */
+.chat-message.deleted {
+    opacity: 0.3;
+    text-decoration: line-through;
+}
+
+.chat-message.deleted .message-mod-actions {
+    display: none !important;
+}
+
+/* Responzivni design */
+@media (max-width: 768px) {
+    .mod-extension-indicator {
+        padding: 4px 8px;
+        font-size: 0.7rem;
+    }
+
+    .mod-extension-indicator .mod-indicator-text {
+        display: none;
+    }
+
+    .message-mod-actions {
+        right: 4px;
+        padding: 2px;
+    }
+
+    .mod-action-btn {
+        width: 22px;
+        height: 22px;
+    }
+
+    .mod-action-btn svg {
+        width: 12px;
+        height: 12px;
+    }
+}

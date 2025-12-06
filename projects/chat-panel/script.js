@@ -24,6 +24,14 @@ const AppState = {
         theme: 'dark',
     },
     youtubeApiKey: '', // Uloženo pouze v session
+    // Moderator extension stav
+    modExtension: {
+        available: false,
+        version: null,
+        authenticated: false,
+        user: null,
+        channels: [], // Kanaly kde ma uzivatel mod opravneni
+    },
 };
 
 // =============================================================================
@@ -70,7 +78,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Aplikovat nastavení
     applySettings();
 
-    console.log('[AdHub] Multistream Chat v2 initialized');
+    // Inicializovat moderator extension
+    initModeratorExtension();
+
+    // Event listener pro mod akce (delegated)
+    document.addEventListener('click', handleModActionClick);
+
+    console.log('[AdHub] Multistream Chat v2.2 initialized');
 });
 
 // =============================================================================
@@ -937,6 +951,10 @@ function renderMessage(message) {
 
     html += `<span class="message-text">${content}</span>`;
     html += '</span>'; // Close message-content
+
+    // Moderacni tlacitka (pokud ma uzivatel opravneni)
+    html += generateModActionsHtml(message);
+
     html += '</div>'; // Close message-body
 
     messageEl.innerHTML = html;
@@ -1726,6 +1744,258 @@ async function downloadChatReaderExtension() {
 }
 
 // =============================================================================
+// MODERATOR EXTENSION
+// =============================================================================
+
+/**
+ * Inicializace a detekce moderatorske extenze
+ */
+function initModeratorExtension() {
+    // Kontrola zda je extension dostupna pres localStorage (nastaveno bridge skriptem)
+    const extActive = localStorage.getItem('adhub_mod_extension_active');
+    const extVersion = localStorage.getItem('adhub_mod_extension_version');
+
+    if (extActive === 'true') {
+        AppState.modExtension.available = true;
+        AppState.modExtension.version = extVersion;
+
+        // Nacist autentizaci
+        const authStatus = localStorage.getItem('adhub_mod_authenticated');
+        if (authStatus === 'true') {
+            AppState.modExtension.authenticated = true;
+            try {
+                AppState.modExtension.user = JSON.parse(localStorage.getItem('adhub_mod_user') || 'null');
+                AppState.modExtension.channels = JSON.parse(localStorage.getItem('adhub_mod_channels') || '[]');
+            } catch (e) {
+                console.error('[Mod Extension] Parse error:', e);
+            }
+        }
+
+        console.log('[Mod Extension] Detected:', AppState.modExtension);
+        updateModIndicator();
+    }
+
+    // Naslouchat na zmeny autentizace
+    document.addEventListener('adhub-mod-auth-changed', (event) => {
+        const { authenticated, user, channels } = event.detail;
+        AppState.modExtension.authenticated = authenticated;
+        AppState.modExtension.user = user;
+        AppState.modExtension.channels = channels || [];
+
+        console.log('[Mod Extension] Auth changed:', authenticated, channels?.length);
+        updateModIndicator();
+        rerenderMessages(); // Prekreslit zpravy pro aktualizaci mod tlacitek
+    });
+
+    // Naslouchat na ready event
+    document.addEventListener('adhub-mod-extension-ready', (event) => {
+        AppState.modExtension.available = true;
+        AppState.modExtension.version = event.detail.version;
+        console.log('[Mod Extension] Ready:', event.detail);
+        updateModIndicator();
+    });
+}
+
+/**
+ * Aktualizace indikatoru moderatora v UI
+ */
+function updateModIndicator() {
+    let indicator = document.getElementById('modExtensionIndicator');
+
+    if (!AppState.modExtension.available) {
+        if (indicator) indicator.remove();
+        return;
+    }
+
+    if (!indicator) {
+        indicator = document.createElement('div');
+        indicator.id = 'modExtensionIndicator';
+        indicator.className = 'mod-extension-indicator';
+
+        // Vlozit do header
+        const header = document.querySelector('.header');
+        if (header) {
+            header.appendChild(indicator);
+        }
+    }
+
+    if (AppState.modExtension.authenticated) {
+        const modCount = AppState.modExtension.channels.filter(c =>
+            c.role === 'moderator' || c.role === 'broadcaster'
+        ).length;
+
+        indicator.innerHTML = `
+            <span class="mod-indicator-icon">🛡️</span>
+            <span class="mod-indicator-text">Mod (${modCount})</span>
+        `;
+        indicator.className = 'mod-extension-indicator active';
+        indicator.title = `Moderator v ${modCount} kanalech`;
+    } else {
+        indicator.innerHTML = `
+            <span class="mod-indicator-icon">🛡️</span>
+            <span class="mod-indicator-text">Neprihlaseno</span>
+        `;
+        indicator.className = 'mod-extension-indicator inactive';
+        indicator.title = 'Klikni pro prihlaseni';
+    }
+}
+
+/**
+ * Zkontrolovat zda ma uzivatel mod opravneni pro dany kanal
+ */
+function hasModeratorPermission(platform, channelLogin) {
+    if (!AppState.modExtension.authenticated) return false;
+    if (platform !== 'twitch') return false; // Zatim jen Twitch
+
+    const normalizedLogin = channelLogin?.toLowerCase();
+
+    const channel = AppState.modExtension.channels.find(
+        c => c.broadcaster_login?.toLowerCase() === normalizedLogin
+    );
+
+    return channel && (channel.role === 'moderator' || channel.role === 'broadcaster');
+}
+
+/**
+ * Ziskat info o moderatorskem statusu
+ */
+function getModeratorInfo(platform, channelLogin) {
+    if (platform !== 'twitch') return null;
+
+    const normalizedLogin = channelLogin?.toLowerCase();
+
+    const channel = AppState.modExtension.channels.find(
+        c => c.broadcaster_login?.toLowerCase() === normalizedLogin
+    );
+
+    if (!channel) return null;
+
+    return {
+        isModerator: channel.role === 'moderator' || channel.role === 'broadcaster',
+        role: channel.role,
+        broadcasterId: channel.broadcaster_id
+    };
+}
+
+/**
+ * Provest moderacni akci
+ */
+async function performModAction(action, data) {
+    if (!window.AdHubModExtension) {
+        showToast('Moderator extension neni dostupna', 'error');
+        return { success: false };
+    }
+
+    try {
+        const result = await window.AdHubModExtension.performAction(action, data);
+
+        if (result.success) {
+            switch (action) {
+                case 'ban':
+                    showToast(`Uzivatel zabanovany`, 'success');
+                    break;
+                case 'timeout':
+                    showToast(`Timeout udelen`, 'success');
+                    break;
+                case 'delete':
+                    showToast(`Zprava smazana`, 'success');
+                    break;
+            }
+        } else {
+            showToast(result.error || 'Akce selhala', 'error');
+        }
+
+        return result;
+    } catch (error) {
+        console.error('[Mod Action] Error:', error);
+        showToast('Chyba pri provedeni akce', 'error');
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Vygenerovat HTML pro moderacni tlacitka
+ */
+function generateModActionsHtml(message) {
+    const platform = message.platform.split('-')[0]; // twitch, kick, youtube
+    const channelLogin = message.channel;
+
+    if (!hasModeratorPermission(platform, channelLogin)) {
+        return '';
+    }
+
+    const modInfo = getModeratorInfo(platform, channelLogin);
+    if (!modInfo) return '';
+
+    // Ulozit data do message pro pozdejsi pouziti
+    message._modInfo = modInfo;
+
+    return `
+        <div class="message-mod-actions" data-message-id="${escapeHtml(message.id)}" data-user-id="${escapeHtml(message.author.id || '')}" data-broadcaster-id="${escapeHtml(modInfo.broadcasterId || '')}">
+            <button class="mod-action-btn mod-delete" title="Smazat zpravu" data-action="delete">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+            </button>
+            <button class="mod-action-btn mod-timeout" title="Timeout 10min" data-action="timeout">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            </button>
+            <button class="mod-action-btn mod-ban" title="Ban" data-action="ban">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                </svg>
+            </button>
+        </div>
+    `;
+}
+
+/**
+ * Handler pro kliknuti na moderacni tlacitko
+ */
+function handleModActionClick(event) {
+    const btn = event.target.closest('.mod-action-btn');
+    if (!btn) return;
+
+    const container = btn.closest('.message-mod-actions');
+    if (!container) return;
+
+    const action = btn.dataset.action;
+    const messageId = container.dataset.messageId;
+    const userId = container.dataset.userId;
+    const broadcasterId = container.dataset.broadcasterId;
+
+    // Najit zpravu v AppState
+    const message = AppState.messages.find(m => m.id === messageId);
+    const username = message?.author?.displayName || 'uzivatel';
+
+    switch (action) {
+        case 'delete':
+            performModAction('delete', { broadcasterId, messageId });
+            // Vizualne oznacit jako smazane
+            const msgEl = document.querySelector(`[data-message-id="${messageId}"]`);
+            if (msgEl) {
+                msgEl.classList.add('deleted');
+            }
+            break;
+
+        case 'timeout':
+            performModAction('timeout', { broadcasterId, userId, duration: 600 });
+            break;
+
+        case 'ban':
+            if (confirm(`Opravdu chcete zabanovat uzivatele ${username}?`)) {
+                performModAction('ban', { broadcasterId, userId });
+            }
+            break;
+    }
+}
+
+// =============================================================================
 // DEBUG
 // =============================================================================
 
@@ -1738,5 +2008,9 @@ window.AdHubChat = {
     downloadChatReaderExtension,
     toggleChannelHighlight,
     clearAllHighlights,
-    version: '2.1.0',
+    // Moderator API
+    hasModeratorPermission,
+    performModAction,
+    initModeratorExtension,
+    version: '2.2.0',
 };

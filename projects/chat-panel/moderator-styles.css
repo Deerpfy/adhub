@@ -1,0 +1,356 @@
+/* Chat Moderator Extension Landing Page Styles */
+
+:root {
+    --bg-primary: #0e0e10;
+    --bg-secondary: #18181b;
+    --bg-tertiary: #1f1f23;
+    --text-primary: #efeff1;
+    --text-secondary: #adadb8;
+    --text-muted: #7a7a85;
+    --accent: #9147ff;
+    --accent-hover: #772ce8;
+    --success: #22c55e;
+    --border-color: #2f2f35;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Header */
+.header {
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+}
+
+.back-link:hover {
+    color: var(--text-primary);
+}
+
+.back-link svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Hero */
+.hero {
+    text-align: center;
+    padding: 60px 0 40px;
+}
+
+.hero-icon {
+    margin-bottom: 24px;
+}
+
+.hero-icon img {
+    filter: drop-shadow(0 4px 20px rgba(145, 71, 255, 0.3));
+}
+
+.hero h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, #a78bfa 0%, #9147ff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+}
+
+/* Features */
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 24px;
+    padding: 40px 0;
+}
+
+.feature {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 24px;
+    border: 1px solid var(--border-color);
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.feature:hover {
+    transform: translateY(-4px);
+    border-color: rgba(145, 71, 255, 0.3);
+}
+
+.feature-icon {
+    font-size: 2rem;
+    margin-bottom: 16px;
+}
+
+.feature h3 {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.feature p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* Download Section */
+.download-section {
+    background: var(--bg-secondary);
+    border-radius: 16px;
+    padding: 40px;
+    margin: 40px 0;
+    border: 1px solid var(--border-color);
+}
+
+.download-section h2 {
+    text-align: center;
+    margin-bottom: 32px;
+    font-size: 1.5rem;
+}
+
+.steps {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.step {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.step-number {
+    width: 36px;
+    height: 36px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.step-content h4 {
+    margin-bottom: 8px;
+    font-size: 1rem;
+}
+
+.step-content p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.step-content code {
+    background: var(--bg-tertiary);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+
+.btn-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, #9147ff 0%, #772ce8 100%);
+    color: white;
+    border: none;
+    padding: 14px 28px;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    margin-top: 12px;
+}
+
+.btn-download:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(145, 71, 255, 0.4);
+}
+
+.btn-download svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* Requirements */
+.requirements {
+    padding: 40px 0;
+}
+
+.requirements h2 {
+    margin-bottom: 20px;
+    font-size: 1.25rem;
+}
+
+.requirements ul {
+    list-style: none;
+    padding: 0;
+}
+
+.requirements li {
+    position: relative;
+    padding-left: 24px;
+    margin-bottom: 12px;
+    color: var(--text-secondary);
+}
+
+.requirements li::before {
+    content: "✓";
+    position: absolute;
+    left: 0;
+    color: var(--success);
+}
+
+/* Twitch App Setup */
+.twitch-app-setup {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 24px;
+    margin: 40px 0;
+    border: 1px solid var(--border-color);
+}
+
+.twitch-app-setup h2 {
+    margin-bottom: 16px;
+    font-size: 1.1rem;
+}
+
+.twitch-app-setup p {
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+
+.twitch-app-setup ol {
+    padding-left: 20px;
+    color: var(--text-secondary);
+}
+
+.twitch-app-setup li {
+    margin-bottom: 8px;
+}
+
+.twitch-app-setup a {
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.twitch-app-setup a:hover {
+    text-decoration: underline;
+}
+
+/* Related */
+.related {
+    padding: 40px 0;
+}
+
+.related h2 {
+    margin-bottom: 20px;
+    font-size: 1.25rem;
+}
+
+.related-links {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.related-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 20px;
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: border-color 0.2s, transform 0.2s;
+}
+
+.related-link:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+}
+
+.related-icon {
+    font-size: 1.25rem;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 40px 0;
+    border-top: 1px solid var(--border-color);
+    margin-top: 40px;
+}
+
+.footer p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.footer-note {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    margin-top: 8px;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+    .hero h1 {
+        font-size: 1.75rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .download-section {
+        padding: 24px;
+    }
+
+    .step {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .features {
+        grid-template-columns: 1fr;
+    }
+}

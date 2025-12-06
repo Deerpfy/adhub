@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdHub Chat Moderator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            width: 320px;
+            min-height: 200px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+        }
+
+        .container {
+            padding: 16px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .logo {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+        }
+
+        .header-text h1 {
+            font-size: 15px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .header-text .version {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        .info-box {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 16px;
+        }
+
+        .info-box p {
+            font-size: 12px;
+            color: #9ca3af;
+            line-height: 1.5;
+        }
+
+        .info-box strong {
+            color: #a78bfa;
+        }
+
+        .mod-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 10px 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .stat-label {
+            font-size: 9px;
+            color: #9ca3af;
+            text-transform: uppercase;
+        }
+
+        .channels-section {
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+
+        .channels-list {
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .channel-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            margin-bottom: 6px;
+        }
+
+        .channel-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .channel-name {
+            font-size: 13px;
+            color: #fff;
+        }
+
+        .channel-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22c55e;
+            box-shadow: 0 0 4px rgba(34, 197, 94, 0.5);
+        }
+
+        .channel-status.waiting {
+            background: #fbbf24;
+            box-shadow: 0 0 4px rgba(251, 191, 36, 0.5);
+        }
+
+        .btn-close-channel {
+            background: rgba(239, 68, 68, 0.2);
+            border: none;
+            color: #f87171;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .btn-close-channel:hover {
+            background: rgba(239, 68, 68, 0.4);
+        }
+
+        .empty-channels {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .add-channel {
+            margin-bottom: 16px;
+        }
+
+        .add-channel-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .add-channel-input {
+            flex: 1;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 13px;
+        }
+
+        .add-channel-input::placeholder {
+            color: #6b7280;
+        }
+
+        .add-channel-input:focus {
+            outline: none;
+            border-color: #9147ff;
+        }
+
+        .btn-add {
+            padding: 10px 16px;
+            background: #9147ff;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-add:hover {
+            background: #772ce8;
+        }
+
+        .btn-add:disabled {
+            background: #4a4a5a;
+            cursor: not-allowed;
+        }
+
+        .how-it-works {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            padding: 12px;
+        }
+
+        .how-it-works h3 {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+
+        .how-it-works ol {
+            font-size: 11px;
+            color: #6b7280;
+            padding-left: 16px;
+            line-height: 1.6;
+        }
+
+        .how-it-works li {
+            margin-bottom: 4px;
+        }
+
+        .footer {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .footer a {
+            font-size: 11px;
+            color: #9147ff;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="icons/icon48.png" alt="Logo" class="logo">
+            <div class="header-text">
+                <h1>Chat Moderator</h1>
+                <div class="version">v1.1.0</div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <p>
+                <strong>Bez prihlasovani!</strong> Pouziva vasi existujici Twitch session.
+                Staci byt prihlasen na Twitch.tv.
+            </p>
+        </div>
+
+        <div class="mod-stats">
+            <div class="stat-box">
+                <div class="stat-value" id="statBans">0</div>
+                <div class="stat-label">Bany</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="statTimeouts">0</div>
+                <div class="stat-label">Timeouty</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="statDeletes">0</div>
+                <div class="stat-label">Smazane</div>
+            </div>
+        </div>
+
+        <div class="add-channel">
+            <div class="section-title">Pridat kanal pro moderaci</div>
+            <div class="add-channel-row">
+                <input type="text" class="add-channel-input" id="channelInput" placeholder="Nazev kanalu (napr. shroud)">
+                <button class="btn-add" id="addBtn">Otevrit</button>
+            </div>
+        </div>
+
+        <div class="channels-section">
+            <div class="section-title">Aktivni chat okna</div>
+            <div class="channels-list" id="channelsList">
+                <div class="empty-channels">Zadne aktivni chaty</div>
+            </div>
+        </div>
+
+        <div class="how-it-works">
+            <h3>Jak to funguje</h3>
+            <ol>
+                <li>Zadejte nazev Twitch kanalu</li>
+                <li>Otevre se popup s chatem</li>
+                <li>Prikazy (/ban, /timeout) se posilaji automaticky</li>
+                <li>Musite mit mod prava v danem kanalu!</li>
+            </ol>
+        </div>
+
+        <div class="footer">
+            <a href="https://deerpfy.github.io/adhub/projects/chat-panel/" target="_blank">
+                Otevrit Multistream Chat
+            </a>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
