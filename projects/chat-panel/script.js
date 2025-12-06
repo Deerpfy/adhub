@@ -610,12 +610,29 @@ function updateChannelHighlightUI(channelId, highlighted) {
 }
 
 /**
+ * Extract video ID from YouTube URL or return as-is
+ */
+function extractVideoId(input) {
+    if (!input) return '';
+    // Try to extract from URL
+    const urlMatch = input.match(/(?:v=|\/live\/|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+    if (urlMatch) return urlMatch[1];
+    // Already a video ID or channel name
+    return input;
+}
+
+/**
  * Normalize channel ID for comparison
  */
 function normalizeChannelId(platform, channel) {
     // Remove # prefix (from IRC), trim whitespace, lowercase
-    const normalizedChannel = (channel || '').replace(/^#/, '').trim().toLowerCase();
-    // Normalize platform name (youtube-extension -> youtube-extension)
+    let normalizedChannel = (channel || '').replace(/^#/, '').trim().toLowerCase();
+
+    // For YouTube, extract video ID if it's a URL
+    if (platform.startsWith('youtube')) {
+        normalizedChannel = extractVideoId(normalizedChannel).toLowerCase();
+    }
+
     return `${platform}-${normalizedChannel}`;
 }
 
@@ -625,25 +642,43 @@ function normalizeChannelId(platform, channel) {
 function isMessageHighlighted(message) {
     if (AppState.highlightedChannels.size === 0) return false;
 
-    const msgChannelId = normalizeChannelId(message.platform, message.channel);
+    const msgChannel = (message.channel || '').toLowerCase();
+    const msgPlatform = message.platform;
+    const basePlatform = msgPlatform.split('-')[0]; // twitch, kick, youtube
 
-    // Direct match
-    if (AppState.highlightedChannels.has(msgChannelId)) return true;
-
-    // Try matching with base platform (youtube-extension -> youtube)
-    const basePlatform = message.platform.split('-')[0];
-    const baseChannelId = normalizeChannelId(basePlatform, message.channel);
-    if (AppState.highlightedChannels.has(baseChannelId)) return true;
-
-    // Check all highlighted channels for partial match
+    // Check all highlighted channels
     for (const highlightedId of AppState.highlightedChannels) {
-        const [hPlatform, ...hChannelParts] = highlightedId.split('-');
-        const hChannel = hChannelParts.join('-').toLowerCase();
-        const msgChannel = (message.channel || '').toLowerCase();
+        // Parse highlighted ID - format: "platform-channel" or "platform-subtype-channel"
+        // Examples: "twitch-moonmoon", "youtube-extension-videoId", "kick-xqc"
+        let hPlatform, hChannel;
 
-        // Match if platforms are compatible and channels match
-        if (basePlatform === hPlatform.split('-')[0] && msgChannel === hChannel) {
-            return true;
+        if (highlightedId.startsWith('youtube-extension-')) {
+            hPlatform = 'youtube-extension';
+            hChannel = highlightedId.substring('youtube-extension-'.length);
+        } else if (highlightedId.startsWith('youtube-iframe-')) {
+            hPlatform = 'youtube-iframe';
+            hChannel = highlightedId.substring('youtube-iframe-'.length);
+        } else {
+            // Simple format: platform-channel
+            const firstDash = highlightedId.indexOf('-');
+            hPlatform = highlightedId.substring(0, firstDash);
+            hChannel = highlightedId.substring(firstDash + 1);
+        }
+
+        const hBasePlatform = hPlatform.split('-')[0]; // twitch, kick, youtube
+
+        // Extract video ID from highlighted channel (in case it's a URL)
+        const hVideoId = extractVideoId(hChannel).toLowerCase();
+
+        // Match conditions:
+        // 1. Same base platform (twitch, kick, youtube)
+        // 2. Channel matches (direct or extracted video ID)
+        if (basePlatform === hBasePlatform) {
+            if (msgChannel === hChannel.toLowerCase() ||
+                msgChannel === hVideoId ||
+                extractVideoId(msgChannel) === hVideoId) {
+                return true;
+            }
         }
     }
 
