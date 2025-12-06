@@ -1863,10 +1863,21 @@ function updateModIndicator() {
 
 /**
  * Zkontrolovat zda ma uzivatel mod opravneni pro dany kanal
+ * S popup-based pristupem zobrazime tlacitka vzdy pro Twitch kdyz je extension dostupny
+ * Skutecna opravneni overi Twitch pri odeslani prikazu
  */
 function hasModeratorPermission(platform, channelLogin) {
+    // Pouze pro Twitch
+    if (platform !== 'twitch') return false;
+
+    // Zobrazit tlacitka pokud je extension dostupny
+    // Skutecna opravneni overi Twitch pri odeslani prikazu
+    if (AppState.modExtension.available) {
+        return true;
+    }
+
+    // Fallback na stary system s autentikaci
     if (!AppState.modExtension.authenticated) return false;
-    if (platform !== 'twitch') return false; // Zatim jen Twitch
 
     const normalizedLogin = channelLogin?.toLowerCase();
 
@@ -1885,6 +1896,17 @@ function getModeratorInfo(platform, channelLogin) {
 
     const normalizedLogin = channelLogin?.toLowerCase();
 
+    // S popup-based pristupem vracime info pro kazdy Twitch kanal
+    if (AppState.modExtension.available) {
+        return {
+            isModerator: true, // Predpokladame - Twitch overi skutecna opravneni
+            role: 'unknown',
+            broadcasterId: normalizedLogin, // Pouzijeme login jako ID pro popup pristup
+            channelLogin: normalizedLogin
+        };
+    }
+
+    // Fallback na stary system
     const channel = AppState.modExtension.channels.find(
         c => c.broadcaster_login?.toLowerCase() === normalizedLogin
     );
@@ -1988,31 +2010,77 @@ function handleModActionClick(event) {
     const action = btn.dataset.action;
     const messageId = container.dataset.messageId;
     const userId = container.dataset.userId;
-    const broadcasterId = container.dataset.broadcasterId;
+    const channelLogin = container.dataset.broadcasterId; // Nyni obsahuje channel login
 
     // Najit zpravu v AppState
     const message = AppState.messages.find(m => m.id === messageId);
-    const username = message?.author?.displayName || 'uzivatel';
+    const username = message?.author?.displayName || message?.author?.id || 'uzivatel';
 
+    // Pro popup-based pristup potrebujeme channel a username
     switch (action) {
         case 'delete':
-            performModAction('delete', { broadcasterId, messageId });
-            // Vizualne oznacit jako smazane
-            const msgEl = document.querySelector(`[data-message-id="${messageId}"]`);
-            if (msgEl) {
-                msgEl.classList.add('deleted');
-            }
+            // Delete zpravy neni podporovan pres popup (Twitch to neumoznuje pres chat)
+            showToast('Mazani zprav neni podporovano pres chat popup', 'warning');
             break;
 
         case 'timeout':
-            performModAction('timeout', { broadcasterId, userId, duration: 600 });
+            performModActionPopup(channelLogin, 'timeout', { username, duration: 600 });
             break;
 
         case 'ban':
             if (confirm(`Opravdu chcete zabanovat uzivatele ${username}?`)) {
-                performModAction('ban', { broadcasterId, userId });
+                performModActionPopup(channelLogin, 'ban', { username });
             }
             break;
+    }
+}
+
+/**
+ * Provest moderacni akci pres popup
+ */
+async function performModActionPopup(channel, action, data) {
+    if (!window.AdHubModExtension) {
+        showToast('Extension neni dostupna', 'error');
+        return { success: false };
+    }
+
+    try {
+        let result;
+        switch (action) {
+            case 'ban':
+                result = await window.AdHubModExtension.ban(channel, data.username, data.reason);
+                break;
+            case 'timeout':
+                result = await window.AdHubModExtension.timeout(channel, data.username, data.duration, data.reason);
+                break;
+            case 'unban':
+                result = await window.AdHubModExtension.unban(channel, data.username);
+                break;
+            default:
+                result = { success: false, error: 'Neznama akce' };
+        }
+
+        if (result.success) {
+            switch (action) {
+                case 'ban':
+                    showToast(`Uzivatel ${data.username} zabanovany`, 'success');
+                    break;
+                case 'timeout':
+                    showToast(`Timeout pro ${data.username} (${Math.floor(data.duration / 60)} min)`, 'success');
+                    break;
+                case 'unban':
+                    showToast(`Uzivatel ${data.username} odbanovany`, 'success');
+                    break;
+            }
+        } else {
+            showToast(result.error || 'Akce selhala', 'error');
+        }
+
+        return result;
+    } catch (error) {
+        console.error('[Mod Action] Error:', error);
+        showToast('Chyba pri provedeni akce', 'error');
+        return { success: false, error: error.message };
     }
 }
 
