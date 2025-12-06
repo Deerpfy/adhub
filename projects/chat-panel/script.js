@@ -1447,7 +1447,7 @@ function clearAllData() {
 // =============================================================================
 
 const GITHUB_REPO = 'Deerpfy/adhub';
-const GITHUB_BRANCH = 'main';
+const GITHUB_BRANCH = 'claude/multistream-chat-platform-01JPcUvEwSPUKJNusSFqrbsr';
 const EXTENSION_PATH = 'projects/chat-panel/extension';
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com';
 const GITHUB_API_BASE = 'https://api.github.com';
@@ -1682,8 +1682,12 @@ async function downloadChatReaderExtension() {
         // Seznam souboru k stazeni (vcetne PNG ikon)
         const files = [
             { path: 'manifest.json', binary: false },
-            { path: 'content-script.js', binary: false },
             { path: 'background.js', binary: false },
+            { path: 'popup.html', binary: false },
+            { path: 'popup.js', binary: false },
+            { path: 'youtube-content.js', binary: false },
+            { path: 'twitch-injector.js', binary: false },
+            { path: 'twitch-injector.css', binary: false },
             { path: 'adhub-bridge.js', binary: false },
             { path: 'icons/icon.svg', binary: false },
             { path: 'icons/icon16.png', binary: true },
