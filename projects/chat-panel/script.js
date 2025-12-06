@@ -2427,21 +2427,75 @@ async function updateExtensionModalStatus() {
     const icon = document.getElementById('extensionModalIcon');
     const title = document.getElementById('extensionModalTitle');
     const version = document.getElementById('extensionModalVersion');
-    const downloadBtn = document.getElementById('extensionModalDownloadBtn');
     const downloadText = document.getElementById('extensionModalDownloadText');
 
+    // Version details elements
+    const activeStatus = document.getElementById('extensionActiveStatus');
+    const loadedCommit = document.getElementById('extensionLoadedCommit');
+    const githubCommit = document.getElementById('extensionGithubCommit');
+    const updateRow = document.getElementById('extensionUpdateRow');
+    const updateStatus = document.getElementById('extensionUpdateStatus');
+
+    // Update main status
     if (status.installed) {
         icon.textContent = '✓';
         icon.className = 'extension-status-icon-large connected';
         title.textContent = 'Rozšíření je nainstalováno';
         version.textContent = `Verze ${status.version || 'neznámá'}`;
         downloadText.textContent = 'Aktualizovat rozšíření';
+
+        // Active status
+        activeStatus.textContent = '✓ Ano';
+        activeStatus.className = 'version-value active';
     } else {
         icon.textContent = '!';
         icon.className = 'extension-status-icon-large disconnected';
         title.textContent = 'Rozšíření není nainstalováno';
         version.textContent = 'Stáhněte a nainstalujte pro plnou funkčnost';
         downloadText.textContent = 'Stáhnout rozšíření';
+
+        // Active status
+        activeStatus.textContent = '✗ Ne';
+        activeStatus.className = 'version-value inactive';
+    }
+
+    // Get stored commit (loaded version)
+    const storedCommit = getStoredExtensionCommit();
+    if (storedCommit) {
+        loadedCommit.textContent = `${storedCommit.shortSha} (${storedCommit.date || 'neznámé datum'})`;
+        loadedCommit.title = storedCommit.message || '';
+    } else {
+        loadedCommit.textContent = 'Nenainstalováno';
+        loadedCommit.className = 'version-value inactive';
+    }
+
+    // Fetch latest commit from GitHub
+    try {
+        const latestCommit = await getLatestExtensionCommit();
+        if (latestCommit) {
+            githubCommit.textContent = `${latestCommit.shortSha} (${latestCommit.date || ''})`;
+            githubCommit.title = latestCommit.message || '';
+
+            // Check if update is available
+            if (storedCommit && storedCommit.sha !== latestCommit.sha) {
+                updateRow.style.display = 'flex';
+                updateStatus.textContent = '⬆ K dispozici aktualizace';
+                updateStatus.className = 'version-value update-available';
+            } else if (storedCommit && storedCommit.sha === latestCommit.sha) {
+                updateRow.style.display = 'flex';
+                updateStatus.textContent = '✓ Máte nejnovější verzi';
+                updateStatus.className = 'version-value up-to-date';
+            } else {
+                updateRow.style.display = 'none';
+            }
+        } else {
+            githubCommit.textContent = 'Nelze načíst';
+            githubCommit.className = 'version-value inactive';
+        }
+    } catch (error) {
+        console.error('[Extension] Error fetching GitHub commit:', error);
+        githubCommit.textContent = 'Chyba při načítání';
+        githubCommit.className = 'version-value inactive';
     }
 }
 
