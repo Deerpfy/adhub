@@ -44,6 +44,7 @@ const DOM = {
     chatContainer: null,
     addChannelModal: null,
     settingsModal: null,
+    extensionModal: null,
     toastContainer: null,
 };
 
@@ -58,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     DOM.chatContainer = document.getElementById('chatContainer');
     DOM.addChannelModal = document.getElementById('addChannelModal');
     DOM.settingsModal = document.getElementById('settingsModal');
+    DOM.extensionModal = document.getElementById('extensionModal');
     DOM.toastContainer = document.getElementById('toastContainer');
 
     // Načíst nastavení z localStorage
@@ -109,6 +111,21 @@ function initEventListeners() {
     document.getElementById('closeSettingsModal').addEventListener('click', () => {
         closeModal(DOM.settingsModal);
     });
+
+    // Extension Modal
+    document.getElementById('extensionBtn').addEventListener('click', () => {
+        openModal(DOM.extensionModal);
+        updateExtensionModalStatus();
+    });
+
+    document.getElementById('closeExtensionModal').addEventListener('click', () => {
+        closeModal(DOM.extensionModal);
+    });
+
+    document.getElementById('extensionModalDownloadBtn').addEventListener('click', downloadExtension);
+
+    // Initialize extension status indicator
+    initExtensionStatusIndicator();
 
     // Theme Toggle
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
@@ -1992,6 +2009,143 @@ function handleModActionClick(event) {
                 performModAction('ban', { broadcasterId, userId });
             }
             break;
+    }
+}
+
+// =============================================================================
+// EXTENSION STATUS INDICATOR
+// =============================================================================
+
+/**
+ * Initialize extension status indicator in header
+ */
+function initExtensionStatusIndicator() {
+    const statusDot = document.getElementById('extensionStatusDot');
+    if (!statusDot) return;
+
+    // Check extension status
+    checkExtensionStatus().then(status => {
+        updateExtensionStatusDot(status);
+    });
+
+    // Listen for extension ready events
+    window.addEventListener('adhub-extension-ready', (e) => {
+        updateExtensionStatusDot({ installed: true, version: e.detail?.version });
+    });
+
+    window.addEventListener('adhub-chat-reader-ready', (e) => {
+        updateExtensionStatusDot({ installed: true, version: e.detail?.version });
+    });
+
+    // Periodic check
+    setInterval(() => {
+        checkExtensionStatus().then(status => {
+            updateExtensionStatusDot(status);
+        });
+    }, 30000);
+}
+
+/**
+ * Check if extension is installed
+ */
+async function checkExtensionStatus() {
+    // Check localStorage markers
+    const timestamp = localStorage.getItem('adhub_extension_timestamp') ||
+                      localStorage.getItem('adhub_chat_reader_timestamp');
+    const version = localStorage.getItem('adhub_extension_version') ||
+                    localStorage.getItem('adhub_chat_reader_version');
+
+    if (timestamp) {
+        const age = Date.now() - parseInt(timestamp, 10);
+        if (age < 60000) { // Less than 1 minute old
+            return { installed: true, version };
+        }
+    }
+
+    // Check data attribute
+    if (document.documentElement.hasAttribute('data-adhub-extension') ||
+        document.documentElement.hasAttribute('data-adhub-chat-reader')) {
+        return { installed: true, version };
+    }
+
+    // Check global variable
+    if (window.adhubExtensionAvailable || window.adhubChatReaderAvailable) {
+        return { installed: true, version: window.adhubExtensionVersion || window.adhubChatReaderVersion };
+    }
+
+    return { installed: false, version: null };
+}
+
+/**
+ * Update extension status dot in header
+ */
+function updateExtensionStatusDot(status) {
+    const statusDot = document.getElementById('extensionStatusDot');
+    const extensionBtn = document.getElementById('extensionBtn');
+    if (!statusDot || !extensionBtn) return;
+
+    if (status.installed) {
+        statusDot.classList.add('connected');
+        statusDot.classList.remove('disconnected');
+        extensionBtn.title = `Extension v${status.version || '?'} - Připojeno`;
+    } else {
+        statusDot.classList.add('disconnected');
+        statusDot.classList.remove('connected');
+        extensionBtn.title = 'Extension - Není nainstalováno';
+    }
+}
+
+/**
+ * Update extension modal status
+ */
+async function updateExtensionModalStatus() {
+    const status = await checkExtensionStatus();
+
+    const icon = document.getElementById('extensionModalIcon');
+    const title = document.getElementById('extensionModalTitle');
+    const version = document.getElementById('extensionModalVersion');
+    const downloadBtn = document.getElementById('extensionModalDownloadBtn');
+    const downloadText = document.getElementById('extensionModalDownloadText');
+
+    if (status.installed) {
+        icon.textContent = '✓';
+        icon.className = 'extension-status-icon-large connected';
+        title.textContent = 'Rozšíření je nainstalováno';
+        version.textContent = `Verze ${status.version || 'neznámá'}`;
+        downloadText.textContent = 'Aktualizovat rozšíření';
+    } else {
+        icon.textContent = '!';
+        icon.className = 'extension-status-icon-large disconnected';
+        title.textContent = 'Rozšíření není nainstalováno';
+        version.textContent = 'Stáhněte a nainstalujte pro plnou funkčnost';
+        downloadText.textContent = 'Stáhnout rozšíření';
+    }
+}
+
+/**
+ * Download extension ZIP
+ */
+async function downloadExtension() {
+    const btn = document.getElementById('extensionModalDownloadBtn');
+    const originalText = document.getElementById('extensionModalDownloadText').textContent;
+
+    btn.disabled = true;
+    document.getElementById('extensionModalDownloadText').textContent = 'Stahuji...';
+
+    try {
+        await downloadChatReaderExtension();
+        document.getElementById('extensionModalDownloadText').textContent = 'Staženo!';
+        setTimeout(() => {
+            btn.disabled = false;
+            document.getElementById('extensionModalDownloadText').textContent = originalText;
+        }, 3000);
+    } catch (error) {
+        console.error('Download error:', error);
+        document.getElementById('extensionModalDownloadText').textContent = 'Chyba - zkuste znovu';
+        setTimeout(() => {
+            btn.disabled = false;
+            document.getElementById('extensionModalDownloadText').textContent = originalText;
+        }, 3000);
     }
 }
 
