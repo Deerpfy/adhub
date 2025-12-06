@@ -622,6 +622,28 @@ function extractVideoId(input) {
 }
 
 /**
+ * Extract channel name from Twitch/Kick URL or return as-is
+ */
+function extractChannelName(platform, input) {
+    if (!input) return '';
+
+    // Twitch URL: twitch.tv/username
+    if (platform === 'twitch' && input.includes('twitch.tv')) {
+        const match = input.match(/twitch\.tv\/([a-zA-Z0-9_]+)/);
+        if (match) return match[1];
+    }
+
+    // Kick URL: kick.com/username
+    if (platform === 'kick' && input.includes('kick.com')) {
+        const match = input.match(/kick\.com\/([a-zA-Z0-9_-]+)/);
+        if (match) return match[1];
+    }
+
+    // Remove @ prefix
+    return input.replace(/^@/, '');
+}
+
+/**
  * Normalize channel ID for comparison
  */
 function normalizeChannelId(platform, channel) {
@@ -667,16 +689,21 @@ function isMessageHighlighted(message) {
 
         const hBasePlatform = hPlatform.split('-')[0]; // twitch, kick, youtube
 
-        // Extract video ID from highlighted channel (in case it's a URL)
-        const hVideoId = extractVideoId(hChannel).toLowerCase();
+        // Extract actual channel name/ID based on platform
+        let normalizedHChannel;
+        if (hBasePlatform === 'youtube') {
+            normalizedHChannel = extractVideoId(hChannel).toLowerCase();
+        } else {
+            // Twitch, Kick - extract username from URL if needed
+            normalizedHChannel = extractChannelName(hBasePlatform, hChannel).toLowerCase();
+        }
 
         // Match conditions:
         // 1. Same base platform (twitch, kick, youtube)
-        // 2. Channel matches (direct or extracted video ID)
+        // 2. Channel matches (direct or extracted)
         if (basePlatform === hBasePlatform) {
             if (msgChannel === hChannel.toLowerCase() ||
-                msgChannel === hVideoId ||
-                extractVideoId(msgChannel) === hVideoId) {
+                msgChannel === normalizedHChannel) {
                 return true;
             }
         }
