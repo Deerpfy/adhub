@@ -3,18 +3,17 @@
  * Background Script - Service Worker
  *
  * Spravuje:
- * - OAuth tokeny a jejich validaci
- * - Komunikaci mezi content scripty a popup
- * - Moderacni API volani
+ * - Otevireni Twitch chat popup oken
+ * - Komunikaci mezi chat injector a Multistream Chat
+ * - Statistiky moderacnich akci
+ *
+ * Nepouziva OAuth - vyuziva existujici Twitch session uzivatele.
  */
 
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 
-// Cache pro uzivatelska data
-let cachedUser = null;
-let cachedToken = null;
-let cachedClientId = null;
-let cachedChannels = [];
+// Cache aktivnich chat popup oken
+const chatPopups = new Map(); // channel -> { tabId, windowId, ready }
 
 // Inicializace pri spusteni
 chrome.runtime.onInstalled.addListener(async (details) => {
@@ -29,70 +28,62 @@ chrome.runtime.onInstalled.addListener(async (details) => {
     }
 });
 
-// Nacist cachovane data pri startu
-chrome.storage.local.get(['twitch_token', 'twitch_user', 'twitch_client_id', 'mod_channels']).then(data => {
-    cachedToken = data.twitch_token;
-    cachedUser = data.twitch_user;
-    cachedClientId = data.twitch_client_id;
-    cachedChannels = data.mod_channels || [];
-    console.log('[Mod Extension] Cache loaded', { user: cachedUser?.login, channels: cachedChannels.length });
-});
+// Sledovat zavreni tabu
+chrome.tabs.onRemoved.addListener((tabId) => {
+    // Odstranit z cache pokud to byl chat popup
+    for (const [channel, popup] of chatPopups) {
+        if (popup.tabId === tabId) {
+            chatPopups.delete(channel);
+            console.log(`[Mod Extension] Chat popup closed: ${channel}`);
 
-// Naslouchat na zmeny v storage
-chrome.storage.onChanged.addListener((changes, namespace) => {
-    if (namespace === 'local') {
-        if (changes.twitch_token) cachedToken = changes.twitch_token.newValue;
-        if (changes.twitch_user) cachedUser = changes.twitch_user.newValue;
-        if (changes.twitch_client_id) cachedClientId = changes.twitch_client_id.newValue;
-        if (changes.mod_channels) cachedChannels = changes.mod_channels.newValue || [];
+            // Notifikovat storage
+            updateChannelStatus(channel, false);
+            break;
+        }
     }
 });
 
 // Hlavni message handler
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    console.log('[Mod Extension] Message received:', message.action);
+    console.log('[Mod Extension] Message:', message.action);
 
     switch (message.action) {
-        case 'getAuthStatus':
-            handleGetAuthStatus(sendResponse);
-            return true; // Async response
-
-        case 'getModeratedChannels':
-            handleGetModeratedChannels(sendResponse);
+        case 'openChatPopup':
+            handleOpenChatPopup(message.channel, sendResponse);
             return true;
 
-        case 'checkModeratorStatus':
-            handleCheckModeratorStatus(message, sendResponse);
+        case 'closeChatPopup':
+            handleCloseChatPopup(message.channel, sendResponse);
             return true;
 
-        case 'banUser':
-            handleBanUser(message, sendResponse);
-            return true;
-
-        case 'timeoutUser':
-            handleTimeoutUser(message, sendResponse);
-            return true;
-
-        case 'deleteMessage':
-            handleDeleteMessage(message, sendResponse);
-            return true;
-
-        case 'unbanUser':
-            handleUnbanUser(message, sendResponse);
-            return true;
-
-        case 'userLoggedIn':
-            cachedUser = message.user;
-            console.log('[Mod Extension] User logged in:', cachedUser?.login);
-            sendResponse({ success: true });
+        case 'getChatPopups':
+            sendResponse({
+                popups: Array.from(chatPopups.entries()).map(([channel, data]) => ({
+                    channel,
+                    ready: data.ready
+                }))
+            });
             return false;
 
-        case 'userLoggedOut':
-            cachedUser = null;
-            cachedToken = null;
-            cachedChannels = [];
-            console.log('[Mod Extension] User logged out');
-            sendResponse({ success: true });
+        case 'sendModAction':
+            handleSendModAction(message, sendResponse);
+            return true;
+
+        case 'getStats':
+            chrome.storage.local.get('mod_stats', (data) => {
+                sendResponse({ stats: data.mod_stats || { bans: 0, timeouts: 0, deletes: 0 } });
+            });
+            return true;
+
+        case 'chatInjectorReady':
+            // Chat injector hlasi pripravenost
+            const channel = message.channel?.toLowerCase();
+            if (channel && chatPopups.has(channel)) {
+                chatPopups.get(channel).ready = true;
+                updateChannelStatus(channel, true);
+                console.log(`[Mod Extension] Chat injector ready: ${channel}`);
+            }
+            sendResponse({ ok: true });
             return false;
 
         default:
@@ -102,238 +93,158 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 /**
- * Ziskat stav autentizace
+ * Otevrit Twitch chat popup pro kanal
  */
-async function handleGetAuthStatus(sendResponse) {
-    try {
-        const data = await chrome.storage.local.get(['twitch_token', 'twitch_user', 'mod_channels']);
+async function handleOpenChatPopup(channel, sendResponse) {
+    const normalizedChannel = channel.toLowerCase();
 
-        if (data.twitch_token && data.twitch_user) {
-            // Overit token
-            const response = await fetch('https://id.twitch.tv/oauth2/validate', {
-                headers: { 'Authorization': `OAuth ${data.twitch_token}` }
-            });
+    // Kontrola zda uz neni otevreny
+    if (chatPopups.has(normalizedChannel)) {
+        const existing = chatPopups.get(normalizedChannel);
 
-            if (response.ok) {
-                sendResponse({
-                    authenticated: true,
-                    user: data.twitch_user,
-                    channels: data.mod_channels || []
-                });
-            } else {
-                // Token nevalidni
-                await chrome.storage.local.remove(['twitch_token', 'twitch_user']);
-                sendResponse({ authenticated: false });
-            }
-        } else {
-            sendResponse({ authenticated: false });
+        // Zkontrolovat zda tab stale existuje
+        try {
+            await chrome.tabs.get(existing.tabId);
+            // Tab existuje, focus na nej
+            await chrome.windows.update(existing.windowId, { focused: true });
+            sendResponse({ success: true, alreadyOpen: true });
+            return;
+        } catch {
+            // Tab neexistuje, odstranit z cache
+            chatPopups.delete(normalizedChannel);
         }
-    } catch (error) {
-        console.error('[Mod Extension] Auth status error:', error);
-        sendResponse({ authenticated: false, error: error.message });
     }
-}
-
-/**
- * Ziskat seznam moderovanych kanalu
- */
-async function handleGetModeratedChannels(sendResponse) {
-    try {
-        const data = await chrome.storage.local.get(['mod_channels']);
-        sendResponse({ channels: data.mod_channels || [] });
-    } catch (error) {
-        sendResponse({ channels: [], error: error.message });
-    }
-}
-
-/**
- * Zkontrolovat moderatorsky status pro konkretni kanal
- */
-async function handleCheckModeratorStatus(message, sendResponse) {
-    const { channelLogin } = message;
 
     try {
-        const channel = cachedChannels.find(
-            c => c.broadcaster_login?.toLowerCase() === channelLogin?.toLowerCase()
-        );
+        // Otevrit novy popup
+        const popupUrl = `https://www.twitch.tv/popout/${normalizedChannel}/chat?popout=`;
 
-        if (channel) {
-            sendResponse({
-                isModerator: channel.role === 'moderator' || channel.role === 'broadcaster',
-                role: channel.role,
-                broadcasterId: channel.broadcaster_id
-            });
-        } else {
-            sendResponse({ isModerator: false, role: null });
-        }
+        const window = await chrome.windows.create({
+            url: popupUrl,
+            type: 'popup',
+            width: 340,
+            height: 600,
+            focused: true
+        });
+
+        // Ulozit do cache
+        chatPopups.set(normalizedChannel, {
+            tabId: window.tabs[0].id,
+            windowId: window.id,
+            ready: false
+        });
+
+        console.log(`[Mod Extension] Chat popup opened: ${normalizedChannel}`);
+        sendResponse({ success: true, tabId: window.tabs[0].id });
+
     } catch (error) {
-        sendResponse({ isModerator: false, error: error.message });
-    }
-}
-
-/**
- * Zabanovat uzivatele
- */
-async function handleBanUser(message, sendResponse) {
-    const { broadcasterId, userId, reason } = message;
-
-    try {
-        if (!cachedToken || !cachedClientId || !cachedUser) {
-            throw new Error('Not authenticated');
-        }
-
-        const response = await fetch(
-            `https://api.twitch.tv/helix/moderation/bans?broadcaster_id=${broadcasterId}&moderator_id=${cachedUser.id}`,
-            {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${cachedToken}`,
-                    'Client-ID': cachedClientId,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    data: {
-                        user_id: userId,
-                        reason: reason || 'Banned via AdHub Moderator'
-                    }
-                })
-            }
-        );
-
-        if (response.ok) {
-            // Aktualizovat statistiky
-            await updateStats('bans');
-            sendResponse({ success: true });
-        } else {
-            const error = await response.json();
-            sendResponse({ success: false, error: error.message || 'Ban failed' });
-        }
-    } catch (error) {
-        console.error('[Mod Extension] Ban error:', error);
+        console.error('[Mod Extension] Error opening popup:', error);
         sendResponse({ success: false, error: error.message });
     }
 }
 
 /**
- * Dat timeout uzivateli
+ * Zavrit chat popup
  */
-async function handleTimeoutUser(message, sendResponse) {
-    const { broadcasterId, userId, duration, reason } = message;
+async function handleCloseChatPopup(channel, sendResponse) {
+    const normalizedChannel = channel.toLowerCase();
+
+    if (!chatPopups.has(normalizedChannel)) {
+        sendResponse({ success: false, error: 'Popup not found' });
+        return;
+    }
 
     try {
-        if (!cachedToken || !cachedClientId || !cachedUser) {
-            throw new Error('Not authenticated');
-        }
-
-        const response = await fetch(
-            `https://api.twitch.tv/helix/moderation/bans?broadcaster_id=${broadcasterId}&moderator_id=${cachedUser.id}`,
-            {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${cachedToken}`,
-                    'Client-ID': cachedClientId,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    data: {
-                        user_id: userId,
-                        duration: duration || 600, // Default 10 minut
-                        reason: reason || 'Timeout via AdHub Moderator'
-                    }
-                })
-            }
-        );
-
-        if (response.ok) {
-            await updateStats('timeouts');
-            sendResponse({ success: true });
-        } else {
-            const error = await response.json();
-            sendResponse({ success: false, error: error.message || 'Timeout failed' });
-        }
+        const popup = chatPopups.get(normalizedChannel);
+        await chrome.windows.remove(popup.windowId);
+        chatPopups.delete(normalizedChannel);
+        updateChannelStatus(normalizedChannel, false);
+        sendResponse({ success: true });
     } catch (error) {
-        console.error('[Mod Extension] Timeout error:', error);
+        chatPopups.delete(normalizedChannel);
         sendResponse({ success: false, error: error.message });
     }
 }
 
 /**
- * Smazat zpravu
+ * Poslat moderacni akci do chat popup
  */
-async function handleDeleteMessage(message, sendResponse) {
-    const { broadcasterId, messageId } = message;
+async function handleSendModAction(message, sendResponse) {
+    const { channel, action, data } = message;
+    const normalizedChannel = channel.toLowerCase();
+
+    if (!chatPopups.has(normalizedChannel)) {
+        sendResponse({ success: false, error: 'Chat popup not open for this channel' });
+        return;
+    }
+
+    const popup = chatPopups.get(normalizedChannel);
+
+    if (!popup.ready) {
+        sendResponse({ success: false, error: 'Chat popup not ready' });
+        return;
+    }
 
     try {
-        if (!cachedToken || !cachedClientId || !cachedUser) {
-            throw new Error('Not authenticated');
+        // Poslat zpravu do content scriptu
+        const response = await chrome.tabs.sendMessage(popup.tabId, {
+            action: 'mod-action',
+            type: action,
+            data: data
+        });
+
+        // Aktualizovat statistiky pokud uspech
+        if (response.success) {
+            await updateStats(action);
         }
 
-        const response = await fetch(
-            `https://api.twitch.tv/helix/moderation/chat?broadcaster_id=${broadcasterId}&moderator_id=${cachedUser.id}&message_id=${messageId}`,
-            {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${cachedToken}`,
-                    'Client-ID': cachedClientId
-                }
-            }
-        );
-
-        if (response.ok || response.status === 204) {
-            await updateStats('deletes');
-            sendResponse({ success: true });
-        } else {
-            const error = await response.json();
-            sendResponse({ success: false, error: error.message || 'Delete failed' });
-        }
+        sendResponse(response);
     } catch (error) {
-        console.error('[Mod Extension] Delete error:', error);
+        console.error('[Mod Extension] Error sending mod action:', error);
         sendResponse({ success: false, error: error.message });
     }
 }
 
 /**
- * Odbanovat uzivatele
+ * Aktualizovat status kanalu v storage
  */
-async function handleUnbanUser(message, sendResponse) {
-    const { broadcasterId, userId } = message;
-
+async function updateChannelStatus(channel, isOpen) {
     try {
-        if (!cachedToken || !cachedClientId || !cachedUser) {
-            throw new Error('Not authenticated');
-        }
+        const data = await chrome.storage.local.get('mod_channels');
+        const channels = data.mod_channels || {};
 
-        const response = await fetch(
-            `https://api.twitch.tv/helix/moderation/bans?broadcaster_id=${broadcasterId}&moderator_id=${cachedUser.id}&user_id=${userId}`,
-            {
-                method: 'DELETE',
-                headers: {
-                    'Authorization': `Bearer ${cachedToken}`,
-                    'Client-ID': cachedClientId
-                }
-            }
-        );
-
-        if (response.ok || response.status === 204) {
-            sendResponse({ success: true });
+        if (isOpen) {
+            channels[channel] = { ready: true, timestamp: Date.now() };
         } else {
-            const error = await response.json();
-            sendResponse({ success: false, error: error.message || 'Unban failed' });
+            delete channels[channel];
         }
+
+        await chrome.storage.local.set({ mod_channels: channels });
     } catch (error) {
-        console.error('[Mod Extension] Unban error:', error);
-        sendResponse({ success: false, error: error.message });
+        console.error('[Mod Extension] Error updating channel status:', error);
     }
 }
 
 /**
  * Aktualizovat statistiky
  */
-async function updateStats(type) {
+async function updateStats(action) {
     try {
         const data = await chrome.storage.local.get('mod_stats');
         const stats = data.mod_stats || { bans: 0, timeouts: 0, deletes: 0 };
-        stats[type] = (stats[type] || 0) + 1;
+
+        switch (action) {
+            case 'ban':
+                stats.bans = (stats.bans || 0) + 1;
+                break;
+            case 'timeout':
+                stats.timeouts = (stats.timeouts || 0) + 1;
+                break;
+            case 'delete':
+                stats.deletes = (stats.deletes || 0) + 1;
+                break;
+        }
+
         await chrome.storage.local.set({ mod_stats: stats });
     } catch (error) {
         console.error('[Mod Extension] Stats update error:', error);
@@ -353,20 +264,28 @@ chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => 
             sendResponse({ pong: true, version: VERSION });
             return false;
 
-        case 'getModStatus':
-            handleCheckModeratorStatus(message, sendResponse);
+        case 'getOpenChannels':
+            sendResponse({
+                channels: Array.from(chatPopups.entries())
+                    .filter(([_, data]) => data.ready)
+                    .map(([channel]) => channel)
+            });
+            return false;
+
+        case 'openChat':
+            handleOpenChatPopup(message.channel, sendResponse);
             return true;
 
-        case 'performModAction':
-            if (message.type === 'ban') {
-                handleBanUser(message, sendResponse);
-            } else if (message.type === 'timeout') {
-                handleTimeoutUser(message, sendResponse);
-            } else if (message.type === 'delete') {
-                handleDeleteMessage(message, sendResponse);
-            } else {
-                sendResponse({ error: 'Unknown action type' });
-            }
+        case 'closeChat':
+            handleCloseChatPopup(message.channel, sendResponse);
+            return true;
+
+        case 'modAction':
+            handleSendModAction({
+                channel: message.channel,
+                action: message.type,
+                data: message.data
+            }, sendResponse);
             return true;
 
         default:

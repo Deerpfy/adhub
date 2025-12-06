@@ -3,12 +3,13 @@
  * Bridge Script - Komunikace mezi extensi a AdHub webem
  *
  * Bezi na AdHub strankach a poskytuje moderacni funkce do Multistream Chat.
+ * Verze 1.1 - Popup-based pristup bez OAuth.
  */
 
 (function() {
     'use strict';
 
-    const VERSION = '1.0.0';
+    const VERSION = '1.1.0';
     const MARKER = '__ADHUB_MOD_BRIDGE__';
 
     // Kontrola opakované injekce
@@ -30,114 +31,108 @@
         detail: { version: VERSION }
     }));
 
-    // Cache pro moderovane kanaly
-    let cachedChannels = [];
-    let isAuthenticated = false;
+    // Cache pro aktivni chat okna
+    let openChannels = [];
 
     /**
-     * Ziskat stav autentizace a kanaly
+     * Refresh seznamu otevrenych kanalu
      */
-    async function refreshAuthStatus() {
+    async function refreshOpenChannels() {
         try {
-            const response = await chrome.runtime.sendMessage({ action: 'getAuthStatus' });
+            const response = await chrome.runtime.sendMessage({ action: 'getChatPopups' });
+            openChannels = (response.popups || []).filter(p => p.ready).map(p => p.channel);
 
-            isAuthenticated = response.authenticated;
-
-            if (isAuthenticated) {
-                cachedChannels = response.channels || [];
-                console.log('[AdHub Mod Bridge] Authenticated, channels:', cachedChannels.length);
-
-                // Aktualizovat localStorage
-                localStorage.setItem('adhub_mod_authenticated', 'true');
-                localStorage.setItem('adhub_mod_user', JSON.stringify(response.user));
-                localStorage.setItem('adhub_mod_channels', JSON.stringify(cachedChannels));
-            } else {
-                localStorage.setItem('adhub_mod_authenticated', 'false');
-                localStorage.removeItem('adhub_mod_user');
-                localStorage.removeItem('adhub_mod_channels');
-            }
+            // Aktualizovat localStorage
+            localStorage.setItem('adhub_mod_open_channels', JSON.stringify(openChannels));
 
             // Dispatch event pro aplikaci
-            document.dispatchEvent(new CustomEvent('adhub-mod-auth-changed', {
-                detail: {
-                    authenticated: isAuthenticated,
-                    user: response.user,
-                    channels: cachedChannels
-                }
+            document.dispatchEvent(new CustomEvent('adhub-mod-channels-changed', {
+                detail: { channels: openChannels }
             }));
 
+            return openChannels;
         } catch (error) {
-            console.error('[AdHub Mod Bridge] Auth check error:', error);
+            console.error('[AdHub Mod Bridge] Error getting channels:', error);
+            return [];
         }
     }
 
     /**
-     * Zkontrolovat moderatorsky status pro kanal
+     * Otevrit chat popup pro kanal
      */
-    function checkModeratorForChannel(channelLogin) {
-        const normalizedLogin = channelLogin?.toLowerCase();
+    async function openChatForChannel(channel) {
+        try {
+            const response = await chrome.runtime.sendMessage({
+                action: 'openChatPopup',
+                channel: channel
+            });
 
-        const channel = cachedChannels.find(
-            c => c.broadcaster_login?.toLowerCase() === normalizedLogin
-        );
+            if (response.success) {
+                // Pockej na ready stav
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                await refreshOpenChannels();
+            }
 
-        return {
-            isModerator: channel ? (channel.role === 'moderator' || channel.role === 'broadcaster') : false,
-            role: channel?.role || null,
-            broadcasterId: channel?.broadcaster_id || null
-        };
+            return response;
+        } catch (error) {
+            console.error('[AdHub Mod Bridge] Error opening chat:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Zavrit chat popup
+     */
+    async function closeChatForChannel(channel) {
+        try {
+            const response = await chrome.runtime.sendMessage({
+                action: 'closeChatPopup',
+                channel: channel
+            });
+
+            await refreshOpenChannels();
+            return response;
+        } catch (error) {
+            console.error('[AdHub Mod Bridge] Error closing chat:', error);
+            return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Zkontrolovat zda je chat otevreny pro kanal
+     */
+    function isChatOpen(channel) {
+        return openChannels.includes(channel?.toLowerCase());
     }
 
     /**
      * Provest moderacni akci
      */
-    async function performModAction(action, data) {
-        try {
-            let response;
+    async function performModAction(channel, action, data) {
+        const normalizedChannel = channel?.toLowerCase();
 
-            switch (action) {
-                case 'ban':
-                    response = await chrome.runtime.sendMessage({
-                        action: 'banUser',
-                        broadcasterId: data.broadcasterId,
-                        userId: data.userId,
-                        reason: data.reason
-                    });
-                    break;
-
-                case 'timeout':
-                    response = await chrome.runtime.sendMessage({
-                        action: 'timeoutUser',
-                        broadcasterId: data.broadcasterId,
-                        userId: data.userId,
-                        duration: data.duration || 600,
-                        reason: data.reason
-                    });
-                    break;
-
-                case 'delete':
-                    response = await chrome.runtime.sendMessage({
-                        action: 'deleteMessage',
-                        broadcasterId: data.broadcasterId,
-                        messageId: data.messageId
-                    });
-                    break;
-
-                case 'unban':
-                    response = await chrome.runtime.sendMessage({
-                        action: 'unbanUser',
-                        broadcasterId: data.broadcasterId,
-                        userId: data.userId
-                    });
-                    break;
-
-                default:
-                    return { success: false, error: 'Unknown action' };
+        // Zkontrolovat zda je chat otevreny
+        if (!isChatOpen(normalizedChannel)) {
+            // Zkusit otevrit chat
+            const openResult = await openChatForChannel(normalizedChannel);
+            if (!openResult.success) {
+                return { success: false, error: 'Chat neni otevreny a nelze ho otevrit' };
             }
+            // Pockej na inicializaci
+            await new Promise(resolve => setTimeout(resolve, 3000));
+        }
+
+        try {
+            const response = await chrome.runtime.sendMessage({
+                action: 'sendModAction',
+                channel: normalizedChannel,
+                action: action,
+                data: data
+            });
 
             return response;
         } catch (error) {
-            console.error('[AdHub Mod Bridge] Action error:', error);
+            console.error('[AdHub Mod Bridge] Mod action error:', error);
             return { success: false, error: error.message };
         }
     }
@@ -145,11 +140,18 @@
     // Exponovat API pro Multistream Chat
     window.AdHubModExtension = {
         version: VERSION,
-        isAuthenticated: () => isAuthenticated,
-        getChannels: () => cachedChannels,
-        checkModerator: checkModeratorForChannel,
+        getOpenChannels: () => openChannels,
+        isChatOpen: isChatOpen,
+        openChat: openChatForChannel,
+        closeChat: closeChatForChannel,
         performAction: performModAction,
-        refresh: refreshAuthStatus
+        refresh: refreshOpenChannels,
+
+        // Pomocne metody pro jednotlive akce
+        ban: (channel, username, reason) => performModAction(channel, 'ban', { username, reason }),
+        timeout: (channel, username, duration, reason) => performModAction(channel, 'timeout', { username, duration, reason }),
+        delete: (channel, messageId) => performModAction(channel, 'delete', { messageId }),
+        unban: (channel, username) => performModAction(channel, 'unban', { username })
     };
 
     // Naslouchat na pozadavky z aplikace
@@ -166,23 +168,31 @@
             case 'check-mod-extension':
                 response.available = true;
                 response.version = VERSION;
-                response.authenticated = isAuthenticated;
+                response.openChannels = openChannels;
                 break;
 
-            case 'check-mod-status':
-                response.data = checkModeratorForChannel(payload.channel);
+            case 'get-open-channels':
+                response.data = await refreshOpenChannels();
+                break;
+
+            case 'open-chat':
+                response.data = await openChatForChannel(payload.channel);
+                break;
+
+            case 'close-chat':
+                response.data = await closeChatForChannel(payload.channel);
+                break;
+
+            case 'is-chat-open':
+                response.data = { isOpen: isChatOpen(payload.channel) };
                 break;
 
             case 'perform-mod-action':
-                response.data = await performModAction(payload.action, payload.data);
-                break;
-
-            case 'refresh-auth':
-                await refreshAuthStatus();
-                response.data = {
-                    authenticated: isAuthenticated,
-                    channels: cachedChannels
-                };
+                response.data = await performModAction(
+                    payload.channel,
+                    payload.action,
+                    payload.data
+                );
                 break;
 
             default:
@@ -196,20 +206,18 @@
         }, '*');
     });
 
-    // Naslouchat na zmeny v storage (treba novy login)
+    // Naslouchat na zmeny v storage
     chrome.storage.onChanged.addListener((changes, namespace) => {
-        if (namespace === 'local') {
-            if (changes.twitch_token || changes.twitch_user || changes.mod_channels) {
-                console.log('[AdHub Mod Bridge] Storage changed, refreshing...');
-                refreshAuthStatus();
-            }
+        if (namespace === 'local' && changes.mod_channels) {
+            console.log('[AdHub Mod Bridge] Channels changed, refreshing...');
+            refreshOpenChannels();
         }
     });
 
     // Inicializace
-    refreshAuthStatus();
+    refreshOpenChannels();
 
-    // Periodicky refresh (kazdych 5 minut)
-    setInterval(refreshAuthStatus, 5 * 60 * 1000);
+    // Periodicky refresh (kazdych 30 sekund)
+    setInterval(refreshOpenChannels, 30 * 1000);
 
 })();
