@@ -765,6 +765,7 @@ a:hover {
     gap: 8px;
     align-items: flex-start;
     min-width: 0;
+    position: relative;
 }
 
 .message-platform-badge {
@@ -1564,66 +1565,159 @@ a:hover {
     font-size: 1rem;
 }
 
-/* Moderacni tlacitka u zprav */
-.message-mod-actions {
+/* Moderacni tlacitka u zprav - trigger button */
+.message-mod-trigger {
     display: none;
     position: absolute;
     right: 8px;
     top: 50%;
     transform: translateY(-50%);
-    gap: 4px;
+    width: 28px;
+    height: 28px;
     background: var(--bg-secondary);
-    padding: 4px;
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: var(--transition-fast);
     z-index: 10;
 }
 
-.chat-message:hover .message-mod-actions {
+.chat-message:hover .message-mod-trigger {
     display: flex;
 }
 
+.message-mod-trigger:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.message-mod-trigger svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Mod actions dropdown menu */
+.message-mod-actions {
+    display: none;
+    position: absolute;
+    right: 8px;
+    top: calc(50% + 18px);
+    min-width: 180px;
+    background: var(--bg-secondary);
+    padding: 6px 0;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border-color);
+    z-index: 100;
+    flex-direction: column;
+}
+
+.message-mod-actions.visible {
+    display: flex;
+}
+
+/* Mod menu section */
+.mod-menu-section {
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.mod-menu-section:last-child {
+    border-bottom: none;
+}
+
+.mod-menu-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    padding: 4px 12px;
+    letter-spacing: 0.5px;
+}
+
+/* Mod action buttons in dropdown */
 .mod-action-btn {
-    width: 26px;
-    height: 26px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    background: var(--bg-hover);
+    gap: 10px;
+    width: 100%;
+    padding: 8px 12px;
+    background: transparent;
     border: none;
-    border-radius: 4px;
     color: var(--text-secondary);
     cursor: pointer;
     transition: var(--transition-fast);
-    padding: 0;
+    text-align: left;
+    font-size: 13px;
 }
 
 .mod-action-btn svg {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
 }
 
 .mod-action-btn:hover {
-    transform: scale(1.1);
+    background: var(--bg-hover);
+    color: var(--text-primary);
 }
 
-/* Delete tlacitko */
+/* Different action colors */
 .mod-action-btn.mod-delete:hover {
-    background: rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.15);
     color: #f87171;
 }
 
-/* Timeout tlacitko */
 .mod-action-btn.mod-timeout:hover {
-    background: rgba(251, 191, 36, 0.2);
+    background: rgba(251, 191, 36, 0.15);
     color: #fbbf24;
 }
 
-/* Ban tlacitko */
 .mod-action-btn.mod-ban:hover {
-    background: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.2);
     color: #ef4444;
+}
+
+.mod-action-btn.mod-unban:hover {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+.mod-action-btn.mod-vip:hover {
+    background: rgba(236, 72, 153, 0.15);
+    color: #ec4899;
+}
+
+.mod-action-btn.mod-positive:hover {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+/* Timeout duration options */
+.timeout-options {
+    display: none;
+    flex-direction: column;
+    padding-left: 26px;
+    gap: 0;
+}
+
+.timeout-options.visible {
+    display: flex;
+}
+
+.timeout-option {
+    padding: 6px 12px;
+    font-size: 12px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.timeout-option:hover {
+    background: rgba(251, 191, 36, 0.1);
+    color: #fbbf24;
 }
 
 /* Smazana zprava */
@@ -1632,7 +1726,14 @@ a:hover {
     text-decoration: line-through;
 }
 
+.chat-message.deleted .message-mod-trigger,
 .chat-message.deleted .message-mod-actions {
+    display: none !important;
+}
+
+/* Own messages - no mod actions */
+.chat-message.own-message .message-mod-trigger,
+.chat-message.own-message .message-mod-actions {
     display: none !important;
 }
 
@@ -1647,19 +1748,25 @@ a:hover {
         display: none;
     }
 
+    .message-mod-trigger {
+        right: 4px;
+        width: 24px;
+        height: 24px;
+    }
+
     .message-mod-actions {
         right: 4px;
-        padding: 2px;
+        min-width: 160px;
     }
 
     .mod-action-btn {
-        width: 22px;
-        height: 22px;
+        padding: 6px 10px;
+        font-size: 12px;
     }
 
     .mod-action-btn svg {
-        width: 12px;
-        height: 12px;
+        width: 14px;
+        height: 14px;
     }
 }
 

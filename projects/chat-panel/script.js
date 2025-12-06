@@ -1816,6 +1816,25 @@ function initModeratorExtension() {
         console.log('[Mod Extension] Ready:', event.detail);
         updateModIndicator();
     });
+
+    // Naslouchat na identifikaci uzivatele (pro rozpoznani vlastnich zprav)
+    window.addEventListener('adhub-user-identified', (event) => {
+        const { login, displayName } = event.detail;
+        AppState.modExtension.user = { login, displayName };
+        console.log('[Mod Extension] User identified:', login);
+        rerenderMessages(); // Prekreslit zpravy pro aktualizaci mod tlacitek
+    });
+
+    // Zkusit ziskat uzivatele z extension API
+    setTimeout(() => {
+        if (window.AdHubModExtension && window.AdHubModExtension.getCurrentUser) {
+            const user = window.AdHubModExtension.getCurrentUser();
+            if (user) {
+                AppState.modExtension.user = user;
+                console.log('[Mod Extension] User from API:', user.login);
+            }
+        }
+    }, 1000);
 }
 
 /**
@@ -1958,6 +1977,35 @@ async function performModAction(action, data) {
 }
 
 /**
+ * Check if message is from the current user (self)
+ */
+function isOwnMessage(message) {
+    const platform = message.platform.split('-')[0];
+
+    // For Twitch, check if author matches logged-in user
+    if (platform === 'twitch') {
+        const currentUser = AppState.modExtension.user;
+        if (currentUser) {
+            // Compare by username (case-insensitive)
+            const authorName = (message.author.displayName || message.author.id || '').toLowerCase();
+            const currentName = (currentUser.login || currentUser.displayName || '').toLowerCase();
+            if (authorName === currentName) {
+                return true;
+            }
+        }
+    }
+
+    // Check author roles - if broadcaster, it's likely the streamer viewing their own chat
+    if (message.author.roles && message.author.roles.includes('broadcaster')) {
+        // This could be the streamer's own message - we'll show buttons anyway
+        // but mark it so CSS can style differently if needed
+        return false;
+    }
+
+    return false;
+}
+
+/**
  * Vygenerovat HTML pro moderacni tlacitka
  */
 function generateModActionsHtml(message) {
@@ -1971,69 +2019,221 @@ function generateModActionsHtml(message) {
     const modInfo = getModeratorInfo(platform, channelLogin);
     if (!modInfo) return '';
 
+    // Skip own messages - can't mod yourself
+    if (isOwnMessage(message)) {
+        return '';
+    }
+
     // Ulozit data do message pro pozdejsi pouziti
     message._modInfo = modInfo;
 
+    const username = escapeHtml(message.author.displayName || message.author.id || '');
+    const authorId = escapeHtml(message.author.id || '');
+    const messageId = escapeHtml(message.id);
+
     return `
-        <div class="message-mod-actions" data-message-id="${escapeHtml(message.id)}" data-user-id="${escapeHtml(message.author.id || '')}" data-broadcaster-id="${escapeHtml(modInfo.broadcasterId || '')}">
-            <button class="mod-action-btn mod-delete" title="Smazat zpravu" data-action="delete">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="3 6 5 6 21 6"></polyline>
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                </svg>
-            </button>
-            <button class="mod-action-btn mod-timeout" title="Timeout 10min" data-action="timeout">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-            </button>
-            <button class="mod-action-btn mod-ban" title="Ban" data-action="ban">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
-                </svg>
-            </button>
+        <button class="message-mod-trigger" data-message-id="${messageId}" title="Moznosti moderace">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="5" r="2"/>
+                <circle cx="12" cy="12" r="2"/>
+                <circle cx="12" cy="19" r="2"/>
+            </svg>
+        </button>
+        <div class="message-mod-actions" data-message-id="${messageId}" data-user-id="${authorId}" data-username="${username}" data-channel="${escapeHtml(channelLogin)}">
+            <div class="mod-menu-section">
+                <div class="mod-menu-label">Timeout</div>
+                <button class="mod-action-btn mod-timeout" data-action="timeout" data-duration="60">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    1 minuta
+                </button>
+                <button class="mod-action-btn mod-timeout" data-action="timeout" data-duration="600">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    10 minut
+                </button>
+                <button class="mod-action-btn mod-timeout" data-action="timeout" data-duration="3600">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    1 hodina
+                </button>
+                <button class="mod-action-btn mod-timeout" data-action="timeout" data-duration="86400">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    1 den
+                </button>
+                <button class="mod-action-btn mod-timeout" data-action="timeout" data-duration="604800">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                    1 tyden
+                </button>
+            </div>
+            <div class="mod-menu-section">
+                <div class="mod-menu-label">Akce</div>
+                <button class="mod-action-btn mod-ban" data-action="ban">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                    </svg>
+                    Zabanovat
+                </button>
+                <button class="mod-action-btn mod-unban mod-positive" data-action="unban">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/>
+                        <path d="M9 12l2 2 4-4"/>
+                    </svg>
+                    Odbanovat
+                </button>
+            </div>
+            <div class="mod-menu-section">
+                <div class="mod-menu-label">Specialni</div>
+                <button class="mod-action-btn mod-vip" data-action="vip">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z"/>
+                    </svg>
+                    Pridat VIP
+                </button>
+                <button class="mod-action-btn mod-unvip" data-action="unvip">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2z"/>
+                        <line x1="2" y1="2" x2="22" y2="22"/>
+                    </svg>
+                    Odebrat VIP
+                </button>
+                <button class="mod-action-btn mod-positive" data-action="shoutout">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 2L11 13"/>
+                        <path d="M22 2l-7 20-4-9-9-4 20-7z"/>
+                    </svg>
+                    Shoutout
+                </button>
+            </div>
         </div>
     `;
 }
 
 /**
- * Handler pro kliknuti na moderacni tlacitko
+ * Toggle mod menu visibility
+ */
+function toggleModMenu(trigger) {
+    const messageBody = trigger.closest('.message-body');
+    const menu = messageBody?.querySelector('.message-mod-actions');
+
+    if (!menu) return;
+
+    // Close any other open menus
+    document.querySelectorAll('.message-mod-actions.visible').forEach(m => {
+        if (m !== menu) m.classList.remove('visible');
+    });
+
+    // Toggle this menu
+    menu.classList.toggle('visible');
+}
+
+/**
+ * Close all mod menus
+ */
+function closeAllModMenus() {
+    document.querySelectorAll('.message-mod-actions.visible').forEach(m => {
+        m.classList.remove('visible');
+    });
+}
+
+/**
+ * Handler pro kliknuti na mod trigger nebo akci
  */
 function handleModActionClick(event) {
+    // Handle trigger button click
+    const trigger = event.target.closest('.message-mod-trigger');
+    if (trigger) {
+        event.stopPropagation();
+        toggleModMenu(trigger);
+        return;
+    }
+
+    // Handle action button click
     const btn = event.target.closest('.mod-action-btn');
-    if (!btn) return;
+    if (btn) {
+        const container = btn.closest('.message-mod-actions');
+        if (!container) return;
 
-    const container = btn.closest('.message-mod-actions');
-    if (!container) return;
+        event.stopPropagation();
 
-    const action = btn.dataset.action;
-    const messageId = container.dataset.messageId;
-    const userId = container.dataset.userId;
-    const channelLogin = container.dataset.broadcasterId; // Nyni obsahuje channel login
+        const action = btn.dataset.action;
+        const username = container.dataset.username;
+        const channel = container.dataset.channel;
+        const duration = btn.dataset.duration ? parseInt(btn.dataset.duration) : null;
 
-    // Najit zpravu v AppState
-    const message = AppState.messages.find(m => m.id === messageId);
-    const username = message?.author?.displayName || message?.author?.id || 'uzivatel';
+        // Close the menu
+        closeAllModMenus();
 
-    // Pro popup-based pristup potrebujeme channel a username
+        // Execute action
+        executeModAction(channel, action, username, duration);
+        return;
+    }
+
+    // If clicked somewhere else, close all menus
+    const clickedOnMenu = event.target.closest('.message-mod-actions');
+    if (!clickedOnMenu) {
+        closeAllModMenus();
+    }
+}
+
+/**
+ * Execute moderation action
+ */
+async function executeModAction(channel, action, username, duration) {
     switch (action) {
-        case 'delete':
-            // Delete zpravy neni podporovan pres popup (Twitch to neumoznuje pres chat)
-            showToast('Mazani zprav neni podporovano pres chat popup', 'warning');
-            break;
-
         case 'timeout':
-            performModActionPopup(channelLogin, 'timeout', { username, duration: 600 });
+            const durationText = formatDuration(duration);
+            performModActionPopup(channel, 'timeout', { username, duration });
             break;
 
         case 'ban':
             if (confirm(`Opravdu chcete zabanovat uzivatele ${username}?`)) {
-                performModActionPopup(channelLogin, 'ban', { username });
+                performModActionPopup(channel, 'ban', { username });
             }
             break;
+
+        case 'unban':
+            performModActionPopup(channel, 'unban', { username });
+            break;
+
+        case 'vip':
+            performModActionPopup(channel, 'vip', { username });
+            break;
+
+        case 'unvip':
+            performModActionPopup(channel, 'unvip', { username });
+            break;
+
+        case 'shoutout':
+            performModActionPopup(channel, 'shoutout', { username });
+            break;
+
+        default:
+            showToast('Neznama akce', 'error');
     }
+}
+
+/**
+ * Format duration for display
+ */
+function formatDuration(seconds) {
+    if (seconds < 60) return `${seconds} sekund`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)} minut`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)} hodin`;
+    return `${Math.floor(seconds / 86400)} dni`;
 }
 
 /**
@@ -2057,6 +2257,15 @@ async function performModActionPopup(channel, action, data) {
             case 'unban':
                 result = await window.AdHubModExtension.unban(channel, data.username);
                 break;
+            case 'vip':
+                result = await window.AdHubModExtension.performAction(channel, 'vip', { username: data.username });
+                break;
+            case 'unvip':
+                result = await window.AdHubModExtension.performAction(channel, 'unvip', { username: data.username });
+                break;
+            case 'shoutout':
+                result = await window.AdHubModExtension.performAction(channel, 'shoutout', { username: data.username });
+                break;
             default:
                 result = { success: false, error: 'Neznama akce' };
         }
@@ -2067,10 +2276,19 @@ async function performModActionPopup(channel, action, data) {
                     showToast(`Uzivatel ${data.username} zabanovany`, 'success');
                     break;
                 case 'timeout':
-                    showToast(`Timeout pro ${data.username} (${Math.floor(data.duration / 60)} min)`, 'success');
+                    showToast(`Timeout pro ${data.username} (${formatDuration(data.duration)})`, 'success');
                     break;
                 case 'unban':
                     showToast(`Uzivatel ${data.username} odbanovany`, 'success');
+                    break;
+                case 'vip':
+                    showToast(`Uzivatel ${data.username} ziskal VIP`, 'success');
+                    break;
+                case 'unvip':
+                    showToast(`Uzivateli ${data.username} odebrany VIP`, 'success');
+                    break;
+                case 'shoutout':
+                    showToast(`Shoutout pro ${data.username}!`, 'success');
                     break;
             }
         } else {
