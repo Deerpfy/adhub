@@ -295,6 +295,8 @@ const BASE_TRANSLATIONS = {
         tool_pdf_merge_desc: 'Spojte více PDF souborů do jednoho dokumentu. Jednoduché přetažení, náhled stránek a změna pořadí.',
         tool_pdf_editor_name: 'PDF Editor',
         tool_pdf_editor_desc: 'Editujte, podepisujte, komprimujte a reorganizujte PDF soubory. 100% client-side zpracování.',
+        tool_pdf_search_name: 'PDF Search',
+        tool_pdf_search_desc: 'Fulltextové vyhledávání v PDF souborech. Nahrajte více PDF a hledejte v nich pomocí MiniSearch. 100% client-side.',
         tool_mindhub_name: 'MindHub',
         tool_mindhub_desc: 'Osobní koordinační platforma pro správu myšlenek, úkolů a myšlenkových map. Organizujte své nápady vizuálně.',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
@@ -658,6 +660,8 @@ const BASE_TRANSLATIONS = {
         tool_pdf_merge_desc: 'Combine multiple PDF files into one document. Simple drag and drop, page preview and reordering.',
         tool_pdf_editor_name: 'PDF Editor',
         tool_pdf_editor_desc: 'Edit, sign, compress and reorganize PDF files. 100% client-side processing.',
+        tool_pdf_search_name: 'PDF Search',
+        tool_pdf_search_desc: 'Full-text search in PDF files. Upload multiple PDFs and search with MiniSearch. 100% client-side.',
         tool_mindhub_name: 'MindHub',
         tool_mindhub_desc: 'Personal coordination platform for managing thoughts, tasks and mind maps. Organize your ideas visually.',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
@@ -1349,6 +1353,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["pdf", "editor", "documents"]
+            },
+            {
+                "id": "pdf-search",
+                "name": t('tool_pdf_search_name'),
+                "description": t('tool_pdf_search_desc'),
+                "category": "tools",
+                "icon": "🔍",
+                "url": "projects/pdf-search/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["pdf", "search", "documents", "fulltext"]
             },
             {
                 "id": "mindhub",
