@@ -1,8 +1,9 @@
 /**
- * AdHub Multistream Chat Moderator
- * Popup Script - Sprava chat popup oken
+ * AdHub Multistream Chat Extension
+ * Popup Script - Manage Twitch chat popup windows
+ * Version 2.0.0
  *
- * Nepouziva OAuth - vyuziva existujici Twitch session.
+ * No OAuth required - uses existing Twitch session.
  */
 
 // DOM Elements

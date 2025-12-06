@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "AdHub YouTube Chat Reader",
-  "version": "1.2.0",
-  "description": "Cte zpravy z YouTube Live chatu a posila je do AdHub Multistream Chat.",
+  "name": "AdHub Multistream Chat Extension",
+  "version": "2.0.0",
+  "description": "YouTube chat reader + Twitch moderator. Cte zpravy z YouTube Live chatu a umoznuje moderaci Twitch chatu.",
   "author": "AdHub",
   "icons": {
     "16": "icons/icon16.png",
@@ -17,7 +17,8 @@
       "48": "icons/icon48.png",
       "128": "icons/icon128.png"
     },
-    "default_title": "YouTube Chat Reader"
+    "default_title": "Multistream Chat Extension",
+    "default_popup": "popup.html"
   },
   "permissions": [
     "storage",
@@ -25,7 +26,10 @@
   ],
   "host_permissions": [
     "https://www.youtube.com/*",
-    "https://youtube.com/*"
+    "https://youtube.com/*",
+    "https://www.twitch.tv/*",
+    "https://twitch.tv/*",
+    "https://deerpfy.github.io/*"
   ],
   "content_scripts": [
     {
@@ -33,7 +37,17 @@
         "https://www.youtube.com/live_chat*",
         "https://www.youtube.com/live_chat_replay*"
       ],
-      "js": ["content-script.js"],
+      "js": ["youtube-content.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    },
+    {
+      "matches": [
+        "https://www.twitch.tv/popout/*/chat*",
+        "https://www.twitch.tv/embed/*/chat*"
+      ],
+      "js": ["twitch-injector.js"],
+      "css": ["twitch-injector.css"],
       "run_at": "document_idle",
       "all_frames": true
     },
@@ -49,5 +63,11 @@
   ],
   "background": {
     "service_worker": "background.js"
-  }
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/*"],
+      "matches": ["<all_urls>"]
+    }
+  ]
 }
