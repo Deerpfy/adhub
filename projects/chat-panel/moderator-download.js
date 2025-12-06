@@ -1,10 +1,11 @@
 /**
- * Chat Moderator Extension Download Script
+ * AdHub Multistream Chat Extension Download Script
+ * Downloads the unified YouTube + Twitch extension
  */
 
 const GITHUB_REPO = 'Deerpfy/adhub';
 const GITHUB_BRANCH = 'main';
-const EXTENSION_PATH = 'projects/chat-panel/moderator-extension';
+const EXTENSION_PATH = 'projects/chat-panel/extension';
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com';
 
 document.getElementById('downloadBtn').addEventListener('click', downloadExtension);
@@ -35,8 +36,9 @@ async function downloadExtension() {
             { path: 'background.js', binary: false },
             { path: 'popup.html', binary: false },
             { path: 'popup.js', binary: false },
-            { path: 'chat-injector.js', binary: false },
-            { path: 'chat-injector.css', binary: false },
+            { path: 'youtube-content.js', binary: false },
+            { path: 'twitch-injector.js', binary: false },
+            { path: 'twitch-injector.css', binary: false },
             { path: 'adhub-bridge.js', binary: false },
             { path: 'icons/icon.svg', binary: false },
             { path: 'icons/icon16.png', binary: true },
@@ -70,7 +72,7 @@ async function downloadExtension() {
         const downloadUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = downloadUrl;
-        a.download = 'adhub-chat-moderator-extension.zip';
+        a.download = 'adhub-multistream-chat-extension.zip';
         a.click();
         URL.revokeObjectURL(downloadUrl);
 

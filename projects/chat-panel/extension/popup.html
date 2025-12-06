@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AdHub Chat Moderator</title>
+    <title>AdHub Multistream Chat</title>
     <style>
         * {
             box-sizing: border-box;
@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            width: 320px;
+            width: 340px;
             min-height: 200px;
             background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
             color: #e0e0e0;
@@ -39,7 +39,7 @@
         }
 
         .header-text h1 {
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 600;
             color: #fff;
         }
@@ -67,6 +67,30 @@
             color: #a78bfa;
         }
 
+        .section {
+            margin-bottom: 16px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #9ca3af;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .section-title .icon {
+            width: 14px;
+            height: 14px;
+        }
+
+        .section-title .yt-icon { color: #ff0000; }
+        .section-title .tw-icon { color: #9147ff; }
+
+        /* Twitch Mod Stats */
         .mod-stats {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -93,20 +117,56 @@
             text-transform: uppercase;
         }
 
-        .channels-section {
-            margin-bottom: 16px;
+        /* Twitch Add Channel */
+        .add-channel-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
         }
 
-        .section-title {
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #9ca3af;
-            margin-bottom: 8px;
+        .add-channel-input {
+            flex: 1;
+            padding: 10px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 13px;
         }
 
+        .add-channel-input::placeholder {
+            color: #6b7280;
+        }
+
+        .add-channel-input:focus {
+            outline: none;
+            border-color: #9147ff;
+        }
+
+        .btn-add {
+            padding: 10px 16px;
+            background: #9147ff;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-add:hover {
+            background: #772ce8;
+        }
+
+        .btn-add:disabled {
+            background: #4a4a5a;
+            cursor: not-allowed;
+        }
+
+        /* Channels List */
         .channels-list {
-            max-height: 150px;
+            max-height: 120px;
             overflow-y: auto;
         }
 
@@ -165,64 +225,17 @@
 
         .empty-channels {
             text-align: center;
-            padding: 20px;
+            padding: 16px;
             color: #6b7280;
             font-size: 12px;
         }
 
-        .add-channel {
-            margin-bottom: 16px;
-        }
-
-        .add-channel-row {
-            display: flex;
-            gap: 8px;
-        }
-
-        .add-channel-input {
-            flex: 1;
-            padding: 10px 12px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 6px;
-            color: #fff;
-            font-size: 13px;
-        }
-
-        .add-channel-input::placeholder {
-            color: #6b7280;
-        }
-
-        .add-channel-input:focus {
-            outline: none;
-            border-color: #9147ff;
-        }
-
-        .btn-add {
-            padding: 10px 16px;
-            background: #9147ff;
-            border: none;
-            border-radius: 6px;
-            color: #fff;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-
-        .btn-add:hover {
-            background: #772ce8;
-        }
-
-        .btn-add:disabled {
-            background: #4a4a5a;
-            cursor: not-allowed;
-        }
-
+        /* How it works */
         .how-it-works {
             background: rgba(255, 255, 255, 0.03);
             border-radius: 8px;
             padding: 12px;
+            margin-bottom: 12px;
         }
 
         .how-it-works h3 {
@@ -244,8 +257,8 @@
             margin-bottom: 4px;
         }
 
+        /* Footer */
         .footer {
-            margin-top: 12px;
             padding-top: 12px;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
             text-align: center;
@@ -253,12 +266,36 @@
 
         .footer a {
             font-size: 11px;
-            color: #9147ff;
+            color: #a78bfa;
             text-decoration: none;
         }
 
         .footer a:hover {
             text-decoration: underline;
+        }
+
+        /* Features list */
+        .features {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .feature-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+
+        .feature-badge.youtube {
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff6b6b;
+        }
+
+        .feature-badge.twitch {
+            background: rgba(145, 71, 255, 0.2);
+            color: #bf94ff;
         }
     </style>
 </head>
@@ -267,43 +304,59 @@
         <div class="header">
             <img src="icons/icon48.png" alt="Logo" class="logo">
             <div class="header-text">
-                <h1>Chat Moderator</h1>
-                <div class="version">v1.1.0</div>
+                <h1>Multistream Chat Extension</h1>
+                <div class="version">v2.0.0</div>
             </div>
+        </div>
+
+        <div class="features">
+            <span class="feature-badge youtube">YouTube Chat</span>
+            <span class="feature-badge twitch">Twitch Moderator</span>
         </div>
 
         <div class="info-box">
             <p>
-                <strong>Bez prihlasovani!</strong> Pouziva vasi existujici Twitch session.
-                Staci byt prihlasen na Twitch.tv.
+                <strong>Bez prihlasovani!</strong> Pouziva vasi existujici YouTube a Twitch session.
+                Staci byt prihlasen na obou platformach.
             </p>
         </div>
 
-        <div class="mod-stats">
-            <div class="stat-box">
-                <div class="stat-value" id="statBans">0</div>
-                <div class="stat-label">Bany</div>
+        <!-- Twitch Mod Stats -->
+        <div class="section">
+            <div class="section-title">
+                <svg class="icon tw-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>
+                </svg>
+                Twitch Moderace
             </div>
-            <div class="stat-box">
-                <div class="stat-value" id="statTimeouts">0</div>
-                <div class="stat-label">Timeouty</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-value" id="statDeletes">0</div>
-                <div class="stat-label">Smazane</div>
+            <div class="mod-stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="statBans">0</div>
+                    <div class="stat-label">Bany</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="statTimeouts">0</div>
+                    <div class="stat-label">Timeouty</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="statDeletes">0</div>
+                    <div class="stat-label">Smazane</div>
+                </div>
             </div>
         </div>
 
-        <div class="add-channel">
-            <div class="section-title">Pridat kanal pro moderaci</div>
+        <!-- Twitch Channel Input -->
+        <div class="section">
+            <div class="section-title">Pridat Twitch kanal pro moderaci</div>
             <div class="add-channel-row">
                 <input type="text" class="add-channel-input" id="channelInput" placeholder="Nazev kanalu (napr. shroud)">
                 <button class="btn-add" id="addBtn">Otevrit</button>
             </div>
         </div>
 
-        <div class="channels-section">
-            <div class="section-title">Aktivni chat okna</div>
+        <!-- Active Twitch Channels -->
+        <div class="section">
+            <div class="section-title">Aktivni Twitch chaty</div>
             <div class="channels-list" id="channelsList">
                 <div class="empty-channels">Zadne aktivni chaty</div>
             </div>
@@ -312,10 +365,10 @@
         <div class="how-it-works">
             <h3>Jak to funguje</h3>
             <ol>
-                <li>Zadejte nazev Twitch kanalu</li>
-                <li>Otevre se popup s chatem</li>
-                <li>Prikazy (/ban, /timeout) se posilaji automaticky</li>
-                <li>Musite mit mod prava v danem kanalu!</li>
+                <li><strong>YouTube:</strong> Chat se cte automaticky z pozadi</li>
+                <li><strong>Twitch:</strong> Zadejte kanal a otevre se popup s chatem</li>
+                <li>Moderacni prikazy (/ban, /timeout) se posilaji automaticky</li>
+                <li>Pro moderaci musite mit mod prava v danem kanalu!</li>
             </ol>
         </div>
 
