@@ -1846,6 +1846,52 @@ a:hover {
     color: var(--text-secondary);
 }
 
+/* Extension Version Details */
+.extension-version-details {
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius);
+    padding: 12px;
+    margin-bottom: 16px;
+    font-size: 0.85rem;
+}
+
+.extension-version-details .version-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.extension-version-details .version-row:last-child {
+    border-bottom: none;
+}
+
+.extension-version-details .version-label {
+    color: var(--text-muted);
+}
+
+.extension-version-details .version-value {
+    font-family: monospace;
+    color: var(--text-primary);
+}
+
+.extension-version-details .version-value.active {
+    color: var(--success);
+}
+
+.extension-version-details .version-value.inactive {
+    color: var(--error);
+}
+
+.extension-version-details .version-value.update-available {
+    color: var(--warning);
+    font-weight: 600;
+}
+
+.extension-version-details .version-value.up-to-date {
+    color: var(--success);
+}
+
 /* Extension Features */
 .extension-features {
     margin-bottom: 20px;
