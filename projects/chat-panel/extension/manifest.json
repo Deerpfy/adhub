@@ -29,7 +29,9 @@
     "https://youtube.com/*",
     "https://www.twitch.tv/*",
     "https://twitch.tv/*",
-    "https://deerpfy.github.io/*"
+    "https://deerpfy.github.io/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
   ],
   "content_scripts": [
     {
@@ -55,6 +57,15 @@
       "matches": [
         "https://deerpfy.github.io/adhub/*",
         "https://deerpfy.github.io/adhub"
+      ],
+      "js": ["adhub-bridge.js"],
+      "run_at": "document_start",
+      "all_frames": false
+    },
+    {
+      "matches": [
+        "http://localhost/*",
+        "http://127.0.0.1/*"
       ],
       "js": ["adhub-bridge.js"],
       "run_at": "document_start",

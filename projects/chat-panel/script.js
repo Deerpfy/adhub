@@ -2241,8 +2241,12 @@ function formatDuration(seconds) {
  * Provest moderacni akci pres popup
  */
 async function performModActionPopup(channel, action, data) {
+    console.log('[Mod Action] Attempting:', action, 'on channel:', channel, 'data:', data);
+    console.log('[Mod Action] AdHubModExtension available:', !!window.AdHubModExtension);
+
     if (!window.AdHubModExtension) {
-        showToast('Extension neni dostupna', 'error');
+        console.error('[Mod Action] window.AdHubModExtension is not defined. Extension bridge not loaded.');
+        showToast('Extension neni dostupna - zkontrolujte ze je rozsirani nainstalovano a znovu nactete stranku', 'error');
         return { success: false };
     }
 
