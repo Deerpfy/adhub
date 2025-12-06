@@ -610,6 +610,47 @@ function updateChannelHighlightUI(channelId, highlighted) {
 }
 
 /**
+ * Normalize channel ID for comparison
+ */
+function normalizeChannelId(platform, channel) {
+    // Remove # prefix (from IRC), trim whitespace, lowercase
+    const normalizedChannel = (channel || '').replace(/^#/, '').trim().toLowerCase();
+    // Normalize platform name (youtube-extension -> youtube-extension)
+    return `${platform}-${normalizedChannel}`;
+}
+
+/**
+ * Check if a message belongs to a highlighted channel
+ */
+function isMessageHighlighted(message) {
+    if (AppState.highlightedChannels.size === 0) return false;
+
+    const msgChannelId = normalizeChannelId(message.platform, message.channel);
+
+    // Direct match
+    if (AppState.highlightedChannels.has(msgChannelId)) return true;
+
+    // Try matching with base platform (youtube-extension -> youtube)
+    const basePlatform = message.platform.split('-')[0];
+    const baseChannelId = normalizeChannelId(basePlatform, message.channel);
+    if (AppState.highlightedChannels.has(baseChannelId)) return true;
+
+    // Check all highlighted channels for partial match
+    for (const highlightedId of AppState.highlightedChannels) {
+        const [hPlatform, ...hChannelParts] = highlightedId.split('-');
+        const hChannel = hChannelParts.join('-').toLowerCase();
+        const msgChannel = (message.channel || '').toLowerCase();
+
+        // Match if platforms are compatible and channels match
+        if (basePlatform === hPlatform.split('-')[0] && msgChannel === hChannel) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+/**
  * Update all messages based on highlighted channels
  */
 function updateMessagesHighlight() {
@@ -625,8 +666,7 @@ function updateMessagesHighlight() {
         const message = AppState.messages.find(m => m.id === messageId);
 
         if (message) {
-            const channelId = `${message.platform}-${message.channel.toLowerCase()}`;
-            const isHighlighted = AppState.highlightedChannels.has(channelId);
+            const isHighlighted = isMessageHighlighted(message);
 
             // If there are highlights, dim non-highlighted messages
             if (hasHighlights) {
@@ -668,7 +708,9 @@ function loadHighlightedChannels() {
 function updateChannelItemState(channelId, state) {
     const element = document.querySelector(`[data-channel-id="${channelId}"]`);
     if (element) {
-        element.className = `channel-item ${state}`;
+        // Preserve highlighted class when updating state
+        const isHighlighted = element.classList.contains('highlighted');
+        element.className = `channel-item ${state}${isHighlighted ? ' highlighted' : ''}`;
     }
 }
 
@@ -777,9 +819,9 @@ function renderMessage(message) {
     const channelDisplayName = channelData?.displayName || channelName;
     const basePlatform = message.platform.split('-')[0]; // twitch, kick, youtube
 
-    // Determine if message should be dimmed
+    // Determine if message should be dimmed (use centralized function)
     const hasHighlights = AppState.highlightedChannels.size > 0;
-    const isHighlighted = AppState.highlightedChannels.has(channelId);
+    const isHighlighted = isMessageHighlighted(message);
     const isDimmed = hasHighlights && !isHighlighted;
 
     const messageEl = document.createElement('div');
