@@ -283,6 +283,8 @@ const BASE_TRANSLATIONS = {
         tool_youtube_desc: 'Stáhněte si rozšíření pro Chrome/Edge/Brave a stahujte YouTube videa přímo z prohlížeče.',
         tool_chat_name: 'Multistream Chat Panel',
         tool_chat_desc: 'Unified chat pro Twitch, Kick a YouTube s overlay módy. Vyžaduje spuštění lokálního serveru.',
+        tool_chat_mod_name: 'Chat Moderator Extension',
+        tool_chat_mod_desc: 'Chrome rozšíření pro moderaci Twitch chatu. Ban, timeout a mazání zpráv přímo z Multistream Chat.',
         tool_pizza_name: 'KomoPizza Demo',
         tool_pizza_desc: 'Ukázková objednávková aplikace pro rychlé prototypování UI konceptů.',
         tool_spinning_name: 'Spinning Wheel Giveaway',
@@ -648,6 +650,8 @@ const BASE_TRANSLATIONS = {
         tool_youtube_desc: 'Download the extension for Chrome/Edge/Brave and download YouTube videos directly from your browser.',
         tool_chat_name: 'Multistream Chat Panel',
         tool_chat_desc: 'Unified chat for Twitch, Kick and YouTube with overlay modes. Requires running a local server.',
+        tool_chat_mod_name: 'Chat Moderator Extension',
+        tool_chat_mod_desc: 'Chrome extension for Twitch chat moderation. Ban, timeout and delete messages directly from Multistream Chat.',
         tool_pizza_name: 'KomoPizza Demo',
         tool_pizza_desc: 'Sample ordering application for rapid UI concept prototyping.',
         tool_spinning_name: 'Spinning Wheel Giveaway',
@@ -1287,6 +1291,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["streaming", "chat", "overlay"]
+            },
+            {
+                "id": "chat-moderator",
+                "name": t('tool_chat_mod_name'),
+                "description": t('tool_chat_mod_desc'),
+                "category": "streaming",
+                "icon": "🛡️",
+                "url": "projects/chat-panel/moderator.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["streaming", "moderation", "twitch", "extension"]
             },
             {
                 "id": "komopizza-demo",

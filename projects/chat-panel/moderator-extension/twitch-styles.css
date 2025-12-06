@@ -1,0 +1,192 @@
+/**
+ * AdHub Multistream Chat Moderator
+ * Twitch Styles - Styly pro moderacni UI na Twitch
+ */
+
+/* Moderator indicator */
+.adhub-mod-indicator {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.9) 0%, rgba(145, 71, 255, 0.9) 100%);
+    border-radius: 20px;
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 9999;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+    animation: adhub-slide-in 0.3s ease;
+}
+
+.adhub-mod-icon {
+    font-size: 14px;
+}
+
+.adhub-mod-text {
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+@keyframes adhub-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Moderacni tlacitka u zprav */
+.adhub-mod-actions {
+    display: none;
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    gap: 4px;
+    background: rgba(24, 24, 27, 0.95);
+    padding: 4px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    z-index: 100;
+}
+
+/* Zobrazit pri hover na zpravu */
+[data-a-target="chat-line-message"]:hover .adhub-mod-actions {
+    display: flex;
+}
+
+/* Jednotlive tlacitka */
+.adhub-mod-btn {
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.adhub-mod-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+/* Delete button */
+.adhub-mod-btn-delete:hover {
+    background: rgba(239, 68, 68, 0.4);
+}
+
+/* Timeout button */
+.adhub-mod-btn-timeout:hover {
+    background: rgba(251, 191, 36, 0.4);
+}
+
+/* Ban button */
+.adhub-mod-btn-ban:hover {
+    background: rgba(239, 68, 68, 0.6);
+}
+
+/* Toast notifikace */
+.adhub-toast {
+    position: fixed;
+    bottom: 130px;
+    right: 20px;
+    padding: 12px 20px;
+    background: rgba(24, 24, 27, 0.95);
+    color: white;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+    max-width: 280px;
+}
+
+.adhub-toast.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.adhub-toast-success {
+    border-left: 3px solid #22c55e;
+}
+
+.adhub-toast-error {
+    border-left: 3px solid #ef4444;
+}
+
+.adhub-toast-info {
+    border-left: 3px solid #3b82f6;
+}
+
+/* Zvyrazneni zpravy pri hover */
+[data-a-target="chat-line-message"] {
+    position: relative;
+}
+
+[data-a-target="chat-line-message"]:hover {
+    background: rgba(139, 92, 246, 0.1);
+}
+
+/* Smazana zprava */
+[data-a-target="chat-line-message"][style*="opacity: 0.3"] {
+    text-decoration: line-through;
+}
+
+/* Responzivni design */
+@media (max-width: 768px) {
+    .adhub-mod-indicator {
+        bottom: 60px;
+        right: 10px;
+        padding: 6px 10px;
+        font-size: 10px;
+    }
+
+    .adhub-toast {
+        bottom: 100px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+}
+
+/* Tmava tema kompatibilita */
+:root[data-color-theme="dark"] .adhub-mod-actions,
+[data-a-target="chat-scrollable-area__message-container"][data-theme="dark"] .adhub-mod-actions {
+    background: rgba(24, 24, 27, 0.98);
+}
+
+:root[data-color-theme="light"] .adhub-mod-actions {
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+:root[data-color-theme="light"] .adhub-mod-btn {
+    color: #18181b;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+:root[data-color-theme="light"] .adhub-mod-btn:hover {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+:root[data-color-theme="light"] .adhub-toast {
+    background: rgba(255, 255, 255, 0.98);
+    color: #18181b;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}

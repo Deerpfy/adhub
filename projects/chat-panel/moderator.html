@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Moderator Extension - AdHub</title>
+    <link rel="stylesheet" href="moderator-styles.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <a href="../../index.html" class="back-link">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Zpet na AdHub
+            </a>
+        </header>
+
+        <main class="main">
+            <div class="hero">
+                <div class="hero-icon">
+                    <img src="moderator-extension/icons/icon.svg" alt="Chat Moderator" width="80" height="80">
+                </div>
+                <h1>Multistream Chat Moderator</h1>
+                <p class="subtitle">Chrome rozsireni pro moderaci Twitch chatu</p>
+            </div>
+
+            <section class="features">
+                <div class="feature">
+                    <div class="feature-icon">🛡️</div>
+                    <h3>Moderacni nastroje</h3>
+                    <p>Ban, timeout a mazani zprav primo z Multistream Chat panelu. Zadne prepinani mezi okny.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔐</div>
+                    <h3>Bezpecne prihlaseni</h3>
+                    <p>Prihlaste se pres Twitch OAuth. Vase heslo nikdy nezadavate do rozsireni.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">📊</div>
+                    <h3>Statistiky</h3>
+                    <p>Sledujte pocet banu, timeoutu a smazanych zprav. Vse ulozeno lokalne.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Integrace s Chat Panel</h3>
+                    <p>Plna integrace s Multistream Chat. Moderujte vice kanalu najednou.</p>
+                </div>
+            </section>
+
+            <section class="download-section">
+                <h2>Instalace</h2>
+
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h4>Stahnete rozsireni</h4>
+                            <p>Kliknete na tlacitko nize pro stazeni ZIP archivu.</p>
+                            <button class="btn-download" id="downloadBtn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                    <polyline points="7 10 12 15 17 10"/>
+                                    <line x1="12" y1="15" x2="12" y2="3"/>
+                                </svg>
+                                Stahnout Chat Moderator v1.0.0
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h4>Rozbalte ZIP</h4>
+                            <p>Rozbalte stazeny archiv do libovolne slozky na vasem pocitaci.</p>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h4>Nahrajte do Chrome</h4>
+                            <p>Otevrete <code>chrome://extensions</code>, zapnete "Rezimu pro vyvojare" a kliknete na "Nahrat rozbalenou".</p>
+                        </div>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h4>Prihlaste se</h4>
+                            <p>Kliknete na ikonu rozsireni a prihlaste se pomoci Twitch uctu.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="requirements">
+                <h2>Pozadavky</h2>
+                <ul>
+                    <li>Chrome, Edge, Brave nebo jiny Chromium prohlizec</li>
+                    <li>Twitch ucet s moderatorskymi opravnenimi v alespon jednom kanalu</li>
+                    <li>Volitelne: Vlastni Twitch Developer aplikace pro OAuth</li>
+                </ul>
+            </section>
+
+            <section class="twitch-app-setup">
+                <h2>Nastaveni Twitch aplikace (volitelne)</h2>
+                <p>Pro vlastni nasazeni musite vytvorit Twitch Developer aplikaci:</p>
+                <ol>
+                    <li>Prejdete na <a href="https://dev.twitch.tv/console/apps" target="_blank">Twitch Developer Console</a></li>
+                    <li>Vytvorte novou aplikaci</li>
+                    <li>Nastavte OAuth Redirect URL na hodnotu z popup.js</li>
+                    <li>Zkopirujte Client ID do popup.js</li>
+                </ol>
+            </section>
+
+            <section class="related">
+                <h2>Souvisejici projekty</h2>
+                <div class="related-links">
+                    <a href="index.html" class="related-link">
+                        <span class="related-icon">💬</span>
+                        <span>Multistream Chat Panel</span>
+                    </a>
+                    <a href="../../projects/youtube-downloader/index.html" class="related-link">
+                        <span class="related-icon">🎥</span>
+                        <span>YouTube Downloader</span>
+                    </a>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <p>AdHub Chat Moderator Extension v1.0.0</p>
+            <p class="footer-note">Pro pouziti na vlastni nebezpeci. Autor nenese odpovednost za pripadne sankce od Twitch.</p>
+        </footer>
+    </div>
+
+    <script src="moderator-download.js"></script>
+</body>
+</html>

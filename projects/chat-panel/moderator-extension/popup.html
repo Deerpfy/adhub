@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdHub Chat Moderator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            width: 340px;
+            min-height: 200px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #e0e0e0;
+        }
+
+        .container {
+            padding: 16px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+        }
+
+        .header-text h1 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .header-text .version {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        .status-section {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 16px;
+        }
+
+        .status-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .status-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .status-label {
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .status-value {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.connected {
+            background: #22c55e;
+            box-shadow: 0 0 6px rgba(34, 197, 94, 0.5);
+        }
+
+        .status-dot.disconnected {
+            background: #6b7280;
+        }
+
+        .status-dot.error {
+            background: #ef4444;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 8px;
+            margin-bottom: 16px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 2px solid #9147ff;
+        }
+
+        .user-name {
+            font-weight: 500;
+            color: #fff;
+        }
+
+        .user-channels {
+            font-size: 11px;
+            color: #9ca3af;
+        }
+
+        .channels-section {
+            margin-bottom: 16px;
+        }
+
+        .channels-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #9ca3af;
+            margin-bottom: 8px;
+        }
+
+        .channels-list {
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        .channel-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+        .channel-name {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .channel-role {
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+
+        .channel-role.broadcaster {
+            background: #ef4444;
+            color: #fff;
+        }
+
+        .channel-role.moderator {
+            background: #22c55e;
+            color: #fff;
+        }
+
+        .channel-role.vip {
+            background: #e91e8d;
+            color: #fff;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-twitch {
+            background: #9147ff;
+            color: #fff;
+        }
+
+        .btn-twitch:hover {
+            background: #772ce8;
+        }
+
+        .btn-twitch:disabled {
+            background: #4a4a5a;
+            cursor: not-allowed;
+        }
+
+        .btn-logout {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            margin-top: 8px;
+        }
+
+        .btn-logout:hover {
+            background: rgba(239, 68, 68, 0.3);
+        }
+
+        .twitch-icon {
+            width: 18px;
+            height: 18px;
+        }
+
+        .section-divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin: 16px 0;
+        }
+
+        .info-text {
+            font-size: 12px;
+            color: #6b7280;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 32px;
+            height: 32px;
+            border: 3px solid rgba(139, 92, 246, 0.3);
+            border-top-color: #9147ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 12px;
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .mod-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .stat-box {
+            text-align: center;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: #9ca3af;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Loading State -->
+        <div class="loading" id="loadingState">
+            <div class="spinner"></div>
+            <div class="loading-text">Nacitam...</div>
+        </div>
+
+        <!-- Logged Out State -->
+        <div class="hidden" id="loggedOutState">
+            <div class="header">
+                <img src="icons/icon48.png" alt="Logo" class="logo">
+                <div class="header-text">
+                    <h1>Chat Moderator</h1>
+                    <div class="version">v1.0.0</div>
+                </div>
+            </div>
+
+            <div class="status-section">
+                <div class="status-row">
+                    <span class="status-label">Twitch</span>
+                    <span class="status-value">
+                        <span class="status-dot disconnected"></span>
+                        Nepripojeno
+                    </span>
+                </div>
+            </div>
+
+            <p class="info-text">
+                Pro pouziti moderacnich nastroju se prihlaste pomoci Twitch uctu.
+                Rozsireni potrebuje pristup k vasim moderacnim opravnenim.
+            </p>
+
+            <div class="section-divider"></div>
+
+            <button class="btn btn-twitch" id="loginBtn">
+                <svg class="twitch-icon" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M11.64 5.93h1.43v4.28h-1.43m3.93-4.28H17v4.28h-1.43M4.5 0L0 4.5v15h5.25V24l4.5-4.5h3.5L22.5 12V0zm15.75 11.25l-3.25 3.25h-3.5l-2.88 2.88V14.5h-4V2.25h13.63z"/>
+                </svg>
+                Prihlasit se pres Twitch
+            </button>
+        </div>
+
+        <!-- Logged In State -->
+        <div class="hidden" id="loggedInState">
+            <div class="header">
+                <img src="icons/icon48.png" alt="Logo" class="logo">
+                <div class="header-text">
+                    <h1>Chat Moderator</h1>
+                    <div class="version">v1.0.0</div>
+                </div>
+            </div>
+
+            <div class="user-info">
+                <img src="" alt="Avatar" class="user-avatar" id="userAvatar">
+                <div>
+                    <div class="user-name" id="userName">-</div>
+                    <div class="user-channels" id="userChannelCount">Moderator v 0 kanalech</div>
+                </div>
+            </div>
+
+            <div class="mod-stats">
+                <div class="stat-box">
+                    <div class="stat-value" id="statBans">0</div>
+                    <div class="stat-label">Bany</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="statTimeouts">0</div>
+                    <div class="stat-label">Timeouty</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="statDeletes">0</div>
+                    <div class="stat-label">Smazane</div>
+                </div>
+            </div>
+
+            <div class="channels-section">
+                <div class="channels-title">Kanaly s opravnenimi</div>
+                <div class="channels-list" id="channelsList">
+                    <!-- Channels will be populated here -->
+                </div>
+            </div>
+
+            <div class="status-section">
+                <div class="status-row">
+                    <span class="status-label">Twitch</span>
+                    <span class="status-value">
+                        <span class="status-dot connected"></span>
+                        Pripojeno
+                    </span>
+                </div>
+                <div class="status-row">
+                    <span class="status-label">Multistream Chat</span>
+                    <span class="status-value" id="chatStatus">
+                        <span class="status-dot disconnected"></span>
+                        Cekam...
+                    </span>
+                </div>
+            </div>
+
+            <button class="btn btn-logout" id="logoutBtn">
+                Odhlasit se
+            </button>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
