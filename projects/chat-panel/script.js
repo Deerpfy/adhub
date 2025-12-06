@@ -1996,7 +1996,8 @@ function isOwnMessage(message) {
     }
 
     // Check author roles - if broadcaster, it's likely the streamer viewing their own chat
-    if (message.author.roles && message.author.roles.includes('broadcaster')) {
+    // Make sure roles is an array before checking
+    if (message.author.roles && Array.isArray(message.author.roles) && message.author.roles.includes('broadcaster')) {
         // This could be the streamer's own message - we'll show buttons anyway
         // but mark it so CSS can style differently if needed
         return false;
