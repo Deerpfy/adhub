@@ -27,6 +27,12 @@
                 </div>
             </div>
             <div class="header-right">
+                <button class="btn btn-icon btn-extension" id="extensionBtn" title="Chrome Extension">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                    </svg>
+                    <span class="extension-status-dot" id="extensionStatusDot"></span>
+                </button>
                 <button class="btn btn-icon" id="settingsBtn" title="Nastavení">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"></circle>
@@ -309,6 +315,66 @@
                     <button class="btn btn-secondary" id="exportSettings">Exportovat nastavení</button>
                     <button class="btn btn-secondary" id="importSettings">Importovat nastavení</button>
                     <button class="btn btn-danger" id="clearAllData">Vymazat všechna data</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Extension Modal -->
+    <div class="modal-overlay" id="extensionModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>🧩 Chrome Extension</h3>
+                <button class="btn btn-icon modal-close" id="closeExtensionModal">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="extension-modal-status" id="extensionModalStatus">
+                    <div class="extension-status-icon-large" id="extensionModalIcon">?</div>
+                    <div class="extension-status-info">
+                        <div class="extension-status-title" id="extensionModalTitle">Kontroluji extension...</div>
+                        <div class="extension-status-version" id="extensionModalVersion"></div>
+                    </div>
+                </div>
+
+                <div class="extension-features">
+                    <h4>Funkce rozšíření</h4>
+                    <div class="extension-feature">
+                        <span class="feature-icon youtube">▶</span>
+                        <div class="feature-info">
+                            <strong>YouTube Chat Reader</strong>
+                            <p>Čte zprávy z YouTube live chatu a zobrazuje je společně s Twitch/Kick</p>
+                        </div>
+                    </div>
+                    <div class="extension-feature">
+                        <span class="feature-icon twitch">⚔</span>
+                        <div class="feature-info">
+                            <strong>Twitch Moderator</strong>
+                            <p>Odesílá moderační příkazy (/ban, /timeout, /delete) přes popup okna</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="extension-note">
+                    <strong>Bez přihlašování!</strong> Rozšíření využívá vaši existující session na YouTube a Twitch.
+                </div>
+
+                <div class="extension-actions">
+                    <button class="btn btn-primary btn-block" id="extensionModalDownloadBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+                            <polyline points="7 10 12 15 17 10"/>
+                            <line x1="12" y1="15" x2="12" y2="3"/>
+                        </svg>
+                        <span id="extensionModalDownloadText">Stáhnout rozšíření</span>
+                    </button>
+                    <a href="moderator.html" class="btn btn-secondary btn-block" target="_blank">
+                        Více informací
+                    </a>
                 </div>
             </div>
         </div>
