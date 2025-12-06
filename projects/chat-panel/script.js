@@ -13,6 +13,7 @@
 const AppState = {
     channels: new Map(), // channel_id -> { adapter, info, element }
     messages: [],
+    highlightedChannels: new Set(), // Set of channel IDs that are highlighted (priority view)
     settings: {
         showTimestamps: true,
         showPlatformBadges: true,
@@ -54,8 +55,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // Načíst nastavení z localStorage
     loadSettings();
 
+    // Načíst zvýrazněné kanály
+    loadHighlightedChannels();
+
     // Načíst uložené kanály
     loadSavedChannels();
+
+    // Aktualizovat UI pro zvýrazněné kanály
+    updateFilterStatusUI();
 
     // Inicializovat event listenery
     initEventListeners();
@@ -91,6 +98,9 @@ function initEventListeners() {
 
     // Theme Toggle
     document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+    // Clear filter button
+    document.getElementById('clearFilterBtn')?.addEventListener('click', clearAllHighlights);
 
     // Platform selector
     document.querySelectorAll('.platform-btn').forEach(btn => {
@@ -446,7 +456,8 @@ function renderChannelItem(channelData) {
     }
 
     const item = document.createElement('div');
-    item.className = `channel-item ${channelData.state}`;
+    const isHighlighted = AppState.highlightedChannels.has(channelData.id);
+    item.className = `channel-item ${channelData.state}${isHighlighted ? ' highlighted' : ''}`;
     item.dataset.channelId = channelData.id;
 
     // Zobrazit kratsi nazev platformy
@@ -477,6 +488,13 @@ function renderChannelItem(channelData) {
             </button>
         </div>
     `;
+
+    // Click on channel item to toggle highlight
+    item.addEventListener('click', (e) => {
+        // Don't toggle if clicking on action buttons
+        if (e.target.closest('.channel-actions')) return;
+        toggleChannelHighlight(channelData.id);
+    });
 
     item.querySelector('.channel-reconnect').addEventListener('click', (e) => {
         e.stopPropagation();
@@ -513,6 +531,138 @@ function reconnectChannel(channelId) {
 }
 
 /**
+ * Toggle channel highlight (priority view)
+ */
+function toggleChannelHighlight(channelId) {
+    const isHighlighted = AppState.highlightedChannels.has(channelId);
+
+    if (isHighlighted) {
+        AppState.highlightedChannels.delete(channelId);
+    } else {
+        AppState.highlightedChannels.add(channelId);
+    }
+
+    // Update channel item UI
+    updateChannelHighlightUI(channelId, !isHighlighted);
+
+    // Update all messages visibility
+    updateMessagesHighlight();
+
+    // Update filter status UI
+    updateFilterStatusUI();
+
+    // Save to localStorage
+    saveHighlightedChannels();
+}
+
+/**
+ * Clear all channel highlights
+ */
+function clearAllHighlights() {
+    // Remove highlighted class from all channel items
+    AppState.highlightedChannels.forEach(channelId => {
+        updateChannelHighlightUI(channelId, false);
+    });
+
+    // Clear the set
+    AppState.highlightedChannels.clear();
+
+    // Update messages
+    updateMessagesHighlight();
+
+    // Update filter status UI
+    updateFilterStatusUI();
+
+    // Save to localStorage
+    saveHighlightedChannels();
+}
+
+/**
+ * Update filter status UI (show/hide filter bar)
+ */
+function updateFilterStatusUI() {
+    const filterActive = document.getElementById('channelFilterActive');
+    const filterCount = document.getElementById('filterCount');
+    const filterHint = document.querySelector('.channel-filter-hint');
+
+    if (!filterActive || !filterCount) return;
+
+    const count = AppState.highlightedChannels.size;
+
+    if (count > 0) {
+        filterActive.classList.remove('hidden');
+        filterCount.textContent = count;
+        if (filterHint) filterHint.classList.add('hidden');
+    } else {
+        filterActive.classList.add('hidden');
+        if (filterHint) filterHint.classList.remove('hidden');
+    }
+}
+
+/**
+ * Update channel item highlight UI
+ */
+function updateChannelHighlightUI(channelId, highlighted) {
+    const element = document.querySelector(`[data-channel-id="${channelId}"]`);
+    if (element) {
+        element.classList.toggle('highlighted', highlighted);
+    }
+}
+
+/**
+ * Update all messages based on highlighted channels
+ */
+function updateMessagesHighlight() {
+    const messagesContainer = DOM.chatContainer.querySelector('.chat-messages');
+    if (!messagesContainer) return;
+
+    const hasHighlights = AppState.highlightedChannels.size > 0;
+
+    // Get all messages
+    const messages = messagesContainer.querySelectorAll('.chat-message');
+    messages.forEach(msgEl => {
+        const messageId = msgEl.dataset.messageId;
+        const message = AppState.messages.find(m => m.id === messageId);
+
+        if (message) {
+            const channelId = `${message.platform}-${message.channel.toLowerCase()}`;
+            const isHighlighted = AppState.highlightedChannels.has(channelId);
+
+            // If there are highlights, dim non-highlighted messages
+            if (hasHighlights) {
+                msgEl.classList.toggle('dimmed', !isHighlighted);
+            } else {
+                // No highlights = show all normally
+                msgEl.classList.remove('dimmed');
+            }
+        }
+    });
+}
+
+/**
+ * Save highlighted channels to localStorage
+ */
+function saveHighlightedChannels() {
+    const highlighted = Array.from(AppState.highlightedChannels);
+    localStorage.setItem('adhub_chat_highlighted', JSON.stringify(highlighted));
+}
+
+/**
+ * Load highlighted channels from localStorage
+ */
+function loadHighlightedChannels() {
+    try {
+        const saved = localStorage.getItem('adhub_chat_highlighted');
+        if (saved) {
+            const highlighted = JSON.parse(saved);
+            AppState.highlightedChannels = new Set(highlighted);
+        }
+    } catch (error) {
+        console.error('[Highlights] Load error:', error);
+    }
+}
+
+/**
  * Aktualizace stavu kanálu v UI
  */
 function updateChannelItemState(channelId, state) {
@@ -536,22 +686,49 @@ function updateChannelItemName(channelId, name) {
 }
 
 /**
- * Získání ikony platformy
+ * Získání ikony platformy (vylepšené SVG ikonky)
  */
 function getPlatformIcon(platform) {
     switch (platform) {
         case 'twitch':
+            // Twitch Glitch logo - vylepšená verze
             return `<svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714Z"/>
+                <path d="M11.64 5.93h1.43v4.28h-1.43m3.93-4.28H17v4.28h-1.43M4.5 0L0 4.5v15h5.25V24l4.5-4.5h3.5L22.5 12V0zm15.75 11.25l-3.25 3.25h-3.5l-2.88 2.88V14.5h-4V2.25h13.63z"/>
             </svg>`;
         case 'kick':
+            // Kick logo - stylizované K
             return `<svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm2.5 16.5l-3-3-3 3H6l4.5-4.5L6 7.5h2.5l3 3 3-3H17l-4.5 4.5L17 16.5h-2.5z"/>
+                <path d="M6.5 3h3v7.5L15 3h4l-6.5 9L19 21h-4l-5.5-7.5V21h-3V3z"/>
             </svg>`;
         case 'youtube':
         case 'youtube-iframe':
         case 'youtube-extension':
+            // YouTube logo - play button v obdélníku
             return `<svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>`;
+        default:
+            return '💬';
+    }
+}
+
+/**
+ * Získání malé ikony platformy pro zprávy (kompaktnější verze)
+ */
+function getPlatformIconSmall(platform) {
+    switch (platform) {
+        case 'twitch':
+            return `<svg viewBox="0 0 24 24" fill="currentColor" class="platform-icon-sm">
+                <path d="M11.64 5.93h1.43v4.28h-1.43m3.93-4.28H17v4.28h-1.43M4.5 0L0 4.5v15h5.25V24l4.5-4.5h3.5L22.5 12V0zm15.75 11.25l-3.25 3.25h-3.5l-2.88 2.88V14.5h-4V2.25h13.63z"/>
+            </svg>`;
+        case 'kick':
+            return `<svg viewBox="0 0 24 24" fill="currentColor" class="platform-icon-sm">
+                <path d="M6.5 3h3v7.5L15 3h4l-6.5 9L19 21h-4l-5.5-7.5V21h-3V3z"/>
+            </svg>`;
+        case 'youtube':
+        case 'youtube-iframe':
+        case 'youtube-extension':
+            return `<svg viewBox="0 0 24 24" fill="currentColor" class="platform-icon-sm">
                 <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
             </svg>`;
         default:
@@ -600,8 +777,13 @@ function renderMessage(message) {
     const channelDisplayName = channelData?.displayName || channelName;
     const basePlatform = message.platform.split('-')[0]; // twitch, kick, youtube
 
+    // Determine if message should be dimmed
+    const hasHighlights = AppState.highlightedChannels.size > 0;
+    const isHighlighted = AppState.highlightedChannels.has(channelId);
+    const isDimmed = hasHighlights && !isHighlighted;
+
     const messageEl = document.createElement('div');
-    messageEl.className = `chat-message platform-${basePlatform} ${AppState.settings.compactMode ? 'compact' : ''}`;
+    messageEl.className = `chat-message platform-${basePlatform}${AppState.settings.compactMode ? ' compact' : ''}${isDimmed ? ' dimmed' : ''}`;
     messageEl.dataset.messageId = message.id;
 
     let html = '';
@@ -1014,6 +1196,7 @@ function exportSettings() {
             platform: c.platform,
             channel: c.channel,
         })),
+        highlightedChannels: Array.from(AppState.highlightedChannels),
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
@@ -1058,6 +1241,15 @@ function importSettings() {
                 }
             }
 
+            if (data.highlightedChannels) {
+                AppState.highlightedChannels = new Set(data.highlightedChannels);
+                saveHighlightedChannels();
+                // Update UI for highlighted channels
+                data.highlightedChannels.forEach(channelId => {
+                    updateChannelHighlightUI(channelId, true);
+                });
+            }
+
             showToast('Nastavení importováno', 'success');
         } catch (error) {
             showToast('Chyba při importu: ' + error.message, 'error');
@@ -1084,9 +1276,13 @@ function clearAllData() {
     // Vymazat zprávy
     AppState.messages = [];
 
+    // Vymazat zvýrazněné kanály
+    AppState.highlightedChannels.clear();
+
     // Vymazat localStorage
     localStorage.removeItem('adhub_chat_settings');
     localStorage.removeItem('adhub_chat_channels');
+    localStorage.removeItem('adhub_chat_highlighted');
 
     // Reset UI
     DOM.channelList.innerHTML = `
@@ -1436,5 +1632,7 @@ window.AdHubChat = {
     showToast,
     checkYouTubeExtension,
     downloadChatReaderExtension,
-    version: '2.0.0',
+    toggleChannelHighlight,
+    clearAllHighlights,
+    version: '2.1.0',
 };
