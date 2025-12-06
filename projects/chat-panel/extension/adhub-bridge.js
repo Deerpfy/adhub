@@ -13,7 +13,7 @@
 (function() {
   'use strict';
 
-  const VERSION = '2.0.0';
+  const VERSION = '2.1.0';
   const MARKER = '__ADHUB_EXTENSION_BRIDGE__';
 
   // Prevent double injection
@@ -286,6 +286,45 @@
     }
   }
 
+  // Saved Twitch username for self-detection
+  let savedTwitchUsername = null;
+
+  /**
+   * Load saved Twitch username from storage
+   */
+  async function loadTwitchUsername() {
+    try {
+      const data = await chrome.storage.local.get('twitch_username');
+      savedTwitchUsername = data.twitch_username || null;
+
+      // Notify the app about the username
+      if (savedTwitchUsername) {
+        window.dispatchEvent(new CustomEvent('adhub-user-identified', {
+          detail: { login: savedTwitchUsername, displayName: savedTwitchUsername }
+        }));
+      }
+
+      return savedTwitchUsername;
+    } catch (e) {
+      console.warn('[AdHub Extension Bridge] Error loading username:', e);
+      return null;
+    }
+  }
+
+  // Load username on init
+  loadTwitchUsername();
+
+  // Listen for username changes from popup
+  chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.type === 'username-changed') {
+      savedTwitchUsername = request.username;
+      window.dispatchEvent(new CustomEvent('adhub-user-identified', {
+        detail: { login: savedTwitchUsername, displayName: savedTwitchUsername }
+      }));
+    }
+    return false;
+  });
+
   // Expose Twitch Mod API for Multistream Chat
   window.AdHubModExtension = {
     version: VERSION,
@@ -295,6 +334,7 @@
     closeChat: closeTwitchChat,
     performAction: performModAction,
     refresh: refreshOpenTwitchChannels,
+    getCurrentUser: () => savedTwitchUsername ? { login: savedTwitchUsername, displayName: savedTwitchUsername } : null,
 
     // Helper methods for individual actions
     ban: (channel, username, reason) => performModAction(channel, 'ban', { username, reason }),

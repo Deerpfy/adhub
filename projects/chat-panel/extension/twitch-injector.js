@@ -200,6 +200,84 @@
                 command = '/emoteonlyoff';
                 break;
 
+            case 'vip':
+                command = `/vip ${data.username}`;
+                break;
+
+            case 'unvip':
+                command = `/unvip ${data.username}`;
+                break;
+
+            case 'mod':
+                command = `/mod ${data.username}`;
+                break;
+
+            case 'unmod':
+                command = `/unmod ${data.username}`;
+                break;
+
+            case 'shoutout':
+                command = `/shoutout ${data.username}`;
+                break;
+
+            case 'raid':
+                command = `/raid ${data.username}`;
+                break;
+
+            case 'announce':
+                command = `/announce ${data.message || ''}`;
+                break;
+
+            case 'announceblue':
+                command = `/announceblue ${data.message || ''}`;
+                break;
+
+            case 'announcegreen':
+                command = `/announcegreen ${data.message || ''}`;
+                break;
+
+            case 'announceorange':
+                command = `/announceorange ${data.message || ''}`;
+                break;
+
+            case 'announcepurple':
+                command = `/announcepurple ${data.message || ''}`;
+                break;
+
+            // Broadcaster-only commands
+            case 'title':
+                if (data.title) {
+                    command = `/title ${data.title}`;
+                } else {
+                    return { success: false, error: 'Title required' };
+                }
+                break;
+
+            case 'game':
+                if (data.game) {
+                    command = `/game ${data.game}`;
+                } else {
+                    return { success: false, error: 'Game/category required' };
+                }
+                break;
+
+            case 'marker':
+                command = data.description ? `/marker ${data.description}` : '/marker';
+                break;
+
+            case 'commercial':
+                const duration = data.duration || 30;
+                command = `/commercial ${duration}`;
+                break;
+
+            case 'uniquechat':
+                command = '/uniquechat';
+                break;
+
+            case 'uniquechatoff':
+                command = '/uniquechatoff';
+                break;
+
             default:
                 return { success: false, error: `Unknown action: ${action}` };
         }
