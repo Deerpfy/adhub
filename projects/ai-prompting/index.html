@@ -36,6 +36,7 @@
         .color-methods { border-left: 3px solid #ef4444; padding-left: 8px; background: rgba(239, 68, 68, 0.1); }
         .color-template { border-left: 3px solid #14b8a6; padding-left: 8px; background: rgba(20, 184, 166, 0.1); }
         .color-features { border-left: 3px solid #06b6d4; padding-left: 8px; background: rgba(6, 182, 212, 0.1); }
+        .color-extended { border-left: 3px solid #8b5cf6; padding-left: 8px; background: rgba(139, 92, 246, 0.1); }
         .dot-purple { background: #a855f7; }
         .dot-blue { background: #3b82f6; }
         .dot-green { background: #22c55e; }
@@ -322,6 +323,79 @@
                         search: { name: 'Web Search', desc: 'Search for information', promptTag: 'Search the web for current information.' },
                     },
                     general: {},
+                },
+                // Extended sections for advanced prompting (inspired by web-analysis-prompt.md)
+                extendedSections: {
+                    title: 'Extended Sections',
+                    subtitle: 'Advanced formatting options for specialized prompts',
+                    toggleShow: 'Show extended options',
+                    toggleHide: 'Hide extended options',
+                    // Analysis areas
+                    analysisAreas: {
+                        label: 'Analysis Areas',
+                        placeholder: 'e.g., Visual design, UI components, UX analysis...',
+                        options: {
+                            visual_design: { name: 'Visual Design', desc: 'Colors, typography, visual consistency' },
+                            ui_components: { name: 'UI Components', desc: 'Buttons, forms, navigation, modals' },
+                            ux_analysis: { name: 'UX Analysis', desc: 'User flow, accessibility, responsiveness' },
+                            content_analysis: { name: 'Content Analysis', desc: 'SEO, structure, multimedia' },
+                            technical_elements: { name: 'Technical Elements', desc: 'Animations, APIs, performance' },
+                            legal_compliance: { name: 'Legal Compliance', desc: 'GDPR, cookies, privacy policy' },
+                        },
+                    },
+                    // Technical output specification
+                    technicalOutput: {
+                        label: 'Technical Output',
+                        placeholder: 'Specify technical details to include...',
+                        options: {
+                            css: { name: 'CSS', desc: 'Styles, properties, values' },
+                            html: { name: 'HTML', desc: 'Structure, semantics, accessibility' },
+                            javascript: { name: 'JavaScript/TypeScript', desc: 'Functions, logic, interactions' },
+                            python: { name: 'Python', desc: 'Backend, scripts, automation' },
+                        },
+                    },
+                    // Priority rating
+                    priorityRating: {
+                        label: 'Priority Rating',
+                        placeholder: 'Rate recommendations by priority...',
+                        enabled: 'Enable priority ratings',
+                        levels: {
+                            critical: 'CRITICAL - Immediate fix required',
+                            high: 'HIGH - Important for functionality/UX',
+                            medium: 'MEDIUM - Quality improvement',
+                            low: 'LOW - Nice-to-have enhancement',
+                        },
+                    },
+                    // Focus areas
+                    focusAreas: {
+                        label: 'Focus Areas',
+                        primary: { label: 'Primary Focus', placeholder: 'e.g., e-commerce conversion, SEO, accessibility' },
+                        secondary: { label: 'Secondary Focus', placeholder: 'e.g., mobile UX, loading speed' },
+                        ignore: { label: 'Ignore', placeholder: 'e.g., backend aspects, content quality' },
+                    },
+                    // Target URL
+                    targetUrl: {
+                        label: 'Target URL',
+                        placeholder: 'https://example.com',
+                    },
+                    // Competitor comparison
+                    competitorComparison: {
+                        label: 'Competitor Comparison',
+                        placeholder: 'Enter competitor URLs...',
+                        addBtn: 'Add competitor',
+                        instruction: 'Compare key aspects with these competitors.',
+                    },
+                    // Final deliverables
+                    deliverables: {
+                        label: 'Final Deliverables',
+                        placeholder: 'e.g., Complete report, prioritized list, technical specs...',
+                        options: {
+                            report: 'Comprehensive analysis report',
+                            recommendations: 'Prioritized recommendations list',
+                            tech_specs: 'Technical specifications for developers',
+                            checklist: 'Implementation checklist',
+                        },
+                    },
                 },
                 database: {
                     title: 'Saved Prompts',
@@ -817,6 +891,79 @@ Prompt k analýze:
                     },
                     general: {},
                 },
+                // Rozšířené sekce pro pokročilé prompty (inspirováno web-analysis-prompt.md)
+                extendedSections: {
+                    title: 'Rozšířené sekce',
+                    subtitle: 'Pokročilé formátovací možnosti pro specializované prompty',
+                    toggleShow: 'Zobrazit rozšířené možnosti',
+                    toggleHide: 'Skrýt rozšířené možnosti',
+                    // Oblasti analýzy
+                    analysisAreas: {
+                        label: 'Oblasti analýzy',
+                        placeholder: 'např. Vizuální design, UI komponenty, UX analýza...',
+                        options: {
+                            visual_design: { name: 'Vizuální design', desc: 'Barvy, typografie, vizuální konzistence' },
+                            ui_components: { name: 'UI komponenty', desc: 'Tlačítka, formuláře, navigace, modály' },
+                            ux_analysis: { name: 'UX analýza', desc: 'User flow, přístupnost, responzivita' },
+                            content_analysis: { name: 'Analýza obsahu', desc: 'SEO, struktura, multimedia' },
+                            technical_elements: { name: 'Technické prvky', desc: 'Animace, API, výkon' },
+                            legal_compliance: { name: 'Právní soulad', desc: 'GDPR, cookies, ochrana soukromí' },
+                        },
+                    },
+                    // Technický výstup
+                    technicalOutput: {
+                        label: 'Technický výstup',
+                        placeholder: 'Specifikuj technické detaily k zahrnutí...',
+                        options: {
+                            css: { name: 'CSS', desc: 'Styly, vlastnosti, hodnoty' },
+                            html: { name: 'HTML', desc: 'Struktura, sémantika, přístupnost' },
+                            javascript: { name: 'JavaScript/TypeScript', desc: 'Funkce, logika, interakce' },
+                            python: { name: 'Python', desc: 'Backend, skripty, automatizace' },
+                        },
+                    },
+                    // Hodnocení priorit
+                    priorityRating: {
+                        label: 'Hodnocení priorit',
+                        placeholder: 'Ohodnoť doporučení podle priority...',
+                        enabled: 'Zapnout hodnocení priorit',
+                        levels: {
+                            critical: 'KRITICKÉ - Vyžaduje okamžitou opravu',
+                            high: 'VYSOKÁ - Důležité pro funkcionalitu/UX',
+                            medium: 'STŘEDNÍ - Zlepšení kvality',
+                            low: 'NÍZKÁ - Nice-to-have vylepšení',
+                        },
+                    },
+                    // Zaměření analýzy
+                    focusAreas: {
+                        label: 'Zaměření analýzy',
+                        primary: { label: 'Primární zaměření', placeholder: 'např. e-commerce konverze, SEO, přístupnost' },
+                        secondary: { label: 'Sekundární zaměření', placeholder: 'např. mobilní UX, rychlost načítání' },
+                        ignore: { label: 'Ignorovat', placeholder: 'např. backend aspekty, kvalita obsahu' },
+                    },
+                    // Cílová URL
+                    targetUrl: {
+                        label: 'Cílová URL',
+                        placeholder: 'https://example.com',
+                    },
+                    // Srovnání s konkurencí
+                    competitorComparison: {
+                        label: 'Srovnání s konkurencí',
+                        placeholder: 'Zadej URL konkurentů...',
+                        addBtn: 'Přidat konkurenta',
+                        instruction: 'Proveď srovnání klíčových aspektů s těmito konkurenty.',
+                    },
+                    // Finální výstupy
+                    deliverables: {
+                        label: 'Finální výstupy',
+                        placeholder: 'např. Kompletní zpráva, prioritizovaný seznam, technické specifikace...',
+                        options: {
+                            report: 'Kompletní analytická zpráva',
+                            recommendations: 'Prioritizovaný seznam doporučení',
+                            tech_specs: 'Technická specifikace pro programátory',
+                            checklist: 'Checklist pro implementaci',
+                        },
+                    },
+                },
                 checklist: {
                     title: 'X-krokový kontrolní seznam promptu',
                     subtitle: 'Základní prvky pro tvorbu efektivních AI promptů',
@@ -1233,6 +1380,33 @@ Prompt k analýze:
             const [fields, setFields] = useState({
                 role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '',
             });
+
+            // Extended sections state - advanced formatting options
+            const [showExtendedSections, setShowExtendedSections] = useState(false);
+            const [extendedFields, setExtendedFields] = useState({
+                // Analysis areas (checkboxes)
+                analysisAreas: [],
+                // Technical output (checkboxes)
+                technicalOutput: [],
+                // Priority rating enabled
+                priorityRating: false,
+                // Focus areas
+                focusPrimary: '',
+                focusSecondary: '',
+                focusIgnore: '',
+                // Target URL
+                targetUrl: '',
+                // Competitor URLs
+                competitors: [],
+                // Final deliverables (checkboxes)
+                deliverables: [],
+            });
+
+            const updateExtendedField = (key, value) => setExtendedFields(prev => ({ ...prev, [key]: value }));
+            const toggleExtendedArray = (key, value) => setExtendedFields(prev => ({
+                ...prev,
+                [key]: prev[key].includes(value) ? prev[key].filter(v => v !== value) : [...prev[key], value]
+            }));
 
             // Enhanced examples state - supports structured data formats and multiple rows
             const [exampleFileType, setExampleFileType] = useState('none'); // none, excel, csv, json, table
@@ -1654,8 +1828,104 @@ Prompt k analýze:
                     }
                 }
 
+                // ==================== EXTENDED SECTIONS ====================
+                // Target URL
+                if (extendedFields.targetUrl) {
+                    if (target === 'claude') {
+                        sections.push({ type: 'extended', text: `<target_url>\n${extendedFields.targetUrl}\n</target_url>` });
+                    } else {
+                        sections.push({ type: 'extended', text: f.section('Target URL', extendedFields.targetUrl) });
+                    }
+                }
+
+                // Analysis Areas
+                if (extendedFields.analysisAreas.length > 0) {
+                    const extT = t.extendedSections?.analysisAreas?.options || {};
+                    const areasText = extendedFields.analysisAreas.map(key => {
+                        const opt = extT[key];
+                        return opt ? `- ${opt.name}: ${opt.desc}` : `- ${key}`;
+                    }).join('\n');
+
+                    if (target === 'claude') {
+                        sections.push({ type: 'extended', text: `<analysis_areas>\n${areasText}\n</analysis_areas>` });
+                    } else {
+                        sections.push({ type: 'extended', text: f.section('Analysis Areas', areasText) });
+                    }
+                }
+
+                // Technical Output
+                if (extendedFields.technicalOutput.length > 0) {
+                    const techT = t.extendedSections?.technicalOutput?.options || {};
+                    const techText = extendedFields.technicalOutput.map(key => {
+                        const opt = techT[key];
+                        return opt ? `- ${opt.name}: ${opt.desc}` : `- ${key}`;
+                    }).join('\n');
+
+                    if (target === 'claude') {
+                        sections.push({ type: 'extended', text: `<technical_output>\nInclude technical details for:\n${techText}\n</technical_output>` });
+                    } else {
+                        sections.push({ type: 'extended', text: f.section('Technical Output', `Include technical details for:\n${techText}`) });
+                    }
+                }
+
+                // Priority Rating
+                if (extendedFields.priorityRating) {
+                    const prioT = t.extendedSections?.priorityRating?.levels || {};
+                    const prioText = Object.entries(prioT).map(([key, label]) => `- ${label}`).join('\n');
+
+                    if (target === 'claude') {
+                        sections.push({ type: 'extended', text: `<priority_rating>\nRate each recommendation with priority:\n${prioText}\n</priority_rating>` });
+                    } else {
+                        sections.push({ type: 'extended', text: f.section('Priority Rating', `Rate each recommendation:\n${prioText}`) });
+                    }
+                }
+
+                // Focus Areas
+                const hasFocus = extendedFields.focusPrimary || extendedFields.focusSecondary || extendedFields.focusIgnore;
+                if (hasFocus) {
+                    const focusLines = [];
+                    if (extendedFields.focusPrimary) focusLines.push(`- Primary focus: ${extendedFields.focusPrimary}`);
+                    if (extendedFields.focusSecondary) focusLines.push(`- Secondary focus: ${extendedFields.focusSecondary}`);
+                    if (extendedFields.focusIgnore) focusLines.push(`- Ignore: ${extendedFields.focusIgnore}`);
+                    const focusText = focusLines.join('\n');
+
+                    if (target === 'claude') {
+                        sections.push({ type: 'extended', text: `<focus_areas>\n${focusText}\n</focus_areas>` });
+                    } else {
+                        sections.push({ type: 'extended', text: f.section('Focus Areas', focusText) });
+                    }
+                }
+
+                // Competitor Comparison
+                const validCompetitors = extendedFields.competitors.filter(url => url.trim());
+                if (validCompetitors.length > 0) {
+                    const compText = validCompetitors.map((url, i) => `- Competitor ${i + 1}: ${url}`).join('\n');
+                    const instruction = t.extendedSections?.competitorComparison?.instruction || 'Compare key aspects with these competitors.';
+
+                    if (target === 'claude') {
+                        sections.push({ type: 'extended', text: `<competitor_comparison>\n${compText}\n${instruction}\n</competitor_comparison>` });
+                    } else {
+                        sections.push({ type: 'extended', text: f.section('Competitor Comparison', `${compText}\n${instruction}`) });
+                    }
+                }
+
+                // Final Deliverables
+                if (extendedFields.deliverables.length > 0) {
+                    const delT = t.extendedSections?.deliverables?.options || {};
+                    const delText = extendedFields.deliverables.map(key => {
+                        const label = delT[key];
+                        return label ? `- ${label}` : `- ${key}`;
+                    }).join('\n');
+
+                    if (target === 'claude') {
+                        sections.push({ type: 'extended', text: `<final_deliverables>\n${delText}\n</final_deliverables>` });
+                    } else {
+                        sections.push({ type: 'extended', text: f.section('Final Deliverables', delText) });
+                    }
+                }
+
                 return sections;
-            }, [fields, target, selectedMethods, t, template, generateFormattedExamples, selectedFeatures]);
+            }, [fields, target, selectedMethods, t, template, generateFormattedExamples, selectedFeatures, extendedFields]);
 
             // Plain text version for copying
             const formattedPrompt = useMemo(() => {
@@ -2926,6 +3196,203 @@ Prompt k analýze:
                                                 <pre className="p-2 bg-slate-900 rounded text-xs text-green-400 overflow-x-auto whitespace-pre-wrap max-h-32 overflow-y-auto">
                                                     {generateFormattedExamples}
                                                 </pre>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Extended Sections - Advanced Formatting Options */}
+                                    <div className="mt-4 border border-slate-700 rounded-lg overflow-hidden">
+                                        {/* Toggle Header */}
+                                        <button
+                                            onClick={() => setShowExtendedSections(!showExtendedSections)}
+                                            className="w-full flex items-center justify-between px-3 py-2.5 bg-gradient-to-r from-purple-900/30 to-indigo-900/30 hover:from-purple-900/40 hover:to-indigo-900/40 transition-colors"
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <Icon name="Settings2" size={16} className="text-purple-400" />
+                                                <span className="text-sm font-medium text-purple-300">{t.extendedSections?.title || 'Extended Sections'}</span>
+                                                <span className="text-xs text-slate-500">({t.extendedSections?.subtitle || 'Advanced options'})</span>
+                                            </div>
+                                            <Icon name={showExtendedSections ? 'ChevronUp' : 'ChevronDown'} size={18} className="text-purple-400" />
+                                        </button>
+
+                                        {/* Extended Sections Content */}
+                                        {showExtendedSections && (
+                                            <div className="p-3 bg-slate-800/50 space-y-4">
+
+                                                {/* Target URL */}
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                                                        <Icon name="Link" size={12} className="inline mr-1" />
+                                                        {t.extendedSections?.targetUrl?.label || 'Target URL'}
+                                                    </label>
+                                                    <input
+                                                        type="url"
+                                                        value={extendedFields.targetUrl}
+                                                        onChange={e => updateExtendedField('targetUrl', e.target.value)}
+                                                        placeholder={t.extendedSections?.targetUrl?.placeholder || 'https://example.com'}
+                                                        className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                                                    />
+                                                </div>
+
+                                                {/* Analysis Areas */}
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                                                        <Icon name="Search" size={12} className="inline mr-1" />
+                                                        {t.extendedSections?.analysisAreas?.label || 'Analysis Areas'}
+                                                    </label>
+                                                    <div className="grid grid-cols-2 gap-1.5">
+                                                        {Object.entries(t.extendedSections?.analysisAreas?.options || {}).map(([key, opt]) => (
+                                                            <label key={key} className={`flex items-start gap-2 p-2 rounded border cursor-pointer transition-colors ${extendedFields.analysisAreas.includes(key) ? 'bg-purple-500/20 border-purple-500/50' : 'bg-slate-700/50 border-slate-600 hover:border-slate-500'}`}>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={extendedFields.analysisAreas.includes(key)}
+                                                                    onChange={() => toggleExtendedArray('analysisAreas', key)}
+                                                                    className="mt-0.5 accent-purple-500"
+                                                                />
+                                                                <div>
+                                                                    <div className="text-xs font-medium text-white">{opt.name}</div>
+                                                                    <div className="text-[10px] text-slate-400">{opt.desc}</div>
+                                                                </div>
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Technical Output */}
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                                                        <Icon name="Code" size={12} className="inline mr-1" />
+                                                        {t.extendedSections?.technicalOutput?.label || 'Technical Output'}
+                                                    </label>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {Object.entries(t.extendedSections?.technicalOutput?.options || {}).map(([key, opt]) => (
+                                                            <label key={key} className={`flex items-center gap-1.5 px-2.5 py-1 rounded border cursor-pointer transition-colors text-xs ${extendedFields.technicalOutput.includes(key) ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300' : 'bg-slate-700/50 border-slate-600 text-slate-300 hover:border-slate-500'}`}>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={extendedFields.technicalOutput.includes(key)}
+                                                                    onChange={() => toggleExtendedArray('technicalOutput', key)}
+                                                                    className="accent-cyan-500"
+                                                                />
+                                                                {opt.name}
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
+                                                {/* Priority Rating */}
+                                                <div>
+                                                    <label className={`flex items-center gap-2 p-2 rounded border cursor-pointer transition-colors ${extendedFields.priorityRating ? 'bg-orange-500/20 border-orange-500/50' : 'bg-slate-700/50 border-slate-600 hover:border-slate-500'}`}>
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={extendedFields.priorityRating}
+                                                            onChange={e => updateExtendedField('priorityRating', e.target.checked)}
+                                                            className="accent-orange-500"
+                                                        />
+                                                        <Icon name="AlertTriangle" size={14} className="text-orange-400" />
+                                                        <span className="text-xs font-medium text-white">{t.extendedSections?.priorityRating?.enabled || 'Enable priority ratings'}</span>
+                                                    </label>
+                                                    {extendedFields.priorityRating && (
+                                                        <div className="mt-2 pl-6 text-[10px] text-slate-400 space-y-0.5">
+                                                            {Object.entries(t.extendedSections?.priorityRating?.levels || {}).map(([key, label]) => (
+                                                                <div key={key} className="flex items-center gap-1.5">
+                                                                    <span className={`w-2 h-2 rounded-full ${key === 'critical' ? 'bg-red-500' : key === 'high' ? 'bg-orange-500' : key === 'medium' ? 'bg-yellow-500' : 'bg-green-500'}`}></span>
+                                                                    {label}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {/* Focus Areas */}
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                                                        <Icon name="Target" size={12} className="inline mr-1" />
+                                                        {t.extendedSections?.focusAreas?.label || 'Focus Areas'}
+                                                    </label>
+                                                    <div className="space-y-2">
+                                                        <input
+                                                            type="text"
+                                                            value={extendedFields.focusPrimary}
+                                                            onChange={e => updateExtendedField('focusPrimary', e.target.value)}
+                                                            placeholder={t.extendedSections?.focusAreas?.primary?.placeholder || 'Primary focus...'}
+                                                            className="w-full px-2 py-1.5 bg-slate-700 border border-green-700/50 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-green-500"
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            value={extendedFields.focusSecondary}
+                                                            onChange={e => updateExtendedField('focusSecondary', e.target.value)}
+                                                            placeholder={t.extendedSections?.focusAreas?.secondary?.placeholder || 'Secondary focus...'}
+                                                            className="w-full px-2 py-1.5 bg-slate-700 border border-blue-700/50 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                                        />
+                                                        <input
+                                                            type="text"
+                                                            value={extendedFields.focusIgnore}
+                                                            onChange={e => updateExtendedField('focusIgnore', e.target.value)}
+                                                            placeholder={t.extendedSections?.focusAreas?.ignore?.placeholder || 'Ignore...'}
+                                                            className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Competitor Comparison */}
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                                                        <Icon name="GitCompare" size={12} className="inline mr-1" />
+                                                        {t.extendedSections?.competitorComparison?.label || 'Competitor Comparison'}
+                                                    </label>
+                                                    <div className="space-y-1.5">
+                                                        {extendedFields.competitors.map((url, idx) => (
+                                                            <div key={idx} className="flex gap-2">
+                                                                <input
+                                                                    type="url"
+                                                                    value={url}
+                                                                    onChange={e => {
+                                                                        const newCompetitors = [...extendedFields.competitors];
+                                                                        newCompetitors[idx] = e.target.value;
+                                                                        updateExtendedField('competitors', newCompetitors);
+                                                                    }}
+                                                                    placeholder={`${t.extendedSections?.competitorComparison?.placeholder || 'Competitor URL'} ${idx + 1}`}
+                                                                    className="flex-1 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                                                                />
+                                                                <button
+                                                                    onClick={() => updateExtendedField('competitors', extendedFields.competitors.filter((_, i) => i !== idx))}
+                                                                    className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded"
+                                                                >
+                                                                    <Icon name="X" size={14} />
+                                                                </button>
+                                                            </div>
+                                                        ))}
+                                                        <button
+                                                            onClick={() => updateExtendedField('competitors', [...extendedFields.competitors, ''])}
+                                                            className="flex items-center gap-1.5 px-2 py-1 bg-purple-500/20 border border-purple-500/30 rounded text-purple-400 hover:bg-purple-500/30 text-xs"
+                                                        >
+                                                            <Icon name="Plus" size={12} />
+                                                            {t.extendedSections?.competitorComparison?.addBtn || 'Add competitor'}
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Final Deliverables */}
+                                                <div>
+                                                    <label className="block text-xs font-medium text-slate-400 mb-1.5">
+                                                        <Icon name="FileOutput" size={12} className="inline mr-1" />
+                                                        {t.extendedSections?.deliverables?.label || 'Final Deliverables'}
+                                                    </label>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {Object.entries(t.extendedSections?.deliverables?.options || {}).map(([key, label]) => (
+                                                            <label key={key} className={`flex items-center gap-1.5 px-2.5 py-1 rounded border cursor-pointer transition-colors text-xs ${extendedFields.deliverables.includes(key) ? 'bg-green-500/20 border-green-500/50 text-green-300' : 'bg-slate-700/50 border-slate-600 text-slate-300 hover:border-slate-500'}`}>
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={extendedFields.deliverables.includes(key)}
+                                                                    onChange={() => toggleExtendedArray('deliverables', key)}
+                                                                    className="accent-green-500"
+                                                                />
+                                                                {label}
+                                                            </label>
+                                                        ))}
+                                                    </div>
+                                                </div>
+
                                             </div>
                                         )}
                                     </div>
