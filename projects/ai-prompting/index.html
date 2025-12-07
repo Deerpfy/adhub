@@ -1281,7 +1281,11 @@ Prompt k analýze:
                     // Enhanced examples data
                     eft: ['none', 'excel', 'csv', 'json', 'table'].indexOf(promptData.exampleFileType || 'none'),
                     eh: promptData.exampleHeaders || '',
-                    er: promptData.exampleRows || [{ id: 1, content: '' }]
+                    er: promptData.exampleRows || [{ id: 1, content: '' }],
+                    // Model-specific features
+                    sf: promptData.selectedFeatures || {},
+                    // Extended sections
+                    ext: promptData.extendedFields || {}
                 };
                 const json = JSON.stringify(minimal);
                 return LZString.compressToEncodedURIComponent(json);
@@ -1302,6 +1306,23 @@ Prompt k analýze:
                 // Get all language codes from AVAILABLE_LANGUAGES
                 const langs = AVAILABLE_LANGUAGES.map(l => l.code);
 
+                // Default extended fields structure
+                const defaultExtended = {
+                    analysisAreas: [],
+                    technicalOutput: [],
+                    priorityRating: false,
+                    focusPrimary: '',
+                    focusSecondary: '',
+                    focusIgnore: '',
+                    targetUrl: '',
+                    competitors: [],
+                    deliverables: [],
+                    emailStyle: '',
+                    emailLanguage: '',
+                    translationStyle: '',
+                    supportTone: '',
+                };
+
                 return {
                     template: ALL_TEMPLATES[minimal.t] || 'general',
                     target: ALL_TARGETS[minimal.a] || 'claude',
@@ -1311,7 +1332,11 @@ Prompt k analýze:
                     // Enhanced examples data
                     exampleFileType: fileTypes[minimal.eft] || 'none',
                     exampleHeaders: minimal.eh || '',
-                    exampleRows: minimal.er || [{ id: 1, content: '' }]
+                    exampleRows: minimal.er || [{ id: 1, content: '' }],
+                    // Model-specific features
+                    selectedFeatures: minimal.sf || {},
+                    // Extended sections (merge with defaults to ensure all keys exist)
+                    extendedFields: { ...defaultExtended, ...(minimal.ext || {}) }
                 };
             } catch (e) {
                 return null;
@@ -2335,6 +2360,8 @@ Prompt k analýze:
                     exampleFileType, exampleHeaders, exampleRows,
                     // Include model-specific features
                     selectedFeatures,
+                    // Include extended sections
+                    extendedFields,
                     createdAt: editingId ? savedPrompts.find(p => p.id === editingId)?.createdAt : new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
                 };
@@ -2352,6 +2379,23 @@ Prompt k analýze:
                 showNotification(`${updated.length} ${t.database.savedCount}`);
             };
 
+            // Default extended fields structure for loading
+            const defaultExtendedFields = {
+                analysisAreas: [],
+                technicalOutput: [],
+                priorityRating: false,
+                focusPrimary: '',
+                focusSecondary: '',
+                focusIgnore: '',
+                targetUrl: '',
+                competitors: [],
+                deliverables: [],
+                emailStyle: '',
+                emailLanguage: '',
+                translationStyle: '',
+                supportTone: '',
+            };
+
             const loadPrompt = (prompt) => {
                 setTemplate(prompt.template || 'general');
                 setTarget(prompt.target || 'claude');
@@ -2364,6 +2408,8 @@ Prompt k analýze:
                 setExampleRows(prompt.exampleRows || [{ id: 1, content: '' }]);
                 // Load model-specific features
                 setSelectedFeatures(prompt.selectedFeatures || {});
+                // Load extended sections (merge with defaults to ensure all keys exist)
+                setExtendedFields({ ...defaultExtendedFields, ...(prompt.extendedFields || {}) });
                 setShowDatabase(false);
             };
 
@@ -2427,6 +2473,24 @@ Prompt k analýze:
                 setExampleFileType('none');
                 setExampleHeaders('');
                 setExampleRows([{ id: 1, content: '' }]);
+                // Reset extended sections
+                setExtendedFields({
+                    analysisAreas: [],
+                    technicalOutput: [],
+                    priorityRating: false,
+                    focusPrimary: '',
+                    focusSecondary: '',
+                    focusIgnore: '',
+                    targetUrl: '',
+                    competitors: [],
+                    deliverables: [],
+                    emailStyle: '',
+                    emailLanguage: '',
+                    translationStyle: '',
+                    supportTone: '',
+                });
+                // Reset model-specific features
+                setSelectedFeatures({});
             };
 
             // Share code functions
@@ -2436,7 +2500,9 @@ Prompt k analýze:
                     // Include enhanced examples data
                     exampleFileType, exampleHeaders, exampleRows,
                     // Include model-specific features
-                    selectedFeatures
+                    selectedFeatures,
+                    // Include extended sections
+                    extendedFields
                 };
                 const code = generateShareCode(promptData);
                 if (code) {
@@ -2467,6 +2533,8 @@ Prompt k analýze:
                     setExampleRows(decoded.exampleRows || [{ id: 1, content: '' }]);
                     // Load model-specific features
                     setSelectedFeatures(decoded.selectedFeatures || {});
+                    // Load extended sections
+                    setExtendedFields(decoded.extendedFields || defaultExtendedFields);
                     setShowImportModal(false);
                     setImportCode('');
                     showNotification(t.share.importSuccess);
@@ -2492,6 +2560,8 @@ Prompt k analýze:
                         setExampleRows(decoded.exampleRows || [{ id: 1, content: '' }]);
                         // Load model-specific features
                         setSelectedFeatures(decoded.selectedFeatures || {});
+                        // Load extended sections
+                        setExtendedFields(decoded.extendedFields || defaultExtendedFields);
                         showNotification(t.share.importSuccess);
                         // Clean URL
                         window.history.replaceState({}, '', window.location.pathname);
