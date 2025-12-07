@@ -396,6 +396,42 @@
                             checklist: 'Implementation checklist',
                         },
                     },
+                    // Template-specific options
+                    emailStyle: {
+                        label: 'Email Style',
+                        options: {
+                            formal: 'Formal / Official',
+                            colleagues: 'Colleagues / Professional',
+                            friendly: 'Friendly / Casual',
+                            request: 'Request / Inquiry',
+                            complaint: 'Complaint / Issue',
+                            thankyou: 'Thank you / Appreciation',
+                        },
+                    },
+                    emailLanguage: {
+                        label: 'Output Language',
+                        placeholder: 'e.g., English, Czech, German...',
+                    },
+                    translationStyle: {
+                        label: 'Translation Style',
+                        options: {
+                            formal: 'Formal / Professional',
+                            literal: 'Literal / Word-by-word',
+                            natural: 'Natural word order',
+                            creative: 'Creative / Localized',
+                            technical: 'Technical / Precise',
+                        },
+                    },
+                    supportTone: {
+                        label: 'Response Tone',
+                        options: {
+                            marketing: 'Marketing (promotional, benefits-focused)',
+                            sales: 'Sales (persuasive, deal-oriented)',
+                            legal: 'Legal (formal, precise, disclaimers)',
+                            technical: 'Technical (detailed, step-by-step)',
+                            empathetic: 'Empathetic (understanding, supportive)',
+                        },
+                    },
                 },
                 database: {
                     title: 'Saved Prompts',
@@ -963,6 +999,42 @@ Prompt k analýze:
                             checklist: 'Checklist pro implementaci',
                         },
                     },
+                    // Možnosti specifické pro šablony
+                    emailStyle: {
+                        label: 'Styl emailu',
+                        options: {
+                            formal: 'Formální / Oficiální',
+                            colleagues: 'Kolegové / Profesionální',
+                            friendly: 'Přátelský / Neformální',
+                            request: 'Žádost / Dotaz',
+                            complaint: 'Stížnost / Reklamace',
+                            thankyou: 'Poděkování / Ocenění',
+                        },
+                    },
+                    emailLanguage: {
+                        label: 'Jazyk výstupu',
+                        placeholder: 'např. Čeština, Angličtina, Němčina...',
+                    },
+                    translationStyle: {
+                        label: 'Styl překladu',
+                        options: {
+                            formal: 'Formální / Profesionální',
+                            literal: 'Doslovný / Slovo od slova',
+                            natural: 'Přirozený slovosled',
+                            creative: 'Kreativní / Lokalizovaný',
+                            technical: 'Technický / Přesný',
+                        },
+                    },
+                    supportTone: {
+                        label: 'Tón odpovědi',
+                        options: {
+                            marketing: 'Marketingový (propagační, výhody)',
+                            sales: 'Obchodní (přesvědčivý, nabídky)',
+                            legal: 'Právní (formální, přesný, upozornění)',
+                            technical: 'Technický (detailní, krok za krokem)',
+                            empathetic: 'Empatický (chápavý, podpůrný)',
+                        },
+                    },
                 },
                 checklist: {
                     title: 'X-krokový kontrolní seznam promptu',
@@ -1361,6 +1433,9 @@ Prompt k analýze:
                 showFocusAreas: false,
                 showCompetitors: false,
                 showDeliverables: false,
+                // Template-specific
+                showEmailStyle: true,
+                showEmailLanguage: true,
             },
             academic: {
                 showTargetUrl: false,
@@ -1419,9 +1494,12 @@ Prompt k analýze:
                 showAnalysisAreas: false,
                 showTechnicalOutput: false,
                 showPriority: false,
-                showFocusAreas: true,
+                showFocusAreas: false,
                 showCompetitors: false,
                 showDeliverables: false,
+                // Template-specific
+                showTranslationStyle: true,
+                showEmailLanguage: true, // reuse for target language
             },
             business: {
                 showTargetUrl: false,
@@ -1437,11 +1515,12 @@ Prompt k analýze:
                 showTargetUrl: false,
                 showAnalysisAreas: false,
                 showTechnicalOutput: false,
-                showPriority: true,
+                showPriority: false,
                 showFocusAreas: false,
                 showCompetitors: false,
-                showDeliverables: true,
-                deliverablesOptions: ['checklist'],
+                showDeliverables: false,
+                // Template-specific
+                showSupportTone: true,
             },
             productivity: {
                 showTargetUrl: false,
@@ -1554,6 +1633,11 @@ Prompt k analýze:
                 competitors: [],
                 // Final deliverables (checkboxes)
                 deliverables: [],
+                // Template-specific options
+                emailStyle: '',
+                emailLanguage: '',
+                translationStyle: '',
+                supportTone: '',
             });
 
             const updateExtendedField = (key, value) => setExtendedFields(prev => ({ ...prev, [key]: value }));
@@ -2075,6 +2159,43 @@ Prompt k analýze:
                         sections.push({ type: 'extended', text: `<final_deliverables>\n${delText}\n</final_deliverables>` });
                     } else {
                         sections.push({ type: 'extended', text: f.section('Final Deliverables', delText) });
+                    }
+                }
+
+                // Email Style + Language
+                if (extendedFields.emailStyle || extendedFields.emailLanguage) {
+                    const styleLabel = t.extendedSections?.emailStyle?.options?.[extendedFields.emailStyle] || extendedFields.emailStyle;
+                    const parts = [];
+                    if (extendedFields.emailStyle) parts.push(`Style: ${styleLabel}`);
+                    if (extendedFields.emailLanguage) parts.push(`Language: ${extendedFields.emailLanguage}`);
+                    const emailText = parts.join('\n');
+
+                    if (target === 'claude') {
+                        sections.push({ type: 'extended', text: `<email_settings>\n${emailText}\n</email_settings>` });
+                    } else {
+                        sections.push({ type: 'extended', text: f.section('Email Settings', emailText) });
+                    }
+                }
+
+                // Translation Style
+                if (extendedFields.translationStyle) {
+                    const styleLabel = t.extendedSections?.translationStyle?.options?.[extendedFields.translationStyle] || extendedFields.translationStyle;
+
+                    if (target === 'claude') {
+                        sections.push({ type: 'extended', text: `<translation_style>\n${styleLabel}\n</translation_style>` });
+                    } else {
+                        sections.push({ type: 'extended', text: f.section('Translation Style', styleLabel) });
+                    }
+                }
+
+                // Support Tone
+                if (extendedFields.supportTone) {
+                    const toneLabel = t.extendedSections?.supportTone?.options?.[extendedFields.supportTone] || extendedFields.supportTone;
+
+                    if (target === 'claude') {
+                        sections.push({ type: 'extended', text: `<response_tone>\n${toneLabel}\n</response_tone>` });
+                    } else {
+                        sections.push({ type: 'extended', text: f.section('Response Tone', toneLabel) });
                     }
                 }
 
@@ -3465,6 +3586,54 @@ Prompt k analýze:
                                                                 placeholder={lang === 'cs' ? 'Sekundární...' : 'Secondary...'} className="px-2 py-1 bg-slate-700 border border-blue-700/50 rounded text-[10px] text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500" />
                                                             <input type="text" value={extendedFields.focusIgnore} onChange={e => updateExtendedField('focusIgnore', e.target.value)}
                                                                 placeholder={lang === 'cs' ? 'Ignorovat...' : 'Ignore...'} className="px-2 py-1 bg-slate-700 border border-slate-600 rounded text-[10px] text-white placeholder-slate-500 focus:ring-1 focus:ring-slate-500" />
+                                                        </div>
+                                                    )}
+
+                                                    {/* Email Style + Language */}
+                                                    {(cfg.showEmailStyle || cfg.showEmailLanguage) && (
+                                                        <div className="flex gap-2">
+                                                            {cfg.showEmailStyle && (
+                                                                <div className="flex-1">
+                                                                    <select value={extendedFields.emailStyle} onChange={e => updateExtendedField('emailStyle', e.target.value)}
+                                                                        className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded text-[10px] text-white focus:ring-1 focus:ring-pink-500">
+                                                                        <option value="">{t.extendedSections?.emailStyle?.label || 'Email Style'}</option>
+                                                                        {Object.entries(t.extendedSections?.emailStyle?.options || {}).map(([k, v]) => (
+                                                                            <option key={k} value={k}>{v}</option>
+                                                                        ))}
+                                                                    </select>
+                                                                </div>
+                                                            )}
+                                                            {cfg.showEmailLanguage && (
+                                                                <div className="flex-1">
+                                                                    <input type="text" value={extendedFields.emailLanguage} onChange={e => updateExtendedField('emailLanguage', e.target.value)}
+                                                                        placeholder={t.extendedSections?.emailLanguage?.placeholder || 'Output language...'}
+                                                                        className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded text-[10px] text-white placeholder-slate-500 focus:ring-1 focus:ring-pink-500" />
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Translation Style */}
+                                                    {cfg.showTranslationStyle && (
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {Object.entries(t.extendedSections?.translationStyle?.options || {}).map(([k, v]) => (
+                                                                <label key={k} className={`flex items-center gap-1 px-1.5 py-0.5 rounded border cursor-pointer text-[10px] ${extendedFields.translationStyle === k ? 'bg-indigo-500/20 border-indigo-500/50 text-indigo-300' : 'bg-slate-700/50 border-slate-600 text-slate-300'}`}>
+                                                                    <input type="radio" name="translationStyle" value={k} checked={extendedFields.translationStyle === k} onChange={e => updateExtendedField('translationStyle', e.target.value)} className="accent-indigo-500 w-2.5 h-2.5" />
+                                                                    {v.split(' /')[0]}
+                                                                </label>
+                                                            ))}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Support Tone */}
+                                                    {cfg.showSupportTone && (
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {Object.entries(t.extendedSections?.supportTone?.options || {}).map(([k, v]) => (
+                                                                <label key={k} className={`flex items-center gap-1 px-1.5 py-0.5 rounded border cursor-pointer text-[10px] ${extendedFields.supportTone === k ? 'bg-teal-500/20 border-teal-500/50 text-teal-300' : 'bg-slate-700/50 border-slate-600 text-slate-300'}`}>
+                                                                    <input type="radio" name="supportTone" value={k} checked={extendedFields.supportTone === k} onChange={e => updateExtendedField('supportTone', e.target.value)} className="accent-teal-500 w-2.5 h-2.5" />
+                                                                    {v.split(' (')[0]}
+                                                                </label>
+                                                            ))}
                                                         </div>
                                                     )}
 
