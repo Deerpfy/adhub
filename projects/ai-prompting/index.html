@@ -3495,7 +3495,7 @@ Prompt k analýze:
                                         {/* Extended Sections Content - Dynamic based on template */}
                                         {showExtendedSections && (() => {
                                             const cfg = EXTENDED_SECTIONS_CONFIG[template] || EXTENDED_SECTIONS_CONFIG.general;
-                                            const hasAnyOption = cfg.showTargetUrl || cfg.showAnalysisAreas || cfg.showTechnicalOutput || cfg.showPriority || cfg.showFocusAreas || cfg.showCompetitors || cfg.showDeliverables;
+                                            const hasAnyOption = cfg.showTargetUrl || cfg.showAnalysisAreas || cfg.showTechnicalOutput || cfg.showPriority || cfg.showFocusAreas || cfg.showCompetitors || cfg.showDeliverables || cfg.showEmailStyle || cfg.showEmailLanguage || cfg.showTranslationStyle || cfg.showSupportTone;
 
                                             if (!hasAnyOption) {
                                                 return (
