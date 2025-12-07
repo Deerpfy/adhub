@@ -3056,47 +3056,84 @@ Prompt k analýze:
                                     })()}
                                 </div>
 
-                                {/* Input Fields */}
-                                <div className="space-y-3">
-                                    {[
-                                        { key: 'role', field: t.fields.role },
-                                        { key: 'task', field: t.fields.task, required: true },
-                                        { key: 'context', field: t.fields.context },
-                                        { key: 'constraints', field: selectedMethods.includes('risen') ? t.fields.steps : t.fields.constraints },
-                                        { key: 'outputFormat', field: selectedMethods.includes('risen') ? t.fields.expectations : t.fields.outputFormat },
-                                    ].map(({ key, field, required }) => (
-                                        <div key={key} id={`field-${key}`} className={tutorialActive && tutorialSteps[tutorialStep]?.target === `field-${key}` ? 'tutorial-highlight' : ''}>
-                                            <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                                                {field.label} {required && <span className="text-amber-400">{t.required}</span>}
+                                {/* Input Fields - Optimized Layout */}
+                                <div className="space-y-2">
+                                    {/* Row 1: Role (full width, single line) */}
+                                    <div id="field-role" className={tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-role' ? 'tutorial-highlight' : ''}>
+                                        <label className="block text-xs font-medium text-slate-300 mb-1">
+                                            {t.fields.role.label}
+                                        </label>
+                                        <input type="text" value={fields.role} onChange={e => updateField('role', e.target.value)} placeholder={t.fields.role.placeholder}
+                                            className="w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm" />
+                                    </div>
+
+                                    {/* Row 2: Task (full width, main field) */}
+                                    <div id="field-task" className={tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-task' ? 'tutorial-highlight' : ''}>
+                                        <label className="block text-xs font-medium text-slate-300 mb-1">
+                                            {t.fields.task.label} <span className="text-amber-400">{t.required}</span>
+                                        </label>
+                                        <AutoResizeTextarea
+                                            value={fields.task}
+                                            onChange={e => updateField('task', e.target.value)}
+                                            placeholder={t.fields.task.placeholder}
+                                            minRows={2}
+                                            maxRows={6}
+                                            className="w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm"
+                                        />
+                                    </div>
+
+                                    {/* Row 3: Context + Constraints side by side */}
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div id="field-context" className={tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-context' ? 'tutorial-highlight' : ''}>
+                                            <label className="block text-xs font-medium text-slate-300 mb-1">
+                                                {t.fields.context.label}
                                             </label>
-                                            {key === 'role' ? (
-                                                <input type="text" value={fields[key]} onChange={e => updateField(key, e.target.value)} placeholder={field.placeholder}
-                                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm" />
-                                            ) : (
-                                                <AutoResizeTextarea
-                                                    value={fields[key]}
-                                                    onChange={e => updateField(key, e.target.value)}
-                                                    placeholder={field.placeholder}
-                                                    minRows={2}
-                                                    maxRows={key === 'task' ? 10 : 6}
-                                                    className="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm"
-                                                />
-                                            )}
+                                            <AutoResizeTextarea
+                                                value={fields.context}
+                                                onChange={e => updateField('context', e.target.value)}
+                                                placeholder={t.fields.context.placeholder}
+                                                minRows={2}
+                                                maxRows={4}
+                                                className="w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm"
+                                            />
                                         </div>
-                                    ))}
+                                        <div id="field-constraints" className={tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-constraints' ? 'tutorial-highlight' : ''}>
+                                            <label className="block text-xs font-medium text-slate-300 mb-1">
+                                                {(selectedMethods.includes('risen') ? t.fields.steps : t.fields.constraints).label}
+                                            </label>
+                                            <AutoResizeTextarea
+                                                value={fields.constraints}
+                                                onChange={e => updateField('constraints', e.target.value)}
+                                                placeholder={(selectedMethods.includes('risen') ? t.fields.steps : t.fields.constraints).placeholder}
+                                                minRows={2}
+                                                maxRows={4}
+                                                className="w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Row 4: Output Format (full width, compact) */}
+                                    <div id="field-outputFormat" className={tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-outputFormat' ? 'tutorial-highlight' : ''}>
+                                        <label className="block text-xs font-medium text-slate-300 mb-1">
+                                            {(selectedMethods.includes('risen') ? t.fields.expectations : t.fields.outputFormat).label}
+                                        </label>
+                                        <input type="text" value={fields.outputFormat} onChange={e => updateField('outputFormat', e.target.value)}
+                                            placeholder={(selectedMethods.includes('risen') ? t.fields.expectations : t.fields.outputFormat).placeholder}
+                                            className="w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm" />
+                                    </div>
 
                                     {/* Enhanced Examples Section with File Format Support */}
-                                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-3">
-                                        <div className="flex items-center justify-between mb-3">
-                                            <label className="text-sm font-medium text-slate-300 flex items-center gap-2">
-                                                <Icon name="Lightbulb" size={16} className="text-yellow-400" />
+                                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-2">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
+                                                <Icon name="Lightbulb" size={14} className="text-yellow-400" />
                                                 {selectedMethods.includes('fewshot') ? t.fields.fewshot.label : t.fields.examples.label}
                                             </label>
                                             {/* File type dropdown */}
                                             <select
                                                 value={exampleFileType}
                                                 onChange={e => setExampleFileType(e.target.value)}
-                                                className="px-2 py-1 bg-slate-700 border border-slate-600 rounded text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                                className="px-2 py-0.5 bg-slate-700 border border-slate-600 rounded text-xs text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
                                             >
                                                 {t.examplesSection && Object.entries(t.examplesSection.fileTypes).map(([key, val]) => (
                                                     <option key={key} value={key}>{val.name}</option>
@@ -3106,113 +3143,78 @@ Prompt k analýze:
 
                                         {/* Headers input for structured formats */}
                                         {exampleFileType !== 'none' && (
-                                            <div className="mb-3">
-                                                <label className="block text-xs text-slate-400 mb-1">
-                                                    {t.examplesSection?.params.headers || 'Column headers'}
-                                                </label>
+                                            <div className="mb-2">
                                                 <input
                                                     type="text"
                                                     value={exampleHeaders}
                                                     onChange={e => setExampleHeaders(e.target.value)}
                                                     placeholder={t.examplesSection?.params.headersPlaceholder || 'e.g., Name | Age | City'}
-                                                    className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                                    className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                                                 />
-                                                <p className="text-xs text-slate-500 mt-1">
-                                                    {exampleFileType === 'excel' || exampleFileType === 'table'
-                                                        ? (lang === 'cs' ? 'Odděl sloupce znakem |' : 'Separate columns with |')
-                                                        : exampleFileType === 'csv'
-                                                        ? (lang === 'cs' ? 'Odděl sloupce čárkou nebo znakem |' : 'Separate with commas or |')
-                                                        : (lang === 'cs' ? 'Zadej klíče pro JSON objekty' : 'Enter keys for JSON objects')}
-                                                </p>
                                             </div>
                                         )}
 
-                                        {/* Dynamic example rows with (+) button */}
-                                        <div className="space-y-2">
+                                        {/* Dynamic example rows - compact */}
+                                        <div className="space-y-1.5">
                                             {exampleRows.map((row, idx) => (
-                                                <div key={row.id} className="flex gap-2 items-start">
-                                                    <span className="text-xs text-slate-500 pt-2 w-6">{idx + 1}.</span>
+                                                <div key={row.id} className="flex gap-1.5 items-start">
+                                                    <span className="text-[10px] text-slate-500 pt-1.5 w-4">{idx + 1}.</span>
                                                     <textarea
                                                         value={row.content}
                                                         onChange={e => updateExampleRow(row.id, e.target.value)}
                                                         placeholder={exampleFileType !== 'none'
-                                                            ? (lang === 'cs' ? 'Data řádku (odděl hodnoty znakem |)...' : 'Row data (separate values with |)...')
-                                                            : (t.examplesSection?.rowPlaceholder || 'Example row data...')}
-                                                        rows={2}
-                                                        className="flex-1 px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-y min-h-[44px] max-h-[150px]"
+                                                            ? (lang === 'cs' ? 'Data řádku...' : 'Row data...')
+                                                            : (lang === 'cs' ? 'Příklad...' : 'Example...')}
+                                                        rows={1}
+                                                        className="flex-1 px-2 py-1 bg-slate-700 border border-slate-600 rounded text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500 resize-y min-h-[28px] max-h-[100px]"
                                                     />
                                                     {exampleRows.length > 1 && (
-                                                        <button
-                                                            onClick={() => removeExampleRow(row.id)}
-                                                            className="p-1.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded"
-                                                            title={t.examplesSection?.removeRow || 'Remove'}
-                                                        >
-                                                            <Icon name="X" size={14} />
+                                                        <button onClick={() => removeExampleRow(row.id)} className="p-1 text-red-400 hover:text-red-300 rounded">
+                                                            <Icon name="X" size={12} />
                                                         </button>
                                                     )}
                                                 </div>
                                             ))}
                                         </div>
 
-                                        {/* Add row button (+) */}
-                                        <button
-                                            onClick={addExampleRow}
-                                            className="mt-2 flex items-center gap-1.5 px-3 py-1.5 bg-amber-500/20 border border-amber-500/30 rounded text-amber-400 hover:bg-amber-500/30 text-xs font-medium transition-colors"
-                                        >
-                                            <Icon name="Plus" size={14} />
-                                            {t.examplesSection?.addRow || 'Add row (+)'}
-                                        </button>
-
-                                        {/* Hint about row separators */}
-                                        <p className="mt-2 text-xs text-slate-500 flex items-center gap-1">
-                                            <Icon name="Info" size={12} />
-                                            {t.examplesSection?.rowSeparatorHint || 'Use (+) button to add separated example rows'}
-                                        </p>
-
-                                        {/* Fallback: Original examples textarea for plain text mode */}
-                                        {exampleFileType === 'none' && exampleRows.every(r => !r.content.trim()) && (
-                                            <div className="mt-3 pt-3 border-t border-slate-700">
-                                                <label className="block text-xs text-slate-400 mb-1">
-                                                    {lang === 'cs' ? 'Nebo zadej příklady volným textem:' : 'Or enter examples as free text:'}
-                                                </label>
-                                                <AutoResizeTextarea
+                                        {/* Add row + Free text in one row */}
+                                        <div className="flex items-center gap-2 mt-1.5">
+                                            <button onClick={addExampleRow} className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 border border-amber-500/30 rounded text-amber-400 hover:bg-amber-500/30 text-[10px]">
+                                                <Icon name="Plus" size={10} />
+                                                {lang === 'cs' ? 'Řádek' : 'Row'}
+                                            </button>
+                                            {exampleFileType === 'none' && exampleRows.every(r => !r.content.trim()) && (
+                                                <input
+                                                    type="text"
                                                     value={fields.examples}
                                                     onChange={e => updateField('examples', e.target.value)}
-                                                    placeholder={selectedMethods.includes('fewshot') ? t.fields.fewshot.placeholder : t.fields.examples.placeholder}
-                                                    minRows={2}
-                                                    maxRows={6}
-                                                    className="w-full px-2 py-1.5 bg-slate-700 border border-slate-600 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
+                                                    placeholder={lang === 'cs' ? 'nebo volný text...' : 'or free text...'}
+                                                    className="flex-1 px-2 py-0.5 bg-slate-700 border border-slate-600 rounded text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-amber-500"
                                                 />
-                                            </div>
-                                        )}
+                                            )}
+                                        </div>
 
-                                        {/* Structure preview for non-plain formats */}
+                                        {/* Structure preview - minimal */}
                                         {exampleFileType !== 'none' && exampleRows.some(r => r.content.trim()) && (
-                                            <div className="mt-3 pt-3 border-t border-slate-700">
-                                                <label className="block text-xs text-slate-400 mb-1 flex items-center gap-1">
-                                                    <Icon name="Eye" size={12} />
-                                                    {t.examplesSection?.structurePreview || 'Structure preview'}
-                                                </label>
-                                                <pre className="p-2 bg-slate-900 rounded text-xs text-green-400 overflow-x-auto whitespace-pre-wrap max-h-32 overflow-y-auto">
-                                                    {generateFormattedExamples}
-                                                </pre>
-                                            </div>
+                                            <pre className="mt-1.5 p-1.5 bg-slate-900 rounded text-[10px] text-green-400 overflow-x-auto whitespace-pre-wrap max-h-20 overflow-y-auto">
+                                                {generateFormattedExamples}
+                                            </pre>
                                         )}
                                     </div>
 
                                     {/* Extended Sections - Advanced Formatting Options */}
-                                    <div className="mt-4 border border-slate-700 rounded-lg overflow-hidden">
+                                    <div className="border border-slate-700 rounded-lg overflow-hidden">
                                         {/* Toggle Header */}
                                         <button
                                             onClick={() => setShowExtendedSections(!showExtendedSections)}
-                                            className="w-full flex items-center justify-between px-3 py-2.5 bg-gradient-to-r from-purple-900/30 to-indigo-900/30 hover:from-purple-900/40 hover:to-indigo-900/40 transition-colors"
+                                            className="w-full flex items-center justify-between px-2 py-1.5 bg-gradient-to-r from-purple-900/30 to-indigo-900/30 hover:from-purple-900/40 hover:to-indigo-900/40 transition-colors"
                                         >
-                                            <div className="flex items-center gap-2">
-                                                <Icon name="Settings2" size={16} className="text-purple-400" />
-                                                <span className="text-sm font-medium text-purple-300">{t.extendedSections?.title || 'Extended Sections'}</span>
-                                                <span className="text-xs text-slate-500">({t.extendedSections?.subtitle || 'Advanced options'})</span>
+                                            <div className="flex items-center gap-1.5">
+                                                <Icon name="Settings2" size={14} className="text-purple-400" />
+                                                <span className="text-xs font-medium text-purple-300">{t.extendedSections?.title || 'Extended Sections'}</span>
+                                                <span className="text-[10px] text-slate-500">({lang === 'cs' ? 'pokročilé' : 'advanced'})</span>
                                             </div>
-                                            <Icon name={showExtendedSections ? 'ChevronUp' : 'ChevronDown'} size={18} className="text-purple-400" />
+                                            <Icon name={showExtendedSections ? 'ChevronUp' : 'ChevronDown'} size={14} className="text-purple-400" />
                                         </button>
 
                                         {/* Extended Sections Content */}
