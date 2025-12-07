@@ -1301,6 +1301,160 @@ Prompt k analýze:
             customer_service: ['emotion', 'fewshot', 'rar', 'risen'],
             productivity: ['emotion', 'plansolve', 'risen', 'zeroshot']
         };
+
+        // Extended sections visibility per template category
+        // Defines which extended options appear for each template
+        const EXTENDED_SECTIONS_CONFIG = {
+            general: {
+                showTargetUrl: false,
+                showAnalysisAreas: false,
+                showTechnicalOutput: false,
+                showPriority: true,
+                showFocusAreas: false,
+                showCompetitors: false,
+                showDeliverables: true,
+            },
+            coding: {
+                showTargetUrl: false,
+                showAnalysisAreas: false,
+                showTechnicalOutput: true,
+                showPriority: true,
+                showFocusAreas: false,
+                showCompetitors: false,
+                showDeliverables: true,
+                technicalOutputOptions: ['css', 'html', 'javascript', 'python'],
+                deliverablesOptions: ['tech_specs', 'checklist'],
+            },
+            creative: {
+                showTargetUrl: false,
+                showAnalysisAreas: false,
+                showTechnicalOutput: false,
+                showPriority: false,
+                showFocusAreas: true,
+                showCompetitors: false,
+                showDeliverables: false,
+            },
+            analysis: {
+                showTargetUrl: true,
+                showAnalysisAreas: true,
+                showTechnicalOutput: true,
+                showPriority: true,
+                showFocusAreas: true,
+                showCompetitors: true,
+                showDeliverables: true,
+                analysisAreasOptions: ['visual_design', 'ui_components', 'ux_analysis', 'content_analysis', 'technical_elements', 'legal_compliance'],
+            },
+            explanation: {
+                showTargetUrl: false,
+                showAnalysisAreas: false,
+                showTechnicalOutput: false,
+                showPriority: false,
+                showFocusAreas: true,
+                showCompetitors: false,
+                showDeliverables: false,
+            },
+            email: {
+                showTargetUrl: false,
+                showAnalysisAreas: false,
+                showTechnicalOutput: false,
+                showPriority: false,
+                showFocusAreas: false,
+                showCompetitors: false,
+                showDeliverables: false,
+            },
+            academic: {
+                showTargetUrl: false,
+                showAnalysisAreas: false,
+                showTechnicalOutput: false,
+                showPriority: true,
+                showFocusAreas: true,
+                showCompetitors: false,
+                showDeliverables: true,
+                deliverablesOptions: ['report', 'recommendations'],
+            },
+            data: {
+                showTargetUrl: false,
+                showAnalysisAreas: false,
+                showTechnicalOutput: true,
+                showPriority: false,
+                showFocusAreas: false,
+                showCompetitors: false,
+                showDeliverables: true,
+                technicalOutputOptions: ['python', 'javascript'],
+                deliverablesOptions: ['tech_specs', 'report'],
+            },
+            marketing: {
+                showTargetUrl: true,
+                showAnalysisAreas: true,
+                showTechnicalOutput: false,
+                showPriority: true,
+                showFocusAreas: true,
+                showCompetitors: true,
+                showDeliverables: true,
+                analysisAreasOptions: ['content_analysis', 'ux_analysis'],
+                deliverablesOptions: ['report', 'recommendations', 'checklist'],
+            },
+            summarization: {
+                showTargetUrl: false,
+                showAnalysisAreas: false,
+                showTechnicalOutput: false,
+                showPriority: false,
+                showFocusAreas: true,
+                showCompetitors: false,
+                showDeliverables: true,
+                deliverablesOptions: ['report'],
+            },
+            image_gen: {
+                showTargetUrl: false,
+                showAnalysisAreas: true,
+                showTechnicalOutput: false,
+                showPriority: false,
+                showFocusAreas: true,
+                showCompetitors: false,
+                showDeliverables: false,
+                analysisAreasOptions: ['visual_design'],
+            },
+            translation: {
+                showTargetUrl: false,
+                showAnalysisAreas: false,
+                showTechnicalOutput: false,
+                showPriority: false,
+                showFocusAreas: true,
+                showCompetitors: false,
+                showDeliverables: false,
+            },
+            business: {
+                showTargetUrl: false,
+                showAnalysisAreas: false,
+                showTechnicalOutput: false,
+                showPriority: true,
+                showFocusAreas: true,
+                showCompetitors: true,
+                showDeliverables: true,
+                deliverablesOptions: ['report', 'recommendations', 'checklist'],
+            },
+            customer_service: {
+                showTargetUrl: false,
+                showAnalysisAreas: false,
+                showTechnicalOutput: false,
+                showPriority: true,
+                showFocusAreas: false,
+                showCompetitors: false,
+                showDeliverables: true,
+                deliverablesOptions: ['checklist'],
+            },
+            productivity: {
+                showTargetUrl: false,
+                showAnalysisAreas: false,
+                showTechnicalOutput: false,
+                showPriority: true,
+                showFocusAreas: true,
+                showCompetitors: false,
+                showDeliverables: true,
+                deliverablesOptions: ['checklist'],
+            },
+        };
+
         const methodIcons = {
             cot: 'Brain',
             zeroshot: 'Sparkles',
@@ -3217,181 +3371,132 @@ Prompt k analýze:
                                             <Icon name={showExtendedSections ? 'ChevronUp' : 'ChevronDown'} size={14} className="text-purple-400" />
                                         </button>
 
-                                        {/* Extended Sections Content */}
-                                        {showExtendedSections && (
-                                            <div className="p-3 bg-slate-800/50 space-y-3">
+                                        {/* Extended Sections Content - Dynamic based on template */}
+                                        {showExtendedSections && (() => {
+                                            const cfg = EXTENDED_SECTIONS_CONFIG[template] || EXTENDED_SECTIONS_CONFIG.general;
+                                            const hasAnyOption = cfg.showTargetUrl || cfg.showAnalysisAreas || cfg.showTechnicalOutput || cfg.showPriority || cfg.showFocusAreas || cfg.showCompetitors || cfg.showDeliverables;
 
-                                                {/* Row 1: Target URL + Priority Rating */}
-                                                <div className="grid grid-cols-3 gap-3">
-                                                    <div className="col-span-2">
-                                                        <label className="block text-xs font-medium text-slate-400 mb-1">
-                                                            <Icon name="Link" size={12} className="inline mr-1" />
-                                                            {t.extendedSections?.targetUrl?.label || 'Target URL'}
-                                                        </label>
-                                                        <input
-                                                            type="url"
-                                                            value={extendedFields.targetUrl}
-                                                            onChange={e => updateExtendedField('targetUrl', e.target.value)}
-                                                            placeholder={t.extendedSections?.targetUrl?.placeholder || 'https://example.com'}
-                                                            className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                                                        />
+                                            if (!hasAnyOption) {
+                                                return (
+                                                    <div className="p-3 bg-slate-800/50 text-center text-xs text-slate-500">
+                                                        {lang === 'cs' ? 'Pro tuto šablonu nejsou k dispozici rozšířené možnosti.' : 'No extended options available for this template.'}
                                                     </div>
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-slate-400 mb-1">&nbsp;</label>
-                                                        <label className={`flex items-center gap-2 px-2 py-1 rounded border cursor-pointer transition-colors text-xs ${extendedFields.priorityRating ? 'bg-orange-500/20 border-orange-500/50 text-orange-300' : 'bg-slate-700/50 border-slate-600 text-slate-300 hover:border-slate-500'}`}>
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={extendedFields.priorityRating}
-                                                                onChange={e => updateExtendedField('priorityRating', e.target.checked)}
-                                                                className="accent-orange-500"
-                                                            />
-                                                            <Icon name="AlertTriangle" size={12} className="text-orange-400" />
-                                                            {lang === 'cs' ? 'Priority' : 'Priorities'}
-                                                        </label>
-                                                    </div>
-                                                </div>
+                                                );
+                                            }
 
-                                                {/* Row 2: Analysis Areas - compact inline pills */}
-                                                <div>
-                                                    <label className="block text-xs font-medium text-slate-400 mb-1">
-                                                        <Icon name="Search" size={12} className="inline mr-1" />
-                                                        {t.extendedSections?.analysisAreas?.label || 'Analysis Areas'}
-                                                    </label>
-                                                    <div className="flex flex-wrap gap-1.5">
-                                                        {Object.entries(t.extendedSections?.analysisAreas?.options || {}).map(([key, opt]) => (
-                                                            <label key={key} className={`flex items-center gap-1 px-2 py-1 rounded border cursor-pointer transition-colors text-xs ${extendedFields.analysisAreas.includes(key) ? 'bg-purple-500/20 border-purple-500/50 text-purple-300' : 'bg-slate-700/50 border-slate-600 text-slate-300 hover:border-slate-500'}`}>
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={extendedFields.analysisAreas.includes(key)}
-                                                                    onChange={() => toggleExtendedArray('analysisAreas', key)}
-                                                                    className="accent-purple-500 w-3 h-3"
-                                                                />
-                                                                {opt.name}
-                                                            </label>
-                                                        ))}
-                                                    </div>
-                                                </div>
+                                            const analysisOptions = cfg.analysisAreasOptions || Object.keys(t.extendedSections?.analysisAreas?.options || {});
+                                            const techOptions = cfg.technicalOutputOptions || Object.keys(t.extendedSections?.technicalOutput?.options || {});
+                                            const deliverOptions = cfg.deliverablesOptions || Object.keys(t.extendedSections?.deliverables?.options || {});
 
-                                                {/* Row 3: Technical Output + Deliverables - side by side */}
-                                                <div className="grid grid-cols-2 gap-3">
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-slate-400 mb-1">
-                                                            <Icon name="Code" size={12} className="inline mr-1" />
-                                                            {t.extendedSections?.technicalOutput?.label || 'Tech Output'}
-                                                        </label>
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {Object.entries(t.extendedSections?.technicalOutput?.options || {}).map(([key, opt]) => (
-                                                                <label key={key} className={`flex items-center gap-1 px-2 py-0.5 rounded border cursor-pointer transition-colors text-xs ${extendedFields.technicalOutput.includes(key) ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300' : 'bg-slate-700/50 border-slate-600 text-slate-300 hover:border-slate-500'}`}>
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={extendedFields.technicalOutput.includes(key)}
-                                                                        onChange={() => toggleExtendedArray('technicalOutput', key)}
-                                                                        className="accent-cyan-500 w-3 h-3"
-                                                                    />
-                                                                    {opt.name}
-                                                                </label>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                    <div>
-                                                        <label className="block text-xs font-medium text-slate-400 mb-1">
-                                                            <Icon name="FileOutput" size={12} className="inline mr-1" />
-                                                            {t.extendedSections?.deliverables?.label || 'Deliverables'}
-                                                        </label>
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {Object.entries(t.extendedSections?.deliverables?.options || {}).map(([key, label]) => (
-                                                                <label key={key} className={`flex items-center gap-1 px-2 py-0.5 rounded border cursor-pointer transition-colors text-xs ${extendedFields.deliverables.includes(key) ? 'bg-green-500/20 border-green-500/50 text-green-300' : 'bg-slate-700/50 border-slate-600 text-slate-300 hover:border-slate-500'}`} title={label}>
-                                                                    <input
-                                                                        type="checkbox"
-                                                                        checked={extendedFields.deliverables.includes(key)}
-                                                                        onChange={() => toggleExtendedArray('deliverables', key)}
-                                                                        className="accent-green-500 w-3 h-3"
-                                                                    />
-                                                                    {key === 'report' ? (lang === 'cs' ? 'Zpráva' : 'Report') :
-                                                                     key === 'recommendations' ? (lang === 'cs' ? 'Doporučení' : 'Recs') :
-                                                                     key === 'tech_specs' ? (lang === 'cs' ? 'Specifikace' : 'Specs') :
-                                                                     (lang === 'cs' ? 'Checklist' : 'Checklist')}
-                                                                </label>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                            return (
+                                                <div className="p-2 bg-slate-800/50 space-y-2">
 
-                                                {/* Row 4: Focus Areas - 3 columns */}
-                                                <div>
-                                                    <label className="block text-xs font-medium text-slate-400 mb-1">
-                                                        <Icon name="Target" size={12} className="inline mr-1" />
-                                                        {t.extendedSections?.focusAreas?.label || 'Focus Areas'}
-                                                    </label>
-                                                    <div className="grid grid-cols-3 gap-2">
-                                                        <input
-                                                            type="text"
-                                                            value={extendedFields.focusPrimary}
-                                                            onChange={e => updateExtendedField('focusPrimary', e.target.value)}
-                                                            placeholder={lang === 'cs' ? 'Primární...' : 'Primary...'}
-                                                            className="px-2 py-1 bg-slate-700 border border-green-700/50 rounded text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-green-500"
-                                                        />
-                                                        <input
-                                                            type="text"
-                                                            value={extendedFields.focusSecondary}
-                                                            onChange={e => updateExtendedField('focusSecondary', e.target.value)}
-                                                            placeholder={lang === 'cs' ? 'Sekundární...' : 'Secondary...'}
-                                                            className="px-2 py-1 bg-slate-700 border border-blue-700/50 rounded text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                                                        />
-                                                        <input
-                                                            type="text"
-                                                            value={extendedFields.focusIgnore}
-                                                            onChange={e => updateExtendedField('focusIgnore', e.target.value)}
-                                                            placeholder={lang === 'cs' ? 'Ignorovat...' : 'Ignore...'}
-                                                            className="px-2 py-1 bg-slate-700 border border-slate-600 rounded text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-slate-500"
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                {/* Row 5: Competitor Comparison - compact */}
-                                                <div>
-                                                    <div className="flex items-center justify-between mb-1">
-                                                        <label className="text-xs font-medium text-slate-400">
-                                                            <Icon name="GitCompare" size={12} className="inline mr-1" />
-                                                            {t.extendedSections?.competitorComparison?.label || 'Competitors'}
-                                                        </label>
-                                                        <button
-                                                            onClick={() => updateExtendedField('competitors', [...extendedFields.competitors, ''])}
-                                                            className="flex items-center gap-1 px-1.5 py-0.5 bg-purple-500/20 border border-purple-500/30 rounded text-purple-400 hover:bg-purple-500/30 text-[10px]"
-                                                        >
-                                                            <Icon name="Plus" size={10} />
-                                                            {lang === 'cs' ? 'Přidat' : 'Add'}
-                                                        </button>
-                                                    </div>
-                                                    {extendedFields.competitors.length > 0 && (
-                                                        <div className="flex flex-wrap gap-1.5">
-                                                            {extendedFields.competitors.map((url, idx) => (
-                                                                <div key={idx} className="flex gap-1 flex-1 min-w-[200px]">
-                                                                    <input
-                                                                        type="url"
-                                                                        value={url}
-                                                                        onChange={e => {
-                                                                            const newCompetitors = [...extendedFields.competitors];
-                                                                            newCompetitors[idx] = e.target.value;
-                                                                            updateExtendedField('competitors', newCompetitors);
-                                                                        }}
-                                                                        placeholder={`URL ${idx + 1}`}
-                                                                        className="flex-1 px-2 py-1 bg-slate-700 border border-slate-600 rounded text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                                                                    />
-                                                                    <button
-                                                                        onClick={() => updateExtendedField('competitors', extendedFields.competitors.filter((_, i) => i !== idx))}
-                                                                        className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded"
-                                                                    >
-                                                                        <Icon name="X" size={12} />
-                                                                    </button>
+                                                    {/* Row 1: Target URL + Priority */}
+                                                    {(cfg.showTargetUrl || cfg.showPriority) && (
+                                                        <div className="flex gap-2">
+                                                            {cfg.showTargetUrl && (
+                                                                <div className="flex-1">
+                                                                    <input type="url" value={extendedFields.targetUrl} onChange={e => updateExtendedField('targetUrl', e.target.value)}
+                                                                        placeholder={t.extendedSections?.targetUrl?.placeholder || 'https://example.com'}
+                                                                        className="w-full px-2 py-1 bg-slate-700 border border-slate-600 rounded text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-purple-500" />
                                                                 </div>
-                                                            ))}
+                                                            )}
+                                                            {cfg.showPriority && (
+                                                                <label className={`flex items-center gap-1.5 px-2 py-1 rounded border cursor-pointer text-xs whitespace-nowrap ${extendedFields.priorityRating ? 'bg-orange-500/20 border-orange-500/50 text-orange-300' : 'bg-slate-700/50 border-slate-600 text-slate-300'}`}>
+                                                                    <input type="checkbox" checked={extendedFields.priorityRating} onChange={e => updateExtendedField('priorityRating', e.target.checked)} className="accent-orange-500 w-3 h-3" />
+                                                                    <Icon name="AlertTriangle" size={10} className="text-orange-400" />
+                                                                    {lang === 'cs' ? 'Priority' : 'Priorities'}
+                                                                </label>
+                                                            )}
                                                         </div>
                                                     )}
-                                                </div>
 
-                                            </div>
-                                        )}
+                                                    {/* Analysis Areas */}
+                                                    {cfg.showAnalysisAreas && (
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {analysisOptions.map(key => {
+                                                                const opt = t.extendedSections?.analysisAreas?.options?.[key];
+                                                                if (!opt) return null;
+                                                                return (
+                                                                    <label key={key} className={`flex items-center gap-1 px-1.5 py-0.5 rounded border cursor-pointer text-[10px] ${extendedFields.analysisAreas.includes(key) ? 'bg-purple-500/20 border-purple-500/50 text-purple-300' : 'bg-slate-700/50 border-slate-600 text-slate-300'}`}>
+                                                                        <input type="checkbox" checked={extendedFields.analysisAreas.includes(key)} onChange={() => toggleExtendedArray('analysisAreas', key)} className="accent-purple-500 w-2.5 h-2.5" />
+                                                                        {opt.name}
+                                                                    </label>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Technical Output + Deliverables */}
+                                                    {(cfg.showTechnicalOutput || cfg.showDeliverables) && (
+                                                        <div className="flex flex-wrap gap-1">
+                                                            {cfg.showTechnicalOutput && techOptions.map(key => {
+                                                                const opt = t.extendedSections?.technicalOutput?.options?.[key];
+                                                                if (!opt) return null;
+                                                                return (
+                                                                    <label key={key} className={`flex items-center gap-1 px-1.5 py-0.5 rounded border cursor-pointer text-[10px] ${extendedFields.technicalOutput.includes(key) ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-300' : 'bg-slate-700/50 border-slate-600 text-slate-300'}`}>
+                                                                        <input type="checkbox" checked={extendedFields.technicalOutput.includes(key)} onChange={() => toggleExtendedArray('technicalOutput', key)} className="accent-cyan-500 w-2.5 h-2.5" />
+                                                                        {opt.name}
+                                                                    </label>
+                                                                );
+                                                            })}
+                                                            {cfg.showDeliverables && deliverOptions.map(key => {
+                                                                const label = t.extendedSections?.deliverables?.options?.[key];
+                                                                if (!label) return null;
+                                                                const shortLabel = key === 'report' ? (lang === 'cs' ? 'Zpráva' : 'Report') :
+                                                                                   key === 'recommendations' ? (lang === 'cs' ? 'Dopor.' : 'Recs') :
+                                                                                   key === 'tech_specs' ? (lang === 'cs' ? 'Spec.' : 'Specs') : 'Check';
+                                                                return (
+                                                                    <label key={key} className={`flex items-center gap-1 px-1.5 py-0.5 rounded border cursor-pointer text-[10px] ${extendedFields.deliverables.includes(key) ? 'bg-green-500/20 border-green-500/50 text-green-300' : 'bg-slate-700/50 border-slate-600 text-slate-300'}`} title={label}>
+                                                                        <input type="checkbox" checked={extendedFields.deliverables.includes(key)} onChange={() => toggleExtendedArray('deliverables', key)} className="accent-green-500 w-2.5 h-2.5" />
+                                                                        {shortLabel}
+                                                                    </label>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
+
+                                                    {/* Focus Areas */}
+                                                    {cfg.showFocusAreas && (
+                                                        <div className="grid grid-cols-3 gap-1.5">
+                                                            <input type="text" value={extendedFields.focusPrimary} onChange={e => updateExtendedField('focusPrimary', e.target.value)}
+                                                                placeholder={lang === 'cs' ? 'Primární...' : 'Primary...'} className="px-2 py-1 bg-slate-700 border border-green-700/50 rounded text-[10px] text-white placeholder-slate-500 focus:ring-1 focus:ring-green-500" />
+                                                            <input type="text" value={extendedFields.focusSecondary} onChange={e => updateExtendedField('focusSecondary', e.target.value)}
+                                                                placeholder={lang === 'cs' ? 'Sekundární...' : 'Secondary...'} className="px-2 py-1 bg-slate-700 border border-blue-700/50 rounded text-[10px] text-white placeholder-slate-500 focus:ring-1 focus:ring-blue-500" />
+                                                            <input type="text" value={extendedFields.focusIgnore} onChange={e => updateExtendedField('focusIgnore', e.target.value)}
+                                                                placeholder={lang === 'cs' ? 'Ignorovat...' : 'Ignore...'} className="px-2 py-1 bg-slate-700 border border-slate-600 rounded text-[10px] text-white placeholder-slate-500 focus:ring-1 focus:ring-slate-500" />
+                                                        </div>
+                                                    )}
+
+                                                    {/* Competitors */}
+                                                    {cfg.showCompetitors && (
+                                                        <div>
+                                                            <div className="flex items-center justify-between mb-1">
+                                                                <span className="text-[10px] text-slate-400">{t.extendedSections?.competitorComparison?.label || 'Competitors'}</span>
+                                                                <button onClick={() => updateExtendedField('competitors', [...extendedFields.competitors, ''])}
+                                                                    className="flex items-center gap-0.5 px-1 py-0.5 bg-purple-500/20 border border-purple-500/30 rounded text-purple-400 text-[9px]">
+                                                                    <Icon name="Plus" size={8} /> {lang === 'cs' ? 'Přidat' : 'Add'}
+                                                                </button>
+                                                            </div>
+                                                            {extendedFields.competitors.length > 0 && (
+                                                                <div className="flex flex-wrap gap-1">
+                                                                    {extendedFields.competitors.map((url, idx) => (
+                                                                        <div key={idx} className="flex gap-1 flex-1 min-w-[150px]">
+                                                                            <input type="url" value={url} onChange={e => { const nc = [...extendedFields.competitors]; nc[idx] = e.target.value; updateExtendedField('competitors', nc); }}
+                                                                                placeholder={`URL ${idx + 1}`} className="flex-1 px-1.5 py-0.5 bg-slate-700 border border-slate-600 rounded text-[10px] text-white placeholder-slate-500" />
+                                                                            <button onClick={() => updateExtendedField('competitors', extendedFields.competitors.filter((_, i) => i !== idx))} className="text-red-400 hover:text-red-300">
+                                                                                <Icon name="X" size={10} />
+                                                                            </button>
+                                                                        </div>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    )}
+
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
 
