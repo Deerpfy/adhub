@@ -1,0 +1,55 @@
+{
+    "manifest_version": 3,
+    "name": "Steam Farm - AdHUB",
+    "version": "1.0.0",
+    "description": "Farming Steam hodin a trading cards. Součást AdHUB projektu.",
+    "author": "Deerpfy",
+
+    "permissions": [
+        "nativeMessaging",
+        "storage"
+    ],
+
+    "host_permissions": [
+        "*://deerpfy.github.io/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*",
+        "file:///*"
+    ],
+
+    "background": {
+        "service_worker": "background.js",
+        "type": "module"
+    },
+
+    "content_scripts": [
+        {
+            "matches": [
+                "*://deerpfy.github.io/adhub/projects/steam-farm/*",
+                "http://localhost/*/projects/steam-farm/*",
+                "http://127.0.0.1/*/projects/steam-farm/*",
+                "file:///*steam-farm*"
+            ],
+            "js": ["content.js"],
+            "run_at": "document_end"
+        }
+    ],
+
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": {
+            "16": "icons/icon16.png",
+            "32": "icons/icon32.png",
+            "48": "icons/icon48.png",
+            "128": "icons/icon128.png"
+        },
+        "default_title": "Steam Farm"
+    },
+
+    "icons": {
+        "16": "icons/icon16.png",
+        "32": "icons/icon32.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    }
+}

@@ -1,0 +1,9 @@
+{
+    "name": "com.adhub.steamfarm",
+    "description": "Steam Farm Native Messaging Host pro AdHUB",
+    "path": "__PATH__",
+    "type": "stdio",
+    "allowed_origins": [
+        "chrome-extension://__EXTENSION_ID__/"
+    ]
+}

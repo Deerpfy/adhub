@@ -1,0 +1,19 @@
+{
+    "name": "adhub-steam-farm-host",
+    "version": "1.1.0",
+    "description": "Native Messaging Host pro Steam Farm - AdHUB",
+    "main": "steam-farm-host.js",
+    "scripts": {
+        "start": "node steam-farm-host.js"
+    },
+    "dependencies": {
+        "steam-user": "^5.0.10",
+        "steam-totp": "^2.1.2",
+        "argon2": "^0.41.1"
+    },
+    "author": "Deerpfy",
+    "license": "MIT",
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Steam Farm - AdHUB</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <a href="../../index.html" class="back-btn" title="Zpět na AdHUB">
+                        <span class="back-icon">←</span>
+                    </a>
+                    <div class="logo">
+                        <span class="logo-icon">🎮</span>
+                        <span>Steam Farm</span>
+                    </div>
+                    <span class="version-badge">v1.1</span>
+                </div>
+                <div class="header-right">
+                    <div class="connection-status" id="connectionStatus">
+                        <span class="status-dot disconnected"></span>
+                        <span class="status-text">Nepřipojeno</span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Security Notice -->
+            <div class="security-notice" id="securityNotice">
+                <div class="notice-icon">🔒</div>
+                <div class="notice-content">
+                    <h3>100% Lokální zpracování</h3>
+                    <p>Vaše přihlašovací údaje nikdy neopouštějí váš počítač. Veškerá komunikace probíhá přímo mezi vaším prohlížečem a Steam servery přes lokální Native Host.</p>
+                </div>
+                <button class="notice-close" onclick="this.parentElement.style.display='none'">×</button>
+            </div>
+
+            <!-- Extension Check -->
+            <div class="extension-check" id="extensionCheck">
+                <div class="check-card warning">
+                    <div class="check-icon">⚠️</div>
+                    <h3>Vyžadováno rozšíření</h3>
+                    <p>Pro fungování Steam Farm je potřeba nainstalovat Chrome rozšíření a Native Host.</p>
+                    <div class="check-steps">
+                        <div class="step" id="stepExtension">
+                            <span class="step-status">○</span>
+                            <span class="step-text">Chrome/Edge rozšíření</span>
+                        </div>
+                        <div class="step" id="stepNativeHost">
+                            <span class="step-status">○</span>
+                            <span class="step-text">Native Host (Node.js)</span>
+                        </div>
+                        <div class="step" id="stepNodeModules">
+                            <span class="step-status">○</span>
+                            <span class="step-text">Steam knihovny</span>
+                        </div>
+                    </div>
+                    <a href="#installation" class="btn btn-primary">Zobrazit návod k instalaci</a>
+                </div>
+            </div>
+
+            <!-- Vault Section -->
+            <section class="section vault-section" id="vaultSection" style="display: none;">
+                <div class="section-header">
+                    <h2><span class="section-icon">🔐</span> Bezpečnostní trezor</h2>
+                </div>
+                <div class="vault-card">
+                    <!-- Create Vault -->
+                    <div id="vaultCreate" style="display: none;">
+                        <div class="vault-info">
+                            <span class="vault-icon">🛡️</span>
+                            <h3>Vytvořte bezpečnostní heslo</h3>
+                            <p>Vaše přihlašovací údaje ke Steam budou šifrovány pomocí AES-256 s klíčem odvozeným z vašeho hesla přes Argon2id.</p>
+                        </div>
+                        <form id="createVaultForm" class="vault-form">
+                            <div class="form-group">
+                                <label for="vaultPassword">Heslo pro trezor</label>
+                                <input type="password" id="vaultPassword" required minlength="4" placeholder="Minimálně 4 znaky">
+                            </div>
+                            <div class="form-group">
+                                <label for="vaultPasswordConfirm">Potvrzení hesla</label>
+                                <input type="password" id="vaultPasswordConfirm" required minlength="4" placeholder="Zopakujte heslo">
+                            </div>
+                            <p class="form-hint">⚠️ Pokud heslo zapomenete, můžete trezor smazat a vytvořit nový, ale ztratíte uloženou session.</p>
+                            <button type="submit" class="btn btn-primary btn-large" id="createVaultBtn">
+                                <span class="btn-icon">🔒</span>
+                                Vytvořit trezor
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Unlock Vault -->
+                    <div id="vaultUnlock" style="display: none;">
+                        <div class="vault-info">
+                            <span class="vault-icon">🔓</span>
+                            <h3>Odemkněte trezor</h3>
+                            <p>Zadejte heslo pro přístup k šifrovaným údajům.</p>
+                        </div>
+                        <form id="unlockVaultForm" class="vault-form">
+                            <div class="form-group">
+                                <label for="unlockPassword">Heslo trezoru</label>
+                                <input type="password" id="unlockPassword" required placeholder="Zadejte heslo">
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-large" id="unlockVaultBtn">
+                                <span class="btn-icon">🔓</span>
+                                Odemknout
+                            </button>
+                        </form>
+                        <div class="vault-reset">
+                            <button class="btn btn-danger btn-small" id="deleteVaultBtn">
+                                🗑️ Smazat trezor a začít znovu
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Login Section -->
+            <section class="section login-section" id="loginSection" style="display: none;">
+                <div class="section-header">
+                    <h2><span class="section-icon">🔐</span> Přihlášení ke Steam</h2>
+                </div>
+                <div class="login-card">
+                    <form id="loginForm" class="login-form">
+                        <div class="form-group">
+                            <label for="username">Steam uživatelské jméno</label>
+                            <input type="text" id="username" name="username" required autocomplete="username" placeholder="Váš Steam login">
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Heslo</label>
+                            <input type="password" id="password" name="password" required autocomplete="current-password" placeholder="Vaše Steam heslo">
+                        </div>
+                        <div class="form-group">
+                            <label for="sharedSecret">Shared Secret (volitelné)</label>
+                            <input type="password" id="sharedSecret" name="sharedSecret" placeholder="Pro automatické 2FA">
+                            <span class="form-hint">Pokud máte Mobile Authenticator, zadejte shared_secret pro automatické přihlášení</span>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-large" id="loginBtn">
+                            <span class="btn-icon">🚀</span>
+                            Přihlásit se
+                        </button>
+                    </form>
+
+                    <!-- Steam Guard Dialog -->
+                    <div class="steam-guard-dialog" id="steamGuardDialog" style="display: none;">
+                        <h3>🔐 Steam Guard</h3>
+                        <p id="steamGuardText">Zadejte kód ze Steam Guard</p>
+                        <input type="text" id="steamGuardCode" maxlength="5" placeholder="XXXXX" autocomplete="one-time-code">
+                        <button class="btn btn-primary" id="submitGuardCode">Potvrdit</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Account Info -->
+            <section class="section account-section" id="accountSection" style="display: none;">
+                <div class="section-header">
+                    <h2><span class="section-icon">👤</span> <span id="accountName">-</span></h2>
+                    <button class="btn btn-secondary btn-small" id="logoutBtn">Odhlásit</button>
+                </div>
+                <div class="account-stats">
+                    <div class="stat-card">
+                        <span class="stat-icon">🎮</span>
+                        <span class="stat-value" id="totalGames">0</span>
+                        <span class="stat-label">Her</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon">🃏</span>
+                        <span class="stat-value" id="totalCards">0</span>
+                        <span class="stat-label">Zbývajících kartiček</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-icon">⏱️</span>
+                        <span class="stat-value" id="totalHours">0</span>
+                        <span class="stat-label">Hodin celkem</span>
+                    </div>
+                    <div class="stat-card active">
+                        <span class="stat-icon">▶️</span>
+                        <span class="stat-value" id="farmingCount">0</span>
+                        <span class="stat-label">Aktivně farmí</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Farming Controls -->
+            <section class="section farming-section" id="farmingSection" style="display: none;">
+                <div class="section-header">
+                    <h2><span class="section-icon">🚜</span> Farming</h2>
+                    <div class="farming-controls">
+                        <button class="btn btn-success" id="startAllBtn" title="Spustit farmení všech vybraných">
+                            ▶️ Spustit vše
+                        </button>
+                        <button class="btn btn-danger" id="stopAllBtn" title="Zastavit farmení">
+                            ⏹️ Zastavit
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="filters">
+                    <div class="filter-group">
+                        <label>Filtr:</label>
+                        <button class="filter-btn active" data-filter="all">Vše</button>
+                        <button class="filter-btn" data-filter="cards">S kartičkami</button>
+                        <button class="filter-btn" data-filter="hours">Pro hodiny</button>
+                        <button class="filter-btn" data-filter="selected">Vybrané</button>
+                    </div>
+                    <div class="search-group">
+                        <input type="text" id="gameSearch" placeholder="Hledat hru..." class="search-input">
+                    </div>
+                </div>
+
+                <!-- Games Grid -->
+                <div class="games-grid" id="gamesGrid">
+                    <!-- Games will be rendered here -->
+                    <div class="empty-state" id="emptyGames">
+                        <span class="empty-icon">🎮</span>
+                        <p>Načítání her...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Currently Farming -->
+            <section class="section current-farming-section" id="currentFarmingSection" style="display: none;">
+                <div class="section-header">
+                    <h2><span class="section-icon">⚡</span> Právě farmím</h2>
+                    <span class="farming-info" id="farmingInfo">0/32 slotů</span>
+                </div>
+                <div class="farming-list" id="farmingList">
+                    <!-- Currently farming games will be shown here -->
+                </div>
+            </section>
+
+            <!-- Installation Guide -->
+            <section class="section installation-section" id="installation">
+                <div class="section-header">
+                    <h2><span class="section-icon">📦</span> Instalace</h2>
+                </div>
+                <div class="installation-steps">
+                    <div class="install-step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Nainstalujte Chrome rozšíření</h3>
+                            <ol>
+                                <li>Otevřete <code>chrome://extensions</code></li>
+                                <li>Zapněte "Režim pro vývojáře"</li>
+                                <li>Klikněte "Načíst rozbalené rozšíření"</li>
+                                <li>Vyberte složku <code>projects/steam-farm/plugin</code></li>
+                            </ol>
+                        </div>
+                    </div>
+                    <div class="install-step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Nainstalujte Native Host</h3>
+                            <div class="os-tabs">
+                                <button class="os-tab active" data-os="windows">Windows</button>
+                                <button class="os-tab" data-os="linux">Linux/macOS</button>
+                            </div>
+                            <div class="os-content" id="os-windows">
+                                <pre><code>cd projects/steam-farm/native-host
+npm install
+install.bat</code></pre>
+                            </div>
+                            <div class="os-content" id="os-linux" style="display: none;">
+                                <pre><code>cd projects/steam-farm/native-host
+npm install
+chmod +x install.sh
+./install.sh</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="install-step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Restartujte prohlížeč</h3>
+                            <p>Po instalaci Native Host je potřeba restartovat prohlížeč, aby se rozšíření připojilo.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Cards Section -->
+            <section class="section cards-section" id="cardsSection" style="display: none;">
+                <div class="section-header">
+                    <h2><span class="section-icon">🃏</span> Trading Cards</h2>
+                    <button class="btn btn-secondary btn-small" id="refreshCardsBtn">🔄 Obnovit</button>
+                </div>
+                <div class="cards-info">
+                    <p>Zobrazení zbývajících kartiček pro vaše hry. Kartičky padají pouze u her s kartičkami, které máte ve vlastnictví.</p>
+                </div>
+                <div class="cards-grid" id="cardsGrid">
+                    <!-- Cards info will be rendered here -->
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <span class="footer-text">Steam Farm - AdHUB Project</span>
+                <span class="footer-version">v1.0.0</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>
