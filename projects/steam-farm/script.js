@@ -9,7 +9,11 @@
  */
 
 // Version
-const VERSION = '1.1.0';
+const VERSION = '1.2.0';
+
+// GitHub repo for downloads
+const REPO = 'Deerpfy/adhub';
+const HOST_VERSION = '1.2.0';
 
 // Extension ID - will be set after extension is loaded
 let EXTENSION_ID = null;
@@ -128,6 +132,11 @@ function initEventListeners() {
     // Cards refresh
     document.getElementById('refreshCardsBtn')?.addEventListener('click', fetchCardsData);
 
+    // Auto-install buttons
+    document.getElementById('installWindowsBtn')?.addEventListener('click', () => downloadInstaller('windows'));
+    document.getElementById('installUnixBtn')?.addEventListener('click', () => downloadInstaller('unix'));
+    document.getElementById('copyExtensionId')?.addEventListener('click', copyExtensionIdToClipboard);
+
     // Listen for messages from extension
     window.addEventListener('message', handleExtensionMessage);
 }
@@ -221,6 +230,12 @@ function handleExtensionMessage(event) {
 function handleExtensionConnected(data) {
     state.connected = true;
     EXTENSION_ID = data.extensionId;
+
+    // Update extension ID in auto-install section
+    const extensionIdCode = document.getElementById('extensionIdCode');
+    if (extensionIdCode) {
+        extensionIdCode.textContent = EXTENSION_ID;
+    }
 
     const stepExtension = document.getElementById('stepExtension');
     const stepNativeHost = document.getElementById('stepNativeHost');
@@ -841,6 +856,104 @@ function showToast(message, type = 'info') {
 }
 
 window.addEventListener('beforeunload', saveState);
+
+// ===== Auto-Install Functions =====
+
+// Download installer for specific OS
+async function downloadInstaller(os) {
+    const baseUrl = `https://github.com/${REPO}/releases/download/steam-farm-v${HOST_VERSION}`;
+
+    let url, filename;
+    if (os === 'windows') {
+        url = `${baseUrl}/installer-windows.ps1`;
+        filename = 'installer-windows.ps1';
+    } else {
+        url = `${baseUrl}/installer-unix.sh`;
+        filename = 'installer-unix.sh';
+    }
+
+    const btn = document.getElementById(os === 'windows' ? 'installWindowsBtn' : 'installUnixBtn');
+    const originalContent = btn.innerHTML;
+
+    btn.innerHTML = '<span class="spinner"></span> Stahuji...';
+    btn.disabled = true;
+
+    try {
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error('Instalátor není k dispozici');
+        }
+
+        const blob = await response.blob();
+        const downloadUrl = URL.createObjectURL(blob);
+
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(downloadUrl);
+
+        btn.innerHTML = '<span>✓</span> Staženo!';
+        showToast(`Instalátor stažen: ${filename}`, 'success');
+
+        // Show extension ID
+        showExtensionIdInfo();
+
+    } catch (error) {
+        console.error('Download error:', error);
+        btn.innerHTML = '<span>⚠️</span> Chyba';
+        showToast('Nelze stáhnout instalátor. Zkuste GitHub Releases.', 'error');
+
+        // Open GitHub releases as fallback
+        setTimeout(() => {
+            if (confirm('Chcete otevřít GitHub Releases pro manuální stažení?')) {
+                window.open(`https://github.com/${REPO}/releases/tag/steam-farm-v${HOST_VERSION}`, '_blank');
+            }
+            btn.innerHTML = originalContent;
+            btn.disabled = false;
+        }, 1500);
+        return;
+    }
+
+    setTimeout(() => {
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+    }, 3000);
+}
+
+// Show extension ID info after download
+function showExtensionIdInfo() {
+    const infoEl = document.getElementById('extensionIdInfo');
+    const codeEl = document.getElementById('extensionIdCode');
+
+    if (infoEl && codeEl) {
+        infoEl.style.display = 'block';
+
+        if (EXTENSION_ID) {
+            codeEl.textContent = EXTENSION_ID;
+        } else {
+            codeEl.textContent = 'Nejprve nainstalujte rozšíření do prohlížeče';
+        }
+    }
+}
+
+// Copy extension ID to clipboard
+async function copyExtensionIdToClipboard() {
+    if (!EXTENSION_ID) {
+        showToast('Rozšíření není připojeno', 'error');
+        return;
+    }
+
+    try {
+        await navigator.clipboard.writeText(EXTENSION_ID);
+        showToast('ID zkopírováno do schránky', 'success');
+    } catch (error) {
+        showToast('Nelze kopírovat do schránky', 'error');
+    }
+}
 
 // Expose for debugging
 window.steamFarmState = state;

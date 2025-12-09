@@ -156,13 +156,112 @@
         .footer a:hover {
             text-decoration: underline;
         }
+
+        .install-section {
+            display: none;
+            padding: 12px;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), #161620);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+
+        .install-section.show {
+            display: block;
+        }
+
+        .install-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #ef4444;
+            margin-bottom: 8px;
+        }
+
+        .install-desc {
+            font-size: 0.8rem;
+            color: #a0a0b0;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .btn-install {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-install:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .install-steps {
+            display: none;
+            margin-top: 12px;
+            padding: 10px;
+            background: #1a1a24;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            color: #a0a0b0;
+        }
+
+        .install-steps.show {
+            display: block;
+        }
+
+        .install-steps ol {
+            margin-left: 16px;
+        }
+
+        .install-steps li {
+            margin-bottom: 4px;
+        }
+
+        .install-steps code {
+            background: #2a2a3a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s ease infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <span class="logo-icon">🎮</span>
         <span class="logo-text">Steam Farm</span>
-        <span class="version">v1.0</span>
+        <span class="version">v1.2</span>
+    </div>
+
+    <div class="install-section" id="installSection">
+        <div class="install-title">⚠️ Native Host není nainstalován</div>
+        <div class="install-desc">
+            Pro fungování Steam Farm je potřeba nainstalovat Native Host komponentu.
+        </div>
+        <button class="btn btn-install" id="installBtn">
+            <span>📥</span>
+            <span>Stáhnout instalátor</span>
+        </button>
+        <div class="install-steps" id="installSteps">
+            <ol>
+                <li>Stáhněte instalátor pro váš systém</li>
+                <li>Spusťte stažený soubor</li>
+                <li>Zadejte ID rozšíření: <code id="extensionId"></code></li>
+                <li>Restartujte prohlížeč</li>
+            </ol>
+        </div>
     </div>
 
     <div class="status">

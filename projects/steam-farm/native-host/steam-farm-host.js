@@ -11,12 +11,12 @@
 
 const SteamUser = require('steam-user');
 const SteamTotp = require('steam-totp');
-const argon2 = require('argon2');
+const argon2 = require('argon2-browser');
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
 
-const VERSION = '1.1.0';
+const VERSION = '1.2.0';
 
 // Data directory
 const DATA_DIR = path.join(process.env.APPDATA || process.env.HOME, '.adhub-steam-farm');
@@ -37,11 +37,11 @@ const SALT_LENGTH = 32;
 
 // Argon2 options (secure defaults)
 const ARGON2_OPTIONS = {
-    type: argon2.argon2id,
-    memoryCost: 65536,      // 64 MB
-    timeCost: 3,            // 3 iterations
+    type: argon2.ArgonType.Argon2id,
+    mem: 65536,             // 64 MB
+    time: 3,                // 3 iterations
     parallelism: 4,         // 4 threads
-    hashLength: 32          // 256-bit key
+    hashLen: 32             // 256-bit key
 };
 
 // State
@@ -73,12 +73,12 @@ function log(message) {
  * Derive encryption key from password using Argon2id
  */
 async function deriveKey(password, salt) {
-    const hash = await argon2.hash(password, {
-        ...ARGON2_OPTIONS,
+    const result = await argon2.hash({
+        pass: password,
         salt: salt,
-        raw: true
+        ...ARGON2_OPTIONS
     });
-    return hash;
+    return Buffer.from(result.hash);
 }
 
 /**
@@ -118,21 +118,32 @@ function decrypt(encryptedData, key) {
 
 /**
  * Hash password for verification (stored separately from encryption key)
+ * Returns object with salt and hash for later verification
  */
 async function hashPassword(password) {
-    return await argon2.hash(password, {
-        type: argon2.argon2id,
-        memoryCost: 65536,
-        timeCost: 3,
-        parallelism: 4
+    const salt = crypto.randomBytes(SALT_LENGTH);
+    const result = await argon2.hash({
+        pass: password,
+        salt: salt,
+        ...ARGON2_OPTIONS
     });
+    return {
+        salt: salt.toString('hex'),
+        hash: result.hashHex
+    };
 }
 
 /**
  * Verify password against stored hash
  */
-async function verifyPassword(password, hash) {
-    return await argon2.verify(hash, password);
+async function verifyPassword(password, storedData) {
+    const salt = Buffer.from(storedData.salt, 'hex');
+    const result = await argon2.hash({
+        pass: password,
+        salt: salt,
+        ...ARGON2_OPTIONS
+    });
+    return result.hashHex === storedData.hash;
 }
 
 // ===========================================

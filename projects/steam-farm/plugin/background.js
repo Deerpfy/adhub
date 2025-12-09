@@ -3,7 +3,7 @@
  * Komunikace mezi webem a Native Host přes Native Messaging
  */
 
-const VERSION = '1.1.0';
+const VERSION = '1.2.0';
 const NATIVE_HOST_NAME = 'com.adhub.steamfarm';
 
 // State
