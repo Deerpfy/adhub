@@ -18,6 +18,7 @@ adhub/
     ├── pdf-editor/         # PDF editor
     ├── pdf-merge/          # PDF spojovac
     ├── mindhub/            # Task manager
+    ├── steam-farm/         # Steam hours & cards farming
     ├── spinning-wheel-giveaway/
     ├── resignation-bets/
     ├── ai-prompting/
@@ -72,6 +73,63 @@ adhub/
 **Typ:** SPA task manager
 
 **Uloziste:** 100% localStorage
+
+### Steam Farm (`projects/steam-farm/`)
+
+**Typ:** Chrome Extension + Native Host (Node.js) + Web UI
+
+**Soubory:**
+- `index.html` - Web UI pro ovladani farmingu
+- `script.js` - Frontend logika
+- `styles.css` - Styly v AdHUB designu
+- `plugin/manifest.json` - Extension manifest v1.0.0
+- `plugin/background.js` - Service worker, Native Messaging
+- `plugin/content.js` - Bridge mezi webem a extension
+- `plugin/popup.html` + `popup.js` - Popup rozsirenni
+- `native-host/steam-farm-host.js` - Node.js host pro steam-user
+- `native-host/package.json` - NPM dependencies (steam-user, steam-totp)
+- `native-host/install.bat` + `install.sh` - Instalacni skripty
+
+**Funkcionalita:**
+- Farming az 32 her soucasne
+- Zobrazeni zbyvajicich trading cards
+- Automaticke 2FA s shared_secret
+- Lokalni ulozeni session (refresh token)
+- 100% lokalni zpracovani - zadne data neodchazeji na externi servery
+
+**Architektura:**
+```
+Web UI (index.html)
+     |
+     v
+content.js (window.postMessage)
+     |
+     v
+background.js (chrome.runtime.sendMessage)
+     |
+     v
+Native Messaging (chrome.runtime.connectNative)
+     |
+     v
+steam-farm-host.js (Node.js)
+     |
+     v
+steam-user knihovna
+     |
+     v
+Steam CM servery
+```
+
+**Instalace:**
+1. Nahrat rozsirenni z `plugin/` do chrome://extensions
+2. Spustit `npm install` v `native-host/`
+3. Spustit `install.bat` nebo `install.sh` s ID rozsirenni
+4. Restartovat prohlizec
+
+**Dulezite:**
+- Steam protokol vyzaduje Native Host - browser-only neni mozne
+- Max 32 her soucasne (Steam limit)
+- Refresh token ma platnost ~200 dni
 
 ---
 

@@ -301,6 +301,9 @@ const BASE_TRANSLATIONS = {
         tool_pdf_search_desc: 'Fulltextové vyhledávání v PDF souborech. Nahrajte více PDF a hledejte v nich pomocí MiniSearch. 100% client-side.',
         tool_mindhub_name: 'MindHub',
         tool_mindhub_desc: 'Osobní koordinační platforma pro správu myšlenek, úkolů a myšlenkových map. Organizujte své nápady vizuálně.',
+        tool_steam_farm_name: 'Steam Farm',
+        tool_steam_farm_desc: 'Farming Steam hodin a trading cards. Simuluje hraní až 32 her současně. Vyžaduje rozšíření a Native Host.',
+        category_gaming: 'gaming',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
         link_ninite_desc: 'Vyber aplikace a nainstaluj je jedním kliknutím po čisté instalaci Windows.',
         link_winget_name: 'Winget.run katalog balíčků',
@@ -668,6 +671,9 @@ const BASE_TRANSLATIONS = {
         tool_pdf_search_desc: 'Full-text search in PDF files. Upload multiple PDFs and search with MiniSearch. 100% client-side.',
         tool_mindhub_name: 'MindHub',
         tool_mindhub_desc: 'Personal coordination platform for managing thoughts, tasks and mind maps. Organize your ideas visually.',
+        tool_steam_farm_name: 'Steam Farm',
+        tool_steam_farm_desc: 'Farm Steam hours and trading cards. Simulates playing up to 32 games simultaneously. Requires extension and Native Host.',
+        category_gaming: 'gaming',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
         link_ninite_desc: 'Select apps and install them with one click after a clean Windows installation.',
         link_winget_name: 'Winget.run Package Catalog',
@@ -1390,6 +1396,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["productivity", "tasks", "organization"]
+            },
+            {
+                "id": "steam-farm",
+                "name": t('tool_steam_farm_name'),
+                "description": t('tool_steam_farm_desc'),
+                "category": "gaming",
+                "icon": "🎮",
+                "url": "projects/steam-farm/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["gaming", "steam", "farming", "cards"]
             }
         ],
         "links": [
