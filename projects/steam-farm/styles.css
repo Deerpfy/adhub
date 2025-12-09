@@ -341,6 +341,57 @@ body::before {
     font-size: 1.3rem;
 }
 
+/* Vault Section */
+.vault-card {
+    padding: 32px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    max-width: 450px;
+    margin: 0 auto;
+}
+
+.vault-info {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.vault-icon {
+    font-size: 3rem;
+    display: block;
+    margin-bottom: 12px;
+}
+
+.vault-info h3 {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+}
+
+.vault-info p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.vault-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.vault-reset {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+    text-align: center;
+}
+
+.vault-reset p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
 /* Login Section */
 .login-card {
     padding: 32px;

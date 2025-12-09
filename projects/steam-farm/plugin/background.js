@@ -3,7 +3,7 @@
  * Komunikace mezi webem a Native Host přes Native Messaging
  */
 
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 const NATIVE_HOST_NAME = 'com.adhub.steamfarm';
 
 // State
@@ -114,6 +114,41 @@ function handleNativeMessage(message) {
                 type: 'STEAM_FARM_DISCONNECTED'
             });
             break;
+
+        case 'VAULT_STATUS':
+            broadcastToTabs({
+                type: 'STEAM_FARM_VAULT_STATUS',
+                data: message.data
+            });
+            break;
+
+        case 'VAULT_CREATED':
+            broadcastToTabs({
+                type: 'STEAM_FARM_VAULT_CREATED',
+                data: message.data
+            });
+            break;
+
+        case 'VAULT_UNLOCKED':
+            broadcastToTabs({
+                type: 'STEAM_FARM_VAULT_UNLOCKED',
+                data: message.data
+            });
+            break;
+
+        case 'VAULT_DELETED':
+            broadcastToTabs({
+                type: 'STEAM_FARM_VAULT_DELETED',
+                data: message.data
+            });
+            break;
+
+        case 'VAULT_ERROR':
+            broadcastToTabs({
+                type: 'STEAM_FARM_VAULT_ERROR',
+                error: message.error
+            });
+            break;
     }
 }
 
@@ -199,6 +234,32 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         case 'STEAM_FARM_RESTORE_SESSION':
             sendToNativeHost({ type: 'RESTORE_SESSION' });
+            sendResponse({ success: true });
+            break;
+
+        case 'STEAM_FARM_CHECK_VAULT_STATUS':
+            sendToNativeHost({ type: 'CHECK_VAULT_STATUS' });
+            sendResponse({ success: true });
+            break;
+
+        case 'STEAM_FARM_CREATE_VAULT':
+            sendToNativeHost({
+                type: 'CREATE_VAULT',
+                data: message.data
+            });
+            sendResponse({ success: true });
+            break;
+
+        case 'STEAM_FARM_UNLOCK_VAULT':
+            sendToNativeHost({
+                type: 'UNLOCK_VAULT',
+                data: message.data
+            });
+            sendResponse({ success: true });
+            break;
+
+        case 'STEAM_FARM_DELETE_VAULT':
+            sendToNativeHost({ type: 'DELETE_VAULT' });
             sendResponse({ success: true });
             break;
 

@@ -3,10 +3,13 @@
  * Webové rozhraní pro farming Steam hodin a kartiček
  *
  * Komunikace: Web <-> Chrome Extension <-> Native Host (Node.js) <-> Steam
+ *
+ * Bezpečnost: Refresh token je šifrován pomocí AES-256-GCM s klíčem
+ * odvozeným z uživatelského hesla přes Argon2id
  */
 
 // Version
-const VERSION = '1.0.0';
+const VERSION = '1.1.0';
 
 // Extension ID - will be set after extension is loaded
 let EXTENSION_ID = null;
@@ -16,6 +19,8 @@ const state = {
     connected: false,
     loggedIn: false,
     steamGuardPending: false,
+    vaultExists: false,
+    vaultUnlocked: false,
     user: null,
     games: [],
     selectedGames: new Set(),
@@ -29,6 +34,9 @@ const state = {
 const elements = {
     connectionStatus: null,
     extensionCheck: null,
+    vaultSection: null,
+    vaultCreate: null,
+    vaultUnlock: null,
     loginSection: null,
     accountSection: null,
     farmingSection: null,
@@ -53,6 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
 function initElements() {
     elements.connectionStatus = document.getElementById('connectionStatus');
     elements.extensionCheck = document.getElementById('extensionCheck');
+    elements.vaultSection = document.getElementById('vaultSection');
+    elements.vaultCreate = document.getElementById('vaultCreate');
+    elements.vaultUnlock = document.getElementById('vaultUnlock');
     elements.loginSection = document.getElementById('loginSection');
     elements.accountSection = document.getElementById('accountSection');
     elements.farmingSection = document.getElementById('farmingSection');
@@ -67,6 +78,11 @@ function initElements() {
 
 // Initialize event listeners
 function initEventListeners() {
+    // Vault forms
+    document.getElementById('createVaultForm')?.addEventListener('submit', handleCreateVault);
+    document.getElementById('unlockVaultForm')?.addEventListener('submit', handleUnlockVault);
+    document.getElementById('deleteVaultBtn')?.addEventListener('click', handleDeleteVault);
+
     // Login form
     elements.loginForm?.addEventListener('submit', handleLogin);
 
@@ -147,6 +163,26 @@ function handleExtensionMessage(event) {
             handleExtensionConnected(data);
             break;
 
+        case 'STEAM_FARM_VAULT_STATUS':
+            handleVaultStatus(data);
+            break;
+
+        case 'STEAM_FARM_VAULT_CREATED':
+            handleVaultCreated(data);
+            break;
+
+        case 'STEAM_FARM_VAULT_UNLOCKED':
+            handleVaultUnlocked(data);
+            break;
+
+        case 'STEAM_FARM_VAULT_DELETED':
+            handleVaultDeleted(data);
+            break;
+
+        case 'STEAM_FARM_VAULT_ERROR':
+            handleVaultError(error);
+            break;
+
         case 'STEAM_FARM_LOGIN_RESULT':
             handleLoginResult(data, error);
             break;
@@ -200,17 +236,169 @@ function handleExtensionConnected(data) {
 
         updateConnectionStatus('connected', 'Připojeno');
         hideExtensionRequired();
-        showLoginSection();
 
-        // Check if we have saved session
-        if (data.hasSession) {
-            sendToExtension('RESTORE_SESSION');
-        }
+        // Check vault status
+        sendToExtension('CHECK_VAULT_STATUS');
     } else {
         updateConnectionStatus('disconnected', 'Native Host není připojen');
         showExtensionRequired();
     }
 }
+
+// ===========================================
+// VAULT HANDLERS
+// ===========================================
+
+function handleVaultStatus(data) {
+    state.vaultExists = data.exists;
+    state.vaultUnlocked = data.unlocked;
+
+    if (data.unlocked) {
+        // Vault is unlocked, show login or restore session
+        hideVaultSection();
+        showLoginSection();
+
+        if (data.hasSession) {
+            sendToExtension('RESTORE_SESSION');
+        }
+    } else if (data.exists) {
+        // Vault exists but locked - show unlock form
+        showVaultUnlock();
+    } else {
+        // No vault - show create form
+        showVaultCreate();
+    }
+}
+
+function handleCreateVault(e) {
+    e.preventDefault();
+
+    const password = document.getElementById('vaultPassword').value;
+    const confirm = document.getElementById('vaultPasswordConfirm').value;
+
+    if (password.length < 4) {
+        showToast('Heslo musí mít alespoň 4 znaky', 'error');
+        return;
+    }
+
+    if (password !== confirm) {
+        showToast('Hesla se neshodují', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('createVaultBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-icon">⏳</span> Vytvářím...';
+
+    sendToExtension('CREATE_VAULT', { password });
+}
+
+function handleUnlockVault(e) {
+    e.preventDefault();
+
+    const password = document.getElementById('unlockPassword').value;
+
+    if (!password) {
+        showToast('Zadejte heslo', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('unlockVaultBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-icon">⏳</span> Odemykám...';
+
+    sendToExtension('UNLOCK_VAULT', { password });
+}
+
+function handleDeleteVault() {
+    if (!confirm('Opravdu chcete smazat trezor? Ztratíte uloženou session a budete se muset znovu přihlásit ke Steam.')) {
+        return;
+    }
+
+    sendToExtension('DELETE_VAULT');
+}
+
+function handleVaultCreated(data) {
+    const btn = document.getElementById('createVaultBtn');
+    btn.disabled = false;
+    btn.innerHTML = '<span class="btn-icon">🔒</span> Vytvořit trezor';
+
+    if (data.success) {
+        state.vaultExists = true;
+        state.vaultUnlocked = true;
+        showToast('Trezor vytvořen! Nyní se můžete přihlásit.', 'success');
+        hideVaultSection();
+        showLoginSection();
+    }
+}
+
+function handleVaultUnlocked(data) {
+    const btn = document.getElementById('unlockVaultBtn');
+    btn.disabled = false;
+    btn.innerHTML = '<span class="btn-icon">🔓</span> Odemknout';
+
+    document.getElementById('unlockPassword').value = '';
+
+    if (data.success) {
+        state.vaultUnlocked = true;
+        showToast('Trezor odemčen!', 'success');
+        hideVaultSection();
+        showLoginSection();
+
+        if (data.hasSession) {
+            sendToExtension('RESTORE_SESSION');
+        }
+    }
+}
+
+function handleVaultDeleted(data) {
+    if (data.success) {
+        state.vaultExists = false;
+        state.vaultUnlocked = false;
+        showToast('Trezor smazán', 'success');
+        showVaultCreate();
+    }
+}
+
+function handleVaultError(error) {
+    showToast(error, 'error');
+
+    // Reset buttons
+    const createBtn = document.getElementById('createVaultBtn');
+    const unlockBtn = document.getElementById('unlockVaultBtn');
+
+    if (createBtn) {
+        createBtn.disabled = false;
+        createBtn.innerHTML = '<span class="btn-icon">🔒</span> Vytvořit trezor';
+    }
+
+    if (unlockBtn) {
+        unlockBtn.disabled = false;
+        unlockBtn.innerHTML = '<span class="btn-icon">🔓</span> Odemknout';
+    }
+}
+
+function showVaultCreate() {
+    elements.vaultSection.style.display = 'block';
+    elements.vaultCreate.style.display = 'block';
+    elements.vaultUnlock.style.display = 'none';
+    elements.loginSection.style.display = 'none';
+}
+
+function showVaultUnlock() {
+    elements.vaultSection.style.display = 'block';
+    elements.vaultCreate.style.display = 'none';
+    elements.vaultUnlock.style.display = 'block';
+    elements.loginSection.style.display = 'none';
+}
+
+function hideVaultSection() {
+    elements.vaultSection.style.display = 'none';
+}
+
+// ===========================================
+// LOGIN HANDLERS
+// ===========================================
 
 // Send message to extension
 function sendToExtension(type, data = {}) {
@@ -224,6 +412,11 @@ function sendToExtension(type, data = {}) {
 // Handle login form submit
 async function handleLogin(e) {
     e.preventDefault();
+
+    if (!state.vaultUnlocked) {
+        showToast('Nejdříve odemkněte trezor', 'error');
+        return;
+    }
 
     const username = document.getElementById('username').value.trim();
     const password = document.getElementById('password').value;
@@ -257,7 +450,7 @@ function handleLoginResult(data, error) {
     }
 
     if (data.success) {
-        showToast('Přihlášení úspěšné!', 'success');
+        showToast('Přihlašování...', 'success');
     }
 }
 
@@ -343,7 +536,7 @@ function handleFarmingStatus(data) {
     document.getElementById('farmingCount').textContent = state.farmingGames.length;
     document.getElementById('farmingInfo').textContent = `${state.farmingGames.length}/32 slotů`;
     renderFarmingList();
-    renderGames(); // Update game cards to show farming status
+    renderGames();
 }
 
 // Handle error
@@ -365,9 +558,17 @@ function handleDisconnected() {
     state.farmingGames = [];
 
     updateConnectionStatus('disconnected', 'Odpojeno');
-    showLoginSection();
-    showToast('Odpojeno od Steam', 'warning');
 
+    // Show vault or login based on vault state
+    if (state.vaultUnlocked) {
+        showLoginSection();
+    } else if (state.vaultExists) {
+        showVaultUnlock();
+    } else {
+        showVaultCreate();
+    }
+
+    showToast('Odpojeno od Steam', 'warning');
     localStorage.removeItem('steam_farm_has_session');
 }
 
@@ -377,7 +578,10 @@ function handleLogout() {
     handleDisconnected();
 }
 
-// Start farming selected games
+// ===========================================
+// FARMING
+// ===========================================
+
 function startFarming() {
     if (state.selectedGames.size === 0) {
         showToast('Vyberte hry pro farmení', 'warning');
@@ -394,40 +598,39 @@ function startFarming() {
     showToast(`Spouštím farmení ${appIds.length} her...`, 'success');
 }
 
-// Stop farming
 function stopFarming() {
     sendToExtension('STOP_FARMING');
     showToast('Zastavuji farmení...', 'success');
 }
 
-// Render games grid
+// ===========================================
+// RENDERING
+// ===========================================
+
 function renderGames() {
     const grid = elements.gamesGrid;
     if (!grid) return;
 
     let filteredGames = [...state.games];
 
-    // Apply filter
     switch (state.filter) {
         case 'cards':
             filteredGames = filteredGames.filter(g => state.cardsData[g.appId] > 0);
             break;
         case 'hours':
-            filteredGames = filteredGames.filter(g => g.playtimeForever < 120); // Less than 2 hours
+            filteredGames = filteredGames.filter(g => g.playtimeForever < 120);
             break;
         case 'selected':
             filteredGames = filteredGames.filter(g => state.selectedGames.has(g.appId));
             break;
     }
 
-    // Apply search
     if (state.searchQuery) {
         filteredGames = filteredGames.filter(g =>
             g.name.toLowerCase().includes(state.searchQuery)
         );
     }
 
-    // Sort by name
     filteredGames.sort((a, b) => a.name.localeCompare(b.name));
 
     if (filteredGames.length === 0) {
@@ -472,7 +675,6 @@ function renderGames() {
     }).join('');
 }
 
-// Toggle game selection
 window.toggleGameSelection = function(appId) {
     if (state.selectedGames.has(appId)) {
         state.selectedGames.delete(appId);
@@ -486,7 +688,6 @@ window.toggleGameSelection = function(appId) {
     renderGames();
 };
 
-// Render farming list
 function renderFarmingList() {
     const list = elements.farmingList;
     if (!list) return;
@@ -518,13 +719,11 @@ function renderFarmingList() {
     }).join('');
 }
 
-// Remove game from farming
 window.removeFarmingGame = function(appId) {
     const newList = state.farmingGames.filter(id => id !== appId);
     sendToExtension('UPDATE_FARMING', { appIds: newList });
 };
 
-// Render cards
 function renderCards() {
     const grid = document.getElementById('cardsGrid');
     if (!grid) return;
@@ -551,13 +750,15 @@ function renderCards() {
     `).join('');
 }
 
-// Fetch cards data
 function fetchCardsData() {
     sendToExtension('GET_CARDS');
     showToast('Načítám data o kartičkách...', 'success');
 }
 
-// Update connection status
+// ===========================================
+// UI HELPERS
+// ===========================================
+
 function updateConnectionStatus(status, text) {
     const statusEl = elements.connectionStatus;
     if (!statusEl) return;
@@ -569,19 +770,18 @@ function updateConnectionStatus(status, text) {
     textEl.textContent = text;
 }
 
-// Show extension required
 function showExtensionRequired() {
     elements.extensionCheck.style.display = 'block';
+    elements.vaultSection.style.display = 'none';
     elements.loginSection.style.display = 'none';
 }
 
-// Hide extension required
 function hideExtensionRequired() {
     elements.extensionCheck.style.display = 'none';
 }
 
-// Show login section
 function showLoginSection() {
+    elements.vaultSection.style.display = 'none';
     elements.loginSection.style.display = 'block';
     elements.accountSection.style.display = 'none';
     elements.farmingSection.style.display = 'none';
@@ -589,13 +789,11 @@ function showLoginSection() {
     elements.cardsSection.style.display = 'none';
 }
 
-// Format total hours
 function formatTotalHours(games) {
     const totalMinutes = games.reduce((sum, g) => sum + (g.playtimeForever || 0), 0);
     return Math.floor(totalMinutes / 60);
 }
 
-// Load saved state
 function loadSavedState() {
     try {
         const selectedGames = localStorage.getItem('steam_farm_selected_games');
@@ -607,7 +805,6 @@ function loadSavedState() {
     }
 }
 
-// Save state
 function saveState() {
     try {
         localStorage.setItem('steam_farm_selected_games', JSON.stringify([...state.selectedGames]));
@@ -616,7 +813,6 @@ function saveState() {
     }
 }
 
-// Show toast notification
 function showToast(message, type = 'info') {
     const container = elements.toastContainer;
     if (!container) return;
@@ -637,7 +833,6 @@ function showToast(message, type = 'info') {
 
     container.appendChild(toast);
 
-    // Remove after 4 seconds
     setTimeout(() => {
         toast.style.opacity = '0';
         toast.style.transform = 'translateX(100px)';
@@ -645,7 +840,6 @@ function showToast(message, type = 'info') {
     }, 4000);
 }
 
-// Save state when games are selected
 window.addEventListener('beforeunload', saveState);
 
 // Expose for debugging
