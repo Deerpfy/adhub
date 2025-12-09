@@ -1204,3 +1204,121 @@ body::before {
 ::-webkit-scrollbar-thumb:hover {
     background: var(--border-hover);
 }
+
+/* Auto Install Section */
+.auto-install-card {
+    background: linear-gradient(135deg, var(--bg-card), rgba(139, 92, 246, 0.1));
+    border: 1px solid var(--primary-color);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+    text-align: center;
+}
+
+.auto-install-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.auto-install-icon {
+    font-size: 2rem;
+}
+
+.auto-install-header h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.auto-install-desc {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.auto-install-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.btn-installer {
+    min-width: 180px;
+    padding: 14px 24px;
+    font-size: 0.95rem;
+}
+
+.btn-installer span {
+    margin-right: 8px;
+}
+
+.extension-id-info {
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.extension-id-info p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 12px;
+}
+
+.extension-id-code {
+    display: block;
+    background: var(--bg-color);
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
+    font-size: 0.95rem;
+    color: var(--primary-color);
+    word-break: break-all;
+    margin-bottom: 12px;
+}
+
+.installation-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 32px 0;
+}
+
+.installation-divider::before,
+.installation-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.installation-divider span {
+    padding: 0 16px;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Loading spinner for buttons */
+.btn .spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin 0.8s ease infinite;
+    margin-right: 8px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

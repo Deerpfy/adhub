@@ -20,7 +20,7 @@
                         <span class="logo-icon">🎮</span>
                         <span>Steam Farm</span>
                     </div>
-                    <span class="version-badge">v1.1</span>
+                    <span class="version-badge">v1.2</span>
                 </div>
                 <div class="header-right">
                     <div class="connection-status" id="connectionStatus">
@@ -243,6 +243,33 @@
                 <div class="section-header">
                     <h2><span class="section-icon">📦</span> Instalace</h2>
                 </div>
+
+                <!-- Auto Install Section -->
+                <div class="auto-install-card" id="autoInstallCard">
+                    <div class="auto-install-header">
+                        <span class="auto-install-icon">🚀</span>
+                        <h3>Rychlá automatická instalace</h3>
+                    </div>
+                    <p class="auto-install-desc">Stáhněte instalátor pro váš systém. Instalátor automaticky stáhne a nakonfiguruje Native Host.</p>
+                    <div class="auto-install-buttons">
+                        <button class="btn btn-primary btn-installer" id="installWindowsBtn">
+                            <span>🪟</span> Windows (PowerShell)
+                        </button>
+                        <button class="btn btn-primary btn-installer" id="installUnixBtn">
+                            <span>🐧</span> Linux / macOS
+                        </button>
+                    </div>
+                    <div class="extension-id-info" id="extensionIdInfo" style="display: none;">
+                        <p>Při instalaci budete potřebovat ID rozšíření:</p>
+                        <code class="extension-id-code" id="extensionIdCode">Připojte se k rozšíření pro zobrazení ID</code>
+                        <button class="btn btn-secondary btn-small" id="copyExtensionId" title="Kopírovat ID">📋 Kopírovat</button>
+                    </div>
+                </div>
+
+                <div class="installation-divider">
+                    <span>nebo manuální instalace</span>
+                </div>
+
                 <div class="installation-steps">
                     <div class="install-step">
                         <div class="step-number">1</div>
@@ -306,7 +333,7 @@ chmod +x install.sh
         <footer class="footer">
             <div class="footer-content">
                 <span class="footer-text">Steam Farm - AdHUB Project</span>
-                <span class="footer-version">v1.0.0</span>
+                <span class="footer-version">v1.2.0</span>
             </div>
         </footer>
     </div>
