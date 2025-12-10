@@ -1,0 +1,129 @@
+{
+    "name": "API Katalog - Offline-First API Directory",
+    "short_name": "API Katalog",
+    "description": "Offline-first webova aplikace pro prochazeni a spravu katalogu 10,000+ API. Funguje 100% offline bez zavislosti na serveru.",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#0a0a0f",
+    "theme_color": "#8b5cf6",
+    "scope": "./",
+    "lang": "cs",
+    "dir": "ltr",
+    "categories": ["developer", "tools", "productivity", "utilities"],
+    "icons": [
+        {
+            "src": "./icons/icon-72.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "./icons/icon-96.png",
+            "sizes": "96x96",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "./icons/icon-128.png",
+            "sizes": "128x128",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "./icons/icon-144.png",
+            "sizes": "144x144",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "./icons/icon-152.png",
+            "sizes": "152x152",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "./icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "./icons/icon-384.png",
+            "sizes": "384x384",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "./icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "./screenshots/desktop.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "API Katalog - Desktop view"
+        },
+        {
+            "src": "./screenshots/mobile.png",
+            "sizes": "750x1334",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "API Katalog - Mobile view"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Vyhledavani API",
+            "short_name": "Hledat",
+            "description": "Rychle vyhledejte API podle nazvu nebo kategorie",
+            "url": "./index.html?action=search",
+            "icons": [
+                {
+                    "src": "./icons/search-icon.png",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
+            "name": "Oblibene",
+            "short_name": "Oblibene",
+            "description": "Zobrazte vase oblibene API",
+            "url": "./index.html?filter=favorites",
+            "icons": [
+                {
+                    "src": "./icons/favorite-icon.png",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
+            "name": "Import dat",
+            "short_name": "Import",
+            "description": "Importujte API katalog ze souboru",
+            "url": "./index.html?action=import",
+            "icons": [
+                {
+                    "src": "./icons/import-icon.png",
+                    "sizes": "96x96"
+                }
+            ]
+        }
+    ],
+    "related_applications": [],
+    "prefer_related_applications": false,
+    "share_target": {
+        "action": "./index.html",
+        "method": "GET",
+        "params": {
+            "title": "name",
+            "text": "description",
+            "url": "url"
+        }
+    }
+}
