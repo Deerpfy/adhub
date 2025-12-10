@@ -410,8 +410,14 @@ body::before {
     border-color: var(--primary-color);
 }
 
+/* Icon images from RustLabs */
 .building-icon {
-    font-size: 1.8rem;
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
 }
 
 .building-name {
@@ -519,7 +525,10 @@ body::before {
 }
 
 .target-icon {
-    font-size: 2rem;
+    width: 56px;
+    height: 56px;
+    object-fit: contain;
+    image-rendering: pixelated;
 }
 
 .target-details h3 {
@@ -572,7 +581,10 @@ body::before {
 }
 
 .result-icon {
-    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    image-rendering: pixelated;
 }
 
 .result-name {
@@ -705,7 +717,12 @@ body::before {
 }
 
 .recipe-icon {
-    font-size: 1.6rem;
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: crisp-edges;
 }
 
 .recipe-name {
@@ -749,7 +766,10 @@ body::before {
 .tree-item.level-2 { margin-left: 40px; border-left: 2px solid var(--border-color); }
 
 .tree-icon {
-    font-size: 1.2rem;
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    image-rendering: pixelated;
 }
 
 .tree-amount {
@@ -774,7 +794,10 @@ body::before {
 }
 
 .raw-icon {
-    font-size: 1.3rem;
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    image-rendering: pixelated;
 }
 
 .raw-info {
@@ -877,7 +900,10 @@ body::before {
 }
 
 .compare-table .method-icon {
-    font-size: 1.3rem;
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+    image-rendering: pixelated;
 }
 
 .compare-table .efficiency-bar {
@@ -925,7 +951,10 @@ body::before {
 }
 
 .reference-icon {
-    font-size: 1.5rem;
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+    image-rendering: pixelated;
 }
 
 .reference-info {

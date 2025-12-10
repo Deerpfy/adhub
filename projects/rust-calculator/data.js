@@ -1,8 +1,16 @@
 /**
  * Rust Calculator - Game Data
  * Data extracted from analysis: buildings HP, explosives costs, crafting recipes
- * Source: RustLabs-style data, manually compiled
+ * Using official RustLabs images: rustlabs.com/img/items180/{shortname}.png
  */
+
+// RustLabs image base URL
+const RUSTLABS_IMG = 'https://rustlabs.com/img/items180/';
+
+// Helper to get RustLabs image URL
+function getRustIcon(shortname) {
+    return `${RUSTLABS_IMG}${shortname}.png`;
+}
 
 const GAME_DATA = {
     version: "1.0.0",
@@ -13,202 +21,240 @@ const GAME_DATA = {
         // Walls
         twig_wall: {
             name: "Twig Wall",
-            nameCs: "Dřevěná zeď (Twig)",
+            nameCs: "Drevena zed (Twig)",
             hp: 10,
             tier: "twig",
             category: "wall",
-            icon: "🪵",
+            icon: getRustIcon('wood'),
             buildCost: { wood: 10 }
         },
         wood_wall: {
             name: "Wood Wall",
-            nameCs: "Dřevěná zeď",
+            nameCs: "Drevena zed",
             hp: 250,
             tier: "wood",
             category: "wall",
-            icon: "🪵",
+            icon: getRustIcon('wood'),
             buildCost: { wood: 200 }
         },
         stone_wall: {
             name: "Stone Wall",
-            nameCs: "Kamenná zeď",
+            nameCs: "Kamenna zed",
             hp: 500,
             tier: "stone",
             category: "wall",
-            icon: "🧱",
+            icon: getRustIcon('stones'),
             buildCost: { stones: 300 }
         },
         metal_wall: {
             name: "Sheet Metal Wall",
-            nameCs: "Plechová zeď",
+            nameCs: "Plechova zed",
             hp: 1000,
             tier: "sheet_metal",
             category: "wall",
-            icon: "🔩",
+            icon: getRustIcon('metal.fragments'),
             buildCost: { metal_fragments: 200 }
         },
         armored_wall: {
             name: "Armored Wall",
-            nameCs: "Pancéřová zeď",
+            nameCs: "Pancerova zed",
             hp: 2000,
             tier: "armored",
             category: "wall",
-            icon: "🛡️",
+            icon: getRustIcon('metal.refined'),
             buildCost: { hqm: 25 }
         },
 
         // Doors
         wood_door: {
             name: "Wooden Door",
-            nameCs: "Dřevěné dveře",
+            nameCs: "Drevene dvere",
             hp: 200,
             tier: "wood",
             category: "door",
-            icon: "🚪",
+            icon: getRustIcon('door.hinged.wood'),
             buildCost: { wood: 300 }
         },
         metal_door: {
             name: "Sheet Metal Door",
-            nameCs: "Plechové dveře",
+            nameCs: "Plechove dvere",
             hp: 250,
             tier: "sheet_metal",
             category: "door",
-            icon: "🚪",
+            icon: getRustIcon('door.hinged.metal'),
             buildCost: { metal_fragments: 150 }
         },
         garage_door: {
             name: "Garage Door",
-            nameCs: "Garážová vrata",
+            nameCs: "Garazova vrata",
             hp: 600,
             tier: "sheet_metal",
             category: "door",
-            icon: "🚗",
+            icon: getRustIcon('door.double.hinged.metal'),
             buildCost: { metal_fragments: 300, gears: 2 }
         },
         armored_door: {
             name: "Armored Door",
-            nameCs: "Pancéřové dveře",
+            nameCs: "Pancerove dvere",
             hp: 800,
             tier: "armored",
             category: "door",
-            icon: "🚪",
+            icon: getRustIcon('door.hinged.toptier'),
             buildCost: { hqm: 20, gears: 5 }
         },
 
         // Foundations
         stone_foundation: {
             name: "Stone Foundation",
-            nameCs: "Kamenný základ",
+            nameCs: "Kamenny zaklad",
             hp: 500,
             tier: "stone",
             category: "foundation",
-            icon: "⬜",
+            icon: getRustIcon('stones'),
             buildCost: { stones: 300 }
         },
         metal_foundation: {
             name: "Sheet Metal Foundation",
-            nameCs: "Plechový základ",
+            nameCs: "Plechovy zaklad",
             hp: 1000,
             tier: "sheet_metal",
             category: "foundation",
-            icon: "⬜",
+            icon: getRustIcon('metal.fragments'),
             buildCost: { metal_fragments: 200 }
         },
         armored_foundation: {
             name: "Armored Foundation",
-            nameCs: "Pancéřový základ",
+            nameCs: "Pancerovy zaklad",
             hp: 2000,
             tier: "armored",
             category: "foundation",
-            icon: "⬜",
+            icon: getRustIcon('metal.refined'),
             buildCost: { hqm: 25 }
         },
 
         // Floors/Ceilings
         stone_floor: {
             name: "Stone Floor",
-            nameCs: "Kamenná podlaha",
+            nameCs: "Kamenna podlaha",
             hp: 500,
             tier: "stone",
             category: "floor",
-            icon: "⬜",
+            icon: getRustIcon('stones'),
             buildCost: { stones: 300 }
         },
         metal_floor: {
             name: "Sheet Metal Floor",
-            nameCs: "Plechová podlaha",
+            nameCs: "Plechova podlaha",
             hp: 1000,
             tier: "sheet_metal",
             category: "floor",
-            icon: "⬜",
+            icon: getRustIcon('metal.fragments'),
             buildCost: { metal_fragments: 200 }
         },
         armored_floor: {
             name: "Armored Floor",
-            nameCs: "Pancéřová podlaha",
+            nameCs: "Pancerova podlaha",
             hp: 2000,
             tier: "armored",
             category: "floor",
-            icon: "⬜",
+            icon: getRustIcon('metal.refined'),
             buildCost: { hqm: 25 }
         },
 
         // Windows
         metal_window_bars: {
             name: "Metal Window Bars",
-            nameCs: "Kovové mříže",
+            nameCs: "Kovove mrize",
             hp: 500,
             tier: "sheet_metal",
             category: "window",
-            icon: "🪟",
+            icon: getRustIcon('wall.frame.cell'),
             buildCost: { metal_fragments: 75 }
         },
         reinforced_window: {
             name: "Reinforced Glass Window",
-            nameCs: "Zpevněné skleněné okno",
+            nameCs: "Zpevnene sklenene okno",
             hp: 350,
             tier: "sheet_metal",
             category: "window",
-            icon: "🪟",
+            icon: getRustIcon('wall.window.bars.metal'),
             buildCost: { metal_fragments: 150, hqm: 25 }
         },
 
         // Other structures
         tool_cupboard: {
             name: "Tool Cupboard",
-            nameCs: "Skříňka na nářadí (TC)",
+            nameCs: "Skrinka na naradi (TC)",
             hp: 250,
             tier: "wood",
             category: "deployable",
-            icon: "📦",
+            icon: getRustIcon('cupboard.tool'),
             buildCost: { wood: 1000 }
         },
         workbench_t1: {
             name: "Workbench Level 1",
-            nameCs: "Pracovní stůl 1",
+            nameCs: "Pracovni stul 1",
             hp: 250,
             tier: "wood",
             category: "deployable",
-            icon: "🔧",
+            icon: getRustIcon('workbench1'),
             buildCost: { wood: 500, metal_fragments: 100, scrap: 50 }
         },
         workbench_t2: {
             name: "Workbench Level 2",
-            nameCs: "Pracovní stůl 2",
+            nameCs: "Pracovni stul 2",
             hp: 500,
             tier: "sheet_metal",
             category: "deployable",
-            icon: "🔧",
+            icon: getRustIcon('workbench2'),
             buildCost: { metal_fragments: 500, hqm: 20, scrap: 500 }
         },
         workbench_t3: {
             name: "Workbench Level 3",
-            nameCs: "Pracovní stůl 3",
+            nameCs: "Pracovni stul 3",
             hp: 1000,
             tier: "armored",
             category: "deployable",
-            icon: "🔧",
+            icon: getRustIcon('workbench3'),
             buildCost: { metal_fragments: 1000, hqm: 100, scrap: 1250 }
+        },
+
+        // Additional raid targets
+        large_wooden_box: {
+            name: "Large Wood Box",
+            nameCs: "Velka drevena bedna",
+            hp: 250,
+            tier: "wood",
+            category: "deployable",
+            icon: getRustIcon('box.wooden.large'),
+            buildCost: { wood: 250, metal_fragments: 50 }
+        },
+        vending_machine: {
+            name: "Vending Machine",
+            nameCs: "Prodejni automat",
+            hp: 500,
+            tier: "sheet_metal",
+            category: "deployable",
+            icon: getRustIcon('vending.machine'),
+            buildCost: { metal_fragments: 200, gears: 2 }
+        },
+        auto_turret: {
+            name: "Auto Turret",
+            nameCs: "Automaticka vez",
+            hp: 1000,
+            tier: "sheet_metal",
+            category: "deployable",
+            icon: getRustIcon('autoturret'),
+            buildCost: { hqm: 40, cctv_camera: 1, targeting_computer: 1 }
+        },
+        sam_site: {
+            name: "SAM Site",
+            nameCs: "SAM Site",
+            hp: 1000,
+            tier: "sheet_metal",
+            category: "deployable",
+            icon: getRustIcon('samsite'),
+            buildCost: { hqm: 75, gears: 3, tech_trash: 1 }
         }
     },
 
@@ -216,8 +262,8 @@ const GAME_DATA = {
     explosives: {
         c4: {
             name: "Timed Explosive Charge (C4)",
-            nameCs: "Časovaná nálož (C4)",
-            icon: "💣",
+            nameCs: "Casovana naloz (C4)",
+            icon: getRustIcon('explosive.timed'),
             sulfurCost: 2200,
             workbench: 3,
             damage: {
@@ -231,7 +277,7 @@ const GAME_DATA = {
         rocket: {
             name: "Rocket",
             nameCs: "Raketa",
-            icon: "🚀",
+            icon: getRustIcon('ammo.rocket.basic'),
             sulfurCost: 1400,
             workbench: 3,
             damage: {
@@ -245,7 +291,7 @@ const GAME_DATA = {
         satchel: {
             name: "Satchel Charge",
             nameCs: "Satchel bomba",
-            icon: "🎒",
+            icon: getRustIcon('explosive.satchel'),
             sulfurCost: 480,
             workbench: 1,
             damage: {
@@ -255,14 +301,13 @@ const GAME_DATA = {
                 sheet_metal: 63,
                 armored: 65
             },
-            // Satchels have random dud chance
             dudChance: 0.2
         },
         explo_ammo: {
             name: "Explosive 5.56 Ammo",
-            nameCs: "Výbušná munice 5.56",
-            icon: "🔫",
-            sulfurCost: 25, // per round
+            nameCs: "Vybusna munice 5.56",
+            icon: getRustIcon('ammo.rifle.explosive'),
+            sulfurCost: 25,
             workbench: 3,
             damage: {
                 twig: 100,
@@ -274,8 +319,8 @@ const GAME_DATA = {
         },
         beancan: {
             name: "Beancan Grenade",
-            nameCs: "Beancan granát",
-            icon: "🥫",
+            nameCs: "Beancan granat",
+            icon: getRustIcon('grenade.beancan'),
             sulfurCost: 120,
             workbench: 1,
             damage: {
@@ -289,8 +334,8 @@ const GAME_DATA = {
         },
         f1_grenade: {
             name: "F1 Grenade",
-            nameCs: "F1 Granát",
-            icon: "💥",
+            nameCs: "F1 Granat",
+            icon: getRustIcon('grenade.f1'),
             sulfurCost: 60,
             workbench: 2,
             damage: {
@@ -303,8 +348,8 @@ const GAME_DATA = {
         },
         high_velocity_rocket: {
             name: "High Velocity Rocket (HV)",
-            nameCs: "Vysokorychlostní raketa",
-            icon: "🎯",
+            nameCs: "Vysokorychlostni raketa",
+            icon: getRustIcon('ammo.rocket.hv'),
             sulfurCost: 200,
             workbench: 2,
             damage: {
@@ -317,13 +362,13 @@ const GAME_DATA = {
         },
         incendiary_rocket: {
             name: "Incendiary Rocket",
-            nameCs: "Zápalná raketa",
-            icon: "🔥",
+            nameCs: "Zapalna raketa",
+            icon: getRustIcon('ammo.rocket.fire'),
             sulfurCost: 610,
             workbench: 3,
             damage: {
                 twig: 2000,
-                wood: 150, // burns wood effectively
+                wood: 150,
                 stone: 50,
                 sheet_metal: 70,
                 armored: 100
@@ -335,8 +380,8 @@ const GAME_DATA = {
     meleeWeapons: {
         rock: {
             name: "Rock",
-            nameCs: "Kámen",
-            icon: "🪨",
+            nameCs: "Kamen",
+            icon: getRustIcon('rock'),
             damage: {
                 twig: 2,
                 wood: 1
@@ -344,8 +389,8 @@ const GAME_DATA = {
         },
         bone_club: {
             name: "Bone Club",
-            nameCs: "Kostěná palice",
-            icon: "🦴",
+            nameCs: "Kostena palice",
+            icon: getRustIcon('bone.club'),
             damage: {
                 twig: 4,
                 wood: 2
@@ -353,8 +398,8 @@ const GAME_DATA = {
         },
         salvaged_axe: {
             name: "Salvaged Axe",
-            nameCs: "Sběrná sekera",
-            icon: "🪓",
+            nameCs: "Sberna sekera",
+            icon: getRustIcon('axe.salvaged'),
             damage: {
                 twig: 8,
                 wood: 4
@@ -362,30 +407,28 @@ const GAME_DATA = {
         },
         jackhammer: {
             name: "Jackhammer",
-            nameCs: "Sbíječka",
-            icon: "⛏️",
+            nameCs: "Sbijecka",
+            icon: getRustIcon('jackhammer'),
             damage: {
                 twig: 12,
                 wood: 6,
-                stone: 3 // soft side
+                stone: 3
             }
         }
     },
 
-    // Crafting recipes (simplified dependency tree)
+    // Crafting recipes
     recipes: {
-        // Basic materials
         gunpowder: {
             name: "Gunpowder",
-            nameCs: "Střelný prach",
-            icon: "💨",
+            nameCs: "Strelny prach",
+            icon: getRustIcon('gunpowder'),
             output: 10,
             workbench: 0,
             ingredients: {
                 sulfur: 20,
                 charcoal: 30
             },
-            // Mixing table recipe (more efficient)
             mixingTable: {
                 output: 10,
                 ingredients: {
@@ -396,8 +439,8 @@ const GAME_DATA = {
         },
         low_grade_fuel: {
             name: "Low Grade Fuel",
-            nameCs: "Palivo nízké kvality",
-            icon: "⛽",
+            nameCs: "Palivo nizke kvality",
+            icon: getRustIcon('lowgradefuel'),
             output: 4,
             workbench: 0,
             ingredients: {
@@ -405,12 +448,10 @@ const GAME_DATA = {
                 cloth: 1
             }
         },
-
-        // Explosives crafting
         explosives: {
             name: "Explosives",
-            nameCs: "Výbušnina",
-            icon: "💣",
+            nameCs: "Vybusnina",
+            icon: getRustIcon('explosives'),
             output: 1,
             workbench: 3,
             ingredients: {
@@ -422,8 +463,8 @@ const GAME_DATA = {
         },
         c4: {
             name: "Timed Explosive Charge",
-            nameCs: "Časovaná nálož (C4)",
-            icon: "💣",
+            nameCs: "Casovana naloz (C4)",
+            icon: getRustIcon('explosive.timed'),
             output: 1,
             workbench: 3,
             ingredients: {
@@ -435,7 +476,7 @@ const GAME_DATA = {
         rocket: {
             name: "Rocket",
             nameCs: "Raketa",
-            icon: "🚀",
+            icon: getRustIcon('ammo.rocket.basic'),
             output: 1,
             workbench: 3,
             ingredients: {
@@ -447,7 +488,7 @@ const GAME_DATA = {
         satchel: {
             name: "Satchel Charge",
             nameCs: "Satchel bomba",
-            icon: "🎒",
+            icon: getRustIcon('explosive.satchel'),
             output: 1,
             workbench: 1,
             ingredients: {
@@ -458,8 +499,8 @@ const GAME_DATA = {
         },
         beancan: {
             name: "Beancan Grenade",
-            nameCs: "Beancan granát",
-            icon: "🥫",
+            nameCs: "Beancan granat",
+            icon: getRustIcon('grenade.beancan'),
             output: 1,
             workbench: 1,
             ingredients: {
@@ -469,8 +510,8 @@ const GAME_DATA = {
         },
         explo_ammo: {
             name: "Explosive 5.56 Ammo",
-            nameCs: "Výbušná munice 5.56",
-            icon: "🔫",
+            nameCs: "Vybusna munice 5.56",
+            icon: getRustIcon('ammo.rifle.explosive'),
             output: 2,
             workbench: 3,
             ingredients: {
@@ -481,8 +522,8 @@ const GAME_DATA = {
         },
         f1_grenade: {
             name: "F1 Grenade",
-            nameCs: "F1 Granát",
-            icon: "💥",
+            nameCs: "F1 Granat",
+            icon: getRustIcon('grenade.f1'),
             output: 1,
             workbench: 2,
             ingredients: {
@@ -490,12 +531,10 @@ const GAME_DATA = {
                 metal_fragments: 40
             }
         },
-
-        // Intermediate items
         small_stash: {
             name: "Small Stash",
-            nameCs: "Malá skrýš",
-            icon: "📦",
+            nameCs: "Mala skrys",
+            icon: getRustIcon('stash.small'),
             output: 1,
             workbench: 0,
             ingredients: {
@@ -505,7 +544,7 @@ const GAME_DATA = {
         rope: {
             name: "Rope",
             nameCs: "Lano",
-            icon: "🪢",
+            icon: getRustIcon('rope'),
             output: 1,
             workbench: 0,
             ingredients: {
@@ -514,8 +553,8 @@ const GAME_DATA = {
         },
         metal_pipes: {
             name: "Metal Pipe",
-            nameCs: "Kovová trubka",
-            icon: "🔧",
+            nameCs: "Kovova trubka",
+            icon: getRustIcon('metalpipe'),
             output: 1,
             workbench: 1,
             ingredients: {
@@ -523,12 +562,10 @@ const GAME_DATA = {
                 metal_fragments: 100
             }
         },
-
-        // HV Rocket
         high_velocity_rocket: {
             name: "High Velocity Rocket",
-            nameCs: "Vysokorychlostní raketa",
-            icon: "🎯",
+            nameCs: "Vysokorychlostni raketa",
+            icon: getRustIcon('ammo.rocket.hv'),
             output: 1,
             workbench: 2,
             ingredients: {
@@ -536,12 +573,10 @@ const GAME_DATA = {
                 metal_pipes: 1
             }
         },
-
-        // Incendiary Rocket
         incendiary_rocket: {
             name: "Incendiary Rocket",
-            nameCs: "Zápalná raketa",
-            icon: "🔥",
+            nameCs: "Zapalna raketa",
+            icon: getRustIcon('ammo.rocket.fire'),
             output: 1,
             workbench: 3,
             ingredients: {
@@ -551,12 +586,10 @@ const GAME_DATA = {
                 low_grade_fuel: 250
             }
         },
-
-        // Rocket Launcher
         rocket_launcher: {
             name: "Rocket Launcher",
             nameCs: "Raketomet",
-            icon: "🎇",
+            icon: getRustIcon('rocket.launcher'),
             output: 1,
             workbench: 3,
             ingredients: {
@@ -566,20 +599,26 @@ const GAME_DATA = {
         }
     },
 
-    // Raw materials (not craftable - must be gathered)
+    // Raw materials
     rawMaterials: {
-        sulfur: { name: "Sulfur", nameCs: "Síra", icon: "🟡", gatherable: true },
-        charcoal: { name: "Charcoal", nameCs: "Dřevěné uhlí", icon: "⚫", gatherable: true },
-        wood: { name: "Wood", nameCs: "Dřevo", icon: "🪵", gatherable: true },
-        stones: { name: "Stones", nameCs: "Kameny", icon: "🪨", gatherable: true },
-        metal_fragments: { name: "Metal Fragments", nameCs: "Kovové úlomky", icon: "⚙️", gatherable: true },
-        hqm: { name: "High Quality Metal", nameCs: "Kvalitní kov (HQM)", icon: "✨", gatherable: true },
-        cloth: { name: "Cloth", nameCs: "Látka", icon: "🧵", gatherable: true },
-        animal_fat: { name: "Animal Fat", nameCs: "Živočišný tuk", icon: "🍖", gatherable: true },
-        low_grade_fuel: { name: "Low Grade Fuel", nameCs: "Palivo", icon: "⛽", gatherable: false },
-        scrap: { name: "Scrap", nameCs: "Šrot", icon: "🔩", gatherable: true },
-        tech_trash: { name: "Tech Trash", nameCs: "Tech odpad", icon: "💾", lootOnly: true },
-        gears: { name: "Gears", nameCs: "Ozubená kola", icon: "⚙️", lootOnly: true }
+        sulfur: { name: "Sulfur", nameCs: "Sira", icon: getRustIcon('sulfur'), gatherable: true },
+        charcoal: { name: "Charcoal", nameCs: "Drevene uhli", icon: getRustIcon('charcoal'), gatherable: true },
+        wood: { name: "Wood", nameCs: "Drevo", icon: getRustIcon('wood'), gatherable: true },
+        stones: { name: "Stones", nameCs: "Kameny", icon: getRustIcon('stones'), gatherable: true },
+        metal_fragments: { name: "Metal Fragments", nameCs: "Kovove ulomky", icon: getRustIcon('metal.fragments'), gatherable: true },
+        hqm: { name: "High Quality Metal", nameCs: "Kvalitni kov (HQM)", icon: getRustIcon('metal.refined'), gatherable: true },
+        cloth: { name: "Cloth", nameCs: "Latka", icon: getRustIcon('cloth'), gatherable: true },
+        animal_fat: { name: "Animal Fat", nameCs: "Zivocisny tuk", icon: getRustIcon('fat.animal'), gatherable: true },
+        low_grade_fuel: { name: "Low Grade Fuel", nameCs: "Palivo", icon: getRustIcon('lowgradefuel'), gatherable: false },
+        scrap: { name: "Scrap", nameCs: "Srot", icon: getRustIcon('scrap'), gatherable: true },
+        tech_trash: { name: "Tech Trash", nameCs: "Tech odpad", icon: getRustIcon('techparts'), lootOnly: true },
+        gears: { name: "Gears", nameCs: "Ozubena kola", icon: getRustIcon('gears'), lootOnly: true },
+        rope: { name: "Rope", nameCs: "Lano", icon: getRustIcon('rope'), gatherable: false },
+        small_stash: { name: "Small Stash", nameCs: "Mala skrys", icon: getRustIcon('stash.small'), gatherable: false },
+        metal_pipes: { name: "Metal Pipe", nameCs: "Kovova trubka", icon: getRustIcon('metalpipe'), gatherable: false },
+        beancan: { name: "Beancan Grenade", nameCs: "Beancan granat", icon: getRustIcon('grenade.beancan'), gatherable: false },
+        gunpowder: { name: "Gunpowder", nameCs: "Strelny prach", icon: getRustIcon('gunpowder'), gatherable: false },
+        explosives: { name: "Explosives", nameCs: "Vybusnina", icon: getRustIcon('explosives'), gatherable: false }
     },
 
     // Utility functions
@@ -594,8 +633,9 @@ const GAME_DATA = {
         for (const [ingredientId, amount] of Object.entries(recipe.ingredients)) {
             const neededAmount = amount * multiplier;
 
-            if (this.rawMaterials[ingredientId]) {
-                // This is a raw material
+            // Check if it's a truly raw material (gatherable or loot-only)
+            const rawMat = this.rawMaterials[ingredientId];
+            if (rawMat && (rawMat.gatherable || rawMat.lootOnly)) {
                 raw[ingredientId] = (raw[ingredientId] || 0) + neededAmount;
             } else if (this.recipes[ingredientId]) {
                 // This is a craftable item - recurse
@@ -612,7 +652,6 @@ const GAME_DATA = {
         return raw;
     },
 
-    // Calculate explosives needed to destroy a building
     calculateExplosivesNeeded(buildingId, explosiveId) {
         const building = this.buildings[buildingId];
         const explosive = this.explosives[explosiveId];
@@ -630,12 +669,11 @@ const GAME_DATA = {
             totalSulfur,
             building,
             explosive,
-            efficiency: totalSulfur / building.hp // Lower is better
+            efficiency: totalSulfur / building.hp
         };
     }
 };
 
-// Export for use in other modules
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = GAME_DATA;
 }

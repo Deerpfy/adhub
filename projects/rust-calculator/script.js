@@ -1,6 +1,7 @@
 /**
  * Rust Calculator - Main Script
  * Offline-first PWA for raid and crafting calculations
+ * Using official RustLabs icons
  */
 
 // Translations
@@ -15,6 +16,7 @@ const TRANSLATIONS = {
         cat_doors: "Doors",
         cat_foundations: "Foundations",
         cat_floors: "Floors",
+        cat_windows: "Windows",
         cat_deployables: "Deployables",
         quantity: "Quantity:",
         select_target: "Select a target to raid",
@@ -39,37 +41,38 @@ const TRANSLATIONS = {
         import_error: "Error importing data"
     },
     cs: {
-        tab_raid: "Raid kalkul\u00e1tor",
+        tab_raid: "Raid kalkulator",
         tab_craft: "Crafting",
-        tab_compare: "Porovn\u00e1n\u00ed",
-        raid_target: "C\u00edl raidu",
-        raid_results: "N\u00e1klady raidu",
+        tab_compare: "Porovnani",
+        raid_target: "Cil raidu",
+        raid_results: "Naklady raidu",
         cat_walls: "Zdi",
-        cat_doors: "Dve\u0159e",
-        cat_foundations: "Z\u00e1klady",
+        cat_doors: "Dvere",
+        cat_foundations: "Zaklady",
         cat_floors: "Podlahy",
+        cat_windows: "Okna",
         cat_deployables: "Deployables",
-        quantity: "Po\u010det:",
-        select_target: "Vyber c\u00edl k raidov\u00e1n\u00ed",
-        best_option: "Nejefektivn\u011bj\u0161\u00ed:",
+        quantity: "Pocet:",
+        select_target: "Vyber cil k raidovani",
+        best_option: "Nejefektivnejsi:",
         craft_recipe: "Recept",
         search_recipes: "Hledat recepty...",
-        craft_amount: "Po\u010det k v\u00fdrob\u011b:",
+        craft_amount: "Pocet k vyrobe:",
         raw_materials: "Suroviny",
-        select_recipe: "Vyber recept k v\u00fdrob\u011b",
-        total_sulfur: "Celkem s\u00edra:",
-        compare_title: "Porovn\u00e1n\u00ed metod raidu",
-        compare_select: "Vyber budovu k porovn\u00e1n\u00ed:",
+        select_recipe: "Vyber recept k vyrobe",
+        total_sulfur: "Celkem sira:",
+        compare_title: "Porovnani metod raidu",
+        compare_select: "Vyber budovu k porovnani:",
         col_method: "Metoda",
-        col_quantity: "Po\u010det",
-        col_sulfur: "S\u00edra",
+        col_quantity: "Pocet",
+        col_sulfur: "Sira",
         col_efficiency: "Efektivita",
-        quick_ref: "Rychl\u00fd p\u0159ehled",
+        quick_ref: "Rychly prehled",
         export: "Exportovat data",
         import: "Importovat data",
-        export_success: "Data \u00fasp\u011b\u0161n\u011b exportov\u00e1na!",
-        import_success: "Data \u00fasp\u011b\u0161n\u011b importov\u00e1na!",
-        import_error: "Chyba p\u0159i importu dat"
+        export_success: "Data uspesne exportovana!",
+        import_success: "Data uspesne importovana!",
+        import_error: "Chyba pri importu dat"
     }
 };
 
@@ -84,6 +87,14 @@ const state = {
     favorites: [],
     history: []
 };
+
+// Helper function to render icon (supports both URLs and emoji)
+function renderIcon(iconSrc, className = 'icon', alt = '') {
+    if (iconSrc && iconSrc.startsWith('http')) {
+        return `<img class="${className}" src="${iconSrc}" alt="${alt}" loading="lazy" onerror="this.style.display='none'">`;
+    }
+    return `<span class="${className}">${iconSrc || '?'}</span>`;
+}
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
@@ -158,6 +169,7 @@ function initLanguage() {
             renderRecipes();
             if (state.selectedBuilding) updateRaidResults();
             if (state.selectedRecipe) updateCraftResults();
+            renderQuickReference();
         });
     });
 
@@ -165,19 +177,19 @@ function initLanguage() {
 }
 
 function updateTranslations() {
-    const t = TRANSLATIONS[state.language];
+    const tr = TRANSLATIONS[state.language];
 
     document.querySelectorAll('[data-i18n]').forEach(el => {
         const key = el.dataset.i18n;
-        if (t[key]) {
-            el.textContent = t[key];
+        if (tr[key]) {
+            el.textContent = tr[key];
         }
     });
 
     document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
         const key = el.dataset.i18nPlaceholder;
-        if (t[key]) {
-            el.placeholder = t[key];
+        if (tr[key]) {
+            el.placeholder = tr[key];
         }
     });
 }
@@ -238,7 +250,7 @@ function renderBuildings(category) {
             item.dataset.tier = building.tier;
             item.dataset.id = id;
             item.innerHTML = `
-                <span class="building-icon">${building.icon}</span>
+                ${renderIcon(building.icon, 'building-icon', getName(building))}
                 <span class="building-name">${getName(building)}</span>
                 <span class="building-hp">${building.hp} HP</span>
             `;
@@ -277,10 +289,10 @@ function updateRaidResults() {
     // Show selected target
     targetEl.innerHTML = `
         <div class="target-info">
-            <span class="target-icon">${building.icon}</span>
+            ${renderIcon(building.icon, 'target-icon', getName(building))}
             <div class="target-details">
                 <h3>${getName(building)} x${state.targetQty}</h3>
-                <span>Tier: ${building.tier}</span>
+                <span>Tier: ${building.tier.replace('_', ' ')}</span>
             </div>
         </div>
         <span class="target-hp">${totalHp} HP</span>
@@ -309,7 +321,7 @@ function updateRaidResults() {
     // Render results
     resultsEl.innerHTML = results.map((r, i) => `
         <div class="result-row${i === 0 ? ' best' : ''}">
-            <span class="result-icon">${r.explosive.icon}</span>
+            ${renderIcon(r.explosive.icon, 'result-icon', getName(r.explosive))}
             <span class="result-name">${getName(r.explosive)}</span>
             <div class="result-count">
                 <span class="count">${r.count}</span>
@@ -371,7 +383,7 @@ function renderRecipes() {
         item.className = `recipe-item${state.selectedRecipe === id ? ' selected' : ''}`;
         item.dataset.id = id;
         item.innerHTML = `
-            <span class="recipe-icon">${recipe.icon}</span>
+            ${renderIcon(recipe.icon, 'recipe-icon', getName(recipe))}
             <span class="recipe-name">${getName(recipe)}</span>
         `;
         item.addEventListener('click', () => selectRecipe(id));
@@ -419,7 +431,7 @@ function updateCraftResults() {
     // Show selected recipe
     recipeEl.innerHTML = `
         <div class="target-info">
-            <span class="target-icon">${recipe.icon}</span>
+            ${renderIcon(recipe.icon, 'target-icon', getName(recipe))}
             <div class="target-details">
                 <h3>${getName(recipe)} x${quantity}</h3>
                 <span>Workbench T${recipe.workbench}</span>
@@ -431,7 +443,7 @@ function updateCraftResults() {
     const tree = buildCraftTree(state.selectedRecipe, quantity);
     treeEl.innerHTML = tree.map(item => `
         <div class="tree-item level-${item.level}">
-            <span class="tree-icon">${item.icon}</span>
+            ${renderIcon(item.icon, 'tree-icon', item.name)}
             <span class="tree-name">${item.name}</span>
             <span class="tree-amount">x${Math.ceil(item.amount)}</span>
         </div>
@@ -441,10 +453,10 @@ function updateCraftResults() {
     const raw = GAME_DATA.calculateRawMaterials(state.selectedRecipe, quantity);
 
     rawEl.innerHTML = Object.entries(raw).map(([id, amount]) => {
-        const mat = GAME_DATA.rawMaterials[id] || { name: id, icon: '?' };
+        const mat = GAME_DATA.rawMaterials[id] || { name: id, icon: '' };
         return `
             <div class="raw-item">
-                <span class="raw-icon">${mat.icon}</span>
+                ${renderIcon(mat.icon, 'raw-icon', getName(mat))}
                 <div class="raw-info">
                     <span class="raw-name">${getName(mat)}</span>
                     <span class="raw-amount">${Math.ceil(amount).toLocaleString()}</span>
@@ -482,7 +494,7 @@ function buildCraftTree(recipeId, quantity, level = 0) {
         if (subRecipe && level < 3) {
             tree.push(...buildCraftTree(ingredientId, neededAmount, level + 1));
         } else {
-            const mat = GAME_DATA.rawMaterials[ingredientId] || { name: ingredientId, icon: '?' };
+            const mat = GAME_DATA.rawMaterials[ingredientId] || { name: ingredientId, icon: '' };
             tree.push({
                 level: level + 1,
                 name: getName(mat),
@@ -499,11 +511,11 @@ function buildCraftTree(recipeId, quantity, level = 0) {
 function initCompareTab() {
     const select = document.getElementById('compareBuilding');
 
-    // Populate building options
+    // Populate building options (text only for select)
     Object.entries(GAME_DATA.buildings).forEach(([id, building]) => {
         const option = document.createElement('option');
         option.value = id;
-        option.textContent = `${building.icon} ${getName(building)} (${building.hp} HP)`;
+        option.textContent = `${getName(building)} (${building.hp} HP)`;
         select.appendChild(option);
     });
 
@@ -555,7 +567,7 @@ function renderCompareTable(buildingId) {
             <tr>
                 <td>
                     <div class="method-cell">
-                        <span class="method-icon">${r.explosive.icon}</span>
+                        ${renderIcon(r.explosive.icon, 'method-icon', getName(r.explosive))}
                         <span>${getName(r.explosive)}</span>
                     </div>
                 </td>
@@ -579,7 +591,7 @@ function renderQuickReference() {
 
     grid.innerHTML = Object.entries(GAME_DATA.explosives).map(([id, exp]) => `
         <div class="reference-item">
-            <span class="reference-icon">${exp.icon}</span>
+            ${renderIcon(exp.icon, 'reference-icon', getName(exp))}
             <div class="reference-info">
                 <span class="reference-name">${getName(exp)}</span>
                 <span class="reference-sulfur">${exp.sulfurCost.toLocaleString()} sulfur</span>
