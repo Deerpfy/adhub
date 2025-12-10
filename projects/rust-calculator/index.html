@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#cd412b">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="Offline Rust raid and crafting calculator. Calculate sulfur costs, explosives needed, and raw materials.">
+
+    <title>Rust Calculator - Raid & Crafting</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+    <link rel="stylesheet" href="styles.css?v=1.0.0">
+</head>
+<body>
+    <div class="container">
+        <!-- Offline indicator -->
+        <div class="offline-banner" id="offlineBanner">
+            <span class="offline-icon">!</span>
+            <span class="offline-text">Offline mode - All features work without internet</span>
+        </div>
+
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <a href="../../" class="back-link" title="Back to AdHUB">
+                        <span class="back-icon">&larr;</span>
+                    </a>
+                    <h1 class="logo">
+                        <span class="logo-icon">&#x26A1;</span>
+                        Rust Calculator
+                    </h1>
+                    <span class="version-badge">v1.0.0</span>
+                </div>
+                <div class="header-right">
+                    <button class="pwa-install-btn" id="installBtn" style="display: none;">
+                        <span class="install-icon">+</span>
+                        <span class="install-text">Install App</span>
+                    </button>
+                    <div class="language-selector">
+                        <button class="lang-btn" data-lang="cs" title="Cestina">CZ</button>
+                        <button class="lang-btn active" data-lang="en" title="English">EN</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Tab Navigation -->
+        <nav class="tab-nav">
+            <button class="tab-btn active" data-tab="raid">
+                <span class="tab-icon">&#x1F4A3;</span>
+                <span class="tab-text" data-i18n="tab_raid">Raid Calculator</span>
+            </button>
+            <button class="tab-btn" data-tab="craft">
+                <span class="tab-icon">&#x1F527;</span>
+                <span class="tab-text" data-i18n="tab_craft">Crafting</span>
+            </button>
+            <button class="tab-btn" data-tab="compare">
+                <span class="tab-icon">&#x2696;</span>
+                <span class="tab-text" data-i18n="tab_compare">Compare</span>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- RAID CALCULATOR TAB -->
+            <section class="tab-panel active" id="tab-raid">
+                <div class="panel-grid">
+                    <!-- Target Selection -->
+                    <div class="card target-card">
+                        <h2 class="card-title">
+                            <span class="card-icon">&#x1F3E0;</span>
+                            <span data-i18n="raid_target">Raid Target</span>
+                        </h2>
+
+                        <div class="category-tabs" id="buildingCategories">
+                            <button class="cat-tab active" data-category="wall" data-i18n="cat_walls">Walls</button>
+                            <button class="cat-tab" data-category="door" data-i18n="cat_doors">Doors</button>
+                            <button class="cat-tab" data-category="foundation" data-i18n="cat_foundations">Foundations</button>
+                            <button class="cat-tab" data-category="floor" data-i18n="cat_floors">Floors</button>
+                            <button class="cat-tab" data-category="deployable" data-i18n="cat_deployables">Deployables</button>
+                        </div>
+
+                        <div class="building-grid" id="buildingGrid">
+                            <!-- Buildings populated by JS -->
+                        </div>
+
+                        <div class="quantity-control">
+                            <label data-i18n="quantity">Quantity:</label>
+                            <div class="qty-buttons">
+                                <button class="qty-btn" data-delta="-1">-</button>
+                                <input type="number" id="targetQty" value="1" min="1" max="100">
+                                <button class="qty-btn" data-delta="1">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results Panel -->
+                    <div class="card results-card">
+                        <h2 class="card-title">
+                            <span class="card-icon">&#x1F4CA;</span>
+                            <span data-i18n="raid_results">Raid Cost</span>
+                        </h2>
+
+                        <div class="selected-target" id="selectedTarget">
+                            <span class="placeholder" data-i18n="select_target">Select a target to raid</span>
+                        </div>
+
+                        <div class="results-table" id="raidResults">
+                            <!-- Results populated by JS -->
+                        </div>
+
+                        <div class="best-option" id="bestOption" style="display: none;">
+                            <span class="best-icon">&#x2B50;</span>
+                            <span class="best-text" data-i18n="best_option">Most efficient:</span>
+                            <span class="best-value" id="bestValue"></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- CRAFTING TAB -->
+            <section class="tab-panel" id="tab-craft">
+                <div class="panel-grid">
+                    <!-- Recipe Selection -->
+                    <div class="card recipe-card">
+                        <h2 class="card-title">
+                            <span class="card-icon">&#x1F4D6;</span>
+                            <span data-i18n="craft_recipe">Recipe</span>
+                        </h2>
+
+                        <div class="search-box">
+                            <input type="text" id="recipeSearch" placeholder="Search recipes..." data-i18n-placeholder="search_recipes">
+                            <span class="search-icon">&#x1F50D;</span>
+                        </div>
+
+                        <div class="recipe-grid" id="recipeGrid">
+                            <!-- Recipes populated by JS -->
+                        </div>
+
+                        <div class="quantity-control">
+                            <label data-i18n="craft_amount">Amount to craft:</label>
+                            <div class="qty-buttons">
+                                <button class="qty-btn" data-delta="-1">-</button>
+                                <input type="number" id="craftQty" value="1" min="1" max="1000">
+                                <button class="qty-btn" data-delta="1">+</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Crafting Results -->
+                    <div class="card craft-results-card">
+                        <h2 class="card-title">
+                            <span class="card-icon">&#x1F4CB;</span>
+                            <span data-i18n="raw_materials">Raw Materials</span>
+                        </h2>
+
+                        <div class="selected-recipe" id="selectedRecipe">
+                            <span class="placeholder" data-i18n="select_recipe">Select a recipe to craft</span>
+                        </div>
+
+                        <div class="craft-tree" id="craftTree">
+                            <!-- Tree populated by JS -->
+                        </div>
+
+                        <div class="raw-materials" id="rawMaterials">
+                            <!-- Raw materials populated by JS -->
+                        </div>
+
+                        <div class="sulfur-summary" id="sulfurSummary" style="display: none;">
+                            <span class="sulfur-icon">&#x1F7E1;</span>
+                            <span data-i18n="total_sulfur">Total Sulfur:</span>
+                            <span class="sulfur-value" id="totalSulfur">0</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- COMPARE TAB -->
+            <section class="tab-panel" id="tab-compare">
+                <div class="card compare-card">
+                    <h2 class="card-title">
+                        <span class="card-icon">&#x2696;</span>
+                        <span data-i18n="compare_title">Compare Raid Methods</span>
+                    </h2>
+
+                    <div class="compare-selector">
+                        <label data-i18n="compare_select">Select building to compare:</label>
+                        <select id="compareBuilding">
+                            <!-- Options populated by JS -->
+                        </select>
+                    </div>
+
+                    <div class="compare-table-wrapper">
+                        <table class="compare-table" id="compareTable">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="col_method">Method</th>
+                                    <th data-i18n="col_quantity">Quantity</th>
+                                    <th data-i18n="col_sulfur">Sulfur</th>
+                                    <th data-i18n="col_efficiency">Efficiency</th>
+                                </tr>
+                            </thead>
+                            <tbody id="compareBody">
+                                <!-- Rows populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Sulfur Quick Reference -->
+                <div class="card reference-card">
+                    <h2 class="card-title">
+                        <span class="card-icon">&#x1F4D6;</span>
+                        <span data-i18n="quick_ref">Quick Reference</span>
+                    </h2>
+
+                    <div class="reference-grid" id="referenceGrid">
+                        <!-- Reference populated by JS -->
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Data Management -->
+        <div class="data-actions">
+            <button class="action-btn" id="exportBtn">
+                <span class="action-icon">&#x1F4E4;</span>
+                <span data-i18n="export">Export Data</span>
+            </button>
+            <button class="action-btn" id="importBtn">
+                <span class="action-icon">&#x1F4E5;</span>
+                <span data-i18n="import">Import Data</span>
+            </button>
+            <input type="file" id="importFile" accept=".json" style="display: none;">
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <span class="footer-text">Rust Calculator - Offline PWA</span>
+                <span class="footer-version">Data based on game analysis</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Scripts -->
+    <script src="data.js?v=1.0.0"></script>
+    <script src="script.js?v=1.0.0"></script>
+    <script>
+        // Register Service Worker for offline support
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('SW registered:', reg.scope))
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>

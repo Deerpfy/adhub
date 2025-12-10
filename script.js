@@ -303,6 +303,8 @@ const BASE_TRANSLATIONS = {
         tool_mindhub_desc: 'Osobní koordinační platforma pro správu myšlenek, úkolů a myšlenkových map. Organizujte své nápady vizuálně.',
         tool_steam_farm_name: 'Steam Farm',
         tool_steam_farm_desc: 'Farming Steam hodin a trading cards. Simuluje hraní až 32 her současně. Vyžaduje rozšíření a Native Host.',
+        tool_rust_calculator_name: 'Rust Calculator',
+        tool_rust_calculator_desc: 'Offline kalkulátor pro hru Rust - raid náklady, crafting recepty a suroviny. PWA fungující 100% offline.',
         category_gaming: 'gaming',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
         link_ninite_desc: 'Vyber aplikace a nainstaluj je jedním kliknutím po čisté instalaci Windows.',
@@ -673,6 +675,8 @@ const BASE_TRANSLATIONS = {
         tool_mindhub_desc: 'Personal coordination platform for managing thoughts, tasks and mind maps. Organize your ideas visually.',
         tool_steam_farm_name: 'Steam Farm',
         tool_steam_farm_desc: 'Farm Steam hours and trading cards. Simulates playing up to 32 games simultaneously. Requires extension and Native Host.',
+        tool_rust_calculator_name: 'Rust Calculator',
+        tool_rust_calculator_desc: 'Offline calculator for Rust game - raid costs, crafting recipes and raw materials. PWA working 100% offline.',
         category_gaming: 'gaming',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
         link_ninite_desc: 'Select apps and install them with one click after a clean Windows installation.',
@@ -1407,6 +1411,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["gaming", "steam", "farming", "cards"]
+            },
+            {
+                "id": "rust-calculator",
+                "name": t('tool_rust_calculator_name'),
+                "description": t('tool_rust_calculator_desc'),
+                "category": "gaming",
+                "icon": "⚡",
+                "url": "projects/rust-calculator/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["gaming", "rust", "calculator", "raid", "crafting", "offline"]
             }
         ],
         "links": [
