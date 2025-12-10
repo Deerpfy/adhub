@@ -1,0 +1,65 @@
+{
+    "name": "AI Visibility Tracker",
+    "short_name": "AI Tracker",
+    "description": "Offline-first aplikace pro sledování viditelnosti značky v AI vyhledávačích",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#0a0a0f",
+    "theme_color": "#10b981",
+    "orientation": "any",
+    "scope": "./",
+    "lang": "cs",
+    "categories": ["productivity", "business", "utilities"],
+    "icons": [
+        {
+            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='80' fill='%230a0a0f'/><text x='256' y='340' text-anchor='middle' font-size='280'>📊</text></svg>",
+            "sizes": "512x512",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='30' fill='%230a0a0f'/><text x='96' y='130' text-anchor='middle' font-size='100'>📊</text></svg>",
+            "sizes": "192x192",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        }
+    ],
+    "screenshots": [],
+    "shortcuts": [
+        {
+            "name": "Dashboard",
+            "short_name": "Dashboard",
+            "description": "Zobrazit přehled viditelnosti",
+            "url": "./index.html#dashboard",
+            "icons": [
+                {
+                    "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' rx='15' fill='%2310b981'/><text x='48' y='65' text-anchor='middle' font-size='50'>📈</text></svg>",
+                    "sizes": "96x96",
+                    "type": "image/svg+xml"
+                }
+            ]
+        },
+        {
+            "name": "Přidat značku",
+            "short_name": "Značka",
+            "description": "Přidat novou sledovanou značku",
+            "url": "./index.html#brands",
+            "icons": [
+                {
+                    "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect width='96' height='96' rx='15' fill='%238b5cf6'/><text x='48' y='65' text-anchor='middle' font-size='50'>🏷️</text></svg>",
+                    "sizes": "96x96",
+                    "type": "image/svg+xml"
+                }
+            ]
+        }
+    ],
+    "prefer_related_applications": false,
+    "related_applications": [],
+    "features": [
+        "Offline mode",
+        "IndexedDB storage",
+        "Data export/import",
+        "Dark/Light theme"
+    ],
+    "permissions": []
+}

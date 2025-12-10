@@ -307,6 +307,8 @@ const BASE_TRANSLATIONS = {
         tool_rust_calculator_desc: 'Offline kalkulátor pro hru Rust - raid náklady, crafting recepty a suroviny. PWA fungující 100% offline.',
         tool_docbook_name: 'DocBook',
         tool_docbook_desc: 'Offline dokumentační platforma inspirovaná GitBookem. WYSIWYG Markdown editor, hierarchická navigace, fulltext vyhledávání a export. 100% offline PWA.',
+        tool_nimt_tracker_name: 'AI Visibility Tracker',
+        tool_nimt_tracker_desc: 'Sledujte viditelnost vaší značky v AI vyhledávačích. Share of Voice, citace zdrojů, konkurenční analýza. 100% offline PWA.',
         category_gaming: 'gaming',
         category_documentation: 'dokumentace',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
@@ -682,6 +684,8 @@ const BASE_TRANSLATIONS = {
         tool_rust_calculator_desc: 'Offline calculator for Rust game - raid costs, crafting recipes and raw materials. PWA working 100% offline.',
         tool_docbook_name: 'DocBook',
         tool_docbook_desc: 'Offline documentation platform inspired by GitBook. WYSIWYG Markdown editor, hierarchical navigation, fulltext search and export. 100% offline PWA.',
+        tool_nimt_tracker_name: 'AI Visibility Tracker',
+        tool_nimt_tracker_desc: 'Track your brand visibility in AI search engines. Share of Voice, source citations, competitive analysis. 100% offline PWA.',
         category_gaming: 'gaming',
         category_documentation: 'documentation',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
@@ -1439,6 +1443,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["documentation", "markdown", "editor", "offline", "pwa"]
+            },
+            {
+                "id": "nimt-tracker",
+                "name": t('tool_nimt_tracker_name'),
+                "description": t('tool_nimt_tracker_desc'),
+                "category": "tools",
+                "icon": "📊",
+                "url": "projects/nimt-tracker/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["ai", "seo", "analytics", "visibility", "offline", "pwa"]
             }
         ],
         "links": [
