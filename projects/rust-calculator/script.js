@@ -88,9 +88,10 @@ const state = {
     history: []
 };
 
-// Helper function to render icon (supports both URLs and emoji)
+// Helper function to render icon (supports URLs, local paths, and emoji)
 function renderIcon(iconSrc, className = 'icon', alt = '') {
-    if (iconSrc && iconSrc.startsWith('http')) {
+    // Check if it's an image path (http URL or local path ending with image extension)
+    if (iconSrc && (iconSrc.startsWith('http') || /\.(svg|png|jpg|jpeg|gif|webp)$/i.test(iconSrc))) {
         return `<img class="${className}" src="${iconSrc}" alt="${alt}" loading="lazy" onerror="this.style.display='none'">`;
     }
     return `<span class="${className}">${iconSrc || '?'}</span>`;
