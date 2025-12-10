@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0d9488"/>
+      <stop offset="100%" style="stop-color:#14b8a6"/>
+    </linearGradient>
+    <linearGradient id="bookGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff"/>
+      <stop offset="100%" style="stop-color:#f0fdfa"/>
+    </linearGradient>
+  </defs>
+  <!-- Background circle -->
+  <circle cx="96" cy="96" r="88" fill="url(#bgGrad)"/>
+  <!-- Book icon -->
+  <g transform="translate(96, 96)">
+    <!-- Book spine -->
+    <path d="M-8,-40 L-8,40 C-8,44 -4,48 0,48 C4,48 8,44 8,40 L8,-40 C8,-44 4,-48 0,-48 C-4,-48 -8,-44 -8,-40" fill="#0f766e"/>
+    <!-- Left page -->
+    <path d="M-8,-38 L-44,-30 C-48,-29 -50,-25 -50,-21 L-50,29 C-50,33 -47,36 -43,35 L-8,38 Z" fill="url(#bookGrad)"/>
+    <!-- Right page -->
+    <path d="M8,-38 L44,-30 C48,-29 50,-25 50,-21 L50,29 C50,33 47,36 43,35 L8,38 Z" fill="url(#bookGrad)"/>
+    <!-- Page lines left -->
+    <line x1="-42" y1="-15" x2="-16" y2="-18" stroke="#14b8a6" stroke-width="3" stroke-linecap="round"/>
+    <line x1="-42" y1="-2" x2="-16" y2="-5" stroke="#14b8a6" stroke-width="3" stroke-linecap="round"/>
+    <line x1="-42" y1="11" x2="-16" y2="8" stroke="#14b8a6" stroke-width="3" stroke-linecap="round"/>
+    <!-- Page lines right -->
+    <line x1="42" y1="-15" x2="16" y2="-18" stroke="#14b8a6" stroke-width="3" stroke-linecap="round"/>
+    <line x1="42" y1="-2" x2="16" y2="-5" stroke="#14b8a6" stroke-width="3" stroke-linecap="round"/>
+    <line x1="42" y1="11" x2="16" y2="8" stroke="#14b8a6" stroke-width="3" stroke-linecap="round"/>
+  </g>
+</svg>
