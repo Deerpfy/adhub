@@ -3,7 +3,7 @@
  * Enables offline functionality by caching all assets
  */
 
-const CACHE_NAME = 'docbook-v1.0.0';
+const CACHE_NAME = 'docbook-v1.0.1';
 const CACHE_ASSETS = [
     './',
     './index.html',
@@ -29,7 +29,7 @@ const CACHE_LIBS = [
     'https://unpkg.com/dexie@3.2.4/dist/dexie.min.js',
     'https://unpkg.com/marked@11.1.1/marked.min.js',
     'https://unpkg.com/dompurify@3.0.6/dist/purify.min.js',
-    'https://unpkg.com/flexsearch@0.7.31/dist/flexsearch.bundle.min.js'
+    'https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.7.31/dist/flexsearch.bundle.min.js'
 ];
 
 /**
