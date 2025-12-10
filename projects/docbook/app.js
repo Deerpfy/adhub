@@ -28,8 +28,12 @@ class DocBookApp {
         // Setup event listeners
         this.setupEventListeners();
 
-        // Initialize search
-        await window.DocBookSearch.init();
+        // Initialize search (optional - may fail if FlexSearch didn't load)
+        if (window.DocBookSearch && typeof window.DocBookSearch.init === 'function') {
+            await window.DocBookSearch.init();
+        } else {
+            console.warn('[DocBook] Search module not available - search disabled');
+        }
 
         // Initialize editor
         window.DocBookEditor.init();
