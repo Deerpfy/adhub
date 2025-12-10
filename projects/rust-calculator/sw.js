@@ -1,0 +1,142 @@
+/**
+ * Rust Calculator - Service Worker
+ * Provides offline-first caching for the PWA
+ */
+
+const CACHE_NAME = 'rust-calculator-v1.0.0';
+const CACHE_URLS = [
+    './',
+    './index.html',
+    './styles.css',
+    './script.js',
+    './data.js',
+    './manifest.json',
+    './icons/icon.svg',
+    './icons/icon-72.png',
+    './icons/icon-96.png',
+    './icons/icon-128.png',
+    './icons/icon-144.png',
+    './icons/icon-152.png',
+    './icons/icon-192.png',
+    './icons/icon-384.png',
+    './icons/icon-512.png'
+];
+
+// Install event - cache all assets
+self.addEventListener('install', event => {
+    console.log('[SW] Installing service worker...');
+
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => {
+                console.log('[SW] Caching app shell...');
+                return cache.addAll(CACHE_URLS);
+            })
+            .then(() => {
+                console.log('[SW] Install complete');
+                return self.skipWaiting();
+            })
+            .catch(err => {
+                console.error('[SW] Install failed:', err);
+            })
+    );
+});
+
+// Activate event - clean up old caches
+self.addEventListener('activate', event => {
+    console.log('[SW] Activating service worker...');
+
+    event.waitUntil(
+        caches.keys()
+            .then(cacheNames => {
+                return Promise.all(
+                    cacheNames
+                        .filter(name => name !== CACHE_NAME)
+                        .map(name => {
+                            console.log('[SW] Deleting old cache:', name);
+                            return caches.delete(name);
+                        })
+                );
+            })
+            .then(() => {
+                console.log('[SW] Activation complete');
+                return self.clients.claim();
+            })
+    );
+});
+
+// Fetch event - serve from cache, fallback to network
+self.addEventListener('fetch', event => {
+    // Skip cross-origin requests
+    if (!event.request.url.startsWith(self.location.origin)) {
+        return;
+    }
+
+    // Skip non-GET requests
+    if (event.request.method !== 'GET') {
+        return;
+    }
+
+    event.respondWith(
+        caches.match(event.request)
+            .then(cachedResponse => {
+                if (cachedResponse) {
+                    // Return cached response
+                    console.log('[SW] Serving from cache:', event.request.url);
+                    return cachedResponse;
+                }
+
+                // Not in cache - fetch from network
+                console.log('[SW] Fetching from network:', event.request.url);
+                return fetch(event.request)
+                    .then(networkResponse => {
+                        // Cache the new response
+                        if (networkResponse.ok) {
+                            const responseClone = networkResponse.clone();
+                            caches.open(CACHE_NAME)
+                                .then(cache => {
+                                    cache.put(event.request, responseClone);
+                                });
+                        }
+                        return networkResponse;
+                    })
+                    .catch(err => {
+                        console.error('[SW] Fetch failed:', err);
+
+                        // Return fallback for HTML requests
+                        if (event.request.headers.get('accept').includes('text/html')) {
+                            return caches.match('./index.html');
+                        }
+
+                        // Return error for other requests
+                        return new Response('Offline - Resource not available', {
+                            status: 503,
+                            statusText: 'Service Unavailable'
+                        });
+                    });
+            })
+    );
+});
+
+// Message event - handle cache updates
+self.addEventListener('message', event => {
+    if (event.data === 'skipWaiting') {
+        self.skipWaiting();
+    }
+
+    if (event.data === 'clearCache') {
+        caches.delete(CACHE_NAME).then(() => {
+            console.log('[SW] Cache cleared');
+        });
+    }
+});
+
+// Background sync for future use
+self.addEventListener('sync', event => {
+    console.log('[SW] Background sync:', event.tag);
+});
+
+// Push notifications for future use
+self.addEventListener('push', event => {
+    console.log('[SW] Push received:', event);
+});
