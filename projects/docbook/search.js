@@ -6,8 +6,20 @@
 
 class DocBookSearch {
     constructor() {
-        // FlexSearch index for pages
-        this.index = new FlexSearch.Document({
+        this.index = null;
+        this.isInitialized = false;
+    }
+
+    /**
+     * Create FlexSearch index
+     */
+    createIndex() {
+        if (typeof FlexSearch === 'undefined') {
+            console.warn('[DocBook Search] FlexSearch not loaded yet');
+            return null;
+        }
+
+        return new FlexSearch.Document({
             document: {
                 id: 'id',
                 index: ['title', 'content'],
@@ -17,8 +29,6 @@ class DocBookSearch {
             resolution: 9,
             cache: 100
         });
-
-        this.isInitialized = false;
     }
 
     /**
@@ -26,19 +36,15 @@ class DocBookSearch {
      */
     async init() {
         try {
-            const pages = await window.DocBookDB.PageDB.getAll();
+            // Create index if not exists
+            this.index = this.createIndex();
 
-            // Clear and rebuild index
-            this.index = new FlexSearch.Document({
-                document: {
-                    id: 'id',
-                    index: ['title', 'content'],
-                    store: ['title', 'content', 'spaceId', 'slug']
-                },
-                tokenize: 'forward',
-                resolution: 9,
-                cache: 100
-            });
+            if (!this.index) {
+                console.warn('[DocBook Search] Nelze vytvořit index, FlexSearch není dostupný');
+                return;
+            }
+
+            const pages = await window.DocBookDB.PageDB.getAll();
 
             // Add all pages to index
             for (const page of pages) {
@@ -46,9 +52,9 @@ class DocBookSearch {
             }
 
             this.isInitialized = true;
-            console.log(`[DocBook Search] Indexed ${pages.length} pages`);
+            console.log(`[DocBook Search] Indexováno ${pages.length} stránek`);
         } catch (error) {
-            console.error('[DocBook Search] Init error:', error);
+            console.error('[DocBook Search] Chyba inicializace:', error);
         }
     }
 
@@ -58,13 +64,27 @@ class DocBookSearch {
     addPage(page) {
         if (!page || !page.id) return;
 
-        this.index.add({
-            id: page.id,
-            title: page.title || '',
-            content: this.stripMarkdown(page.content || ''),
-            spaceId: page.spaceId,
-            slug: page.slug
-        });
+        // Ensure index exists
+        if (!this.index) {
+            this.index = this.createIndex();
+        }
+
+        if (!this.index) {
+            console.warn('[DocBook Search] Index není dostupný');
+            return;
+        }
+
+        try {
+            this.index.add({
+                id: page.id,
+                title: page.title || '',
+                content: this.stripMarkdown(page.content || ''),
+                spaceId: page.spaceId,
+                slug: page.slug
+            });
+        } catch (error) {
+            console.error('[DocBook Search] Chyba při přidávání stránky:', error);
+        }
     }
 
     /**
@@ -73,17 +93,32 @@ class DocBookSearch {
     updatePage(page) {
         if (!page || !page.id) return;
 
-        // Remove old entry and add new
-        this.index.remove(page.id);
-        this.addPage(page);
+        if (!this.index) {
+            this.index = this.createIndex();
+        }
+
+        if (!this.index) return;
+
+        try {
+            // Remove old entry and add new
+            this.index.remove(page.id);
+            this.addPage(page);
+        } catch (error) {
+            console.error('[DocBook Search] Chyba při aktualizaci stránky:', error);
+        }
     }
 
     /**
      * Remove page from search index
      */
     removePage(pageId) {
-        if (!pageId) return;
-        this.index.remove(pageId);
+        if (!pageId || !this.index) return;
+
+        try {
+            this.index.remove(pageId);
+        } catch (error) {
+            console.error('[DocBook Search] Chyba při odstraňování stránky:', error);
+        }
     }
 
     /**
@@ -95,6 +130,11 @@ class DocBookSearch {
         }
 
         const limit = options.limit || 20;
+
+        // If index not available, use database search
+        if (!this.index) {
+            return await window.DocBookDB.PageDB.search(query);
+        }
 
         try {
             // Search in title and content
@@ -132,7 +172,7 @@ class DocBookSearch {
 
             return enrichedResults;
         } catch (error) {
-            console.error('[DocBook Search] Search error:', error);
+            console.error('[DocBook Search] Chyba vyhledávání:', error);
 
             // Fallback to database search
             return await window.DocBookDB.PageDB.search(query);
@@ -235,4 +275,4 @@ class DocBookSearch {
 // Export for global access
 window.DocBookSearch = new DocBookSearch();
 
-console.log('[DocBook] Search module loaded');
+console.log('[DocBook] Search modul načten');

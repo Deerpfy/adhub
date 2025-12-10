@@ -347,7 +347,7 @@ class DocBookApp {
      */
     renderPagesNav(pages, spaceId, level = 0) {
         if (!pages || pages.length === 0) {
-            return '<div class="nav-page-empty" style="padding: 8px 12px; color: var(--text-muted); font-size: 0.85rem;">Zadne stranky</div>';
+            return '<div class="nav-page-empty" style="padding: 8px 12px; color: var(--text-muted); font-size: 0.85rem;">Žádné stránky</div>';
         }
 
         return pages.map(page => `
@@ -376,13 +376,13 @@ class DocBookApp {
 
             case 'edit-space':
                 // TODO: Implement space editing
-                this.showToast('Editace prostoru - pripravujeme', 'info');
+                this.showToast('Editace prostoru - připravujeme', 'info');
                 break;
 
             case 'delete-space':
                 this.deleteTarget = { type: 'space', id: space.id, name: space.name };
                 document.getElementById('deleteWarning').textContent =
-                    `Opravdu chcete smazat prostor "${space.name}" a vsechny jeho stranky?`;
+                    `Opravdu chcete smazat prostor "${space.name}" a všechny jeho stránky?`;
                 this.openModal('deleteModal');
                 break;
         }
@@ -412,7 +412,7 @@ class DocBookApp {
         try {
             const page = await window.DocBookDB.PageDB.getWithSpace(pageId);
             if (!page) {
-                this.showToast('Stranka nenalezena', 'error');
+                this.showToast('Stránka nenalezena', 'error');
                 return;
             }
 
@@ -443,7 +443,7 @@ class DocBookApp {
 
         } catch (error) {
             console.error('[DocBook] Open page error:', error);
-            this.showToast('Chyba pri otevirani stranky', 'error');
+            this.showToast('Chyba při otevírání stránky', 'error');
         }
     }
 
@@ -473,7 +473,7 @@ class DocBookApp {
 
         const name = nameInput.value.trim();
         if (!name) {
-            this.showToast('Zadejte nazev prostoru', 'warning');
+            this.showToast('Zadejte název prostoru', 'warning');
             nameInput.focus();
             return;
         }
@@ -488,12 +488,14 @@ class DocBookApp {
             // Create first page
             const page = await window.DocBookDB.PageDB.create({
                 spaceId: space.id,
-                title: 'Uvod',
-                content: `# ${name}\n\nVitejte v novem prostoru dokumentace.`
+                title: 'Úvod',
+                content: `# ${name}\n\nVítejte v novém prostoru dokumentace.`
             });
 
             // Update search index
-            window.DocBookSearch.addPage(page);
+            if (window.DocBookSearch) {
+                window.DocBookSearch.addPage(page);
+            }
 
             // Reload navigation
             await this.loadNavigation();
@@ -506,10 +508,10 @@ class DocBookApp {
             nameInput.value = '';
             descInput.value = '';
 
-            this.showToast('Prostor vytvoren', 'success');
+            this.showToast('Prostor vytvořen', 'success');
         } catch (error) {
             console.error('[DocBook] Create space error:', error);
-            this.showToast('Chyba pri vytvareni prostoru', 'error');
+            this.showToast('Chyba při vytváření prostoru', 'error');
         }
     }
 
@@ -522,13 +524,13 @@ class DocBookApp {
 
         const title = nameInput.value.trim();
         if (!title) {
-            this.showToast('Zadejte nazev stranky', 'warning');
+            this.showToast('Zadejte název stránky', 'warning');
             nameInput.focus();
             return;
         }
 
         if (!this.currentSpace) {
-            this.showToast('Neni vybran prostor', 'error');
+            this.showToast('Není vybrán prostor', 'error');
             return;
         }
 
@@ -541,7 +543,9 @@ class DocBookApp {
             });
 
             // Update search index
-            window.DocBookSearch.addPage(page);
+            if (window.DocBookSearch) {
+                window.DocBookSearch.addPage(page);
+            }
 
             // Reload navigation
             await this.loadNavigation();
@@ -554,10 +558,10 @@ class DocBookApp {
             nameInput.value = '';
             parentSelect.value = '';
 
-            this.showToast('Stranka vytvorena', 'success');
+            this.showToast('Stránka vytvořena', 'success');
         } catch (error) {
             console.error('[DocBook] Create page error:', error);
-            this.showToast('Chyba pri vytvareni stranky', 'error');
+            this.showToast('Chyba při vytváření stránky', 'error');
         }
     }
 
@@ -566,7 +570,7 @@ class DocBookApp {
      */
     async populateParentPageSelect(spaceId) {
         const select = document.getElementById('pageParentSelect');
-        select.innerHTML = '<option value="">-- Zadna (root stranka) --</option>';
+        select.innerHTML = '<option value="">-- Žádná (root stránka) --</option>';
 
         const pages = await window.DocBookDB.PageDB.getBySpace(spaceId);
 
@@ -588,7 +592,7 @@ class DocBookApp {
 
         // Populate parent select
         const select = document.getElementById('pageSettingsParent');
-        select.innerHTML = '<option value="">-- Zadna (root stranka) --</option>';
+        select.innerHTML = '<option value="">-- Žádná (root stránka) --</option>';
 
         const pages = await window.DocBookDB.PageDB.getBySpace(page.spaceId);
         for (const p of pages) {
@@ -619,7 +623,7 @@ class DocBookApp {
         const parentId = document.getElementById('pageSettingsParent').value;
 
         if (!title) {
-            this.showToast('Nazev stranky je povinny', 'warning');
+            this.showToast('Název stránky je povinný', 'warning');
             return;
         }
 
@@ -642,10 +646,10 @@ class DocBookApp {
             window.DocBookSearch.updatePage(this.currentPage);
 
             this.closeModal('pageSettingsModal');
-            this.showToast('Nastaveni ulozeno', 'success');
+            this.showToast('Nastavení uloženo', 'success');
         } catch (error) {
             console.error('[DocBook] Save page settings error:', error);
-            this.showToast('Chyba pri ukladani', 'error');
+            this.showToast('Chyba při ukládání', 'error');
         }
     }
 
@@ -694,11 +698,11 @@ class DocBookApp {
             }
 
             this.closeModal('deleteModal');
-            this.showToast('Smazano', 'success');
+            this.showToast('Smazáno', 'success');
             this.deleteTarget = null;
         } catch (error) {
             console.error('[DocBook] Delete error:', error);
-            this.showToast('Chyba pri mazani', 'error');
+            this.showToast('Chyba při mazání', 'error');
         }
     }
 
@@ -753,10 +757,10 @@ class DocBookApp {
             this.elements.editorScreen.style.display = 'none';
 
             this.closeModal('settingsModal');
-            this.showToast('Vsechna data smazana', 'success');
+            this.showToast('Všechna data smazána', 'success');
         } catch (error) {
             console.error('[DocBook] Clear all data error:', error);
-            this.showToast('Chyba pri mazani dat', 'error');
+            this.showToast('Chyba při mazání dat', 'error');
         }
     }
 
@@ -784,7 +788,7 @@ class DocBookApp {
             const results = await window.DocBookSearch.search(query);
 
             if (results.length === 0) {
-                searchResults.innerHTML = '<div class="search-empty">Zadne vysledky</div>';
+                searchResults.innerHTML = '<div class="search-empty">Žádné výsledky</div>';
                 return;
             }
 
@@ -878,7 +882,7 @@ class DocBookApp {
                 }
 
                 this.closeModal('importModal');
-                this.showToast(`Importovano ${result.spaces} prostoru, ${result.pages} stranek`, 'success');
+                this.showToast(`Importováno ${result.spaces} prostorů, ${result.pages} stránek`, 'success');
             }
         } catch (error) {
             console.error('[DocBook] Import error:', error);
@@ -931,7 +935,7 @@ class DocBookApp {
         const stats = await window.DocBookDB.DBUtils.getStats();
         if (stats.spaces > 0 || stats.pages > 0) {
             document.getElementById('welcomeStats').innerHTML = `
-                <p>Mate ulozeno: ${stats.spaces} prostoru, ${stats.pages} stranek</p>
+                <p>Máte uloženo: ${stats.spaces} prostorů, ${stats.pages} stránek</p>
             `;
         }
     }
