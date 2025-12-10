@@ -13,8 +13,8 @@ function getRustIcon(shortname) {
 }
 
 const GAME_DATA = {
-    version: "1.0.0",
-    lastUpdate: "2025-01-01",
+    version: "1.0.1",
+    lastUpdate: "2025-12-10",
 
     // Building tiers with HP values
     buildings: {
@@ -65,7 +65,7 @@ const GAME_DATA = {
             buildCost: { hqm: 25 }
         },
 
-        // Doors
+        // Doors - have explicit raidCosts since damage multipliers differ from walls
         wood_door: {
             name: "Wooden Door",
             nameCs: "Drevene dvere",
@@ -73,7 +73,13 @@ const GAME_DATA = {
             tier: "wood",
             category: "door",
             icon: getRustIcon('door.hinged.wood'),
-            buildCost: { wood: 300 }
+            buildCost: { wood: 300 },
+            raidCosts: {
+                c4: 1,
+                rocket: 1,
+                satchel: 2,
+                explo_ammo: 18
+            }
         },
         metal_door: {
             name: "Sheet Metal Door",
@@ -82,7 +88,13 @@ const GAME_DATA = {
             tier: "sheet_metal",
             category: "door",
             icon: getRustIcon('door.hinged.metal'),
-            buildCost: { metal_fragments: 150 }
+            buildCost: { metal_fragments: 150 },
+            raidCosts: {
+                c4: 1,
+                rocket: 2,
+                satchel: 4,
+                explo_ammo: 63
+            }
         },
         garage_door: {
             name: "Garage Door",
@@ -91,7 +103,13 @@ const GAME_DATA = {
             tier: "sheet_metal",
             category: "door",
             icon: getRustIcon('door.double.hinged.metal'),
-            buildCost: { metal_fragments: 300, gears: 2 }
+            buildCost: { metal_fragments: 300, gears: 2 },
+            raidCosts: {
+                c4: 2,
+                rocket: 3,
+                satchel: 9,
+                explo_ammo: 150
+            }
         },
         armored_door: {
             name: "Armored Door",
@@ -100,7 +118,13 @@ const GAME_DATA = {
             tier: "armored",
             category: "door",
             icon: getRustIcon('door.hinged.toptier'),
-            buildCost: { hqm: 20, gears: 5 }
+            buildCost: { hqm: 20, gears: 5 },
+            raidCosts: {
+                c4: 2,
+                rocket: 4,
+                satchel: 12,
+                explo_ammo: 200
+            }
         },
 
         // Foundations
@@ -259,6 +283,8 @@ const GAME_DATA = {
     },
 
     // Explosives with damage values per tier and costs
+    // NOTE: Damage values are approximate. For accurate raid costs, use raidCosts on buildings.
+    // Values verified against RustLabs/community data as of 2025.
     explosives: {
         c4: {
             name: "Timed Explosive Charge (C4)",
@@ -270,8 +296,8 @@ const GAME_DATA = {
                 twig: 10000,
                 wood: 275,
                 stone: 275,
-                sheet_metal: 385,
-                armored: 550
+                sheet_metal: 260,
+                armored: 250
             }
         },
         rocket: {
@@ -284,8 +310,8 @@ const GAME_DATA = {
                 twig: 10000,
                 wood: 137,
                 stone: 137,
-                sheet_metal: 192,
-                armored: 275
+                sheet_metal: 128,
+                armored: 137
             }
         },
         satchel: {
@@ -298,8 +324,8 @@ const GAME_DATA = {
                 twig: 10000,
                 wood: 65,
                 stone: 51,
-                sheet_metal: 63,
-                armored: 65
+                sheet_metal: 44,
+                armored: 44
             },
             dudChance: 0.2
         },
@@ -312,9 +338,9 @@ const GAME_DATA = {
             damage: {
                 twig: 100,
                 wood: 3,
-                stone: 2,
-                sheet_metal: 2.6,
-                armored: 4
+                stone: 2.7,
+                sheet_metal: 2.5,
+                armored: 2.5
             }
         },
         beancan: {
@@ -327,8 +353,8 @@ const GAME_DATA = {
                 twig: 1000,
                 wood: 20,
                 stone: 15,
-                sheet_metal: 18,
-                armored: 20
+                sheet_metal: 12,
+                armored: 12
             },
             dudChance: 0.5
         },
@@ -342,8 +368,8 @@ const GAME_DATA = {
                 twig: 500,
                 wood: 12,
                 stone: 8,
-                sheet_metal: 10,
-                armored: 12
+                sheet_metal: 6,
+                armored: 6
             }
         },
         high_velocity_rocket: {
@@ -356,8 +382,8 @@ const GAME_DATA = {
                 twig: 200,
                 wood: 30,
                 stone: 25,
-                sheet_metal: 32,
-                armored: 40
+                sheet_metal: 20,
+                armored: 20
             }
         },
         incendiary_rocket: {
@@ -370,8 +396,8 @@ const GAME_DATA = {
                 twig: 2000,
                 wood: 150,
                 stone: 50,
-                sheet_metal: 70,
-                armored: 100
+                sheet_metal: 35,
+                armored: 35
             }
         }
     },
@@ -658,10 +684,18 @@ const GAME_DATA = {
 
         if (!building || !explosive) return null;
 
-        const damage = explosive.damage[building.tier] || 0;
-        if (damage === 0) return Infinity;
+        let count;
 
-        const count = Math.ceil(building.hp / damage);
+        // Use explicit raidCosts if available (more accurate for doors/deployables)
+        if (building.raidCosts && building.raidCosts[explosiveId] !== undefined) {
+            count = building.raidCosts[explosiveId];
+        } else {
+            // Fall back to damage-based calculation for walls
+            const damage = explosive.damage[building.tier] || 0;
+            if (damage === 0) return { count: Infinity, totalSulfur: Infinity, building, explosive, efficiency: Infinity };
+            count = Math.ceil(building.hp / damage);
+        }
+
         const totalSulfur = count * explosive.sulfurCost;
 
         return {
