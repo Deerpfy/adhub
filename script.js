@@ -305,7 +305,10 @@ const BASE_TRANSLATIONS = {
         tool_steam_farm_desc: 'Farming Steam hodin a trading cards. Simuluje hraní až 32 her současně. Vyžaduje rozšíření a Native Host.',
         tool_rust_calculator_name: 'Rust Calculator',
         tool_rust_calculator_desc: 'Offline kalkulátor pro hru Rust - raid náklady, crafting recepty a suroviny. PWA fungující 100% offline.',
+        tool_docbook_name: 'DocBook',
+        tool_docbook_desc: 'Offline dokumentační platforma inspirovaná GitBookem. WYSIWYG Markdown editor, hierarchická navigace, fulltext vyhledávání a export. 100% offline PWA.',
         category_gaming: 'gaming',
+        category_documentation: 'dokumentace',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
         link_ninite_desc: 'Vyber aplikace a nainstaluj je jedním kliknutím po čisté instalaci Windows.',
         link_winget_name: 'Winget.run katalog balíčků',
@@ -677,7 +680,10 @@ const BASE_TRANSLATIONS = {
         tool_steam_farm_desc: 'Farm Steam hours and trading cards. Simulates playing up to 32 games simultaneously. Requires extension and Native Host.',
         tool_rust_calculator_name: 'Rust Calculator',
         tool_rust_calculator_desc: 'Offline calculator for Rust game - raid costs, crafting recipes and raw materials. PWA working 100% offline.',
+        tool_docbook_name: 'DocBook',
+        tool_docbook_desc: 'Offline documentation platform inspired by GitBook. WYSIWYG Markdown editor, hierarchical navigation, fulltext search and export. 100% offline PWA.',
         category_gaming: 'gaming',
+        category_documentation: 'documentation',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
         link_ninite_desc: 'Select apps and install them with one click after a clean Windows installation.',
         link_winget_name: 'Winget.run Package Catalog',
@@ -1422,6 +1428,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["gaming", "rust", "calculator", "raid", "crafting", "offline"]
+            },
+            {
+                "id": "docbook",
+                "name": t('tool_docbook_name'),
+                "description": t('tool_docbook_desc'),
+                "category": "tools",
+                "icon": "📖",
+                "url": "projects/docbook/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["documentation", "markdown", "editor", "offline", "pwa"]
             }
         ],
         "links": [
