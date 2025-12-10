@@ -219,12 +219,16 @@ function initRaidCalculator() {
     const qtyInput = document.getElementById('targetQty');
     const qtyBtns = document.querySelectorAll('.target-card .qty-btn');
 
+    // Initialize input with current state value
+    qtyInput.value = state.targetQty;
+
     qtyBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const delta = parseInt(btn.dataset.delta);
             state.targetQty = Math.max(1, Math.min(100, state.targetQty + delta));
             qtyInput.value = state.targetQty;
             updateRaidResults();
+            saveState();
         });
     });
 
@@ -232,6 +236,7 @@ function initRaidCalculator() {
         state.targetQty = Math.max(1, Math.min(100, parseInt(qtyInput.value) || 1));
         qtyInput.value = state.targetQty;
         updateRaidResults();
+        saveState();
     });
 
     // Initial render
@@ -298,12 +303,14 @@ function updateRaidResults() {
         <span class="target-hp">${totalHp} HP</span>
     `;
 
-    // Calculate results for each explosive
+    // Calculate results for each explosive using GAME_DATA.calculateExplosivesNeeded
+    // This properly handles raidCosts for doors and deployables
     const results = [];
     Object.entries(GAME_DATA.explosives).forEach(([id, explosive]) => {
-        const damage = explosive.damage[building.tier] || 0;
-        if (damage > 0) {
-            const count = Math.ceil(totalHp / damage);
+        const result = GAME_DATA.calculateExplosivesNeeded(state.selectedBuilding, id);
+        if (result && result.count !== Infinity) {
+            // Multiply by quantity
+            const count = result.count * state.targetQty;
             const sulfur = count * explosive.sulfurCost;
             results.push({
                 id,
@@ -537,18 +544,17 @@ function renderCompareTable(buildingId) {
         return;
     }
 
+    // Use calculateExplosivesNeeded for proper raidCosts handling
     const results = [];
     Object.entries(GAME_DATA.explosives).forEach(([id, explosive]) => {
-        const damage = explosive.damage[building.tier] || 0;
-        if (damage > 0) {
-            const count = Math.ceil(building.hp / damage);
-            const sulfur = count * explosive.sulfurCost;
+        const result = GAME_DATA.calculateExplosivesNeeded(buildingId, id);
+        if (result && result.count !== Infinity) {
             results.push({
                 id,
                 explosive,
-                count,
-                sulfur,
-                efficiency: sulfur / building.hp
+                count: result.count,
+                sulfur: result.totalSulfur,
+                efficiency: result.efficiency
             });
         }
     });

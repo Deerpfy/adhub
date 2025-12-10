@@ -3,7 +3,7 @@
  * Provides offline-first caching for the PWA
  */
 
-const CACHE_NAME = 'rust-calculator-v1.0.0';
+const CACHE_NAME = 'rust-calculator-v1.0.1';
 const CACHE_URLS = [
     './',
     './index.html',
