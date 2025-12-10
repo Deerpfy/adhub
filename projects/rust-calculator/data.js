@@ -1,15 +1,15 @@
 /**
  * Rust Calculator - Game Data
  * Data extracted from analysis: buildings HP, explosives costs, crafting recipes
- * Using official RustLabs images: rustlabs.com/img/items180/{shortname}.png
+ * Using local SVG icons for offline support
  */
 
-// RustLabs image base URL
-const RUSTLABS_IMG = 'https://rustlabs.com/img/items180/';
+// Local game icons path (SVG for offline support)
+const GAME_ICONS_PATH = 'icons/game/';
 
-// Helper to get RustLabs image URL
+// Helper to get local game icon URL
 function getRustIcon(shortname) {
-    return `${RUSTLABS_IMG}${shortname}.png`;
+    return `${GAME_ICONS_PATH}${shortname}.svg`;
 }
 
 const GAME_DATA = {
