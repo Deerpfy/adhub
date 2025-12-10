@@ -3,7 +3,7 @@
  * Provides offline-first caching for the PWA
  */
 
-const CACHE_NAME = 'rust-calculator-v1.0.1';
+const CACHE_NAME = 'rust-calculator-v1.0.2';
 const CACHE_URLS = [
     './',
     './index.html',
@@ -11,6 +11,7 @@ const CACHE_URLS = [
     './script.js',
     './data.js',
     './manifest.json',
+    // App icons
     './icons/icon.svg',
     './icons/icon-72.png',
     './icons/icon-96.png',
@@ -19,7 +20,52 @@ const CACHE_URLS = [
     './icons/icon-152.png',
     './icons/icon-192.png',
     './icons/icon-384.png',
-    './icons/icon-512.png'
+    './icons/icon-512.png',
+    // Game icons (local SVGs for offline support)
+    './icons/game/ammo.rifle.explosive.svg',
+    './icons/game/ammo.rocket.basic.svg',
+    './icons/game/ammo.rocket.fire.svg',
+    './icons/game/ammo.rocket.hv.svg',
+    './icons/game/autoturret.svg',
+    './icons/game/axe.salvaged.svg',
+    './icons/game/bone.club.svg',
+    './icons/game/box.wooden.large.svg',
+    './icons/game/charcoal.svg',
+    './icons/game/cloth.svg',
+    './icons/game/cupboard.tool.svg',
+    './icons/game/door.double.hinged.metal.svg',
+    './icons/game/door.hinged.metal.svg',
+    './icons/game/door.hinged.toptier.svg',
+    './icons/game/door.hinged.wood.svg',
+    './icons/game/explosive.satchel.svg',
+    './icons/game/explosive.timed.svg',
+    './icons/game/explosives.svg',
+    './icons/game/fat.animal.svg',
+    './icons/game/gears.svg',
+    './icons/game/grenade.beancan.svg',
+    './icons/game/grenade.f1.svg',
+    './icons/game/gunpowder.svg',
+    './icons/game/jackhammer.svg',
+    './icons/game/lowgradefuel.svg',
+    './icons/game/metal.fragments.svg',
+    './icons/game/metal.refined.svg',
+    './icons/game/metalpipe.svg',
+    './icons/game/rock.svg',
+    './icons/game/rocket.launcher.svg',
+    './icons/game/rope.svg',
+    './icons/game/samsite.svg',
+    './icons/game/scrap.svg',
+    './icons/game/stash.small.svg',
+    './icons/game/stones.svg',
+    './icons/game/sulfur.svg',
+    './icons/game/techparts.svg',
+    './icons/game/vending.machine.svg',
+    './icons/game/wall.frame.cell.svg',
+    './icons/game/wall.window.bars.metal.svg',
+    './icons/game/wood.svg',
+    './icons/game/workbench1.svg',
+    './icons/game/workbench2.svg',
+    './icons/game/workbench3.svg'
 ];
 
 // Install event - cache all assets
