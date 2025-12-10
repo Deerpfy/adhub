@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#8b5cf6">
+    <meta name="description" content="Server Hub - Offline-first PWA for managing servers, sites, and backups. Inspired by xCloud.">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>Server Hub - Offline Server Management</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css?v=1.0.0">
+
+    <!-- Inline critical icon for fast loading -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%238b5cf6' rx='20' width='100' height='100'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white'>SH</text></svg>">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <a href="../../index.html" class="back-btn" title="Zpet na AdHUB">
+                        <span class="back-icon">←</span>
+                    </a>
+                    <h1 class="logo">
+                        <span class="logo-icon">🖥️</span>
+                        Server Hub
+                    </h1>
+                    <span class="version-badge">v1.0.0</span>
+                    <span class="offline-badge" id="offlineBadge" style="display: none;">Offline</span>
+                </div>
+                <div class="header-right">
+                    <button class="btn-icon" id="exportBtn" title="Export dat">
+                        <span>📤</span>
+                    </button>
+                    <button class="btn-icon" id="importBtn" title="Import dat">
+                        <span>📥</span>
+                    </button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;">
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-view="dashboard">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">Dashboard</span>
+            </button>
+            <button class="nav-tab" data-view="servers">
+                <span class="nav-icon">🖥️</span>
+                <span class="nav-text">Servery</span>
+            </button>
+            <button class="nav-tab" data-view="sites">
+                <span class="nav-icon">🌐</span>
+                <span class="nav-text">Weby</span>
+            </button>
+            <button class="nav-tab" data-view="backups">
+                <span class="nav-icon">💾</span>
+                <span class="nav-text">Zalohy</span>
+            </button>
+            <button class="nav-tab" data-view="activity">
+                <span class="nav-icon">📋</span>
+                <span class="nav-text">Aktivita</span>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <section class="view active" id="dashboardView">
+                <div class="view-header">
+                    <h2 class="view-title">Dashboard</h2>
+                    <p class="view-subtitle">Prehled vaseho serveru a webu</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card stat-servers">
+                        <div class="stat-icon">🖥️</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statServers">0</span>
+                            <span class="stat-label">Serveru</span>
+                        </div>
+                        <div class="stat-detail">
+                            <span class="stat-active" id="statServersActive">0 aktivnich</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-sites">
+                        <div class="stat-icon">🌐</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statSites">0</span>
+                            <span class="stat-label">Webu</span>
+                        </div>
+                        <div class="stat-detail">
+                            <span class="stat-ssl" id="statSitesSSL">0 s SSL</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-backups">
+                        <div class="stat-icon">💾</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statBackups">0</span>
+                            <span class="stat-label">Zaloh</span>
+                        </div>
+                        <div class="stat-detail">
+                            <span class="stat-size" id="statBackupsSize">0 MB</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card stat-wordpress">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="statWordPress">0</span>
+                            <span class="stat-label">WordPress</span>
+                        </div>
+                        <div class="stat-detail">
+                            <span class="stat-staging" id="statStaging">0 staging</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <h3 class="section-title">Rychle akce</h3>
+                    <div class="actions-grid">
+                        <button class="action-btn" data-action="add-server">
+                            <span class="action-icon">➕</span>
+                            <span class="action-text">Novy server</span>
+                        </button>
+                        <button class="action-btn" data-action="add-site">
+                            <span class="action-icon">🌐</span>
+                            <span class="action-text">Novy web</span>
+                        </button>
+                        <button class="action-btn" data-action="create-backup">
+                            <span class="action-icon">💾</span>
+                            <span class="action-text">Vytvorit zalohu</span>
+                        </button>
+                        <button class="action-btn" data-action="export-data">
+                            <span class="action-icon">📤</span>
+                            <span class="action-text">Export dat</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="recent-activity">
+                    <h3 class="section-title">Posledni aktivita</h3>
+                    <div class="activity-list" id="dashboardActivityList">
+                        <div class="empty-state">
+                            <span class="empty-icon">📋</span>
+                            <p>Zadna nedavna aktivita</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Servers View -->
+            <section class="view" id="serversView">
+                <div class="view-header">
+                    <div class="view-header-left">
+                        <h2 class="view-title">Servery</h2>
+                        <p class="view-subtitle">Sprava vasich serveru</p>
+                    </div>
+                    <div class="view-header-right">
+                        <button class="btn btn-primary" id="addServerBtn">
+                            <span>➕</span> Pridat server
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Server Filters -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <button class="filter-btn active" data-filter="all">Vsechny</button>
+                        <button class="filter-btn" data-filter="active">Aktivni</button>
+                        <button class="filter-btn" data-filter="stopped">Zastavene</button>
+                    </div>
+                    <div class="search-box">
+                        <input type="text" id="serverSearch" placeholder="Hledat server..." class="search-input">
+                        <span class="search-icon">🔍</span>
+                    </div>
+                </div>
+
+                <!-- Servers List -->
+                <div class="cards-grid" id="serversList">
+                    <!-- Servers will be rendered here -->
+                </div>
+
+                <div class="empty-state" id="serversEmptyState" style="display: none;">
+                    <span class="empty-icon">🖥️</span>
+                    <h3>Zadne servery</h3>
+                    <p>Zacnete pridanim vaseho prvniho serveru</p>
+                    <button class="btn btn-primary" data-action="add-server">
+                        <span>➕</span> Pridat server
+                    </button>
+                </div>
+            </section>
+
+            <!-- Sites View -->
+            <section class="view" id="sitesView">
+                <div class="view-header">
+                    <div class="view-header-left">
+                        <h2 class="view-title">Weby</h2>
+                        <p class="view-subtitle">Sprava vasich webovych stranek</p>
+                    </div>
+                    <div class="view-header-right">
+                        <button class="btn btn-primary" id="addSiteBtn">
+                            <span>➕</span> Pridat web
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Sites Filters -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <button class="filter-btn active" data-filter="all">Vsechny</button>
+                        <button class="filter-btn" data-filter="wordpress">WordPress</button>
+                        <button class="filter-btn" data-filter="staging">Staging</button>
+                        <button class="filter-btn" data-filter="ssl">S SSL</button>
+                    </div>
+                    <div class="search-box">
+                        <input type="text" id="siteSearch" placeholder="Hledat web..." class="search-input">
+                        <span class="search-icon">🔍</span>
+                    </div>
+                </div>
+
+                <!-- Sites List -->
+                <div class="cards-grid" id="sitesList">
+                    <!-- Sites will be rendered here -->
+                </div>
+
+                <div class="empty-state" id="sitesEmptyState" style="display: none;">
+                    <span class="empty-icon">🌐</span>
+                    <h3>Zadne weby</h3>
+                    <p>Zacnete pridanim vaseho prvniho webu</p>
+                    <button class="btn btn-primary" data-action="add-site">
+                        <span>➕</span> Pridat web
+                    </button>
+                </div>
+            </section>
+
+            <!-- Backups View -->
+            <section class="view" id="backupsView">
+                <div class="view-header">
+                    <div class="view-header-left">
+                        <h2 class="view-title">Zalohy</h2>
+                        <p class="view-subtitle">Sprava zaloh vasich webu a serveru</p>
+                    </div>
+                    <div class="view-header-right">
+                        <button class="btn btn-primary" id="createBackupBtn">
+                            <span>➕</span> Nova zaloha
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Backups Filters -->
+                <div class="filters-bar">
+                    <div class="filter-group">
+                        <button class="filter-btn active" data-filter="all">Vsechny</button>
+                        <button class="filter-btn" data-filter="full">Kompletni</button>
+                        <button class="filter-btn" data-filter="database">Databaze</button>
+                        <button class="filter-btn" data-filter="files">Soubory</button>
+                    </div>
+                    <div class="search-box">
+                        <input type="text" id="backupSearch" placeholder="Hledat zalohu..." class="search-input">
+                        <span class="search-icon">🔍</span>
+                    </div>
+                </div>
+
+                <!-- Backups List -->
+                <div class="table-container">
+                    <table class="data-table" id="backupsTable">
+                        <thead>
+                            <tr>
+                                <th>Nazev</th>
+                                <th>Typ</th>
+                                <th>Velikost</th>
+                                <th>Datum</th>
+                                <th>Akce</th>
+                            </tr>
+                        </thead>
+                        <tbody id="backupsList">
+                            <!-- Backups will be rendered here -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="empty-state" id="backupsEmptyState" style="display: none;">
+                    <span class="empty-icon">💾</span>
+                    <h3>Zadne zalohy</h3>
+                    <p>Vytvorte zalohu pro ochranu vasich dat</p>
+                    <button class="btn btn-primary" data-action="create-backup">
+                        <span>➕</span> Vytvorit zalohu
+                    </button>
+                </div>
+            </section>
+
+            <!-- Activity View -->
+            <section class="view" id="activityView">
+                <div class="view-header">
+                    <div class="view-header-left">
+                        <h2 class="view-title">Historie aktivit</h2>
+                        <p class="view-subtitle">Vsechny zmeny a udalosti</p>
+                    </div>
+                    <div class="view-header-right">
+                        <button class="btn btn-secondary" id="clearActivityBtn">
+                            <span>🗑️</span> Vymazat historii
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Activity Timeline -->
+                <div class="activity-timeline" id="activityTimeline">
+                    <!-- Activity items will be rendered here -->
+                </div>
+
+                <div class="empty-state" id="activityEmptyState" style="display: none;">
+                    <span class="empty-icon">📋</span>
+                    <h3>Zadna aktivita</h3>
+                    <p>Historie aktivit je prazdna</p>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <span class="footer-text">Server Hub - Offline Server Management</span>
+                <span class="footer-version">v1.0.0 | PWA</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modal: Add/Edit Server -->
+    <div class="modal-overlay" id="serverModal">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2 class="modal-title" id="serverModalTitle">Pridat server</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="serverForm">
+                    <input type="hidden" id="serverId">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="serverName">Nazev serveru *</label>
+                            <input type="text" id="serverName" required placeholder="Muj server">
+                        </div>
+                        <div class="form-group">
+                            <label for="serverProvider">Provider</label>
+                            <select id="serverProvider">
+                                <option value="custom">Vlastni server</option>
+                                <option value="digitalocean">DigitalOcean</option>
+                                <option value="vultr">Vultr</option>
+                                <option value="hetzner">Hetzner</option>
+                                <option value="aws">AWS EC2</option>
+                                <option value="gcp">Google Cloud</option>
+                                <option value="linode">Linode</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="serverIP">IP adresa</label>
+                            <input type="text" id="serverIP" placeholder="192.168.1.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="serverStatus">Status</label>
+                            <select id="serverStatus">
+                                <option value="pending">Cekajici</option>
+                                <option value="active">Aktivni</option>
+                                <option value="stopped">Zastaveny</option>
+                                <option value="error">Chyba</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="serverRegion">Region</label>
+                            <input type="text" id="serverRegion" placeholder="eu-central-1">
+                        </div>
+                        <div class="form-group">
+                            <label for="serverSize">Velikost</label>
+                            <input type="text" id="serverSize" placeholder="2 vCPU, 4 GB RAM">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="serverWebServer">Web server</label>
+                            <select id="serverWebServer">
+                                <option value="nginx">Nginx (LEMP)</option>
+                                <option value="openlitespeed">OpenLiteSpeed</option>
+                                <option value="apache">Apache</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="serverPHP">PHP verze</label>
+                            <select id="serverPHP">
+                                <option value="8.3">PHP 8.3</option>
+                                <option value="8.2">PHP 8.2</option>
+                                <option value="8.1">PHP 8.1</option>
+                                <option value="8.0">PHP 8.0</option>
+                                <option value="7.4">PHP 7.4</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="serverOS">Operacni system</label>
+                            <input type="text" id="serverOS" placeholder="Ubuntu 22.04 LTS">
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" data-close-modal>Zrusit</button>
+                        <button type="submit" class="btn btn-primary">Ulozit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Add/Edit Site -->
+    <div class="modal-overlay" id="siteModal">
+        <div class="modal-content modal-lg">
+            <div class="modal-header">
+                <h2 class="modal-title" id="siteModalTitle">Pridat web</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="siteForm">
+                    <input type="hidden" id="siteId">
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="siteName">Nazev webu *</label>
+                            <input type="text" id="siteName" required placeholder="Muj web">
+                        </div>
+                        <div class="form-group">
+                            <label for="siteDomain">Domena *</label>
+                            <input type="text" id="siteDomain" required placeholder="example.com">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="siteServer">Server</label>
+                            <select id="siteServer">
+                                <option value="">-- Vyberte server --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="siteType">Typ</label>
+                            <select id="siteType">
+                                <option value="wordpress">WordPress</option>
+                                <option value="laravel">Laravel</option>
+                                <option value="php">PHP</option>
+                                <option value="static">Staticka stranka</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="siteStatus">Status</label>
+                            <select id="siteStatus">
+                                <option value="pending">Cekajici</option>
+                                <option value="active">Aktivni</option>
+                                <option value="maintenance">Udrzba</option>
+                                <option value="error">Chyba</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="sitePHP">PHP verze</label>
+                            <select id="sitePHP">
+                                <option value="">Podle serveru</option>
+                                <option value="8.3">PHP 8.3</option>
+                                <option value="8.2">PHP 8.2</option>
+                                <option value="8.1">PHP 8.1</option>
+                                <option value="8.0">PHP 8.0</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group form-checkbox">
+                            <label>
+                                <input type="checkbox" id="siteSSL">
+                                SSL aktivni (Let's Encrypt)
+                            </label>
+                        </div>
+                        <div class="form-group form-checkbox">
+                            <label>
+                                <input type="checkbox" id="siteStaging">
+                                Staging prostredi
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="form-group" id="wpSettingsGroup" style="display: none;">
+                        <h4>WordPress nastaveni</h4>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="siteWPVersion">WP verze</label>
+                                <input type="text" id="siteWPVersion" placeholder="6.4">
+                            </div>
+                            <div class="form-group">
+                                <label for="siteWPAdmin">Admin URL</label>
+                                <input type="text" id="siteWPAdmin" placeholder="/wp-admin">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" data-close-modal>Zrusit</button>
+                        <button type="submit" class="btn btn-primary">Ulozit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Create Backup -->
+    <div class="modal-overlay" id="backupModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Vytvorit zalohu</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="backupForm">
+                    <div class="form-group">
+                        <label for="backupName">Nazev zalohy</label>
+                        <input type="text" id="backupName" placeholder="Zaloha">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="backupSite">Web</label>
+                        <select id="backupSite">
+                            <option value="">-- Vyberte web --</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="backupType">Typ zalohy</label>
+                        <select id="backupType">
+                            <option value="full">Kompletni (soubory + databaze)</option>
+                            <option value="database">Pouze databaze</option>
+                            <option value="files">Pouze soubory</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="backupStorage">Uloziste</label>
+                        <select id="backupStorage">
+                            <option value="local">Lokalni</option>
+                            <option value="s3">Amazon S3</option>
+                            <option value="r2">Cloudflare R2</option>
+                            <option value="gdrive">Google Drive</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="backupNotes">Poznamky</label>
+                        <textarea id="backupNotes" rows="3" placeholder="Vase poznamky..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" data-close-modal>Zrusit</button>
+                        <button type="submit" class="btn btn-primary">Vytvorit zalohu</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal: Confirm Delete -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-content modal-sm">
+            <div class="modal-header">
+                <h2 class="modal-title">Potvrzeni</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="confirm-message" id="confirmMessage">Opravdu chcete smazat tuto polozku?</p>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" data-close-modal>Zrusit</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Smazat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="db.js?v=1.0.0"></script>
+    <script src="app.js?v=1.0.0"></script>
+</body>
+</html>

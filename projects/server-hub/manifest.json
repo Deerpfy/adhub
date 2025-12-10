@@ -1,0 +1,23 @@
+{
+  "name": "Server Hub - Offline Server Management",
+  "short_name": "Server Hub",
+  "description": "Offline-first PWA for managing servers, sites, and backups. Inspired by xCloud control panel.",
+  "version": "1.0.0",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#8b5cf6",
+  "orientation": "any",
+  "scope": "./",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%238b5cf6' rx='20' width='100' height='100'/><text x='50' y='68' font-size='50' text-anchor='middle' fill='white'>SH</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["utilities", "productivity", "developer"],
+  "lang": "cs",
+  "dir": "ltr"
+}

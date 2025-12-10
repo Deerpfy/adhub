@@ -309,6 +309,8 @@ const BASE_TRANSLATIONS = {
         tool_docbook_desc: 'Offline dokumentační platforma inspirovaná GitBookem. WYSIWYG Markdown editor, hierarchická navigace, fulltext vyhledávání a export. 100% offline PWA.',
         tool_api_catalog_name: 'API Katalog',
         tool_api_catalog_desc: 'Offline-first katalog 10,000+ API. Procházejte, vyhledávejte a spravujte API podle kategorií. PWA s IndexedDB, import/export dat. Založeno na analýze API-mega-list.',
+        tool_server_hub_name: 'Server Hub',
+        tool_server_hub_desc: 'Offline-first PWA pro správu serverů, webů a záloh. Inspirováno xCloud control panelem. IndexedDB databáze, export/import dat.',
         category_gaming: 'gaming',
         category_documentation: 'dokumentace',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
@@ -686,6 +688,8 @@ const BASE_TRANSLATIONS = {
         tool_docbook_desc: 'Offline documentation platform inspired by GitBook. WYSIWYG Markdown editor, hierarchical navigation, fulltext search and export. 100% offline PWA.',
         tool_api_catalog_name: 'API Catalog',
         tool_api_catalog_desc: 'Offline-first catalog of 10,000+ APIs. Browse, search and manage APIs by category. PWA with IndexedDB, data import/export. Based on API-mega-list analysis.',
+        tool_server_hub_name: 'Server Hub',
+        tool_server_hub_desc: 'Offline-first PWA for managing servers, sites, and backups. Inspired by xCloud control panel. IndexedDB database, data export/import.',
         category_gaming: 'gaming',
         category_documentation: 'documentation',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
@@ -1454,6 +1458,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["api", "catalog", "offline", "pwa", "database"]
+            },
+            {
+                "id": "server-hub",
+                "name": t('tool_server_hub_name'),
+                "description": t('tool_server_hub_desc'),
+                "category": "tools",
+                "icon": "🖥️",
+                "url": "projects/server-hub/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["server", "hosting", "management", "offline", "pwa"]
             }
         ],
         "links": [
