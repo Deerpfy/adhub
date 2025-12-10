@@ -3,7 +3,7 @@
  * Enables offline functionality by caching all assets
  */
 
-const CACHE_NAME = 'docbook-v1.0.1';
+const CACHE_NAME = 'docbook-v1.0.2';
 const CACHE_ASSETS = [
     './',
     './index.html',
