@@ -398,6 +398,8 @@ body::before {
 .filter-tabs {
     display: flex;
     gap: 6px;
+    min-height: 42px; /* CLS prevention */
+    contain: layout style;
     flex-wrap: wrap;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -430,6 +432,9 @@ body::before {
     white-space: nowrap;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    min-width: 80px; /* CLS prevention */
+    min-height: 36px;
+    box-sizing: border-box;
 }
 
 .filter-tab:active {
@@ -564,6 +569,8 @@ body::before {
 /* Content Sections - Oddělení nástrojů a odkazů */
 .content-section {
     margin-bottom: 32px;
+    min-height: 200px; /* CLS prevention - reserve space */
+    contain: layout style;
 }
 
 .section-header {
@@ -573,6 +580,7 @@ body::before {
     gap: 16px;
     margin-bottom: 20px;
     padding: 16px 20px;
+    min-height: 48px; /* CLS prevention */
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 14px;
@@ -636,6 +644,10 @@ body::before {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
     gap: 16px;
+    min-height: 180px; /* CLS prevention */
+    contain: layout;
+    content-visibility: auto; /* Lazy rendering for off-screen content */
+    contain-intrinsic-size: auto 400px;
 }
 
 .tool-card {
@@ -651,6 +663,7 @@ body::before {
     backdrop-filter: blur(10px);
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    contain: layout style; /* CLS prevention */
 }
 
 .tool-card::before {
