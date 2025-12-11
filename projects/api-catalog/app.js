@@ -12,7 +12,7 @@
 // Constants & Configuration
 // ============================================
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.1.0';
 const PAGE_SIZE_DEFAULT = 50;
 
 // Category definitions based on API-mega-list analysis
@@ -483,11 +483,13 @@ function renderApiCard(api) {
                     ${isFavorite ? '&#9733;' : '&#9734;'}
                 </button>
             </div>
+            ${api.author ? `<div class="api-author">&#128100; ${escapeHtml(api.author)}</div>` : ''}
             <p class="api-description">${escapeHtml(api.description || 'Bez popisu')}</p>
             ${tags ? `<div class="api-tags">${tags}</div>` : ''}
             <div class="api-card-footer">
-                <span class="api-category">${escapeHtml(api.category || 'other')}</span>
+                <span class="api-category">${escapeHtml(category?.name || api.category || 'other')}</span>
                 ${api.platform ? `<span class="api-platform">&#9889; ${escapeHtml(api.platform)}</span>` : ''}
+                ${api.pricing ? `<span class="api-pricing">&#128176; ${escapeHtml(api.pricing)}</span>` : ''}
             </div>
         </article>
     `;
@@ -553,48 +555,99 @@ async function openApiDetail(apiId) {
                 </div>
             </div>
 
+            ${api.author ? `
+                <div class="api-detail-section api-detail-author">
+                    <span class="author-badge">&#128100; Autor: <strong>${escapeHtml(api.author)}</strong></span>
+                </div>
+            ` : ''}
+
             ${api.description ? `
                 <div class="api-detail-section">
-                    <h4>Popis</h4>
+                    <h4>&#128221; Popis</h4>
                     <p>${escapeHtml(api.description)}</p>
                 </div>
             ` : ''}
 
+            <div class="api-detail-grid">
+                ${api.platform ? `
+                    <div class="api-detail-card">
+                        <div class="detail-card-icon">&#9889;</div>
+                        <div class="detail-card-label">Platforma</div>
+                        <div class="detail-card-value">${escapeHtml(api.platform)}</div>
+                    </div>
+                ` : ''}
+
+                ${api.pricing ? `
+                    <div class="api-detail-card">
+                        <div class="detail-card-icon">&#128176;</div>
+                        <div class="detail-card-label">Cena</div>
+                        <div class="detail-card-value">${escapeHtml(api.pricing)}</div>
+                    </div>
+                ` : ''}
+
+                ${category ? `
+                    <div class="api-detail-card">
+                        <div class="detail-card-icon">${category.icon}</div>
+                        <div class="detail-card-label">Kategorie</div>
+                        <div class="detail-card-value">${escapeHtml(category.name)}</div>
+                    </div>
+                ` : ''}
+            </div>
+
             ${api.tags?.length ? `
                 <div class="api-detail-section">
-                    <h4>Tagy</h4>
+                    <h4>&#127991; Tagy</h4>
                     <div class="api-detail-tags">${tags}</div>
                 </div>
             ` : ''}
 
-            ${api.platform ? `
-                <div class="api-detail-section">
-                    <h4>Platforma</h4>
-                    <p>${escapeHtml(api.platform)}</p>
+            <div class="api-detail-section api-detail-links">
+                <h4>&#128279; Odkazy</h4>
+                <div class="api-links-grid">
+                    ${api.url ? `
+                        <a href="${escapeHtml(api.url)}" target="_blank" rel="noopener" class="api-link-btn primary">
+                            <span>&#128279;</span> Otevrit API
+                        </a>
+                    ` : ''}
+                    ${api.documentation ? `
+                        <a href="${escapeHtml(api.documentation)}" target="_blank" rel="noopener" class="api-link-btn secondary">
+                            <span>&#128214;</span> Dokumentace
+                        </a>
+                    ` : ''}
+                    ${api.docsUrl ? `
+                        <a href="${escapeHtml(api.docsUrl)}" target="_blank" rel="noopener" class="api-link-btn secondary">
+                            <span>&#128214;</span> Dokumentace
+                        </a>
+                    ` : ''}
                 </div>
-            ` : ''}
+            </div>
 
-            ${api.url ? `
-                <div class="api-detail-section">
-                    <h4>URL</h4>
-                    <a href="${escapeHtml(api.url)}" target="_blank" rel="noopener" class="api-detail-link">${escapeHtml(api.url)}</a>
+            <div class="api-detail-section api-detail-meta">
+                <h4>&#128736; Metadata</h4>
+                <div class="meta-grid">
+                    <div class="meta-item">
+                        <span class="meta-label">ID</span>
+                        <span class="meta-value">${escapeHtml(api.id)}</span>
+                    </div>
+                    ${api.sourceUrl ? `
+                        <div class="meta-item">
+                            <span class="meta-label">Zdrojova URL</span>
+                            <a href="${escapeHtml(api.sourceUrl)}" target="_blank" rel="noopener" class="meta-value meta-link">${escapeHtml(api.sourceUrl)}</a>
+                        </div>
+                    ` : ''}
+                    ${api.scrapedAt ? `
+                        <div class="meta-item">
+                            <span class="meta-label">Scrapovano</span>
+                            <span class="meta-value">${formatDate(api.scrapedAt)}</span>
+                        </div>
+                    ` : ''}
+                    ${api.createdAt ? `
+                        <div class="meta-item">
+                            <span class="meta-label">Vytvoreno</span>
+                            <span class="meta-value">${formatDate(api.createdAt)}</span>
+                        </div>
+                    ` : ''}
                 </div>
-            ` : ''}
-
-            ${api.docsUrl ? `
-                <div class="api-detail-section">
-                    <h4>Dokumentace</h4>
-                    <a href="${escapeHtml(api.docsUrl)}" target="_blank" rel="noopener" class="api-detail-link">${escapeHtml(api.docsUrl)}</a>
-                </div>
-            ` : ''}
-
-            <div class="api-detail-section">
-                <h4>Metadata</h4>
-                <p>
-                    <strong>ID:</strong> ${api.id}<br>
-                    <strong>Vytvoreno:</strong> ${formatDate(api.createdAt)}<br>
-                    <strong>Aktualizovano:</strong> ${formatDate(api.updatedAt)}
-                </p>
             </div>
         </div>
     `;
@@ -824,6 +877,29 @@ async function loadSampleData() {
     showLoading(true);
 
     try {
+        // Try to load real data from JSON file first
+        const response = await fetch('./data/api-catalog-data.json');
+
+        if (response.ok) {
+            const jsonData = await response.json();
+            const apis = jsonData.data?.apis || [];
+
+            if (apis.length > 0) {
+                await APICatalogDB.APIStore.bulkPut(apis);
+                await APICatalogDB.SyncStore.setLastSync();
+
+                await loadData();
+                await updateStats();
+                renderCategoryFilters();
+                applyFilters();
+
+                showToast(`Nacteno ${apis.length} API z katalogu`, 'success');
+                showLoading(false);
+                return;
+            }
+        }
+
+        // Fallback to sample data if JSON not available
         const sampleApis = generateSampleApis();
 
         await APICatalogDB.APIStore.bulkPut(sampleApis);
