@@ -125,28 +125,38 @@
         }
 
         /* CLS Prevention - Fixed dimensions for layout stability */
+        .controls {
+            min-height: 50px;
+            contain: layout;
+        }
         .filter-tabs {
-            min-height: 42px; /* Prevent shift when tabs load */
+            min-height: 42px;
             contain: layout style;
         }
+        /* Fixed widths for filter tabs - prevents text-change layout shifts */
         .filter-tab {
-            min-width: 80px;
+            min-width: 90px;
             min-height: 36px;
             box-sizing: border-box;
+            text-align: center;
+            justify-content: center;
         }
+        .filter-tab[data-filter="all"] { min-width: 65px; }
+        .filter-tab[data-filter="tools"] { min-width: 95px; }
+        .filter-tab[data-filter="links"] { min-width: 95px; }
         .content-section {
-            min-height: 200px; /* Reserve space for content */
+            min-height: 250px;
             contain: layout style;
         }
-        .tools-grid, .links-grid {
-            min-height: 180px; /* Minimum grid height */
+        .tools-grid {
+            min-height: 200px;
             contain: layout;
         }
         .section-header {
-            min-height: 48px; /* Fixed header height */
+            min-height: 52px;
+            contain: layout;
         }
-        /* Prevent font-induced layout shifts */
-        .tool-card, .link-card {
+        .tool-card {
             contain: layout style;
         }
     </style>
