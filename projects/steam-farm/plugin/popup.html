@@ -84,6 +84,17 @@
             box-shadow: 0 0 6px #ef4444;
         }
 
+        .status-dot.loading {
+            background: #f59e0b;
+            box-shadow: 0 0 6px #f59e0b;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
         .status-label {
             color: #a0a0b0;
             font-size: 0.85rem;
@@ -160,8 +171,8 @@
         .install-section {
             display: none;
             padding: 12px;
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), #161620);
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), #161620);
+            border: 1px solid rgba(245, 158, 11, 0.3);
             border-radius: 10px;
             margin-bottom: 12px;
         }
@@ -173,7 +184,7 @@
         .install-title {
             font-size: 0.9rem;
             font-weight: 600;
-            color: #ef4444;
+            color: #f59e0b;
             margin-bottom: 8px;
         }
 
@@ -185,13 +196,13 @@
         }
 
         .btn-install {
-            background: linear-gradient(135deg, #ef4444, #dc2626);
-            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
         }
 
         .btn-install:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
         }
 
         .install-steps {
@@ -216,13 +227,6 @@
             margin-bottom: 4px;
         }
 
-        .install-steps code {
-            background: #2a2a3a;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-family: monospace;
-        }
-
         .spinner {
             display: inline-block;
             width: 14px;
@@ -236,19 +240,32 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+
+        .success-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            background: rgba(16, 185, 129, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            font-size: 0.7rem;
+            color: #10b981;
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <span class="logo-icon">🎮</span>
         <span class="logo-text">Steam Farm</span>
-        <span class="version">v1.2</span>
+        <span class="version">v2.0</span>
     </div>
 
     <div class="install-section" id="installSection">
-        <div class="install-title">⚠️ Native Host není nainstalován</div>
+        <div class="install-title">Steam Farm Service není spuštěn</div>
         <div class="install-desc">
-            Pro fungování Steam Farm je potřeba nainstalovat Native Host komponentu.
+            Pro fungování je potřeba nainstalovat a spustit Steam Farm Service.
+            Stačí stáhnout a spustit instalátor - žádné další kroky nejsou potřeba!
         </div>
         <button class="btn btn-install" id="installBtn">
             <span>📥</span>
@@ -256,24 +273,23 @@
         </button>
         <div class="install-steps" id="installSteps">
             <ol>
-                <li>Stáhněte instalátor pro váš systém</li>
-                <li>Spusťte stažený soubor</li>
-                <li>Zadejte ID rozšíření: <code id="extensionId"></code></li>
-                <li>Restartujte prohlížeč</li>
+                <li>Spusťte stažený instalátor</li>
+                <li>Service se automaticky nainstaluje a spustí</li>
+                <li>Obnovte tuto stránku</li>
             </ol>
         </div>
     </div>
 
     <div class="status">
         <div class="status-row">
-            <span class="status-dot" id="nativeHostDot"></span>
-            <span class="status-label">Native Host:</span>
-            <span class="status-value" id="nativeHostStatus">Kontroluji...</span>
+            <span class="status-dot loading" id="serviceDot"></span>
+            <span class="status-label">Service:</span>
+            <span class="status-value" id="serviceStatus">Kontroluji...</span>
         </div>
         <div class="status-row">
             <span class="status-dot" id="steamDot"></span>
             <span class="status-label">Steam:</span>
-            <span class="status-value" id="steamStatus">Nepřihlášeno</span>
+            <span class="status-value" id="steamStatus">-</span>
         </div>
     </div>
 

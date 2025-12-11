@@ -1,15 +1,19 @@
 {
-    "name": "adhub-steam-farm-host",
-    "version": "1.2.0",
-    "description": "Native Messaging Host pro Steam Farm - AdHUB",
-    "main": "steam-farm-host.js",
-    "bin": "steam-farm-host.js",
+    "name": "adhub-steam-farm-service",
+    "version": "2.0.0",
+    "description": "WebSocket Service pro Steam Farm - AdHUB (no Extension ID required)",
+    "main": "steam-farm-service.js",
+    "bin": {
+        "steam-farm-service": "steam-farm-service.js",
+        "steam-farm-host": "steam-farm-host.js"
+    },
     "scripts": {
-        "start": "node steam-farm-host.js",
+        "start": "node steam-farm-service.js",
+        "start:legacy": "node steam-farm-host.js",
         "build": "npm run build:win && npm run build:linux && npm run build:mac",
-        "build:win": "pkg . --targets node18-win-x64 --output dist/steam-farm-host-win.exe",
-        "build:linux": "pkg . --targets node18-linux-x64 --output dist/steam-farm-host-linux",
-        "build:mac": "pkg . --targets node18-macos-x64 --output dist/steam-farm-host-macos"
+        "build:win": "pkg steam-farm-service.js --targets node18-win-x64 --output dist/steam-farm-service-win.exe",
+        "build:linux": "pkg steam-farm-service.js --targets node18-linux-x64 --output dist/steam-farm-service-linux",
+        "build:mac": "pkg steam-farm-service.js --targets node18-macos-x64 --output dist/steam-farm-service-macos"
     },
     "pkg": {
         "assets": [],
@@ -18,7 +22,8 @@
     "dependencies": {
         "steam-user": "^5.0.10",
         "steam-totp": "^2.1.2",
-        "argon2-browser": "^1.18.0"
+        "argon2-browser": "^1.18.0",
+        "ws": "^8.14.2"
     },
     "devDependencies": {
         "pkg": "^5.8.1"

@@ -1,56 +1,153 @@
 /**
  * Steam Farm - Background Service Worker
- * Komunikace mezi webem a Native Host přes Native Messaging
+ * Komunikace se Steam Farm Service přes WebSocket
+ *
+ * v2.0.0 - WebSocket architektura (bez nutnosti Native Messaging registrace)
  */
 
-const VERSION = '1.2.0';
-const NATIVE_HOST_NAME = 'com.adhub.steamfarm';
+const VERSION = '2.0.0';
+const SERVICE_URL = 'ws://127.0.0.1:17532';
+const STATUS_URL = 'http://127.0.0.1:17532/status';
 
 // State
-let nativePort = null;
+let ws = null;
 let connectedTabs = new Set();
+let isServiceRunning = false;
 let isLoggedIn = false;
 let currentUser = null;
 let farmingGames = [];
+let reconnectTimer = null;
+let messageQueue = [];
 
-// Connect to native host
-function connectToNativeHost() {
+// Check if service is running via HTTP
+async function checkServiceStatus() {
     try {
-        nativePort = chrome.runtime.connectNative(NATIVE_HOST_NAME);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
 
-        nativePort.onMessage.addListener(handleNativeMessage);
-
-        nativePort.onDisconnect.addListener(() => {
-            const error = chrome.runtime.lastError;
-            console.log('[SteamFarm] Native host disconnected:', error?.message);
-            nativePort = null;
-            isLoggedIn = false;
-            currentUser = null;
-            farmingGames = [];
-
-            // Notify all tabs
-            broadcastToTabs({
-                type: 'STEAM_FARM_DISCONNECTED',
-                error: error?.message
-            });
+        const response = await fetch(STATUS_URL, {
+            signal: controller.signal,
+            cache: 'no-store'
         });
+        clearTimeout(timeoutId);
 
-        console.log('[SteamFarm] Connected to native host');
-        return true;
+        if (response.ok) {
+            const data = await response.json();
+            isServiceRunning = true;
+            isLoggedIn = data.isLoggedIn;
+            currentUser = data.username ? { personaName: data.username } : null;
+            farmingGames = [];
+            return data;
+        }
     } catch (error) {
-        console.error('[SteamFarm] Failed to connect to native host:', error);
-        nativePort = null;
-        return false;
+        // Service not running
     }
+    isServiceRunning = false;
+    isLoggedIn = false;
+    currentUser = null;
+    farmingGames = [];
+    return null;
 }
 
-// Handle messages from native host
-function handleNativeMessage(message) {
-    console.log('[SteamFarm] Native message:', message);
+// Connect to WebSocket service
+function connectWebSocket() {
+    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+        return Promise.resolve(true);
+    }
+
+    return new Promise((resolve) => {
+        try {
+            ws = new WebSocket(SERVICE_URL);
+
+            ws.onopen = () => {
+                console.log('[SteamFarm] WebSocket connected');
+                isServiceRunning = true;
+
+                // Process queued messages
+                while (messageQueue.length > 0) {
+                    const msg = messageQueue.shift();
+                    ws.send(JSON.stringify(msg));
+                }
+
+                resolve(true);
+            };
+
+            ws.onmessage = (event) => {
+                try {
+                    const message = JSON.parse(event.data);
+                    handleServiceMessage(message);
+                } catch (e) {
+                    console.error('[SteamFarm] Failed to parse message:', e);
+                }
+            };
+
+            ws.onclose = () => {
+                console.log('[SteamFarm] WebSocket disconnected');
+                ws = null;
+                isServiceRunning = false;
+
+                // Notify tabs about disconnection
+                broadcastToTabs({
+                    type: 'STEAM_FARM_SERVICE_DISCONNECTED'
+                });
+
+                // Try to reconnect after delay
+                if (!reconnectTimer) {
+                    reconnectTimer = setTimeout(() => {
+                        reconnectTimer = null;
+                        connectWebSocket();
+                    }, 5000);
+                }
+            };
+
+            ws.onerror = (error) => {
+                console.error('[SteamFarm] WebSocket error:', error);
+                ws = null;
+                isServiceRunning = false;
+                resolve(false);
+            };
+
+            // Timeout for connection
+            setTimeout(() => {
+                if (ws && ws.readyState === WebSocket.CONNECTING) {
+                    ws.close();
+                    resolve(false);
+                }
+            }, 3000);
+
+        } catch (error) {
+            console.error('[SteamFarm] Failed to create WebSocket:', error);
+            isServiceRunning = false;
+            resolve(false);
+        }
+    });
+}
+
+// Handle messages from service
+function handleServiceMessage(message) {
+    console.log('[SteamFarm] Service message:', message);
 
     switch (message.type) {
+        case 'CONNECTED':
+            isServiceRunning = true;
+            isLoggedIn = message.isLoggedIn;
+            if (message.username) {
+                currentUser = { personaName: message.username };
+            }
+            farmingGames = message.farmingGames || [];
+            broadcastToTabs({
+                type: 'STEAM_FARM_SERVICE_CONNECTED',
+                data: message
+            });
+            break;
+
         case 'PONG':
-            // Native host is responsive
+            // Service is responsive
+            isLoggedIn = message.isLoggedIn;
+            if (message.username) {
+                currentUser = { personaName: message.username };
+            }
+            farmingGames = message.farmingGames || [];
             break;
 
         case 'LOGIN_RESULT':
@@ -152,20 +249,21 @@ function handleNativeMessage(message) {
     }
 }
 
-// Send message to native host
-function sendToNativeHost(message) {
-    if (!nativePort) {
-        const connected = connectToNativeHost();
+// Send message to service
+async function sendToService(message) {
+    // First ensure we're connected
+    if (!ws || ws.readyState !== WebSocket.OPEN) {
+        const connected = await connectWebSocket();
         if (!connected) {
             return false;
         }
     }
 
     try {
-        nativePort.postMessage(message);
+        ws.send(JSON.stringify(message));
         return true;
     } catch (error) {
-        console.error('[SteamFarm] Failed to send to native host:', error);
+        console.error('[SteamFarm] Failed to send to service:', error);
         return false;
     }
 }
@@ -189,112 +287,119 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         connectedTabs.add(tabId);
     }
 
-    switch (message.type) {
-        case 'STEAM_FARM_PING':
-            // Check native host connection
-            if (!nativePort) {
-                connectToNativeHost();
-            }
+    // Handle async operations
+    (async () => {
+        switch (message.type) {
+            case 'STEAM_FARM_PING':
+                // Check service status
+                const status = await checkServiceStatus();
 
-            sendResponse({
-                type: 'STEAM_FARM_PONG',
-                source: 'steam-farm-extension',
-                data: {
-                    extensionId: chrome.runtime.id,
-                    nativeHostConnected: !!nativePort,
-                    hasSession: isLoggedIn,
-                    version: VERSION
+                sendResponse({
+                    type: 'STEAM_FARM_PONG',
+                    source: 'steam-farm-extension',
+                    data: {
+                        extensionId: chrome.runtime.id,
+                        serviceRunning: isServiceRunning,
+                        hasSession: isLoggedIn,
+                        version: VERSION,
+                        serviceVersion: status?.version
+                    }
+                });
+
+                // If service is running, establish WebSocket connection
+                if (isServiceRunning) {
+                    connectWebSocket();
                 }
-            });
-            break;
+                break;
 
-        case 'STEAM_FARM_LOGIN':
-            sendToNativeHost({
-                type: 'LOGIN',
-                data: message.data
-            });
-            sendResponse({ success: true });
-            break;
+            case 'STEAM_FARM_LOGIN':
+                await sendToService({
+                    type: 'LOGIN',
+                    data: message.data
+                });
+                sendResponse({ success: true });
+                break;
 
-        case 'STEAM_FARM_STEAM_GUARD_CODE':
-            sendToNativeHost({
-                type: 'STEAM_GUARD_CODE',
-                data: message.data
-            });
-            sendResponse({ success: true });
-            break;
+            case 'STEAM_FARM_STEAM_GUARD_CODE':
+                await sendToService({
+                    type: 'STEAM_GUARD_CODE',
+                    data: message.data
+                });
+                sendResponse({ success: true });
+                break;
 
-        case 'STEAM_FARM_LOGOUT':
-            sendToNativeHost({ type: 'LOGOUT' });
-            isLoggedIn = false;
-            currentUser = null;
-            farmingGames = [];
-            sendResponse({ success: true });
-            break;
+            case 'STEAM_FARM_LOGOUT':
+                await sendToService({ type: 'LOGOUT' });
+                isLoggedIn = false;
+                currentUser = null;
+                farmingGames = [];
+                sendResponse({ success: true });
+                break;
 
-        case 'STEAM_FARM_RESTORE_SESSION':
-            sendToNativeHost({ type: 'RESTORE_SESSION' });
-            sendResponse({ success: true });
-            break;
+            case 'STEAM_FARM_RESTORE_SESSION':
+                await sendToService({ type: 'RESTORE_SESSION' });
+                sendResponse({ success: true });
+                break;
 
-        case 'STEAM_FARM_CHECK_VAULT_STATUS':
-            sendToNativeHost({ type: 'CHECK_VAULT_STATUS' });
-            sendResponse({ success: true });
-            break;
+            case 'STEAM_FARM_CHECK_VAULT_STATUS':
+                await sendToService({ type: 'CHECK_VAULT_STATUS' });
+                sendResponse({ success: true });
+                break;
 
-        case 'STEAM_FARM_CREATE_VAULT':
-            sendToNativeHost({
-                type: 'CREATE_VAULT',
-                data: message.data
-            });
-            sendResponse({ success: true });
-            break;
+            case 'STEAM_FARM_CREATE_VAULT':
+                await sendToService({
+                    type: 'CREATE_VAULT',
+                    data: message.data
+                });
+                sendResponse({ success: true });
+                break;
 
-        case 'STEAM_FARM_UNLOCK_VAULT':
-            sendToNativeHost({
-                type: 'UNLOCK_VAULT',
-                data: message.data
-            });
-            sendResponse({ success: true });
-            break;
+            case 'STEAM_FARM_UNLOCK_VAULT':
+                await sendToService({
+                    type: 'UNLOCK_VAULT',
+                    data: message.data
+                });
+                sendResponse({ success: true });
+                break;
 
-        case 'STEAM_FARM_DELETE_VAULT':
-            sendToNativeHost({ type: 'DELETE_VAULT' });
-            sendResponse({ success: true });
-            break;
+            case 'STEAM_FARM_DELETE_VAULT':
+                await sendToService({ type: 'DELETE_VAULT' });
+                sendResponse({ success: true });
+                break;
 
-        case 'STEAM_FARM_GET_GAMES':
-            sendToNativeHost({ type: 'GET_GAMES' });
-            sendResponse({ success: true });
-            break;
+            case 'STEAM_FARM_GET_GAMES':
+                await sendToService({ type: 'GET_GAMES' });
+                sendResponse({ success: true });
+                break;
 
-        case 'STEAM_FARM_GET_CARDS':
-            sendToNativeHost({ type: 'GET_CARDS' });
-            sendResponse({ success: true });
-            break;
+            case 'STEAM_FARM_GET_CARDS':
+                await sendToService({ type: 'GET_CARDS' });
+                sendResponse({ success: true });
+                break;
 
-        case 'STEAM_FARM_START_FARMING':
-            sendToNativeHost({
-                type: 'START_FARMING',
-                data: message.data
-            });
-            sendResponse({ success: true });
-            break;
+            case 'STEAM_FARM_START_FARMING':
+                await sendToService({
+                    type: 'START_FARMING',
+                    data: message.data
+                });
+                sendResponse({ success: true });
+                break;
 
-        case 'STEAM_FARM_STOP_FARMING':
-            sendToNativeHost({ type: 'STOP_FARMING' });
-            farmingGames = [];
-            sendResponse({ success: true });
-            break;
+            case 'STEAM_FARM_STOP_FARMING':
+                await sendToService({ type: 'STOP_FARMING' });
+                farmingGames = [];
+                sendResponse({ success: true });
+                break;
 
-        case 'STEAM_FARM_UPDATE_FARMING':
-            sendToNativeHost({
-                type: 'UPDATE_FARMING',
-                data: message.data
-            });
-            sendResponse({ success: true });
-            break;
-    }
+            case 'STEAM_FARM_UPDATE_FARMING':
+                await sendToService({
+                    type: 'UPDATE_FARMING',
+                    data: message.data
+                });
+                sendResponse({ success: true });
+                break;
+        }
+    })();
 
     return true; // Keep message channel open for async response
 });
@@ -304,7 +409,11 @@ chrome.tabs.onRemoved.addListener((tabId) => {
     connectedTabs.delete(tabId);
 });
 
-// Initialize connection on startup
-connectToNativeHost();
+// Initialize - try to connect to service
+checkServiceStatus().then(status => {
+    if (status) {
+        connectWebSocket();
+    }
+});
 
 console.log('[SteamFarm] Background service worker started v' + VERSION);
