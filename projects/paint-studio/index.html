@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- SEO Meta Tags -->
+    <title>Paint Studio - Offline Digital Painting App</title>
+    <meta name="description" content="Professional offline-first digital painting application. Layers, brushes, pressure sensitivity, export to PNG. Works 100% offline.">
+    <meta name="keywords" content="paint, drawing, digital art, offline, canvas, layers, brushes">
+    <meta name="author" content="Deerpfy">
+
+    <!-- PWA -->
+    <meta name="theme-color" content="#8b5cf6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Paint Studio">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Preload critical resources -->
+    <link rel="preload" href="app/core/PaintApp.js" as="script" type="module">
+</head>
+<body>
+    <div id="app" class="app">
+        <!-- Header Toolbar -->
+        <header class="header">
+            <div class="header-left">
+                <button class="btn-icon menu-btn" id="menuBtn" title="Menu">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                        <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <h1 class="logo">
+                    <svg class="logo-icon" viewBox="0 0 24 24" width="28" height="28">
+                        <path d="M20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.996.996 0 00-1.41 0l-1.84 1.83 3.75 3.75 1.84-1.83zM3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="currentColor"/>
+                    </svg>
+                    <span>Paint Studio</span>
+                </h1>
+            </div>
+
+            <div class="header-center">
+                <!-- Undo/Redo -->
+                <div class="history-controls">
+                    <button class="btn-icon" id="undoBtn" title="Zpět (Ctrl+Z)" disabled>
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path d="M12.5 8c-2.65 0-5.05 1.04-6.83 2.73L3 8v9h9l-2.82-2.82C10.48 12.85 11.43 12.5 12.5 12.5c2.33 0 4.31 1.46 5.11 3.5l2.61-.93C19.12 11.98 16.11 8 12.5 8z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <button class="btn-icon" id="redoBtn" title="Vpřed (Ctrl+Y)" disabled>
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path d="M11.5 8c2.65 0 5.05 1.04 6.83 2.73L21 8v9h-9l2.82-2.82C13.52 12.85 12.57 12.5 11.5 12.5c-2.33 0-4.31 1.46-5.11 3.5l-2.61-.93C4.88 11.98 7.89 8 11.5 8z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Zoom controls -->
+                <div class="zoom-controls">
+                    <button class="btn-icon" id="zoomOutBtn" title="Oddálit">
+                        <svg viewBox="0 0 24 24" width="18" height="18">
+                            <path d="M19 13H5v-2h14v2z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <span class="zoom-level" id="zoomLevel">100%</span>
+                    <button class="btn-icon" id="zoomInBtn" title="Přiblížit">
+                        <svg viewBox="0 0 24 24" width="18" height="18">
+                            <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <button class="btn-icon" id="zoomFitBtn" title="Přizpůsobit">
+                        <svg viewBox="0 0 24 24" width="18" height="18">
+                            <path d="M5 15H3v4c0 1.1.9 2 2 2h4v-2H5v-4zm0-6H3V5c0-1.1.9-2 2-2h4v2H5v4zm14 8h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zM15 3v2h4v4h2V5c0-1.1-.9-2-2-2h-4z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div class="header-right">
+                <button class="btn-secondary" id="newBtn" title="Nový projekt">
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+                    </svg>
+                    <span>Nový</span>
+                </button>
+                <button class="btn-secondary" id="openBtn" title="Otevřít projekt">
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z" fill="currentColor"/>
+                    </svg>
+                    <span>Otevřít</span>
+                </button>
+                <button class="btn-primary" id="exportBtn" title="Exportovat">
+                    <svg viewBox="0 0 24 24" width="18" height="18">
+                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
+                    </svg>
+                    <span>Export</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Left Toolbar - Tools -->
+            <aside class="toolbar toolbar-left" id="toolbarLeft">
+                <div class="tool-group">
+                    <button class="tool-btn active" data-tool="brush" title="Štětec (B)">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34a.996.996 0 00-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <button class="tool-btn" data-tool="pencil" title="Tužka (P)">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.996.996 0 00-1.41 0l-1.84 1.83 3.75 3.75 1.84-1.83zM3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <button class="tool-btn" data-tool="eraser" title="Guma (E)">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M16.24 3.56l4.95 4.94c.78.79.78 2.05 0 2.84L12 20.53c-.79.78-2.05.78-2.84 0l-6.36-6.36c-.78-.78-.78-2.04 0-2.83l6.36-6.36c.79-.78 2.05-.78 2.84 0l4.24-1.42zm-8.49 16.97l8.49-8.49-4.95-4.95-8.49 8.49 4.95 4.95z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="tool-group">
+                    <button class="tool-btn" data-tool="line" title="Čára (L)">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M19 19H5V5h14v14zM5 3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2H5zm12 4H7v2h10V7z" fill="currentColor"/>
+                            <line x1="6" y1="18" x2="18" y2="6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </button>
+                    <button class="tool-btn" data-tool="rectangle" title="Obdélník (R)">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                    </button>
+                    <button class="tool-btn" data-tool="ellipse" title="Elipsa (O)">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <ellipse cx="12" cy="12" rx="9" ry="9" fill="none" stroke="currentColor" stroke-width="2"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="tool-group">
+                    <button class="tool-btn" data-tool="fill" title="Výplň (G)">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M16.56 8.94L7.62 0 6.21 1.41l2.38 2.38-5.15 5.15c-.59.59-.59 1.54 0 2.12l5.5 5.5c.29.29.68.44 1.06.44s.77-.15 1.06-.44l5.5-5.5c.59-.58.59-1.53 0-2.12zM5.21 10L10 5.21 14.79 10H5.21zM19 11.5s-2 2.17-2 3.5c0 1.1.9 2 2 2s2-.9 2-2c0-1.33-2-3.5-2-3.5z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <button class="tool-btn" data-tool="eyedropper" title="Kapátko (I)">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M20.71 5.63l-2.34-2.34a.996.996 0 00-1.41 0l-3.12 3.12-1.93-1.91-1.41 1.41 1.42 1.42L3 16.25V21h4.75l8.92-8.92 1.42 1.42 1.41-1.41-1.92-1.92 3.12-3.12c.4-.39.4-1.03.01-1.42zM6.92 19L5 17.08l8.06-8.06 1.92 1.92L6.92 19z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <button class="tool-btn" data-tool="move" title="Přesun (V)">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M10 9h4V6h3l-5-5-5 5h3v3zm-1 1H6V7l-5 5 5 5v-3h3v-4zm14 2l-5-5v3h-3v4h3v3l5-5zm-9 3h-4v3H7l5 5 5-5h-3v-3z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="tool-divider"></div>
+
+                <!-- Color Selection -->
+                <div class="color-selection">
+                    <div class="color-swatches" id="colorSwatches">
+                        <div class="color-swatch-wrapper">
+                            <div class="color-swatch primary-color" id="primaryColor" title="Primární barva" style="background: #ffffff;"></div>
+                            <div class="color-swatch secondary-color" id="secondaryColor" title="Sekundární barva" style="background: #000000;"></div>
+                        </div>
+                        <button class="swap-colors-btn" id="swapColorsBtn" title="Prohodit barvy (X)">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Canvas Container -->
+            <div class="canvas-container" id="canvasContainer">
+                <div class="canvas-wrapper" id="canvasWrapper">
+                    <!-- Canvas layers will be inserted here -->
+                    <canvas id="mainCanvas" class="main-canvas"></canvas>
+                    <canvas id="previewCanvas" class="preview-canvas"></canvas>
+                </div>
+
+                <!-- QuickShape indicator -->
+                <div class="quickshape-indicator" id="quickshapeIndicator" style="display: none;">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z" fill="currentColor"/>
+                    </svg>
+                    <span>QuickShape</span>
+                </div>
+            </div>
+
+            <!-- Right Panel - Layers & Properties -->
+            <aside class="panel panel-right" id="panelRight">
+                <!-- Brush Settings -->
+                <section class="panel-section brush-settings" id="brushSettings">
+                    <div class="panel-header">
+                        <h3>Štětec</h3>
+                        <button class="btn-icon btn-collapse" data-collapse="brushSettings">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="panel-content">
+                        <div class="setting-row">
+                            <label>Velikost</label>
+                            <div class="slider-group">
+                                <input type="range" id="brushSize" min="1" max="200" value="10" class="slider">
+                                <input type="number" id="brushSizeInput" min="1" max="200" value="10" class="slider-input">
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <label>Průhlednost</label>
+                            <div class="slider-group">
+                                <input type="range" id="brushOpacity" min="0" max="100" value="100" class="slider">
+                                <input type="number" id="brushOpacityInput" min="0" max="100" value="100" class="slider-input">
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <label>Tvrdost</label>
+                            <div class="slider-group">
+                                <input type="range" id="brushHardness" min="0" max="100" value="100" class="slider">
+                                <input type="number" id="brushHardnessInput" min="0" max="100" value="100" class="slider-input">
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <label>
+                                <input type="checkbox" id="streamlineEnabled" checked>
+                                StreamLine (vyhlazování)
+                            </label>
+                            <div class="slider-group">
+                                <input type="range" id="streamlineAmount" min="0" max="100" value="50" class="slider">
+                                <input type="number" id="streamlineAmountInput" min="0" max="100" value="50" class="slider-input">
+                            </div>
+                        </div>
+                        <div class="setting-row checkbox-row">
+                            <label>
+                                <input type="checkbox" id="pressureSensitivity" checked>
+                                Citlivost na tlak
+                            </label>
+                        </div>
+                        <div class="setting-row checkbox-row">
+                            <label>
+                                <input type="checkbox" id="quickshapeEnabled" checked>
+                                QuickShape (držet pro tvar)
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Color Picker -->
+                <section class="panel-section color-picker-section" id="colorPickerSection">
+                    <div class="panel-header">
+                        <h3>Barva</h3>
+                        <button class="btn-icon btn-collapse" data-collapse="colorPickerSection">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="panel-content">
+                        <div class="color-picker-wrapper">
+                            <div class="color-gradient" id="colorGradient">
+                                <div class="color-gradient-picker" id="colorGradientPicker"></div>
+                            </div>
+                            <div class="color-hue-slider">
+                                <input type="range" id="hueSlider" min="0" max="360" value="0" class="hue-slider">
+                            </div>
+                        </div>
+                        <div class="color-inputs">
+                            <div class="color-input-group">
+                                <label>Hex</label>
+                                <input type="text" id="colorHex" value="#ffffff" maxlength="7">
+                            </div>
+                            <div class="color-input-row">
+                                <div class="color-input-group small">
+                                    <label>R</label>
+                                    <input type="number" id="colorR" min="0" max="255" value="255">
+                                </div>
+                                <div class="color-input-group small">
+                                    <label>G</label>
+                                    <input type="number" id="colorG" min="0" max="255" value="255">
+                                </div>
+                                <div class="color-input-group small">
+                                    <label>B</label>
+                                    <input type="number" id="colorB" min="0" max="255" value="255">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="color-presets" id="colorPresets">
+                            <div class="preset-color" style="background: #ffffff;" data-color="#ffffff"></div>
+                            <div class="preset-color" style="background: #000000;" data-color="#000000"></div>
+                            <div class="preset-color" style="background: #ef4444;" data-color="#ef4444"></div>
+                            <div class="preset-color" style="background: #f97316;" data-color="#f97316"></div>
+                            <div class="preset-color" style="background: #eab308;" data-color="#eab308"></div>
+                            <div class="preset-color" style="background: #22c55e;" data-color="#22c55e"></div>
+                            <div class="preset-color" style="background: #06b6d4;" data-color="#06b6d4"></div>
+                            <div class="preset-color" style="background: #3b82f6;" data-color="#3b82f6"></div>
+                            <div class="preset-color" style="background: #8b5cf6;" data-color="#8b5cf6"></div>
+                            <div class="preset-color" style="background: #ec4899;" data-color="#ec4899"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Layers Panel -->
+                <section class="panel-section layers-panel" id="layersPanel">
+                    <div class="panel-header">
+                        <h3>Vrstvy</h3>
+                        <div class="layer-actions">
+                            <button class="btn-icon" id="addLayerBtn" title="Přidat vrstvu">
+                                <svg viewBox="0 0 24 24" width="18" height="18">
+                                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                            <button class="btn-icon" id="deleteLayerBtn" title="Smazat vrstvu">
+                                <svg viewBox="0 0 24 24" width="18" height="18">
+                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panel-content layers-content">
+                        <div class="layers-list" id="layersList">
+                            <!-- Layers will be dynamically added here -->
+                        </div>
+                    </div>
+                    <div class="blend-mode-selector">
+                        <label>Blend Mode</label>
+                        <select id="blendModeSelect">
+                            <option value="source-over">Normal</option>
+                            <option value="multiply">Multiply</option>
+                            <option value="screen">Screen</option>
+                            <option value="overlay">Overlay</option>
+                            <option value="darken">Darken</option>
+                            <option value="lighten">Lighten</option>
+                            <option value="color-dodge">Color Dodge</option>
+                            <option value="color-burn">Color Burn</option>
+                            <option value="hard-light">Hard Light</option>
+                            <option value="soft-light">Soft Light</option>
+                            <option value="difference">Difference</option>
+                            <option value="exclusion">Exclusion</option>
+                            <option value="hue">Hue</option>
+                            <option value="saturation">Saturation</option>
+                            <option value="color">Color</option>
+                            <option value="luminosity">Luminosity</option>
+                        </select>
+                    </div>
+                </section>
+            </aside>
+        </main>
+
+        <!-- Bottom Status Bar -->
+        <footer class="status-bar">
+            <div class="status-left">
+                <span class="canvas-size" id="canvasSizeStatus">1920 x 1080</span>
+                <span class="cursor-position" id="cursorPosition">X: 0, Y: 0</span>
+            </div>
+            <div class="status-center">
+                <span class="tool-info" id="toolInfo">Štětec</span>
+                <span class="pressure-info" id="pressureInfo" style="display: none;">Tlak: 0%</span>
+            </div>
+            <div class="status-right">
+                <span class="offline-status" id="offlineStatus">
+                    <svg viewBox="0 0 24 24" width="14" height="14">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+                    </svg>
+                    <span>Offline připraveno</span>
+                </span>
+            </div>
+        </footer>
+
+        <!-- Side Menu Overlay -->
+        <div class="menu-overlay" id="menuOverlay" style="display: none;">
+            <div class="menu-panel" id="menuPanel">
+                <div class="menu-header">
+                    <h2>Menu</h2>
+                    <button class="btn-icon" id="closeMenuBtn">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <nav class="menu-nav">
+                    <button class="menu-item" id="menuNew">
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z" fill="currentColor"/>
+                        </svg>
+                        <span>Nový projekt</span>
+                    </button>
+                    <button class="menu-item" id="menuOpen">
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" fill="currentColor"/>
+                        </svg>
+                        <span>Otevřít projekt</span>
+                    </button>
+                    <button class="menu-item" id="menuSave">
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path d="M17 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z" fill="currentColor"/>
+                        </svg>
+                        <span>Uložit projekt</span>
+                    </button>
+                    <div class="menu-divider"></div>
+                    <button class="menu-item" id="menuExportPng">
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
+                        </svg>
+                        <span>Export PNG</span>
+                    </button>
+                    <button class="menu-item" id="menuImport">
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z" fill="currentColor"/>
+                        </svg>
+                        <span>Import obrázku</span>
+                    </button>
+                    <div class="menu-divider"></div>
+                    <button class="menu-item" id="menuSettings">
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" fill="currentColor"/>
+                        </svg>
+                        <span>Nastavení</span>
+                    </button>
+                </nav>
+                <div class="menu-footer">
+                    <span class="version">Paint Studio v1.0.0</span>
+                    <a href="../" class="back-to-hub">
+                        <svg viewBox="0 0 24 24" width="16" height="16">
+                            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" fill="currentColor"/>
+                        </svg>
+                        Zpět na AdHUB
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Project Modal -->
+        <div class="modal-overlay" id="newProjectModal" style="display: none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2>Nový projekt</h2>
+                    <button class="btn-icon modal-close" data-modal="newProjectModal">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="projectName">Název projektu</label>
+                        <input type="text" id="projectName" value="Nový projekt" placeholder="Název projektu">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="canvasWidth">Šířka (px)</label>
+                            <input type="number" id="canvasWidth" value="1920" min="1" max="8192">
+                        </div>
+                        <div class="form-group">
+                            <label for="canvasHeight">Výška (px)</label>
+                            <input type="number" id="canvasHeight" value="1080" min="1" max="8192">
+                        </div>
+                    </div>
+                    <div class="preset-sizes">
+                        <span class="preset-label">Předvolby:</span>
+                        <button class="preset-btn" data-width="1920" data-height="1080">Full HD</button>
+                        <button class="preset-btn" data-width="3840" data-height="2160">4K</button>
+                        <button class="preset-btn" data-width="1080" data-height="1080">Instagram</button>
+                        <button class="preset-btn" data-width="2480" data-height="3508">A4 (300dpi)</button>
+                    </div>
+                    <div class="form-group">
+                        <label for="bgColor">Barva pozadí</label>
+                        <div class="bg-color-options">
+                            <label class="color-option">
+                                <input type="radio" name="bgColor" value="#ffffff" checked>
+                                <span class="color-preview" style="background: #ffffff;"></span>
+                                Bílá
+                            </label>
+                            <label class="color-option">
+                                <input type="radio" name="bgColor" value="transparent">
+                                <span class="color-preview transparent-bg"></span>
+                                Průhledná
+                            </label>
+                            <label class="color-option">
+                                <input type="radio" name="bgColor" value="#000000">
+                                <span class="color-preview" style="background: #000000;"></span>
+                                Černá
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary modal-cancel" data-modal="newProjectModal">Zrušit</button>
+                    <button class="btn-primary" id="createProjectBtn">Vytvořit</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Projects List Modal -->
+        <div class="modal-overlay" id="projectsModal" style="display: none;">
+            <div class="modal modal-large">
+                <div class="modal-header">
+                    <h2>Moje projekty</h2>
+                    <button class="btn-icon modal-close" data-modal="projectsModal">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="projects-list" id="projectsList">
+                        <!-- Projects will be dynamically loaded -->
+                        <div class="empty-projects">
+                            <svg viewBox="0 0 24 24" width="48" height="48" class="empty-icon">
+                                <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z" fill="currentColor"/>
+                            </svg>
+                            <p>Zatím nemáte žádné uložené projekty</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Modal -->
+        <div class="modal-overlay" id="exportModal" style="display: none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2>Exportovat</h2>
+                    <button class="btn-icon modal-close" data-modal="exportModal">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="export-preview">
+                        <canvas id="exportPreview"></canvas>
+                    </div>
+                    <div class="form-group">
+                        <label for="exportFormat">Formát</label>
+                        <select id="exportFormat">
+                            <option value="png">PNG (průhlednost)</option>
+                            <option value="jpeg">JPEG (menší velikost)</option>
+                            <option value="webp">WebP (moderní formát)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="qualityGroup" style="display: none;">
+                        <label for="exportQuality">Kvalita</label>
+                        <div class="slider-group">
+                            <input type="range" id="exportQuality" min="10" max="100" value="92" class="slider">
+                            <span id="qualityValue">92%</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="exportFilename">Název souboru</label>
+                        <input type="text" id="exportFilename" value="muj-obrazek" placeholder="Název souboru">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary modal-cancel" data-modal="exportModal">Zrušit</button>
+                    <button class="btn-primary" id="downloadBtn">
+                        <svg viewBox="0 0 24 24" width="18" height="18">
+                            <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
+                        </svg>
+                        Stáhnout
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Scripts (ES Modules) -->
+    <script type="module" src="app/main.js"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker registered'))
+                    .catch(err => console.error('Service Worker registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>
