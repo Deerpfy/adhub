@@ -9,9 +9,9 @@
  * @license MIT
  */
 
-const CACHE_NAME = 'api-catalog-v1.0.0';
-const STATIC_CACHE = 'api-catalog-static-v1.0.0';
-const DATA_CACHE = 'api-catalog-data-v1.0.0';
+const CACHE_NAME = 'api-catalog-v1.1.0';
+const STATIC_CACHE = 'api-catalog-static-v1.1.0';
+const DATA_CACHE = 'api-catalog-data-v1.1.0';
 
 // Statické soubory k precache
 const STATIC_ASSETS = [
@@ -19,8 +19,10 @@ const STATIC_ASSETS = [
     './index.html',
     './app.js',
     './db.js',
+    './scraper.js',
     './styles.css',
     './manifest.json',
+    './data/api-catalog-data.json',
     './icons/icon-192.png',
     './icons/icon-512.png'
 ];
