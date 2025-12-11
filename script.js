@@ -1,6 +1,6 @@
 // AdHUB - Central Hub Script
 // Version management
-const APP_VERSION = '1.2.0';
+const APP_VERSION = '1.3.0';
 
 // ============================================
 // GITHUB API - YouTube Downloader Plugin Version
@@ -1028,8 +1028,124 @@ const BASE_TRANSLATIONS = {
 // Dynamic translations storage (cached translations)
 let TRANSLATIONS = JSON.parse(JSON.stringify(BASE_TRANSLATIONS));
 
-// Current language
-let currentLanguage = localStorage.getItem('adhub_language') || 
+// ============================================
+// GEO-LOCATION BASED LANGUAGE DETECTION
+// ============================================
+
+// Geolocation cache settings
+const GEO_CACHE_KEY = 'adhub_geo_country';
+const GEO_CACHE_TIME_KEY = 'adhub_geo_cache_time';
+const GEO_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+// Countries that should use Czech language
+const CZECH_COUNTRIES = ['CZ', 'SK'];
+
+/**
+ * Detect user's country from IP address using free geolocation APIs
+ * Uses ipapi.co as primary, ip-api.com as fallback
+ * @returns {Promise<string|null>} Country code (e.g., 'CZ', 'US') or null if detection fails
+ */
+async function detectCountryFromIP() {
+    // Check cache first
+    const cachedCountry = localStorage.getItem(GEO_CACHE_KEY);
+    const cacheTime = localStorage.getItem(GEO_CACHE_TIME_KEY);
+
+    if (cachedCountry && cacheTime) {
+        const age = Date.now() - parseInt(cacheTime, 10);
+        if (age < GEO_CACHE_DURATION) {
+            console.log(`[GeoLang] Using cached country: ${cachedCountry}`);
+            return cachedCountry;
+        }
+    }
+
+    // Try ipapi.co first (reliable, CORS-friendly)
+    try {
+        const response = await fetch('https://ipapi.co/country_code/', {
+            method: 'GET',
+            headers: { 'Accept': 'text/plain' },
+            signal: AbortSignal.timeout(5000)
+        });
+
+        if (response.ok) {
+            const countryCode = (await response.text()).trim().toUpperCase();
+            if (countryCode && countryCode.length === 2) {
+                localStorage.setItem(GEO_CACHE_KEY, countryCode);
+                localStorage.setItem(GEO_CACHE_TIME_KEY, Date.now().toString());
+                console.log(`[GeoLang] Detected country (ipapi.co): ${countryCode}`);
+                return countryCode;
+            }
+        }
+    } catch (error) {
+        console.warn('[GeoLang] ipapi.co failed:', error.message);
+    }
+
+    // Fallback to ip-api.com
+    try {
+        const response = await fetch('http://ip-api.com/json/?fields=countryCode', {
+            method: 'GET',
+            signal: AbortSignal.timeout(5000)
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.countryCode) {
+                const countryCode = data.countryCode.toUpperCase();
+                localStorage.setItem(GEO_CACHE_KEY, countryCode);
+                localStorage.setItem(GEO_CACHE_TIME_KEY, Date.now().toString());
+                console.log(`[GeoLang] Detected country (ip-api.com): ${countryCode}`);
+                return countryCode;
+            }
+        }
+    } catch (error) {
+        console.warn('[GeoLang] ip-api.com failed:', error.message);
+    }
+
+    console.warn('[GeoLang] All geolocation APIs failed');
+    return null;
+}
+
+/**
+ * Get appropriate language code based on country
+ * @param {string|null} countryCode - ISO 3166-1 alpha-2 country code
+ * @returns {string} Language code ('cs' or 'en')
+ */
+function getLanguageFromCountry(countryCode) {
+    if (countryCode && CZECH_COUNTRIES.includes(countryCode)) {
+        return 'cs';
+    }
+    return 'en';
+}
+
+/**
+ * Initialize language based on: 1) localStorage, 2) IP geolocation, 3) navigator.language
+ * @returns {Promise<string>} Language code
+ */
+async function initializeLanguageFromGeo() {
+    // 1. Check if user has explicitly set a language preference
+    const savedLang = localStorage.getItem('adhub_language');
+    if (savedLang) {
+        console.log(`[GeoLang] Using saved language preference: ${savedLang}`);
+        return savedLang;
+    }
+
+    // 2. Try to detect country from IP
+    const country = await detectCountryFromIP();
+    if (country) {
+        const lang = getLanguageFromCountry(country);
+        console.log(`[GeoLang] Setting language based on country ${country}: ${lang}`);
+        return lang;
+    }
+
+    // 3. Fallback to browser language
+    const browserLang = navigator.language.startsWith('cs') ? 'cs' : 'en';
+    console.log(`[GeoLang] Using browser language fallback: ${browserLang}`);
+    return browserLang;
+}
+
+// ============================================
+
+// Current language (will be properly initialized in DOMContentLoaded)
+let currentLanguage = localStorage.getItem('adhub_language') ||
     (navigator.language.startsWith('cs') ? 'cs' : 'en');
 
 // Translation cache from localStorage
@@ -3275,13 +3391,16 @@ function updateVersionDisplay() {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize language from IP geolocation (if not already set by user)
+    currentLanguage = await initializeLanguageFromGeo();
+
     // Inicializace počítadla návštěv (Firebase nebo localStorage fallback)
     await initFirebase();
 
     // Set initial language display
     const langInfo = getLanguageInfo(currentLanguage);
     updateCurrentLanguageDisplay(langInfo);
-    
+
     document.documentElement.lang = currentLanguage;
     
     // Update version display
