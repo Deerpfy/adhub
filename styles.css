@@ -675,6 +675,8 @@ body::before {
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
     contain: layout style; /* CLS prevention */
+    min-height: 200px; /* Match skeleton card height */
+    box-sizing: border-box;
 }
 
 .tool-card::before {
