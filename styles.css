@@ -393,6 +393,8 @@ body::before {
 /* Controls - Moderní tabs */
 .controls {
     margin: 20px 0;
+    min-height: 50px; /* CLS prevention */
+    contain: layout;
 }
 
 .filter-tabs {
@@ -432,10 +434,19 @@ body::before {
     white-space: nowrap;
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
-    min-width: 80px; /* CLS prevention */
+    min-width: 90px; /* CLS prevention */
     min-height: 36px;
     box-sizing: border-box;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
+
+/* Fixed widths per filter type to prevent text-change shifts */
+.filter-tab[data-filter="all"] { min-width: 65px; }
+.filter-tab[data-filter="tools"] { min-width: 95px; }
+.filter-tab[data-filter="links"] { min-width: 95px; }
 
 .filter-tab:active {
     transform: scale(0.98);
