@@ -307,6 +307,8 @@ const BASE_TRANSLATIONS = {
         tool_rust_calculator_desc: 'Offline kalkulátor pro hru Rust - raid náklady, crafting recepty a suroviny. PWA fungující 100% offline.',
         tool_docbook_name: 'DocBook',
         tool_docbook_desc: 'Offline dokumentační platforma inspirovaná GitBookem. WYSIWYG Markdown editor, hierarchická navigace, fulltext vyhledávání a export. 100% offline PWA.',
+        tool_api_catalog_name: 'API Katalog',
+        tool_api_catalog_desc: 'Offline-first katalog 10,000+ API. Procházejte, vyhledávejte a spravujte API podle kategorií. PWA s IndexedDB, import/export dat. Založeno na analýze API-mega-list.',
         category_gaming: 'gaming',
         category_documentation: 'dokumentace',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
@@ -682,6 +684,8 @@ const BASE_TRANSLATIONS = {
         tool_rust_calculator_desc: 'Offline calculator for Rust game - raid costs, crafting recipes and raw materials. PWA working 100% offline.',
         tool_docbook_name: 'DocBook',
         tool_docbook_desc: 'Offline documentation platform inspired by GitBook. WYSIWYG Markdown editor, hierarchical navigation, fulltext search and export. 100% offline PWA.',
+        tool_api_catalog_name: 'API Catalog',
+        tool_api_catalog_desc: 'Offline-first catalog of 10,000+ APIs. Browse, search and manage APIs by category. PWA with IndexedDB, data import/export. Based on API-mega-list analysis.',
         category_gaming: 'gaming',
         category_documentation: 'documentation',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
@@ -1439,6 +1443,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["documentation", "markdown", "editor", "offline", "pwa"]
+            },
+            {
+                "id": "api-catalog",
+                "name": t('tool_api_catalog_name'),
+                "description": t('tool_api_catalog_desc'),
+                "category": "tools",
+                "icon": "🔌",
+                "url": "projects/api-catalog/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["api", "catalog", "offline", "pwa", "database"]
             }
         ],
         "links": [
