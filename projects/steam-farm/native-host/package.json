@@ -22,7 +22,7 @@
     "dependencies": {
         "steam-user": "^5.0.10",
         "steam-totp": "^2.1.2",
-        "argon2-browser": "^1.18.0",
+        "argon2": "^0.31.2",
         "ws": "^8.14.2"
     },
     "devDependencies": {
