@@ -251,10 +251,27 @@ export class QuickShape {
 
     /**
      * Draw detected shape on canvas
+     * @param {Object} shape - The detected shape
+     * @param {Array} originalPoints - Original stroke points (optional, for clearing)
      */
-    drawShape(shape) {
+    drawShape(shape, originalPoints = null) {
         const ctx = this.app.layers.getActiveContext();
         if (!ctx) return;
+
+        // If preview toggle is off, clear the freehand stroke area first
+        if (!this.app.settings.quickshapePreview && originalPoints && originalPoints.length > 0) {
+            // Get bounding box of original stroke
+            const bounds = this.getBoundingBox(originalPoints);
+            const padding = this.app.brush.size + 5;
+
+            // Clear the freehand stroke area
+            ctx.clearRect(
+                bounds.x - padding,
+                bounds.y - padding,
+                bounds.width + padding * 2,
+                bounds.height + padding * 2
+            );
+        }
 
         const color = this.app.color.getPrimaryColor();
         const lineWidth = this.app.brush.size;

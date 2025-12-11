@@ -208,6 +208,52 @@
                         </button>
                     </div>
                     <div class="panel-content">
+                        <!-- Brush Type Selector -->
+                        <div class="setting-row">
+                            <label>Typ štětce</label>
+                            <div class="brush-type-grid" id="brushTypeGrid">
+                                <button class="brush-type-btn active" data-brush-type="round" title="Kulatý">
+                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="soft" title="Měkký">
+                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor" opacity="0.5"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="airbrush" title="Airbrush">
+                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.2"/><circle cx="12" cy="12" r="6" fill="currentColor" opacity="0.3"/><circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.4"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="marker" title="Fix">
+                                    <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8" ry="5" fill="currentColor"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="charcoal" title="Uhel">
+                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor" opacity="0.7"/><rect x="8" y="10" width="2" height="2" fill="currentColor" opacity="0.3"/><rect x="14" y="14" width="2" height="2" fill="currentColor" opacity="0.3"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="watercolor" title="Akvarel">
+                                    <svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6" fill="currentColor" opacity="0.3"/><circle cx="14" cy="14" r="6" fill="currentColor" opacity="0.3"/><circle cx="12" cy="12" r="5" fill="currentColor" opacity="0.2"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="ink" title="Inkoust">
+                                    <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(45 12 12)" fill="currentColor"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="calligraphy" title="Kaligrafie">
+                                    <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="4" transform="rotate(-30 12 12)" fill="currentColor"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="chalk" title="Křída">
+                                    <svg viewBox="0 0 24 24"><circle cx="8" cy="10" r="2" fill="currentColor" opacity="0.6"/><circle cx="14" cy="8" r="1.5" fill="currentColor" opacity="0.5"/><circle cx="12" cy="14" r="2" fill="currentColor" opacity="0.7"/><circle cx="16" cy="13" r="1" fill="currentColor" opacity="0.4"/><circle cx="10" cy="16" r="1.5" fill="currentColor" opacity="0.5"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="splatter" title="Sprej">
+                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="8" cy="10" r="0.8" fill="currentColor"/><circle cx="15" cy="9" r="0.6" fill="currentColor"/><circle cx="10" cy="15" r="0.7" fill="currentColor"/><circle cx="16" cy="14" r="0.5" fill="currentColor"/><circle cx="6" cy="13" r="0.4" fill="currentColor"/><circle cx="14" cy="17" r="0.6" fill="currentColor"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="square" title="Čtverec">
+                                    <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" fill="currentColor"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="pixel" title="Pixel">
+                                    <svg viewBox="0 0 24 24"><rect x="10" y="10" width="4" height="4" fill="currentColor"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Brush Preview -->
+                        <div class="brush-preview" id="brushPreview">
+                            <canvas id="brushPreviewCanvas" width="240" height="50"></canvas>
+                        </div>
                         <div class="setting-row">
                             <label>Velikost</label>
                             <div class="slider-group">
@@ -230,6 +276,13 @@
                             </div>
                         </div>
                         <div class="setting-row">
+                            <label>Rozestup</label>
+                            <div class="slider-group">
+                                <input type="range" id="brushSpacing" min="5" max="100" value="25" class="slider">
+                                <input type="number" id="brushSpacingInput" min="5" max="100" value="25" class="slider-input">
+                            </div>
+                        </div>
+                        <div class="setting-row">
                             <label>
                                 <input type="checkbox" id="streamlineEnabled" checked>
                                 StreamLine (vyhlazování)
@@ -249,6 +302,12 @@
                             <label>
                                 <input type="checkbox" id="quickshapeEnabled" checked>
                                 QuickShape (držet pro tvar)
+                            </label>
+                        </div>
+                        <div class="setting-row checkbox-row">
+                            <label>
+                                <input type="checkbox" id="quickshapePreview" checked>
+                                Zobrazit náhled QuickShape
                             </label>
                         </div>
                     </div>

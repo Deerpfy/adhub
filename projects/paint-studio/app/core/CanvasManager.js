@@ -294,8 +294,8 @@ export class CanvasManager {
         if (this.app.settings.quickshapeEnabled && this.app.quickShape) {
             const shape = this.app.quickShape.detect(this.currentStroke);
             if (shape) {
-                // Replace freehand with shape
-                this.app.quickShape.drawShape(shape);
+                // Replace freehand with shape (pass original points for clearing)
+                this.app.quickShape.drawShape(shape, this.currentStroke);
                 this.app.ui?.showQuickShapeIndicator(shape.type);
             }
         }

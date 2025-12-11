@@ -6,6 +6,8 @@ export class UIController {
     constructor(app) {
         this.app = app;
         this.notificationTimeout = null;
+        this.contextMenu = null;
+        this.isFullscreen = false;
     }
 
     /**
@@ -19,6 +21,9 @@ export class UIController {
         this.setupLayerControls();
         this.setupZoomControls();
         this.setupPanelCollapse();
+        this.setupContextMenu();
+        this.setupFullscreen();
+        this.createFullscreenHint();
     }
 
     /**
@@ -148,10 +153,12 @@ export class UIController {
             slider.addEventListener('input', () => {
                 input.value = slider.value;
                 callback(parseInt(slider.value));
+                this.updateBrushPreview();
             });
             input.addEventListener('change', () => {
                 slider.value = input.value;
                 callback(parseInt(input.value));
+                this.updateBrushPreview();
             });
         };
 
@@ -164,6 +171,9 @@ export class UIController {
         syncSlider('brushHardness', 'brushHardnessInput', (val) => {
             this.app.brush.hardness = val / 100;
             this.app.brush.invalidateCache();
+        });
+        syncSlider('brushSpacing', 'brushSpacingInput', (val) => {
+            this.app.brush.spacing = val / 100;
         });
         syncSlider('streamlineAmount', 'streamlineAmountInput', (val) => {
             this.app.streamLine.setAmount(val);
@@ -179,6 +189,25 @@ export class UIController {
         document.getElementById('quickshapeEnabled')?.addEventListener('change', (e) => {
             this.app.settings.quickshapeEnabled = e.target.checked;
         });
+        document.getElementById('quickshapePreview')?.addEventListener('change', (e) => {
+            this.app.settings.quickshapePreview = e.target.checked;
+        });
+
+        // Brush type buttons
+        document.querySelectorAll('.brush-type-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const brushType = btn.dataset.brushType;
+                if (brushType) {
+                    this.app.brush.setBrushType(brushType);
+                    document.querySelectorAll('.brush-type-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    this.updateBrushPreview();
+                }
+            });
+        });
+
+        // Initial brush preview
+        setTimeout(() => this.updateBrushPreview(), 100);
     }
 
     /**
@@ -241,9 +270,12 @@ export class UIController {
 
         // Reverse order so top layer is at top
         const layers = [...this.app.layers.getLayers()].reverse();
+        const totalLayers = layers.length;
 
         layers.forEach((layer, i) => {
             const actualIndex = this.app.layers.getLayers().length - 1 - i;
+            const isFirst = actualIndex === totalLayers - 1; // Top layer (can't move up)
+            const isLast = actualIndex === 0; // Bottom layer (can't move down)
 
             const item = document.createElement('div');
             item.className = 'layer-item' + (actualIndex === this.app.layers.activeLayerIndex ? ' active' : '');
@@ -263,11 +295,23 @@ export class UIController {
                     <span class="layer-name">${layer.name}</span>
                     <span class="layer-opacity">${Math.round(layer.opacity * 100)}%</span>
                 </div>
+                <div class="layer-item-actions">
+                    <button class="layer-move-btn move-up" title="Posunout nahoru" ${isFirst ? 'disabled' : ''}>
+                        <svg viewBox="0 0 24 24" width="12" height="12">
+                            <path d="M7 14l5-5 5 5H7z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                    <button class="layer-move-btn move-down" title="Posunout dolů" ${isLast ? 'disabled' : ''}>
+                        <svg viewBox="0 0 24 24" width="12" height="12">
+                            <path d="M7 10l5 5 5-5H7z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
             `;
 
             // Click to select
             item.addEventListener('click', (e) => {
-                if (!e.target.closest('.layer-visibility')) {
+                if (!e.target.closest('.layer-visibility') && !e.target.closest('.layer-move-btn')) {
                     this.app.layers.setActiveLayer(actualIndex);
                     this.updateBlendModeSelect();
                 }
@@ -276,6 +320,20 @@ export class UIController {
             // Visibility toggle
             item.querySelector('.layer-visibility')?.addEventListener('click', () => {
                 this.app.layers.toggleVisibility(actualIndex);
+            });
+
+            // Move up button
+            item.querySelector('.move-up')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Moving up in UI means moving to higher index (later in array)
+                this.app.layers.moveLayerDown(actualIndex);
+            });
+
+            // Move down button
+            item.querySelector('.move-down')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                // Moving down in UI means moving to lower index (earlier in array)
+                this.app.layers.moveLayerUp(actualIndex);
             });
 
             // Add thumbnail
@@ -595,5 +653,306 @@ export class UIController {
         this.notificationTimeout = setTimeout(() => {
             notification.style.display = 'none';
         }, 3000);
+    }
+
+    /**
+     * Setup context menu
+     */
+    setupContextMenu() {
+        const container = document.getElementById('canvasContainer');
+        if (!container) return;
+
+        // Create context menu element
+        this.contextMenu = document.createElement('div');
+        this.contextMenu.className = 'context-menu';
+        this.contextMenu.style.display = 'none';
+        document.body.appendChild(this.contextMenu);
+
+        // Right-click handler
+        container.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            this.showContextMenu(e.clientX, e.clientY);
+        });
+
+        // Close on click outside
+        document.addEventListener('click', (e) => {
+            if (!this.contextMenu.contains(e.target)) {
+                this.hideContextMenu();
+            }
+        });
+
+        // Close on escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.hideContextMenu();
+            }
+        });
+    }
+
+    /**
+     * Show context menu
+     */
+    showContextMenu(x, y) {
+        const menuItems = [
+            { icon: 'undo', label: 'Zpět', shortcut: 'Ctrl+Z', action: () => this.app.history.undo() },
+            { icon: 'redo', label: 'Vpřed', shortcut: 'Ctrl+Y', action: () => this.app.history.redo() },
+            { divider: true },
+            { icon: 'copy', label: 'Kopírovat vrstvu', action: () => this.app.layers.duplicateLayer(this.app.layers.activeLayerIndex) },
+            { icon: 'paste', label: 'Vložit jako novou vrstvu', action: () => this.pasteAsNewLayer() },
+            { divider: true },
+            { icon: 'clear', label: 'Vyčistit vrstvu', action: () => this.app.layers.clearActiveLayer() },
+            { icon: 'merge', label: 'Sloučit dolů', action: () => this.app.layers.mergeDown(this.app.layers.activeLayerIndex) },
+            { divider: true },
+            { icon: 'fullscreen', label: this.isFullscreen ? 'Ukončit fullscreen' : 'Fullscreen', shortcut: 'F', action: () => this.toggleFullscreen() },
+            { icon: 'fit', label: 'Přizpůsobit zobrazení', shortcut: 'Ctrl+0', action: () => this.app.canvas.fitToView() },
+            { divider: true },
+            { icon: 'save', label: 'Uložit projekt', shortcut: 'Ctrl+S', action: () => this.app.saveProject() },
+            { icon: 'export', label: 'Exportovat', action: () => this.showExportModal() }
+        ];
+
+        this.contextMenu.innerHTML = menuItems.map(item => {
+            if (item.divider) {
+                return '<div class="context-menu-divider"></div>';
+            }
+            return `
+                <button class="context-menu-item" data-action="${item.label}">
+                    ${this.getContextMenuIcon(item.icon)}
+                    <span>${item.label}</span>
+                    ${item.shortcut ? `<span class="shortcut">${item.shortcut}</span>` : ''}
+                </button>
+            `;
+        }).join('');
+
+        // Add click handlers
+        this.contextMenu.querySelectorAll('.context-menu-item').forEach((btn, index) => {
+            const realIndex = menuItems.filter((item, i) => i <= index && !item.divider).length - 1;
+            const nonDividerItems = menuItems.filter(item => !item.divider);
+            btn.addEventListener('click', () => {
+                nonDividerItems[realIndex]?.action();
+                this.hideContextMenu();
+            });
+        });
+
+        // Position menu
+        const menuRect = { width: 200, height: 400 };
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let posX = x;
+        let posY = y;
+
+        if (x + menuRect.width > viewportWidth) {
+            posX = viewportWidth - menuRect.width - 10;
+        }
+        if (y + menuRect.height > viewportHeight) {
+            posY = viewportHeight - menuRect.height - 10;
+        }
+
+        this.contextMenu.style.left = `${posX}px`;
+        this.contextMenu.style.top = `${posY}px`;
+        this.contextMenu.style.display = 'block';
+    }
+
+    /**
+     * Get context menu icon SVG
+     */
+    getContextMenuIcon(type) {
+        const icons = {
+            undo: '<path d="M12.5 8c-2.65 0-5.05 1.04-6.83 2.73L3 8v9h9l-2.82-2.82C10.48 12.85 11.43 12.5 12.5 12.5c2.33 0 4.31 1.46 5.11 3.5l2.61-.93C19.12 11.98 16.11 8 12.5 8z" fill="currentColor"/>',
+            redo: '<path d="M11.5 8c2.65 0 5.05 1.04 6.83 2.73L21 8v9h-9l2.82-2.82C13.52 12.85 12.57 12.5 11.5 12.5c-2.33 0-4.31 1.46-5.11 3.5l-2.61-.93C4.88 11.98 7.89 8 11.5 8z" fill="currentColor"/>',
+            copy: '<path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" fill="currentColor"/>',
+            paste: '<path d="M19 2h-4.18C14.4.84 13.3 0 12 0c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm7 18H5V4h2v3h10V4h2v16z" fill="currentColor"/>',
+            clear: '<path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>',
+            merge: '<path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" fill="currentColor"/>',
+            fullscreen: '<path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" fill="currentColor"/>',
+            fit: '<path d="M5 15H3v4c0 1.1.9 2 2 2h4v-2H5v-4zm0-6H3V5c0-1.1.9-2 2-2h4v2H5v4zm14 8h-4v2h4c1.1 0 2-.9 2-2v-4h-2v4zM15 3v2h4v4h2V5c0-1.1-.9-2-2-2h-4z" fill="currentColor"/>',
+            save: '<path d="M17 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z" fill="currentColor"/>',
+            export: '<path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>'
+        };
+        return `<svg viewBox="0 0 24 24" width="18" height="18">${icons[type] || ''}</svg>`;
+    }
+
+    /**
+     * Hide context menu
+     */
+    hideContextMenu() {
+        if (this.contextMenu) {
+            this.contextMenu.style.display = 'none';
+        }
+    }
+
+    /**
+     * Paste as new layer (placeholder)
+     */
+    async pasteAsNewLayer() {
+        try {
+            const clipboardItems = await navigator.clipboard.read();
+            for (const item of clipboardItems) {
+                if (item.types.includes('image/png')) {
+                    const blob = await item.getType('image/png');
+                    const img = new Image();
+                    img.onload = () => {
+                        const layer = this.app.layers.addLayer('Vložená vrstva');
+                        if (layer) {
+                            const ctx = layer.canvas.getContext('2d');
+                            ctx.drawImage(img, 0, 0);
+                            this.app.canvas.render();
+                            this.updateLayersList();
+                        }
+                    };
+                    img.src = URL.createObjectURL(blob);
+                    return;
+                }
+            }
+            this.showNotification('Schránka neobsahuje obrázek', 'error');
+        } catch (error) {
+            this.showNotification('Nelze přistoupit ke schránce', 'error');
+        }
+    }
+
+    /**
+     * Setup fullscreen functionality
+     */
+    setupFullscreen() {
+        // Keyboard shortcut F for fullscreen
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'f' || e.key === 'F') {
+                if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+                    const activeElement = document.activeElement;
+                    if (activeElement.tagName !== 'INPUT' && activeElement.tagName !== 'TEXTAREA') {
+                        e.preventDefault();
+                        this.toggleFullscreen();
+                    }
+                }
+            }
+            // Escape to exit fullscreen
+            if (e.key === 'Escape' && this.isFullscreen) {
+                this.exitFullscreen();
+            }
+        });
+
+        // Add fullscreen button to menu
+        document.getElementById('menuSettings')?.addEventListener('click', () => {
+            this.hideMenu();
+            this.toggleFullscreen();
+        });
+    }
+
+    /**
+     * Create fullscreen exit hint
+     */
+    createFullscreenHint() {
+        const hint = document.createElement('div');
+        hint.className = 'fullscreen-exit-hint';
+        hint.textContent = 'Stiskněte Esc nebo F pro ukončení fullscreenu';
+        document.getElementById('app')?.appendChild(hint);
+    }
+
+    /**
+     * Toggle fullscreen mode
+     */
+    toggleFullscreen() {
+        if (this.isFullscreen) {
+            this.exitFullscreen();
+        } else {
+            this.enterFullscreen();
+        }
+    }
+
+    /**
+     * Enter fullscreen mode
+     */
+    enterFullscreen() {
+        const app = document.getElementById('app');
+        if (app) {
+            app.classList.add('fullscreen');
+            this.isFullscreen = true;
+
+            // Request browser fullscreen
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            }
+
+            // Recenter canvas
+            setTimeout(() => {
+                this.app.canvas.centerCanvas();
+            }, 100);
+
+            this.showNotification('Fullscreen režim (Esc pro ukončení)', 'info');
+        }
+    }
+
+    /**
+     * Exit fullscreen mode
+     */
+    exitFullscreen() {
+        const app = document.getElementById('app');
+        if (app) {
+            app.classList.remove('fullscreen');
+            this.isFullscreen = false;
+
+            // Exit browser fullscreen
+            if (document.exitFullscreen) {
+                document.exitFullscreen().catch(() => {});
+            }
+
+            // Recenter canvas
+            setTimeout(() => {
+                this.app.canvas.centerCanvas();
+            }, 100);
+        }
+    }
+
+    /**
+     * Setup brush type selection
+     */
+    setupBrushTypeSelection() {
+        document.querySelectorAll('.brush-type-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const brushType = btn.dataset.brushType;
+                if (brushType) {
+                    this.app.brush.setBrushType(brushType);
+                    document.querySelectorAll('.brush-type-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    this.updateBrushPreview();
+                }
+            });
+        });
+    }
+
+    /**
+     * Update brush preview
+     */
+    updateBrushPreview() {
+        const previewCanvas = document.getElementById('brushPreviewCanvas');
+        if (!previewCanvas) return;
+
+        const ctx = previewCanvas.getContext('2d');
+        const width = previewCanvas.width;
+        const height = previewCanvas.height;
+
+        // Clear
+        ctx.clearRect(0, 0, width, height);
+
+        // Draw preview stroke
+        const color = this.app.color?.getPrimaryColor() || '#ffffff';
+        const points = [];
+        for (let i = 0; i <= width; i += 2) {
+            const x = i;
+            const y = height / 2 + Math.sin(i * 0.05) * 15;
+            const pressure = 0.3 + 0.7 * Math.sin(i * 0.03);
+            points.push({ x, y, pressure });
+        }
+
+        // Draw the stroke
+        for (let i = 1; i < points.length; i++) {
+            this.app.brush.drawStroke(
+                ctx,
+                points[i - 1].x, points[i - 1].y,
+                points[i].x, points[i].y,
+                points[i].pressure,
+                color
+            );
+        }
     }
 }
