@@ -3573,8 +3573,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         loadMoreBtn.addEventListener('click', loadMoreLinks);
     }
 
-    // Load data on startup
-    useDefaultConfig();
+    // Load data on startup - useDefaultConfig already called by setLanguage()
+    // which calls renderTools() internally, so no need to call it again
 
     // Check YouTube extension status after render
     setTimeout(checkYouTubeExtensionStatus, 500);
