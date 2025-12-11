@@ -30,7 +30,8 @@ export class PaintApp {
             pressureSensitivity: true,
             streamlineEnabled: true,
             streamlineAmount: 50,
-            quickshapeEnabled: true
+            quickshapeEnabled: true,
+            quickshapePreview: true
         };
 
         // Managers will be initialized in init()

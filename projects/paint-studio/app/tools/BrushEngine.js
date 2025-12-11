@@ -11,13 +11,26 @@ export class BrushEngine {
         this.opacity = 1;
         this.hardness = 1;
         this.spacing = 0.25; // Spacing as fraction of brush size
+        this.flow = 1; // Flow rate (how much paint per stamp)
+        this.scatter = 0; // Random scatter amount
+        this.angle = 0; // Brush rotation angle (radians)
+        this.roundness = 1; // Brush roundness (1 = circular, <1 = elliptical)
+        this.textureStrength = 0; // Texture overlay strength
 
         // Brush types
         this.brushTypes = {
             round: this.createRoundBrush.bind(this),
             soft: this.createSoftBrush.bind(this),
             square: this.createSquareBrush.bind(this),
-            pixel: this.createPixelBrush.bind(this)
+            pixel: this.createPixelBrush.bind(this),
+            airbrush: this.createAirbrush.bind(this),
+            marker: this.createMarkerBrush.bind(this),
+            charcoal: this.createCharcoalBrush.bind(this),
+            watercolor: this.createWatercolorBrush.bind(this),
+            ink: this.createInkBrush.bind(this),
+            calligraphy: this.createCalligraphyBrush.bind(this),
+            splatter: this.createSplatterBrush.bind(this),
+            chalk: this.createChalkBrush.bind(this)
         };
 
         this.currentBrushType = 'round';
@@ -26,6 +39,7 @@ export class BrushEngine {
         this.brushStamp = null;
         this.brushStampSize = 0;
         this.brushStampHardness = 0;
+        this.brushStampType = '';
     }
 
     /**
@@ -35,7 +49,8 @@ export class BrushEngine {
         // Use cached stamp if settings match
         if (this.brushStamp &&
             this.brushStampSize === size &&
-            this.brushStampHardness === hardness) {
+            this.brushStampHardness === hardness &&
+            this.brushStampType === this.currentBrushType) {
             return this.brushStamp;
         }
 
@@ -44,6 +59,7 @@ export class BrushEngine {
         this.brushStamp = createFn(size, hardness);
         this.brushStampSize = size;
         this.brushStampHardness = hardness;
+        this.brushStampType = this.currentBrushType;
 
         return this.brushStamp;
     }
@@ -140,6 +156,250 @@ export class BrushEngine {
         ctx.fillStyle = 'white';
         ctx.fillRect(0, 0, size, size);
         ctx.imageSmoothingEnabled = false;
+
+        return canvas;
+    }
+
+    /**
+     * Create airbrush stamp (very soft, wide gradient)
+     */
+    createAirbrush(size) {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        const center = size / 2;
+        const radius = size / 2;
+
+        const gradient = ctx.createRadialGradient(
+            center, center, 0,
+            center, center, radius
+        );
+
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.3)');
+        gradient.addColorStop(0.1, 'rgba(255, 255, 255, 0.25)');
+        gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.15)');
+        gradient.addColorStop(0.6, 'rgba(255, 255, 255, 0.05)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, size, size);
+
+        return canvas;
+    }
+
+    /**
+     * Create marker brush (flat edge, consistent opacity)
+     */
+    createMarkerBrush(size) {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        const center = size / 2;
+        const radius = size / 2;
+
+        // Elliptical shape for marker
+        ctx.save();
+        ctx.scale(1, 0.6);
+        ctx.beginPath();
+        ctx.arc(center, center / 0.6, radius, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.fill();
+        ctx.restore();
+
+        return canvas;
+    }
+
+    /**
+     * Create charcoal brush (textured, rough edges)
+     */
+    createCharcoalBrush(size) {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        const center = size / 2;
+        const radius = size / 2;
+
+        // Create base gradient
+        const gradient = ctx.createRadialGradient(
+            center, center, 0,
+            center, center, radius
+        );
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+        gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.6)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, size, size);
+
+        // Add noise texture
+        const imageData = ctx.getImageData(0, 0, size, size);
+        const data = imageData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+            const noise = Math.random() * 0.5 + 0.5;
+            data[i + 3] = Math.floor(data[i + 3] * noise);
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+
+        return canvas;
+    }
+
+    /**
+     * Create watercolor brush (soft, wet edges)
+     */
+    createWatercolorBrush(size) {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        const center = size / 2;
+        const radius = size / 2;
+
+        // Create irregular shape using multiple overlapping circles
+        ctx.globalAlpha = 0.15;
+        for (let i = 0; i < 8; i++) {
+            const offsetX = (Math.random() - 0.5) * radius * 0.3;
+            const offsetY = (Math.random() - 0.5) * radius * 0.3;
+            const r = radius * (0.7 + Math.random() * 0.3);
+
+            const gradient = ctx.createRadialGradient(
+                center + offsetX, center + offsetY, 0,
+                center + offsetX, center + offsetY, r
+            );
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+            gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.5)');
+            gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+        }
+
+        return canvas;
+    }
+
+    /**
+     * Create ink brush (pressure-sensitive, calligraphic)
+     */
+    createInkBrush(size) {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        const center = size / 2;
+
+        // Create elongated shape
+        ctx.save();
+        ctx.translate(center, center);
+        ctx.rotate(Math.PI / 4); // 45 degree angle
+        ctx.scale(1, 0.3);
+
+        const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, size / 2);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+        gradient.addColorStop(0.8, 'rgba(255, 255, 255, 0.8)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+
+        return canvas;
+    }
+
+    /**
+     * Create calligraphy brush (flat, angled)
+     */
+    createCalligraphyBrush(size) {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        const center = size / 2;
+
+        ctx.save();
+        ctx.translate(center, center);
+        ctx.rotate(-Math.PI / 6); // -30 degrees
+
+        // Flat rectangular shape
+        ctx.fillStyle = 'white';
+        ctx.fillRect(-size / 2, -size / 8, size, size / 4);
+
+        ctx.restore();
+
+        return canvas;
+    }
+
+    /**
+     * Create splatter brush (spray effect)
+     */
+    createSplatterBrush(size) {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        const center = size / 2;
+        const numDots = Math.floor(size * 2);
+
+        ctx.fillStyle = 'white';
+
+        for (let i = 0; i < numDots; i++) {
+            const angle = Math.random() * Math.PI * 2;
+            const distance = Math.random() * size / 2;
+            const x = center + Math.cos(angle) * distance;
+            const y = center + Math.sin(angle) * distance;
+            const dotSize = Math.random() * 2 + 0.5;
+
+            // Density falls off from center
+            const alpha = 1 - (distance / (size / 2));
+            ctx.globalAlpha = alpha * Math.random();
+
+            ctx.beginPath();
+            ctx.arc(x, y, dotSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        return canvas;
+    }
+
+    /**
+     * Create chalk brush (textured, grainy)
+     */
+    createChalkBrush(size) {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        const center = size / 2;
+        const radius = size / 2;
+
+        // Create dots pattern for chalk effect
+        ctx.fillStyle = 'white';
+
+        for (let x = 0; x < size; x++) {
+            for (let y = 0; y < size; y++) {
+                const dist = Math.sqrt(Math.pow(x - center, 2) + Math.pow(y - center, 2));
+                if (dist < radius) {
+                    const falloff = 1 - (dist / radius);
+                    if (Math.random() < falloff * 0.6) {
+                        ctx.globalAlpha = falloff * (0.5 + Math.random() * 0.5);
+                        ctx.fillRect(x, y, 1, 1);
+                    }
+                }
+            }
+        }
 
         return canvas;
     }

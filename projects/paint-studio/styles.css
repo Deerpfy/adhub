@@ -366,7 +366,7 @@ body {
 
 .canvas-wrapper {
     position: absolute;
-    transform-origin: center center;
+    transform-origin: 0 0;
     box-shadow: var(--shadow-lg);
 }
 
@@ -1362,6 +1362,221 @@ body {
     .modal-body {
         padding: 16px;
     }
+}
+
+/* =============================================
+   Layer Move Buttons
+   ============================================= */
+
+.layer-item-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    margin-left: auto;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.layer-item:hover .layer-item-actions {
+    opacity: 1;
+}
+
+.layer-move-btn {
+    width: 20px;
+    height: 16px;
+    border: none;
+    border-radius: 3px;
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    transition: var(--transition);
+}
+
+.layer-move-btn:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.layer-move-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* =============================================
+   Context Menu
+   ============================================= */
+
+.context-menu {
+    position: fixed;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 8px 0;
+    min-width: 180px;
+    box-shadow: var(--shadow-lg);
+    z-index: 3000;
+    animation: contextMenuIn 0.15s ease;
+}
+
+@keyframes contextMenuIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.context-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    padding: 10px 16px;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    cursor: pointer;
+    text-align: left;
+    transition: var(--transition);
+}
+
+.context-menu-item:hover {
+    background: var(--bg-hover);
+}
+
+.context-menu-item svg {
+    width: 18px;
+    height: 18px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.context-menu-item .shortcut {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.context-menu-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 6px 0;
+}
+
+.context-menu-item.danger {
+    color: var(--danger-color);
+}
+
+.context-menu-item.danger svg {
+    color: var(--danger-color);
+}
+
+/* =============================================
+   Fullscreen Mode
+   ============================================= */
+
+.app.fullscreen .header,
+.app.fullscreen .toolbar,
+.app.fullscreen .panel,
+.app.fullscreen .status-bar {
+    display: none !important;
+}
+
+.app.fullscreen .canvas-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+}
+
+.fullscreen-exit-hint {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 8px 16px;
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 20px;
+    color: white;
+    font-size: 0.8rem;
+    z-index: 10000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.app.fullscreen:hover .fullscreen-exit-hint {
+    opacity: 1;
+}
+
+/* =============================================
+   Advanced Brush Settings
+   ============================================= */
+
+.brush-type-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 16px;
+}
+
+.brush-type-btn {
+    aspect-ratio: 1;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-tertiary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    padding: 8px;
+}
+
+.brush-type-btn:hover {
+    border-color: var(--primary-light);
+}
+
+.brush-type-btn.active {
+    border-color: var(--primary-color);
+    background: rgba(139, 92, 246, 0.15);
+}
+
+.brush-type-btn svg {
+    width: 24px;
+    height: 24px;
+    color: var(--text-secondary);
+}
+
+.brush-type-btn.active svg {
+    color: var(--primary-color);
+}
+
+.brush-preview {
+    width: 100%;
+    height: 60px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.brush-preview canvas {
+    max-width: 100%;
+    max-height: 100%;
 }
 
 /* =============================================
