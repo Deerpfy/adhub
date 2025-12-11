@@ -88,6 +88,83 @@ const state = {
     history: []
 };
 
+// ============================================
+// GEO-LOCATION BASED LANGUAGE DETECTION
+// ============================================
+const GEO_CACHE_KEY = 'adhub_geo_country';
+const GEO_CACHE_TIME_KEY = 'adhub_geo_cache_time';
+const GEO_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+const CZECH_COUNTRIES = ['CZ', 'SK'];
+
+async function detectCountryFromIP() {
+    const cachedCountry = localStorage.getItem(GEO_CACHE_KEY);
+    const cacheTime = localStorage.getItem(GEO_CACHE_TIME_KEY);
+
+    if (cachedCountry && cacheTime) {
+        const age = Date.now() - parseInt(cacheTime, 10);
+        if (age < GEO_CACHE_DURATION) {
+            return cachedCountry;
+        }
+    }
+
+    try {
+        const response = await fetch('https://ipapi.co/country_code/', {
+            method: 'GET',
+            headers: { 'Accept': 'text/plain' },
+            signal: AbortSignal.timeout(5000)
+        });
+        if (response.ok) {
+            const countryCode = (await response.text()).trim().toUpperCase();
+            if (countryCode && countryCode.length === 2) {
+                localStorage.setItem(GEO_CACHE_KEY, countryCode);
+                localStorage.setItem(GEO_CACHE_TIME_KEY, Date.now().toString());
+                return countryCode;
+            }
+        }
+    } catch (e) { /* ignore */ }
+
+    try {
+        const response = await fetch('http://ip-api.com/json/?fields=countryCode', {
+            method: 'GET',
+            signal: AbortSignal.timeout(5000)
+        });
+        if (response.ok) {
+            const data = await response.json();
+            if (data.countryCode) {
+                const countryCode = data.countryCode.toUpperCase();
+                localStorage.setItem(GEO_CACHE_KEY, countryCode);
+                localStorage.setItem(GEO_CACHE_TIME_KEY, Date.now().toString());
+                return countryCode;
+            }
+        }
+    } catch (e) { /* ignore */ }
+
+    return null;
+}
+
+async function initializeLanguageFromGeo() {
+    // Check if saved state has language preference
+    const saved = localStorage.getItem('rustCalculatorState');
+    if (saved) {
+        try {
+            const parsed = JSON.parse(saved);
+            if (parsed.language) {
+                return parsed.language;
+            }
+        } catch (e) { /* ignore */ }
+    }
+
+    // Detect from IP
+    const country = await detectCountryFromIP();
+    if (country && CZECH_COUNTRIES.includes(country)) {
+        return 'cs';
+    }
+
+    // Fallback to browser language
+    return navigator.language.startsWith('cs') ? 'cs' : 'en';
+}
+// ============================================
+
 // Helper function to render icon (supports URLs, local paths, and emoji)
 function renderIcon(iconSrc, className = 'icon', alt = '') {
     // Check if it's an image path (http URL or local path ending with image extension)
@@ -98,8 +175,13 @@ function renderIcon(iconSrc, className = 'icon', alt = '') {
 }
 
 // Initialize app
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize language from IP geolocation (respects saved preference)
+    state.language = await initializeLanguageFromGeo();
+
+    // Load other state (language already set by geo detection)
     loadState();
+
     initTabs();
     initLanguage();
     initRaidCalculator();
@@ -116,7 +198,13 @@ function loadState() {
         const saved = localStorage.getItem('rustCalculatorState');
         if (saved) {
             const parsed = JSON.parse(saved);
+            // Preserve language that was set by geo detection
+            const currentLang = state.language;
             Object.assign(state, parsed);
+            // Only use saved language if user explicitly set it
+            if (!parsed.language) {
+                state.language = currentLang;
+            }
         }
     } catch (e) {
         console.warn('Could not load state:', e);
