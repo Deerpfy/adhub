@@ -21,6 +21,7 @@ const GITHUB_API_BASE = 'https://api.github.com';
 const GITHUB_REPO = 'Deerpfy/adhub';
 const GITHUB_BRANCH = 'main';
 const PLUGIN_PATH = 'projects/steam-farm/plugin';
+const SERVICE_PATH = 'projects/steam-farm/native-host';
 
 // State
 const state = {
@@ -138,12 +139,11 @@ function initEventListeners() {
     // Cards refresh
     document.getElementById('refreshCardsBtn')?.addEventListener('click', fetchCardsData);
 
-    // Auto-install buttons
-    document.getElementById('installWindowsBtn')?.addEventListener('click', () => downloadInstaller('windows'));
-    document.getElementById('installUnixBtn')?.addEventListener('click', () => downloadInstaller('unix'));
-
     // Download plugin button
     document.getElementById('downloadPluginBtn')?.addEventListener('click', handleDownloadPlugin);
+
+    // Download service button
+    document.getElementById('downloadServiceBtn')?.addEventListener('click', handleDownloadService);
 
     // Listen for messages from extension
     window.addEventListener('message', handleExtensionMessage);
@@ -856,70 +856,6 @@ function showToast(message, type = 'info') {
 
 window.addEventListener('beforeunload', saveState);
 
-// ===== Auto-Install Functions =====
-
-// Download installer for specific OS
-async function downloadInstaller(os) {
-    const baseUrl = `https://github.com/${REPO}/releases/download/steam-farm-v${SERVICE_VERSION}`;
-
-    let url, filename;
-    if (os === 'windows') {
-        url = `${baseUrl}/install-service.ps1`;
-        filename = 'install-service.ps1';
-    } else {
-        url = `${baseUrl}/install-service.sh`;
-        filename = 'install-service.sh';
-    }
-
-    const btn = document.getElementById(os === 'windows' ? 'installWindowsBtn' : 'installUnixBtn');
-    const originalContent = btn.innerHTML;
-
-    btn.innerHTML = '<span class="spinner"></span> Stahuji...';
-    btn.disabled = true;
-
-    try {
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            throw new Error('Instalátor není k dispozici');
-        }
-
-        const blob = await response.blob();
-        const downloadUrl = URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(downloadUrl);
-
-        btn.innerHTML = '<span>✓</span> Staženo!';
-        showToast(`Instalátor stažen: ${filename}. Stačí spustit - žádné další kroky!`, 'success');
-
-    } catch (error) {
-        console.error('Download error:', error);
-        btn.innerHTML = '<span>⚠️</span> Chyba';
-        showToast('Nelze stáhnout instalátor. Zkuste GitHub Releases.', 'error');
-
-        // Open GitHub releases as fallback
-        setTimeout(() => {
-            if (confirm('Chcete otevřít GitHub Releases pro manuální stažení?')) {
-                window.open(`https://github.com/${REPO}/releases/tag/steam-farm-v${SERVICE_VERSION}`, '_blank');
-            }
-            btn.innerHTML = originalContent;
-            btn.disabled = false;
-        }, 1500);
-        return;
-    }
-
-    setTimeout(() => {
-        btn.innerHTML = originalContent;
-        btn.disabled = false;
-    }, 3000);
-}
-
 // ===========================================
 // PLUGIN DOWNLOAD
 // ===========================================
@@ -1091,6 +1027,105 @@ async function fetchFileContent(url, isBinary = false) {
         return await response.arrayBuffer();
     }
     return await response.text();
+}
+
+// ===========================================
+// SERVICE DOWNLOAD
+// ===========================================
+
+async function handleDownloadService() {
+    console.log('[SteamFarm] Starting service download...');
+
+    const btn = document.getElementById('downloadServiceBtn');
+    const progress = document.getElementById('serviceDownloadProgress');
+    const progressFill = document.getElementById('serviceProgressFill');
+    const progressText = document.getElementById('serviceProgressText');
+
+    if (!btn) return;
+
+    const originalBtnHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-icon">⏳</span> Stahuji...';
+    if (progress) progress.style.display = 'block';
+    if (progressText) progressText.textContent = 'Načítám soubory...';
+    if (progressFill) progressFill.style.width = '10%';
+
+    try {
+        // Step 1: Get file list
+        const filesUrl = `${GITHUB_API_BASE}/repos/${GITHUB_REPO}/contents/${SERVICE_PATH}?ref=${GITHUB_BRANCH}`;
+        const filesResponse = await fetch(filesUrl);
+
+        if (!filesResponse.ok) {
+            throw new Error(`Cannot load file list: ${filesResponse.status}`);
+        }
+
+        const files = await filesResponse.json();
+        if (progressFill) progressFill.style.width = '20%';
+
+        // Step 2: Download all files (excluding dist folder and old installers)
+        const zip = new JSZip();
+        const serviceFolder = zip.folder('steam-farm-service');
+
+        const excludeFiles = ['dist', 'installer-unix.sh', 'installer-windows.ps1', 'install.bat', 'install.sh', 'com.adhub.steamfarm.json'];
+
+        let downloadedCount = 0;
+        const filesToDownload = files.filter(f => !excludeFiles.includes(f.name));
+
+        for (const file of filesToDownload) {
+            if (file.type === 'file') {
+                if (progressText) progressText.textContent = `Stahuji: ${file.name}`;
+                const content = await fetchFileContent(file.download_url);
+                serviceFolder.file(file.name, content);
+                downloadedCount++;
+                if (progressFill) progressFill.style.width = `${20 + (downloadedCount / filesToDownload.length) * 60}%`;
+            }
+        }
+
+        if (progressFill) progressFill.style.width = '85%';
+        if (progressText) progressText.textContent = 'Generuji ZIP...';
+
+        // Step 3: Generate ZIP
+        const zipBlob = await zip.generateAsync({
+            type: 'blob',
+            compression: 'DEFLATE',
+            compressionOptions: { level: 9 }
+        });
+
+        if (progressFill) progressFill.style.width = '95%';
+        if (progressText) progressText.textContent = 'Stahuji...';
+
+        // Step 4: Download
+        const downloadUrl = URL.createObjectURL(zipBlob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = 'steam-farm-service.zip';
+
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(downloadUrl);
+
+        if (progressFill) progressFill.style.width = '100%';
+        if (progressText) progressText.textContent = 'Hotovo!';
+
+        showToast('Service stažen! Rozbal ZIP a dvojklikem spusť run.bat (Windows) nebo run.command (Mac).', 'success');
+
+        btn.innerHTML = '<span class="btn-icon">✓</span> Staženo!';
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalBtnHtml;
+            if (progress) progress.style.display = 'none';
+            if (progressFill) progressFill.style.width = '0%';
+        }, 2000);
+
+    } catch (error) {
+        console.error('[SteamFarm] Service download error:', error);
+        showToast('Chyba při stahování: ' + error.message, 'error');
+
+        btn.disabled = false;
+        btn.innerHTML = originalBtnHtml;
+        if (progress) progress.style.display = 'none';
+    }
 }
 
 // Expose for debugging
