@@ -1,16 +1,16 @@
 /**
  * Steam Farm - Popup Script
- * v1.2.0 - Auto-install support
+ * v2.0.0 - WebSocket verze (bez nutnosti Extension ID)
  */
 
-const VERSION = '1.2.0';
-const NATIVE_HOST_NAME = 'com.adhub.steamfarm';
+const VERSION = '2.0.0';
+const STATUS_URL = 'http://127.0.0.1:17532/status';
 const REPO = 'Deerpfy/adhub';
-const HOST_VERSION = '1.2.0';
+const SERVICE_VERSION = '2.0.0';
 
 // Elements
-const nativeHostDot = document.getElementById('nativeHostDot');
-const nativeHostStatus = document.getElementById('nativeHostStatus');
+const serviceDot = document.getElementById('serviceDot');
+const serviceStatus = document.getElementById('serviceStatus');
 const steamDot = document.getElementById('steamDot');
 const steamStatus = document.getElementById('steamStatus');
 const farmingInfo = document.getElementById('farmingInfo');
@@ -19,7 +19,6 @@ const openBtn = document.getElementById('openBtn');
 const installSection = document.getElementById('installSection');
 const installBtn = document.getElementById('installBtn');
 const installSteps = document.getElementById('installSteps');
-const extensionIdEl = document.getElementById('extensionId');
 
 // Detect OS
 function getOS() {
@@ -38,105 +37,99 @@ function getOS() {
     return 'unknown';
 }
 
-// Get installer URL based on OS
-function getInstallerUrl() {
+// Get installer info based on OS
+function getInstallerInfo() {
     const os = getOS();
-    const baseUrl = `https://github.com/${REPO}/releases/download/steam-farm-v${HOST_VERSION}`;
+    const baseUrl = `https://github.com/${REPO}/releases/download/steam-farm-v${SERVICE_VERSION}`;
 
     switch (os) {
         case 'windows':
             return {
-                url: `${baseUrl}/installer-windows.ps1`,
-                filename: 'installer-windows.ps1',
-                instructions: 'Klikněte pravým tlačítkem na soubor a zvolte "Spustit pomocí PowerShell"'
+                url: `${baseUrl}/steam-farm-installer.exe`,
+                filename: 'steam-farm-installer.exe',
+                fallbackScript: `${baseUrl}/install-service.ps1`,
+                fallbackFilename: 'install-service.ps1'
             };
         case 'macos':
         case 'linux':
             return {
-                url: `${baseUrl}/installer-unix.sh`,
-                filename: 'installer-unix.sh',
-                instructions: 'Otevřete terminál a spusťte: chmod +x installer-unix.sh && ./installer-unix.sh'
+                url: `${baseUrl}/steam-farm-installer-${os}`,
+                filename: `steam-farm-installer-${os}`,
+                fallbackScript: `${baseUrl}/install-service.sh`,
+                fallbackFilename: 'install-service.sh'
             };
         default:
             return null;
     }
 }
 
-// Check native host connection
-async function checkNativeHost() {
+// Check if service is running
+async function checkService() {
     try {
-        const port = chrome.runtime.connectNative(NATIVE_HOST_NAME);
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
 
-        return new Promise((resolve) => {
-            port.onMessage.addListener((msg) => {
-                if (msg.type === 'PONG') {
-                    // Hide install section
-                    installSection.classList.remove('show');
+        const response = await fetch(STATUS_URL, {
+            signal: controller.signal,
+            cache: 'no-store'
+        });
+        clearTimeout(timeoutId);
 
-                    nativeHostDot.classList.add('connected');
-                    nativeHostDot.classList.remove('disconnected');
-                    nativeHostStatus.textContent = 'Připojeno';
+        if (response.ok) {
+            const data = await response.json();
 
-                    if (msg.isLoggedIn) {
-                        steamDot.classList.add('connected');
-                        steamDot.classList.remove('disconnected');
-                        steamStatus.textContent = msg.username || 'Přihlášeno';
+            // Service is running
+            installSection.classList.remove('show');
 
-                        if (msg.farmingGames?.length > 0) {
-                            farmingInfo.style.display = 'block';
-                            farmingCount.textContent = msg.farmingGames.length;
-                        }
-                    } else {
-                        steamDot.classList.add('disconnected');
-                        steamDot.classList.remove('connected');
-                        steamStatus.textContent = 'Nepřihlášeno';
-                    }
-                    resolve(true);
+            serviceDot.classList.add('connected');
+            serviceDot.classList.remove('disconnected', 'loading');
+            serviceStatus.textContent = `v${data.version}`;
+
+            if (data.isLoggedIn) {
+                steamDot.classList.add('connected');
+                steamDot.classList.remove('disconnected');
+                steamStatus.textContent = data.username || 'Přihlášeno';
+
+                if (data.farmingCount > 0) {
+                    farmingInfo.style.display = 'block';
+                    farmingCount.textContent = data.farmingCount;
                 }
-            });
-
-            port.onDisconnect.addListener(() => {
-                // Show install section
-                showInstallSection();
-
-                nativeHostDot.classList.add('disconnected');
-                nativeHostDot.classList.remove('connected');
-                nativeHostStatus.textContent = 'Nepřipojeno';
+            } else {
                 steamDot.classList.add('disconnected');
                 steamDot.classList.remove('connected');
-                steamStatus.textContent = '-';
-                resolve(false);
-            });
+                steamStatus.textContent = 'Nepřihlášeno';
+            }
 
-            // Send ping
-            port.postMessage({ type: 'PING' });
-
-            // Timeout
-            setTimeout(() => {
-                resolve(false);
-            }, 2000);
-        });
+            return true;
+        }
     } catch (error) {
-        showInstallSection();
-        nativeHostDot.classList.add('disconnected');
-        nativeHostDot.classList.remove('connected');
-        nativeHostStatus.textContent = 'Chyba';
-        return false;
+        // Service not running
     }
+
+    // Show install section
+    showInstallSection();
+
+    serviceDot.classList.add('disconnected');
+    serviceDot.classList.remove('connected', 'loading');
+    serviceStatus.textContent = 'Neběží';
+    steamDot.classList.add('disconnected');
+    steamDot.classList.remove('connected');
+    steamStatus.textContent = '-';
+
+    return false;
 }
 
 // Show install section
 function showInstallSection() {
     installSection.classList.add('show');
-    extensionIdEl.textContent = chrome.runtime.id;
 }
 
 // Download installer
 async function downloadInstaller() {
-    const installer = getInstallerUrl();
+    const installer = getInstallerInfo();
 
     if (!installer) {
-        alert('Nepodporovaný operační systém. Prosím nainstalujte Native Host manuálně.');
+        alert('Nepodporovaný operační systém. Prosím nainstalujte service manuálně.');
         return;
     }
 
@@ -145,35 +138,24 @@ async function downloadInstaller() {
     installBtn.disabled = true;
 
     try {
-        // Fetch the installer script
+        // Try to download the installer
         const response = await fetch(installer.url);
 
         if (!response.ok) {
-            throw new Error('Instalátor není k dispozici na GitHub. Zkuste to později.');
+            // Try fallback script
+            const fallbackResponse = await fetch(installer.fallbackScript);
+            if (fallbackResponse.ok) {
+                const blob = await fallbackResponse.blob();
+                downloadBlob(blob, installer.fallbackFilename);
+                showSuccessState();
+                return;
+            }
+            throw new Error('Instalátor není k dispozici');
         }
 
         const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-
-        // Create download link
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = installer.filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-
-        // Show instructions
-        installSteps.classList.add('show');
-        installBtn.innerHTML = '<span>✓</span><span>Staženo!</span>';
-
-        // Copy extension ID to clipboard
-        try {
-            await navigator.clipboard.writeText(chrome.runtime.id);
-        } catch (e) {
-            // Clipboard not available, user can copy manually
-        }
+        downloadBlob(blob, installer.filename);
+        showSuccessState();
 
     } catch (error) {
         console.error('Download error:', error);
@@ -184,12 +166,34 @@ async function downloadInstaller() {
         setTimeout(() => {
             if (confirm(`Nelze stáhnout instalátor automaticky.\n\nChcete otevřít stránku GitHub Releases pro manuální stažení?`)) {
                 chrome.tabs.create({
-                    url: `https://github.com/${REPO}/releases/tag/steam-farm-v${HOST_VERSION}`
+                    url: `https://github.com/${REPO}/releases/tag/steam-farm-v${SERVICE_VERSION}`
                 });
             }
             installBtn.innerHTML = '<span>📥</span><span>Stáhnout instalátor</span>';
         }, 1000);
     }
+}
+
+function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function showSuccessState() {
+    installSteps.classList.add('show');
+    installBtn.innerHTML = '<span>✓</span><span>Staženo!</span>';
+
+    // Re-enable button after delay for retry
+    setTimeout(() => {
+        installBtn.innerHTML = '<span>📥</span><span>Stáhnout znovu</span>';
+        installBtn.disabled = false;
+    }, 5000);
 }
 
 // Open Steam Farm page
@@ -208,4 +212,7 @@ openBtn.addEventListener('click', async (e) => {
 installBtn.addEventListener('click', downloadInstaller);
 
 // Initialize
-checkNativeHost();
+checkService();
+
+// Periodically check service status
+setInterval(checkService, 5000);

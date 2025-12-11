@@ -20,7 +20,7 @@
                         <span class="logo-icon">🎮</span>
                         <span>Steam Farm</span>
                     </div>
-                    <span class="version-badge">v1.2</span>
+                    <span class="version-badge">v2.0</span>
                 </div>
                 <div class="header-right">
                     <div class="connection-status" id="connectionStatus">
@@ -38,7 +38,7 @@
                 <div class="notice-icon">🔒</div>
                 <div class="notice-content">
                     <h3>100% Lokální zpracování</h3>
-                    <p>Vaše přihlašovací údaje nikdy neopouštějí váš počítač. Veškerá komunikace probíhá přímo mezi vaším prohlížečem a Steam servery přes lokální Native Host.</p>
+                    <p>Vaše přihlašovací údaje nikdy neopouštějí váš počítač. Veškerá komunikace probíhá přímo mezi vaším prohlížečem a Steam servery přes lokální WebSocket Service.</p>
                 </div>
                 <button class="notice-close" onclick="this.parentElement.style.display='none'">×</button>
             </div>
@@ -47,20 +47,16 @@
             <div class="extension-check" id="extensionCheck">
                 <div class="check-card warning">
                     <div class="check-icon">⚠️</div>
-                    <h3>Vyžadováno rozšíření</h3>
-                    <p>Pro fungování Steam Farm je potřeba nainstalovat Chrome rozšíření a Native Host.</p>
+                    <h3>Vyžadováno rozšíření a service</h3>
+                    <p>Pro fungování Steam Farm je potřeba nainstalovat Chrome rozšíření a Steam Farm Service. Instalace je jednoduchá - stačí stáhnout a spustit instalátor!</p>
                     <div class="check-steps">
                         <div class="step" id="stepExtension">
                             <span class="step-status">○</span>
                             <span class="step-text">Chrome/Edge rozšíření</span>
                         </div>
-                        <div class="step" id="stepNativeHost">
+                        <div class="step" id="stepService">
                             <span class="step-status">○</span>
-                            <span class="step-text">Native Host (Node.js)</span>
-                        </div>
-                        <div class="step" id="stepNodeModules">
-                            <span class="step-status">○</span>
-                            <span class="step-text">Steam knihovny</span>
+                            <span class="step-text">Steam Farm Service</span>
                         </div>
                     </div>
                     <a href="#installation" class="btn btn-primary">Zobrazit návod k instalaci</a>
@@ -250,7 +246,7 @@
                         <span class="auto-install-icon">🚀</span>
                         <h3>Rychlá automatická instalace</h3>
                     </div>
-                    <p class="auto-install-desc">Stáhněte instalátor pro váš systém. Instalátor automaticky stáhne a nakonfiguruje Native Host.</p>
+                    <p class="auto-install-desc">Stáhněte instalátor pro váš systém. Instalátor automaticky stáhne a nakonfiguruje Steam Farm Service - <strong>žádné Extension ID není potřeba!</strong></p>
                     <div class="auto-install-buttons">
                         <button class="btn btn-primary btn-installer" id="installWindowsBtn">
                             <span>🪟</span> Windows (PowerShell)
@@ -259,10 +255,8 @@
                             <span>🐧</span> Linux / macOS
                         </button>
                     </div>
-                    <div class="extension-id-info" id="extensionIdInfo" style="display: none;">
-                        <p>Při instalaci budete potřebovat ID rozšíření:</p>
-                        <code class="extension-id-code" id="extensionIdCode">Připojte se k rozšíření pro zobrazení ID</code>
-                        <button class="btn btn-secondary btn-small" id="copyExtensionId" title="Kopírovat ID">📋 Kopírovat</button>
+                    <div class="auto-install-info">
+                        <p>Po stažení stačí spustit instalátor. Service se automaticky nainstaluje a spustí. Poté obnovte tuto stránku.</p>
                     </div>
                 </div>
 
@@ -286,7 +280,7 @@
                     <div class="install-step">
                         <div class="step-number">2</div>
                         <div class="step-content">
-                            <h3>Nainstalujte Native Host</h3>
+                            <h3>Nainstalujte a spusťte Steam Farm Service</h3>
                             <div class="os-tabs">
                                 <button class="os-tab active" data-os="windows">Windows</button>
                                 <button class="os-tab" data-os="linux">Linux/macOS</button>
@@ -294,21 +288,22 @@
                             <div class="os-content" id="os-windows">
                                 <pre><code>cd projects/steam-farm/native-host
 npm install
-install.bat</code></pre>
+node steam-farm-service.js</code></pre>
+                                <p class="install-note">Pro trvalý běh na pozadí použijte automatický instalátor výše.</p>
                             </div>
                             <div class="os-content" id="os-linux" style="display: none;">
                                 <pre><code>cd projects/steam-farm/native-host
 npm install
-chmod +x install.sh
-./install.sh</code></pre>
+node steam-farm-service.js</code></pre>
+                                <p class="install-note">Pro trvalý běh na pozadí použijte automatický instalátor výše.</p>
                             </div>
                         </div>
                     </div>
                     <div class="install-step">
                         <div class="step-number">3</div>
                         <div class="step-content">
-                            <h3>Restartujte prohlížeč</h3>
-                            <p>Po instalaci Native Host je potřeba restartovat prohlížeč, aby se rozšíření připojilo.</p>
+                            <h3>Obnovte stránku</h3>
+                            <p>Po spuštění service obnovte tuto stránku (F5). Rozšíření se automaticky připojí ke službě.</p>
                         </div>
                     </div>
                 </div>
@@ -333,7 +328,7 @@ chmod +x install.sh
         <footer class="footer">
             <div class="footer-content">
                 <span class="footer-text">Steam Farm - AdHUB Project</span>
-                <span class="footer-version">v1.2.0</span>
+                <span class="footer-version">v2.0.0</span>
             </div>
         </footer>
     </div>

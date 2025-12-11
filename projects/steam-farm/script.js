@@ -2,21 +2,19 @@
  * Steam Farm - AdHUB
  * Webové rozhraní pro farming Steam hodin a kartiček
  *
- * Komunikace: Web <-> Chrome Extension <-> Native Host (Node.js) <-> Steam
+ * v2.0.0 - WebSocket architektura (bez nutnosti Extension ID)
+ * Komunikace: Web <-> Chrome Extension <-> WebSocket Service (Node.js) <-> Steam
  *
  * Bezpečnost: Refresh token je šifrován pomocí AES-256-GCM s klíčem
  * odvozeným z uživatelského hesla přes Argon2id
  */
 
 // Version
-const VERSION = '1.2.0';
+const VERSION = '2.0.0';
 
 // GitHub repo for downloads
 const REPO = 'Deerpfy/adhub';
-const HOST_VERSION = '1.2.0';
-
-// Extension ID - will be set after extension is loaded
-let EXTENSION_ID = null;
+const SERVICE_VERSION = '2.0.0';
 
 // State
 const state = {
@@ -135,7 +133,6 @@ function initEventListeners() {
     // Auto-install buttons
     document.getElementById('installWindowsBtn')?.addEventListener('click', () => downloadInstaller('windows'));
     document.getElementById('installUnixBtn')?.addEventListener('click', () => downloadInstaller('unix'));
-    document.getElementById('copyExtensionId')?.addEventListener('click', copyExtensionIdToClipboard);
 
     // Listen for messages from extension
     window.addEventListener('message', handleExtensionMessage);
@@ -229,33 +226,24 @@ function handleExtensionMessage(event) {
 // Extension connected
 function handleExtensionConnected(data) {
     state.connected = true;
-    EXTENSION_ID = data.extensionId;
-
-    // Update extension ID in auto-install section
-    const extensionIdCode = document.getElementById('extensionIdCode');
-    if (extensionIdCode) {
-        extensionIdCode.textContent = EXTENSION_ID;
-    }
 
     const stepExtension = document.getElementById('stepExtension');
-    const stepNativeHost = document.getElementById('stepNativeHost');
-    const stepNodeModules = document.getElementById('stepNodeModules');
+    const stepService = document.getElementById('stepService');
 
     if (stepExtension) {
         stepExtension.classList.add('complete');
     }
 
-    if (data.nativeHostConnected) {
-        if (stepNativeHost) stepNativeHost.classList.add('complete');
-        if (stepNodeModules) stepNodeModules.classList.add('complete');
+    if (data.serviceRunning) {
+        if (stepService) stepService.classList.add('complete');
 
-        updateConnectionStatus('connected', 'Připojeno');
+        updateConnectionStatus('connected', `Připojeno (Service v${data.serviceVersion || '2.0'})`);
         hideExtensionRequired();
 
         // Check vault status
         sendToExtension('CHECK_VAULT_STATUS');
     } else {
-        updateConnectionStatus('disconnected', 'Native Host není připojen');
+        updateConnectionStatus('disconnected', 'Steam Farm Service neběží');
         showExtensionRequired();
     }
 }
@@ -861,15 +849,15 @@ window.addEventListener('beforeunload', saveState);
 
 // Download installer for specific OS
 async function downloadInstaller(os) {
-    const baseUrl = `https://github.com/${REPO}/releases/download/steam-farm-v${HOST_VERSION}`;
+    const baseUrl = `https://github.com/${REPO}/releases/download/steam-farm-v${SERVICE_VERSION}`;
 
     let url, filename;
     if (os === 'windows') {
-        url = `${baseUrl}/installer-windows.ps1`;
-        filename = 'installer-windows.ps1';
+        url = `${baseUrl}/install-service.ps1`;
+        filename = 'install-service.ps1';
     } else {
-        url = `${baseUrl}/installer-unix.sh`;
-        filename = 'installer-unix.sh';
+        url = `${baseUrl}/install-service.sh`;
+        filename = 'install-service.sh';
     }
 
     const btn = document.getElementById(os === 'windows' ? 'installWindowsBtn' : 'installUnixBtn');
@@ -897,10 +885,7 @@ async function downloadInstaller(os) {
         URL.revokeObjectURL(downloadUrl);
 
         btn.innerHTML = '<span>✓</span> Staženo!';
-        showToast(`Instalátor stažen: ${filename}`, 'success');
-
-        // Show extension ID
-        showExtensionIdInfo();
+        showToast(`Instalátor stažen: ${filename}. Stačí spustit - žádné další kroky!`, 'success');
 
     } catch (error) {
         console.error('Download error:', error);
@@ -910,7 +895,7 @@ async function downloadInstaller(os) {
         // Open GitHub releases as fallback
         setTimeout(() => {
             if (confirm('Chcete otevřít GitHub Releases pro manuální stažení?')) {
-                window.open(`https://github.com/${REPO}/releases/tag/steam-farm-v${HOST_VERSION}`, '_blank');
+                window.open(`https://github.com/${REPO}/releases/tag/steam-farm-v${SERVICE_VERSION}`, '_blank');
             }
             btn.innerHTML = originalContent;
             btn.disabled = false;
@@ -922,37 +907,6 @@ async function downloadInstaller(os) {
         btn.innerHTML = originalContent;
         btn.disabled = false;
     }, 3000);
-}
-
-// Show extension ID info after download
-function showExtensionIdInfo() {
-    const infoEl = document.getElementById('extensionIdInfo');
-    const codeEl = document.getElementById('extensionIdCode');
-
-    if (infoEl && codeEl) {
-        infoEl.style.display = 'block';
-
-        if (EXTENSION_ID) {
-            codeEl.textContent = EXTENSION_ID;
-        } else {
-            codeEl.textContent = 'Nejprve nainstalujte rozšíření do prohlížeče';
-        }
-    }
-}
-
-// Copy extension ID to clipboard
-async function copyExtensionIdToClipboard() {
-    if (!EXTENSION_ID) {
-        showToast('Rozšíření není připojeno', 'error');
-        return;
-    }
-
-    try {
-        await navigator.clipboard.writeText(EXTENSION_ID);
-        showToast('ID zkopírováno do schránky', 'success');
-    } catch (error) {
-        showToast('Nelze kopírovat do schránky', 'error');
-    }
 }
 
 // Expose for debugging
