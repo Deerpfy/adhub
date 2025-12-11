@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#10b981">
+    <meta name="description" content="Offline AI Visibility Tracker - Sledujte viditelnost vaší značky v AI vyhledávačích">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📊</text></svg>">
+    <title>AI Visibility Tracker - Offline</title>
+    <link rel="stylesheet" href="styles.css?v=1.0.0">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sticky Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 class="logo">
+                        <span class="logo-icon">📊</span>
+                        AI Visibility Tracker
+                    </h1>
+                    <span class="version-badge">v1.0.0</span>
+                    <span class="offline-badge" id="offlineBadge">
+                        <span class="offline-dot"></span>
+                        Offline Ready
+                    </span>
+                </div>
+                <div class="header-right">
+                    <button class="btn-icon" id="themeToggle" title="Přepnout téma">
+                        <span id="themeIcon">🌙</span>
+                    </button>
+                    <button class="btn-icon" id="exportBtn" title="Exportovat data">
+                        <span>📥</span>
+                    </button>
+                    <button class="btn-icon" id="importBtn" title="Importovat data">
+                        <span>📤</span>
+                    </button>
+                    <input type="file" id="importFile" accept=".json" style="display: none;">
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="nav-tabs">
+            <button class="nav-tab active" data-tab="dashboard">
+                <span class="tab-icon">📈</span>
+                <span class="tab-text">Dashboard</span>
+            </button>
+            <button class="nav-tab" data-tab="brands">
+                <span class="tab-icon">🏷️</span>
+                <span class="tab-text">Značky</span>
+            </button>
+            <button class="nav-tab" data-tab="prompts">
+                <span class="tab-icon">💬</span>
+                <span class="tab-text">Prompty</span>
+            </button>
+            <button class="nav-tab" data-tab="sources">
+                <span class="tab-icon">🔗</span>
+                <span class="tab-text">Zdroje</span>
+            </button>
+            <button class="nav-tab" data-tab="competitors">
+                <span class="tab-icon">⚔️</span>
+                <span class="tab-text">Konkurence</span>
+            </button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Dashboard Tab -->
+            <section class="tab-content active" id="tab-dashboard">
+                <div class="dashboard-hero">
+                    <h2 class="hero-title">AI Visibility Overview</h2>
+                    <p class="hero-subtitle">Sledujte jak je vaše značka viditelná v AI vyhledávačích</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">🎯</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="totalMentions">0</span>
+                            <span class="stat-label">Celkem zmínek</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">📊</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="shareOfVoice">0%</span>
+                            <span class="stat-label">Share of Voice</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">🔗</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="totalSources">0</span>
+                            <span class="stat-label">Citované zdroje</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">💬</div>
+                        <div class="stat-info">
+                            <span class="stat-value" id="totalPrompts">0</span>
+                            <span class="stat-label">Sledované prompty</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="charts-section">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">AI Model Coverage</h3>
+                            <span class="chart-subtitle">Zmínky podle AI platformy</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="aiModelsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3 class="chart-title">Visibility Trend</h3>
+                            <span class="chart-subtitle">Vývoj viditelnosti v čase</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="trendChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Source Distribution -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <span class="section-icon">📰</span>
+                            Distribuce zdrojů citací
+                        </h3>
+                    </div>
+                    <div class="source-distribution" id="sourceDistribution">
+                        <div class="empty-state small">
+                            <p>Zatím žádná data. Přidejte zdroje v sekci "Zdroje".</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <span class="section-icon">🕐</span>
+                            Nedávná aktivita
+                        </h3>
+                    </div>
+                    <div class="activity-list" id="activityList">
+                        <div class="empty-state small">
+                            <p>Zatím žádná aktivita.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Brands Tab -->
+            <section class="tab-content" id="tab-brands">
+                <div class="section-header-bar">
+                    <h2 class="section-main-title">
+                        <span class="section-icon">🏷️</span>
+                        Správa značek
+                    </h2>
+                    <button class="btn btn-primary" id="addBrandBtn">
+                        <span>+</span> Přidat značku
+                    </button>
+                </div>
+
+                <div class="brands-grid" id="brandsGrid">
+                    <div class="empty-state">
+                        <div class="empty-icon">🏷️</div>
+                        <p class="empty-title">Žádné značky</p>
+                        <p class="empty-text">Přidejte značku pro začátek sledování</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Prompts Tab -->
+            <section class="tab-content" id="tab-prompts">
+                <div class="section-header-bar">
+                    <h2 class="section-main-title">
+                        <span class="section-icon">💬</span>
+                        AI Prompty
+                    </h2>
+                    <button class="btn btn-primary" id="addPromptBtn">
+                        <span>+</span> Přidat prompt
+                    </button>
+                </div>
+
+                <!-- Prompt Generator -->
+                <div class="prompt-generator-card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <span class="card-icon">✨</span>
+                            Automatický generátor promptů
+                        </h3>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-description">Zadejte URL webu a vygenerujeme relevantní AI prompty pro sledování.</p>
+                        <div class="input-group">
+                            <input type="url" id="generateUrlInput" class="input" placeholder="https://example.com">
+                            <button class="btn btn-secondary" id="generatePromptsBtn">Generovat</button>
+                        </div>
+                        <div class="generated-prompts" id="generatedPrompts" style="display: none;">
+                            <h4>Vygenerované prompty:</h4>
+                            <div class="prompts-list" id="generatedPromptsList"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="prompts-list-section" id="promptsListSection">
+                    <div class="empty-state">
+                        <div class="empty-icon">💬</div>
+                        <p class="empty-title">Žádné prompty</p>
+                        <p class="empty-text">Přidejte prompt nebo použijte generátor</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Sources Tab -->
+            <section class="tab-content" id="tab-sources">
+                <div class="section-header-bar">
+                    <h2 class="section-main-title">
+                        <span class="section-icon">🔗</span>
+                        Citované zdroje
+                    </h2>
+                    <button class="btn btn-primary" id="addSourceBtn">
+                        <span>+</span> Přidat zdroj
+                    </button>
+                </div>
+
+                <!-- Source Stats -->
+                <div class="source-stats" id="sourceStats">
+                    <div class="source-stat-item">
+                        <span class="source-stat-label">Editoriální média</span>
+                        <div class="source-stat-bar">
+                            <div class="source-stat-fill" id="editorialFill" style="width: 0%"></div>
+                        </div>
+                        <span class="source-stat-value" id="editorialPercent">0%</span>
+                    </div>
+                    <div class="source-stat-item">
+                        <span class="source-stat-label">Vlastní web</span>
+                        <div class="source-stat-bar">
+                            <div class="source-stat-fill own-web" id="ownWebFill" style="width: 0%"></div>
+                        </div>
+                        <span class="source-stat-value" id="ownWebPercent">0%</span>
+                    </div>
+                    <div class="source-stat-item">
+                        <span class="source-stat-label">Recenze & Fóra</span>
+                        <div class="source-stat-bar">
+                            <div class="source-stat-fill reviews" id="reviewsFill" style="width: 0%"></div>
+                        </div>
+                        <span class="source-stat-value" id="reviewsPercent">0%</span>
+                    </div>
+                    <div class="source-stat-item">
+                        <span class="source-stat-label">Ostatní</span>
+                        <div class="source-stat-bar">
+                            <div class="source-stat-fill other" id="otherFill" style="width: 0%"></div>
+                        </div>
+                        <span class="source-stat-value" id="otherPercent">0%</span>
+                    </div>
+                </div>
+
+                <div class="sources-grid" id="sourcesGrid">
+                    <div class="empty-state">
+                        <div class="empty-icon">🔗</div>
+                        <p class="empty-title">Žádné zdroje</p>
+                        <p class="empty-text">Přidejte zdroje citací z AI odpovědí</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Competitors Tab -->
+            <section class="tab-content" id="tab-competitors">
+                <div class="section-header-bar">
+                    <h2 class="section-main-title">
+                        <span class="section-icon">⚔️</span>
+                        Konkurenční analýza
+                    </h2>
+                    <button class="btn btn-primary" id="addCompetitorBtn">
+                        <span>+</span> Přidat konkurenta
+                    </button>
+                </div>
+
+                <!-- SoV Comparison Chart -->
+                <div class="chart-card full-width">
+                    <div class="chart-header">
+                        <h3 class="chart-title">Share of Voice srovnání</h3>
+                        <span class="chart-subtitle">Podíl značek v AI odpovědích</span>
+                    </div>
+                    <div class="chart-body">
+                        <canvas id="sovChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="competitors-grid" id="competitorsGrid">
+                    <div class="empty-state">
+                        <div class="empty-icon">⚔️</div>
+                        <p class="empty-title">Žádní konkurenti</p>
+                        <p class="empty-text">Přidejte konkurenty pro srovnání</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <span class="footer-text">AI Visibility Tracker - 100% offline, vaše data zůstávají u vás</span>
+                <span class="footer-link">
+                    <a href="../" class="back-link">← Zpět na AdHUB</a>
+                </span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <!-- Add Brand Modal -->
+    <div class="modal-overlay" id="brandModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="brandModalTitle">Přidat značku</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="brandForm">
+                    <input type="hidden" id="brandId">
+                    <div class="form-group">
+                        <label for="brandName">Název značky *</label>
+                        <input type="text" id="brandName" class="input" required placeholder="Např. Moje Firma">
+                    </div>
+                    <div class="form-group">
+                        <label for="brandUrl">Web URL</label>
+                        <input type="url" id="brandUrl" class="input" placeholder="https://example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="brandKeywords">Klíčová slova (oddělená čárkou)</label>
+                        <input type="text" id="brandKeywords" class="input" placeholder="produkt, služba, kategorie">
+                    </div>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" id="brandIsPrimary"> Primární značka (moje)
+                        </label>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" data-close-modal>Zrušit</button>
+                        <button type="submit" class="btn btn-primary">Uložit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Prompt Modal -->
+    <div class="modal-overlay" id="promptModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="promptModalTitle">Přidat prompt</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="promptForm">
+                    <input type="hidden" id="promptId">
+                    <div class="form-group">
+                        <label for="promptText">Text promptu *</label>
+                        <textarea id="promptText" class="input textarea" required placeholder="Např. What are the best CRM solutions for small business?"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="promptBrand">Sledovaná značka *</label>
+                        <select id="promptBrand" class="input" required>
+                            <option value="">Vyberte značku</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="promptAiModel">AI Model</label>
+                        <select id="promptAiModel" class="input">
+                            <option value="chatgpt">ChatGPT</option>
+                            <option value="perplexity">Perplexity</option>
+                            <option value="gemini">Gemini</option>
+                            <option value="claude">Claude</option>
+                            <option value="google-ai">Google AI Mode</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Výsledky testování</label>
+                        <div class="checkbox-group">
+                            <label>
+                                <input type="checkbox" id="promptMentioned"> Značka zmíněna
+                            </label>
+                            <label>
+                                <input type="checkbox" id="promptCited"> Citován zdroj
+                            </label>
+                            <label>
+                                <input type="checkbox" id="promptRecommended"> Značka doporučena
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="promptNotes">Poznámky</label>
+                        <textarea id="promptNotes" class="input textarea small" placeholder="Volitelné poznámky k výsledku"></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" data-close-modal>Zrušit</button>
+                        <button type="submit" class="btn btn-primary">Uložit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Source Modal -->
+    <div class="modal-overlay" id="sourceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="sourceModalTitle">Přidat zdroj</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="sourceForm">
+                    <input type="hidden" id="sourceId">
+                    <div class="form-group">
+                        <label for="sourceName">Název zdroje *</label>
+                        <input type="text" id="sourceName" class="input" required placeholder="Např. Forbes článek">
+                    </div>
+                    <div class="form-group">
+                        <label for="sourceUrl">URL *</label>
+                        <input type="url" id="sourceUrl" class="input" required placeholder="https://example.com/article">
+                    </div>
+                    <div class="form-group">
+                        <label for="sourceType">Typ zdroje *</label>
+                        <select id="sourceType" class="input" required>
+                            <option value="editorial">Editoriální média</option>
+                            <option value="own-web">Vlastní web</option>
+                            <option value="reviews">Recenze & Fóra</option>
+                            <option value="other">Ostatní</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sourceBrand">Vztahuje se k značce</label>
+                        <select id="sourceBrand" class="input">
+                            <option value="">Obecný zdroj</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="sourceCitations">Počet citací</label>
+                        <input type="number" id="sourceCitations" class="input" min="1" value="1">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" data-close-modal>Zrušit</button>
+                        <button type="submit" class="btn btn-primary">Uložit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Competitor Modal -->
+    <div class="modal-overlay" id="competitorModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title" id="competitorModalTitle">Přidat konkurenta</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="competitorForm">
+                    <input type="hidden" id="competitorId">
+                    <div class="form-group">
+                        <label for="competitorName">Název konkurenta *</label>
+                        <input type="text" id="competitorName" class="input" required placeholder="Např. Konkurent A">
+                    </div>
+                    <div class="form-group">
+                        <label for="competitorUrl">Web URL</label>
+                        <input type="url" id="competitorUrl" class="input" placeholder="https://competitor.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="competitorMentions">Počet AI zmínek</label>
+                        <input type="number" id="competitorMentions" class="input" min="0" value="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="competitorSov">Odhadovaný Share of Voice (%)</label>
+                        <input type="number" id="competitorSov" class="input" min="0" max="100" value="0">
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" data-close-modal>Zrušit</button>
+                        <button type="submit" class="btn btn-primary">Uložit</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Delete Modal -->
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h2 class="modal-title">Potvrdit smazání</h2>
+                <button class="modal-close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">Opravdu chcete smazat tuto položku?</p>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" data-close-modal>Zrušit</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Smazat</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Chart.js from CDN with local fallback -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script>
+        // Fallback for offline - simple charts if Chart.js not loaded
+        if (typeof Chart === 'undefined') {
+            console.log('Chart.js not available, using fallback');
+            window.Chart = class {
+                constructor(ctx, config) {
+                    this.ctx = ctx;
+                    this.config = config;
+                    this.renderFallback();
+                }
+                renderFallback() {
+                    const canvas = this.ctx.canvas || this.ctx;
+                    const container = canvas.parentElement;
+                    container.innerHTML = '<div class="chart-fallback">Graf není dostupný offline. Data jsou zobrazena níže.</div>';
+                }
+                update() {}
+                destroy() {}
+            };
+        }
+    </script>
+    <script src="db.js?v=1.0.0"></script>
+    <script src="app.js?v=1.0.0"></script>
+</body>
+</html>
