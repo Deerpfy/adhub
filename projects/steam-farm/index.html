@@ -6,6 +6,35 @@
     <title>Steam Farm - AdHUB</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+    <script>
+    // Load JSZip with fallback
+    (function() {
+        console.log('[SteamFarm] Loading JSZip...');
+        const sources = [
+            'jszip.min.js',
+            'https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js',
+            'https://unpkg.com/jszip@3.10.1/dist/jszip.min.js'
+        ];
+        let currentIndex = 0;
+        function tryLoadJSZip() {
+            if (currentIndex >= sources.length) {
+                console.error('[SteamFarm] Failed to load JSZip');
+                return;
+            }
+            const script = document.createElement('script');
+            script.src = sources[currentIndex];
+            script.onerror = function() {
+                currentIndex++;
+                tryLoadJSZip();
+            };
+            script.onload = function() {
+                console.log('[SteamFarm] JSZip loaded:', JSZip.version);
+            };
+            document.head.appendChild(script);
+        }
+        tryLoadJSZip();
+    })();
+    </script>
 </head>
 <body>
     <div class="app-container">
@@ -240,70 +269,121 @@
                     <h2><span class="section-icon">📦</span> Instalace</h2>
                 </div>
 
-                <!-- Auto Install Section -->
-                <div class="auto-install-card" id="autoInstallCard">
-                    <div class="auto-install-header">
-                        <span class="auto-install-icon">🚀</span>
-                        <h3>Rychlá automatická instalace</h3>
-                    </div>
-                    <p class="auto-install-desc">Stáhněte instalátor pro váš systém. Instalátor automaticky stáhne a nakonfiguruje Steam Farm Service - <strong>žádné Extension ID není potřeba!</strong></p>
-                    <div class="auto-install-buttons">
-                        <button class="btn btn-primary btn-installer" id="installWindowsBtn">
-                            <span>🪟</span> Windows (PowerShell)
-                        </button>
-                        <button class="btn btn-primary btn-installer" id="installUnixBtn">
-                            <span>🐧</span> Linux / macOS
-                        </button>
-                    </div>
-                    <div class="auto-install-info">
-                        <p>Po stažení stačí spustit instalátor. Service se automaticky nainstaluje a spustí. Poté obnovte tuto stránku.</p>
-                    </div>
-                </div>
+                <div class="install-options">
+                    <!-- Krok 1: Stažení pluginu -->
+                    <div class="install-card install-card-primary">
+                        <div class="install-card-header">
+                            <span class="install-badge">Krok 1</span>
+                            <h3>Stáhni plugin</h3>
+                        </div>
+                        <p>Stáhni Chrome rozšíření jako ZIP soubor přímo z GitHub repozitáře.</p>
 
-                <div class="installation-divider">
-                    <span>nebo manuální instalace</span>
-                </div>
+                        <!-- Commit info -->
+                        <div class="commit-info" id="commitInfo">
+                            <div class="commit-loading" id="commitLoading">
+                                <div class="spinner-small"></div>
+                                <span>Načítám informace o verzi...</span>
+                            </div>
+                            <div class="commit-details" id="commitDetails" style="display: none;">
+                                <div class="commit-row">
+                                    <span class="commit-label">Poslední commit:</span>
+                                    <code id="latestCommitId" class="commit-id">-</code>
+                                </div>
+                                <div class="commit-row">
+                                    <span class="commit-label">Datum:</span>
+                                    <span id="latestCommitDate">-</span>
+                                </div>
+                                <div class="commit-row">
+                                    <span class="commit-label">Zpráva:</span>
+                                    <span id="latestCommitMessage" class="commit-message">-</span>
+                                </div>
+                            </div>
+                        </div>
 
-                <div class="installation-steps">
-                    <div class="install-step">
-                        <div class="step-number">1</div>
-                        <div class="step-content">
-                            <h3>Nainstalujte Chrome rozšíření</h3>
-                            <ol>
-                                <li>Otevřete <code>chrome://extensions</code></li>
-                                <li>Zapněte "Režim pro vývojáře"</li>
-                                <li>Klikněte "Načíst rozbalené rozšíření"</li>
-                                <li>Vyberte složku <code>projects/steam-farm/plugin</code></li>
-                            </ol>
+                        <div class="install-actions">
+                            <button class="btn btn-primary btn-large" id="downloadPluginBtn">
+                                <span class="btn-icon">📥</span>
+                                Stáhnout plugin (.zip)
+                            </button>
+                        </div>
+
+                        <div class="download-progress" id="downloadProgress" style="display: none;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="downloadProgressFill"></div>
+                            </div>
+                            <span id="downloadProgressText">Generuji ZIP...</span>
                         </div>
                     </div>
+
+                    <!-- GitHub odkaz -->
+                    <div class="install-card">
+                        <h3>Alternativa: GitHub</h3>
+                        <p>Můžete také stáhnout plugin přímo z GitHubu.</p>
+                        <a href="https://github.com/Deerpfy/adhub/tree/main/projects/steam-farm/plugin"
+                           target="_blank" class="btn btn-secondary">
+                            Otevřít na GitHubu
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Krok 2: Instalace rozšíření -->
+                <div class="installation-steps">
                     <div class="install-step">
                         <div class="step-number">2</div>
                         <div class="step-content">
-                            <h3>Nainstalujte a spusťte Steam Farm Service</h3>
-                            <div class="os-tabs">
-                                <button class="os-tab active" data-os="windows">Windows</button>
-                                <button class="os-tab" data-os="linux">Linux/macOS</button>
-                            </div>
-                            <div class="os-content" id="os-windows">
-                                <pre><code>cd projects/steam-farm/native-host
-npm install
-node steam-farm-service.js</code></pre>
-                                <p class="install-note">Pro trvalý běh na pozadí použijte automatický instalátor výše.</p>
-                            </div>
-                            <div class="os-content" id="os-linux" style="display: none;">
-                                <pre><code>cd projects/steam-farm/native-host
-npm install
-node steam-farm-service.js</code></pre>
-                                <p class="install-note">Pro trvalý běh na pozadí použijte automatický instalátor výše.</p>
-                            </div>
+                            <h3>Nainstaluj rozšíření do prohlížeče</h3>
+                            <ol>
+                                <li>Rozbal stažený ZIP soubor</li>
+                                <li>Otevři <code>chrome://extensions</code> v prohlížeči</li>
+                                <li>Zapni "Režim pro vývojáře" (vpravo nahoře)</li>
+                                <li>Klikni "Načíst rozbalené rozšíření"</li>
+                                <li>Vyber rozbalenu složku pluginu</li>
+                            </ol>
                         </div>
                     </div>
+
+                    <!-- Krok 3: Steam Farm Service -->
                     <div class="install-step">
                         <div class="step-number">3</div>
                         <div class="step-content">
-                            <h3>Obnovte stránku</h3>
-                            <p>Po spuštění service obnovte tuto stránku (F5). Rozšíření se automaticky připojí ke službě.</p>
+                            <h3>Nainstaluj Steam Farm Service</h3>
+                            <p class="step-desc">Service běží na pozadí a komunikuje se Steam servery. Stáhni a spusť instalátor:</p>
+                            <div class="service-install-buttons">
+                                <button class="btn btn-primary btn-installer" id="installWindowsBtn">
+                                    <span>🪟</span> Windows
+                                </button>
+                                <button class="btn btn-primary btn-installer" id="installUnixBtn">
+                                    <span>🐧</span> Linux / macOS
+                                </button>
+                            </div>
+                            <p class="install-note">Instalátor automaticky stáhne a nakonfiguruje service. Žádné další kroky nejsou potřeba!</p>
+
+                            <details class="manual-install-details">
+                                <summary>Manuální instalace (pro pokročilé)</summary>
+                                <div class="os-tabs">
+                                    <button class="os-tab active" data-os="windows">Windows</button>
+                                    <button class="os-tab" data-os="linux">Linux/macOS</button>
+                                </div>
+                                <div class="os-content" id="os-windows">
+                                    <pre><code>cd projects/steam-farm/native-host
+npm install
+node steam-farm-service.js</code></pre>
+                                </div>
+                                <div class="os-content" id="os-linux" style="display: none;">
+                                    <pre><code>cd projects/steam-farm/native-host
+npm install
+node steam-farm-service.js</code></pre>
+                                </div>
+                            </details>
+                        </div>
+                    </div>
+
+                    <!-- Krok 4 -->
+                    <div class="install-step">
+                        <div class="step-number">4</div>
+                        <div class="step-content">
+                            <h3>Obnov stránku</h3>
+                            <p>Po instalaci obnov tuto stránku (F5). Rozšíření se automaticky připojí ke službě a můžeš začít farmit!</p>
                         </div>
                     </div>
                 </div>
