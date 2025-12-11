@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://cdn.cloudflare.steamstatic.com data:;">
+    <title>Steam Farm</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                    </svg>
+                </div>
+                <h1>Steam Farm</h1>
+                <span class="version" id="version">v3.0.0</span>
+            </div>
+            <div class="header-right">
+                <div class="status-indicator" id="statusIndicator">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Nepřihlášen</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Login Section -->
+            <section class="section login-section" id="loginSection">
+                <div class="card">
+                    <h2>Přihlášení ke Steam</h2>
+                    <form id="loginForm" class="login-form">
+                        <div class="form-group">
+                            <label for="username">Uživatelské jméno</label>
+                            <input type="text" id="username" name="username" required autocomplete="username">
+                        </div>
+                        <div class="form-group">
+                            <label for="password">Heslo</label>
+                            <input type="password" id="password" name="password" required autocomplete="current-password">
+                        </div>
+                        <div class="form-group">
+                            <label for="sharedSecret">Shared Secret (volitelné)</label>
+                            <input type="text" id="sharedSecret" name="sharedSecret" placeholder="Pro automatické 2FA">
+                            <small>Pokud máte Steam Guard Authenticator, můžete zadat shared_secret pro automatické generování 2FA kódů.</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="loginBtn">
+                            <span>Přihlásit se</span>
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Steam Guard Section -->
+            <section class="section steam-guard-section hidden" id="steamGuardSection">
+                <div class="card">
+                    <h2>Steam Guard</h2>
+                    <p id="steamGuardMessage">Zadejte kód ze Steam Guard Authenticatoru</p>
+                    <form id="steamGuardForm">
+                        <div class="form-group">
+                            <input type="text" id="steamGuardCode" maxlength="5" pattern="[A-Za-z0-9]{5}"
+                                   placeholder="XXXXX" required autocomplete="one-time-code">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Potvrdit</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Dashboard Section -->
+            <section class="section dashboard-section hidden" id="dashboardSection">
+                <!-- User Info -->
+                <div class="user-card card">
+                    <div class="user-avatar">
+                        <svg width="48" height="48" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                        </svg>
+                    </div>
+                    <div class="user-info">
+                        <h3 id="userName">Uživatel</h3>
+                        <p id="userSteamId">Steam ID: ---</p>
+                    </div>
+                    <button class="btn btn-secondary" id="logoutBtn">Odhlásit</button>
+                </div>
+
+                <!-- Farming Status -->
+                <div class="farming-status card">
+                    <h3>Stav farmingu</h3>
+                    <div class="farming-info">
+                        <div class="farming-stat">
+                            <span class="stat-value" id="farmingCount">0</span>
+                            <span class="stat-label">Her aktivních</span>
+                        </div>
+                        <div class="farming-actions">
+                            <button class="btn btn-danger" id="stopFarmingBtn" disabled>Zastavit vše</button>
+                        </div>
+                    </div>
+                    <div class="farming-games" id="farmingGames"></div>
+                </div>
+
+                <!-- Games Library -->
+                <div class="games-library card">
+                    <div class="games-header">
+                        <h3>Knihovna her</h3>
+                        <div class="games-controls">
+                            <input type="text" id="gameSearch" placeholder="Hledat hry..." class="search-input">
+                            <button class="btn btn-secondary" id="refreshGamesBtn">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                                </svg>
+                                Obnovit
+                            </button>
+                        </div>
+                    </div>
+                    <div class="games-list" id="gamesList">
+                        <div class="loading">Načítání her...</div>
+                    </div>
+                    <div class="games-footer">
+                        <div class="selected-info">
+                            <span id="selectedCount">0</span> her vybráno (max 32)
+                        </div>
+                        <button class="btn btn-primary" id="startFarmingBtn" disabled>
+                            Spustit farming
+                        </button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <span>Steam Farm - AdHUB Project</span>
+            <button class="btn-link" id="openDataFolderBtn">Otevřít složku dat</button>
+        </footer>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

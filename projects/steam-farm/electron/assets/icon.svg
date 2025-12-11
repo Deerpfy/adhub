@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1b2838"/>
+      <stop offset="100%" style="stop-color:#171a21"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6"/>
+      <stop offset="100%" style="stop-color:#66b3ff"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="128" height="128" rx="20" fill="url(#bg)"/>
+
+  <!-- Steam-like circle -->
+  <circle cx="64" cy="64" r="40" fill="none" stroke="url(#accent)" stroke-width="4" opacity="0.3"/>
+
+  <!-- Gamepad icon -->
+  <g fill="url(#accent)">
+    <!-- Controller body -->
+    <rect x="32" y="48" width="64" height="32" rx="8"/>
+
+    <!-- Left grip -->
+    <ellipse cx="40" cy="80" rx="12" ry="16"/>
+
+    <!-- Right grip -->
+    <ellipse cx="88" cy="80" rx="12" ry="16"/>
+
+    <!-- D-pad -->
+    <rect x="40" y="58" width="12" height="4" fill="#1b2838" rx="1"/>
+    <rect x="44" y="54" width="4" height="12" fill="#1b2838" rx="1"/>
+
+    <!-- Buttons -->
+    <circle cx="80" cy="56" r="3" fill="#1b2838"/>
+    <circle cx="88" cy="64" r="3" fill="#1b2838"/>
+    <circle cx="72" cy="64" r="3" fill="#1b2838"/>
+    <circle cx="80" cy="72" r="3" fill="#1b2838"/>
+
+    <!-- Analog sticks -->
+    <circle cx="52" cy="72" r="6" fill="#1b2838"/>
+    <circle cx="76" cy="72" r="6" fill="#1b2838"/>
+  </g>
+
+  <!-- Clock/hours indicator -->
+  <g transform="translate(90, 30)">
+    <circle cx="0" cy="0" r="14" fill="#10b981"/>
+    <text x="0" y="4" font-family="Arial" font-size="12" font-weight="bold" fill="white" text-anchor="middle">H</text>
+  </g>
+</svg>
