@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#8b5cf6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="API Katalog">
+    <meta name="description" content="Offline-first webova aplikace pro prochazeni a spravu katalogu 10,000+ API. Funguje 100% offline.">
+    <meta name="keywords" content="API, katalog, offline, PWA, vyhledavani, kategorie, Apify">
+
+    <title>API Katalog - Offline-First API Directory</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="./manifest.json">
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="./icons/icon-32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="./icons/icon-16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="./icons/icon-192.png">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="./styles.css?v=1.0.0">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1 class="logo">
+                        <span class="logo-icon">&#129513;</span>
+                        API Katalog
+                    </h1>
+                    <span class="version-badge" id="versionBadge">v1.0.0</span>
+                    <span class="offline-badge" id="offlineBadge" style="display: none;">
+                        <span class="offline-icon">&#128268;</span>
+                        Offline
+                    </span>
+                </div>
+                <div class="header-right">
+                    <div class="search-container">
+                        <input
+                            type="text"
+                            id="searchInput"
+                            class="search-input"
+                            placeholder="Hledat API podle nazvu, popisu, tagu..."
+                            autocomplete="off"
+                        >
+                        <span class="search-icon">&#128269;</span>
+                        <button class="search-clear" id="searchClear" style="display: none;">&#10005;</button>
+                    </div>
+                    <div class="header-actions">
+                        <button class="btn btn-icon" id="btnImport" title="Importovat data">
+                            <span>&#128229;</span>
+                        </button>
+                        <button class="btn btn-icon" id="btnExport" title="Exportovat data">
+                            <span>&#128228;</span>
+                        </button>
+                        <button class="btn btn-icon" id="btnStats" title="Statistiky">
+                            <span>&#128202;</span>
+                        </button>
+                        <button class="btn btn-icon" id="btnSettings" title="Nastaveni">
+                            <span>&#9881;</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-item">
+                <span class="stat-value" id="statTotal">0</span>
+                <span class="stat-label">Celkem API</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="statCategories">0</span>
+                <span class="stat-label">Kategorii</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="statFavorites">0</span>
+                <span class="stat-label">Oblibenych</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="statFiltered">0</span>
+                <span class="stat-label">Zobrazeno</span>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls">
+            <!-- Filter Tabs -->
+            <div class="filter-tabs">
+                <button class="filter-tab active" data-filter="all">Vsechna</button>
+                <button class="filter-tab" data-filter="favorites">
+                    <span>&#9733;</span> Oblibene
+                </button>
+            </div>
+
+            <!-- Category Filters -->
+            <div class="category-filters" id="categoryFilters">
+                <!-- Categories will be populated by JS -->
+            </div>
+
+            <!-- Sort Controls -->
+            <div class="sort-controls">
+                <label for="sortSelect">Radit:</label>
+                <select id="sortSelect" class="sort-select">
+                    <option value="name-asc">Nazev A-Z</option>
+                    <option value="name-desc">Nazev Z-A</option>
+                    <option value="category">Kategorie</option>
+                    <option value="date-desc">Nejnovejsi</option>
+                    <option value="date-asc">Nejstarsi</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Loading State -->
+            <div class="loading-state" id="loadingState">
+                <div class="loading-spinner"></div>
+                <p class="loading-text">Nacitam API katalog...</p>
+            </div>
+
+            <!-- Empty State - No Data -->
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="empty-icon">&#128218;</div>
+                <h2 class="empty-title">Zadna data v katalogu</h2>
+                <p class="empty-text">Katalog je prazdny. Importujte data nebo nacte ukazkovy katalog.</p>
+                <div class="empty-actions">
+                    <button class="btn btn-primary" id="btnLoadSample">
+                        <span>&#128229;</span> Nacist ukazkova data
+                    </button>
+                    <button class="btn btn-secondary" id="btnImportEmpty">
+                        <span>&#128193;</span> Importovat z JSON
+                    </button>
+                </div>
+            </div>
+
+            <!-- No Results State -->
+            <div class="no-results" id="noResults" style="display: none;">
+                <div class="no-results-icon">&#128269;</div>
+                <h2 class="no-results-title">Zadne vysledky</h2>
+                <p class="no-results-text">Pro hledany vyraz nebylo nic nalezeno.</p>
+                <button class="btn btn-secondary" id="btnClearFilters">
+                    Zrusit filtry
+                </button>
+            </div>
+
+            <!-- API Grid -->
+            <div class="api-grid" id="apiGrid">
+                <!-- API cards will be rendered here -->
+            </div>
+
+            <!-- Load More -->
+            <div class="load-more" id="loadMore" style="display: none;">
+                <button class="btn btn-secondary" id="btnLoadMore">
+                    Nacist dalsi
+                </button>
+                <span class="load-more-info" id="loadMoreInfo"></span>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-left">
+                    <span class="footer-text">API Katalog - Offline-First Directory</span>
+                    <span class="footer-separator">|</span>
+                    <span class="footer-sync" id="footerSync">Posledni sync: nikdy</span>
+                </div>
+                <div class="footer-right">
+                    <span class="footer-version">v1.0.0</span>
+                </div>
+            </div>
+        </footer>
+
+        <!-- API Detail Modal -->
+        <div class="modal-overlay" id="apiDetailModal">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h2 class="modal-title" id="modalApiName">API Detail</h2>
+                    <button class="modal-close" id="closeApiModal">&times;</button>
+                </div>
+                <div class="modal-body" id="modalApiBody">
+                    <!-- API detail content will be rendered here -->
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" id="modalBtnClose">Zavrit</button>
+                    <button class="btn btn-primary" id="modalBtnFavorite">
+                        <span>&#9733;</span> Pridat do oblibenych
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Modal -->
+        <div class="modal-overlay" id="statsModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Statistiky katalogu</h2>
+                    <button class="modal-close" id="closeStatsModal">&times;</button>
+                </div>
+                <div class="modal-body" id="statsModalBody">
+                    <!-- Stats content will be rendered here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div class="modal-overlay" id="settingsModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Nastaveni</h2>
+                    <button class="modal-close" id="closeSettingsModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="settings-section">
+                        <h3>Zobrazeni</h3>
+                        <div class="setting-item">
+                            <label for="settingPageSize">Pocet API na stranku:</label>
+                            <select id="settingPageSize">
+                                <option value="20">20</option>
+                                <option value="50" selected>50</option>
+                                <option value="100">100</option>
+                                <option value="200">200</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label for="settingCompact">Kompaktni zobrazeni:</label>
+                            <input type="checkbox" id="settingCompact">
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>Data</h3>
+                        <div class="setting-item">
+                            <button class="btn btn-danger" id="btnClearData">
+                                Smazat vsechna data
+                            </button>
+                        </div>
+                        <div class="setting-item">
+                            <button class="btn btn-secondary" id="btnClearCache">
+                                Vycistit cache
+                            </button>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h3>O aplikaci</h3>
+                        <p class="settings-about">
+                            API Katalog je offline-first PWA aplikace pro prochazeni
+                            a spravu katalogu API. Vsechna data jsou ulozena lokalne
+                            v IndexedDB a aplikace funguje i bez pripojeni k internetu.
+                        </p>
+                        <p class="settings-info">
+                            <strong>Verze:</strong> 1.0.0<br>
+                            <strong>Licence:</strong> MIT<br>
+                            <strong>Zalozeno na:</strong> cporter202/API-mega-list analyza
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Import Modal -->
+        <div class="modal-overlay" id="importModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">Import dat</h2>
+                    <button class="modal-close" id="closeImportModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="import-dropzone" id="importDropzone">
+                        <div class="dropzone-icon">&#128193;</div>
+                        <p class="dropzone-text">Pretahnete JSON soubor sem nebo kliknete pro vyber</p>
+                        <input type="file" id="importFile" accept=".json" style="display: none;">
+                    </div>
+                    <div class="import-options">
+                        <label>
+                            <input type="checkbox" id="importClear" checked>
+                            Smazat existujici data pred importem
+                        </label>
+                    </div>
+                    <div class="import-status" id="importStatus" style="display: none;">
+                        <div class="import-progress"></div>
+                        <p class="import-message" id="importMessage"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add API Modal -->
+        <div class="modal-overlay" id="addApiModal">
+            <div class="modal-content modal-large">
+                <div class="modal-header">
+                    <h2 class="modal-title">Pridat nove API</h2>
+                    <button class="modal-close" id="closeAddApiModal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="addApiForm" class="api-form">
+                        <div class="form-group">
+                            <label for="apiName">Nazev API *</label>
+                            <input type="text" id="apiName" required placeholder="napr. Amazon Product Scraper">
+                        </div>
+                        <div class="form-group">
+                            <label for="apiDescription">Popis</label>
+                            <textarea id="apiDescription" rows="3" placeholder="Kratky popis funkcionality API"></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="apiCategory">Kategorie *</label>
+                                <select id="apiCategory" required>
+                                    <option value="">Vyberte kategorii</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="apiPlatform">Platforma</label>
+                                <input type="text" id="apiPlatform" placeholder="napr. Apify, REST, GraphQL">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="apiUrl">URL</label>
+                            <input type="url" id="apiUrl" placeholder="https://...">
+                        </div>
+                        <div class="form-group">
+                            <label for="apiTags">Tagy (oddelene carkou)</label>
+                            <input type="text" id="apiTags" placeholder="scraper, e-commerce, automation">
+                        </div>
+                        <div class="form-group">
+                            <label for="apiDocs">Odkaz na dokumentaci</label>
+                            <input type="url" id="apiDocs" placeholder="https://docs...">
+                        </div>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary" id="btnCancelAdd">Zrusit</button>
+                            <button type="submit" class="btn btn-primary">Pridat API</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAB Button -->
+        <button class="fab" id="fabAdd" title="Pridat nove API">
+            <span>+</span>
+        </button>
+
+        <!-- Toast Container -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- Install PWA Banner -->
+        <div class="install-banner" id="installBanner" style="display: none;">
+            <div class="install-banner-content">
+                <span class="install-icon">&#128241;</span>
+                <div class="install-text">
+                    <strong>Nainstalujte aplikaci</strong>
+                    <span>Pro lepsi offline zazetek</span>
+                </div>
+                <button class="btn btn-primary btn-sm" id="btnInstall">Instalovat</button>
+                <button class="install-dismiss" id="btnDismissInstall">&times;</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="./db.js?v=1.0.0"></script>
+    <script src="./app.js?v=1.0.0"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then((registration) => {
+                        console.log('SW registered:', registration.scope);
+                    })
+                    .catch((error) => {
+                        console.error('SW registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
