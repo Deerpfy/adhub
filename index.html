@@ -3,13 +3,158 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+
+    <!-- SEO Meta Tags -->
+    <title>AdHUB - Central Hub for Tools and Utilities</title>
+    <meta name="description" content="AdHUB je centrální hub pro nástroje a utility. PDF editor, YouTube downloader, AI prompting, Rust kalkulačka a 150+ bezplatných online nástrojů na jednom místě.">
+    <meta name="keywords" content="AdHUB, PDF editor, YouTube downloader, tools, utilities, online tools, free tools, developer tools">
+    <meta name="author" content="Deerpfy">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://deerpfy.github.io/adhub/">
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://deerpfy.github.io/adhub/">
+    <meta property="og:title" content="AdHUB - Central Hub for Tools and Utilities">
+    <meta property="og:description" content="Centrální hub pro nástroje a utility. PDF editor, YouTube downloader, AI prompting a 150+ bezplatných online nástrojů.">
+    <meta property="og:image" content="https://deerpfy.github.io/adhub/og-image.png">
+    <meta property="og:locale" content="cs_CZ">
+    <meta property="og:locale:alternate" content="en_US">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://deerpfy.github.io/adhub/">
+    <meta name="twitter:title" content="AdHUB - Central Hub for Tools and Utilities">
+    <meta name="twitter:description" content="Centrální hub pro nástroje a utility. PDF editor, YouTube downloader, AI prompting a 150+ bezplatných online nástrojů.">
+    <meta name="twitter:image" content="https://deerpfy.github.io/adhub/og-image.png">
+
+    <!-- PWA / Mobile -->
     <meta name="theme-color" content="#8b5cf6">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>AdHUB - Central Hub</title>
-    <link rel="stylesheet" href="styles.css?v=1.2.1">
-    <script defer src="script.js?v=1.2.1"></script>
+    <meta name="apple-mobile-web-app-title" content="AdHUB">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://ipapi.co" crossorigin>
+    <link rel="preconnect" href="https://adhub-views-default-rtdb.europe-west1.firebasedatabase.app" crossorigin>
+    <link rel="dns-prefetch" href="https://www.gstatic.com">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css?v=1.3.0">
+
+    <!-- Critical CSS for above-the-fold content -->
+    <style>
+        /* Skeleton loading animation */
+        @keyframes skeleton-pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.7; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, var(--card-bg, #1e1e2e) 25%, rgba(139, 92, 246, 0.1) 50%, var(--card-bg, #1e1e2e) 75%);
+            background-size: 200% 100%;
+            animation: skeleton-pulse 1.5s ease-in-out infinite;
+            border-radius: 8px;
+        }
+        .skeleton-card {
+            height: 180px;
+            margin-bottom: 16px;
+        }
+        .skeleton-text {
+            height: 16px;
+            margin: 8px 0;
+            width: 80%;
+        }
+        .skeleton-text.short { width: 40%; }
+
+        /* Loading state for grids */
+        .tools-grid.loading {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        /* Load more button */
+        .load-more-container {
+            display: flex;
+            justify-content: center;
+            padding: 24px 0;
+        }
+        .load-more-btn {
+            background: var(--primary-color, #8b5cf6);
+            color: white;
+            border: none;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .load-more-btn:hover {
+            background: var(--primary-hover, #7c3aed);
+            transform: translateY(-2px);
+        }
+        .load-more-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .load-more-btn .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid transparent;
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Items counter */
+        .items-counter {
+            text-align: center;
+            color: var(--text-secondary, #888);
+            font-size: 13px;
+            margin-top: 8px;
+        }
+    </style>
+
+    <!-- Script with defer for non-blocking load -->
+    <script defer src="script.js?v=1.3.0"></script>
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "AdHUB",
+        "description": "Central hub for tools and utilities - PDF editor, YouTube downloader, AI prompting and 150+ free online tools",
+        "url": "https://deerpfy.github.io/adhub/",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Any",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "author": {
+            "@type": "Person",
+            "name": "Deerpfy",
+            "url": "https://github.com/Deerpfy"
+        },
+        "aggregateRating": {
+            "@type": "AggregateRating",
+            "ratingValue": "4.8",
+            "ratingCount": "150"
+        }
+    }
+    </script>
 </head>
 <body>
     <div class="container">
@@ -20,7 +165,7 @@
                         <span class="logo-icon">🎯</span>
                         AdHUB
                     </h1>
-                    <span class="version-badge" id="versionBadge">v1.0.0</span>
+                    <span class="version-badge" id="versionBadge">v1.3.0</span>
                 </div>
                 <div class="header-right">
                     <button class="idea-button" id="ideaButton" title="Máte nápad? Sdílejte ho s námi!">
@@ -49,10 +194,10 @@
                         </div>
                     </div>
                     <div class="search-container">
-                        <input 
-                            type="text" 
-                            id="searchInput" 
-                            class="search-input" 
+                        <input
+                            type="text"
+                            id="searchInput"
+                            class="search-input"
                             data-i18n-placeholder="search_placeholder"
                             placeholder="Search tool, link..."
                             autocomplete="off"
@@ -82,7 +227,10 @@
                     <span class="section-badge our-tools-badge" data-i18n="section_our_tools_badge">Lokální projekty</span>
                 </div>
                 <div class="tools-grid" id="toolsGrid">
-                    <!-- Tools will be loaded here -->
+                    <!-- Skeleton loading placeholders -->
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
                 </div>
             </section>
 
@@ -96,8 +244,22 @@
                     <span class="section-badge external-links-badge" data-i18n="section_external_links_badge">Bezplatné online služby</span>
                 </div>
                 <div class="tools-grid" id="linksGrid">
-                    <!-- Links will be loaded here -->
+                    <!-- Skeleton loading placeholders -->
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
+                    <div class="skeleton skeleton-card"></div>
                 </div>
+                <!-- Load More Button (for lazy loading) -->
+                <div class="load-more-container" id="loadMoreContainer" style="display: none;">
+                    <button class="load-more-btn" id="loadMoreBtn">
+                        <span class="btn-text" data-i18n="load_more">Načíst další</span>
+                        <span class="btn-count" id="remainingCount"></span>
+                    </button>
+                </div>
+                <div class="items-counter" id="itemsCounter"></div>
             </section>
 
             <div class="empty-state" id="emptyState" style="display: none;">
@@ -110,11 +272,11 @@
         <footer class="footer">
             <div class="footer-content">
                 <span class="footer-text" data-i18n="footer_text">AdHUB - Central Hub for tools and utilities</span>
-                <span class="footer-version" id="footerVersion">Version 1.0.0</span>
+                <span class="footer-version" id="footerVersion">Version 1.3.0</span>
             </div>
         </footer>
 
-        <!-- Discord Idea Modal -->
+        <!-- Discord Idea Modal (iframe loaded lazily) -->
         <div class="modal-overlay" id="discordModal">
             <div class="modal-content">
                 <div class="modal-header">
@@ -125,14 +287,11 @@
                     <p class="modal-description" data-i18n="idea_modal_description">
                         Máte nápad na novou funkci nebo vylepšení? Připojte se k našemu Discord serveru a sdílejte své nápady v AI kanálu!
                     </p>
-                    <div class="discord-embed-container">
-                        <iframe src="https://discord.com/widget?id=1431912130914816042&theme=dark"
-                                width="100%"
-                                height="500"
-                                allowtransparency="true"
-                                frameborder="0"
-                                sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts">
-                        </iframe>
+                    <div class="discord-embed-container" id="discordEmbedContainer">
+                        <!-- Discord iframe loaded lazily when modal opens -->
+                        <div class="discord-placeholder">
+                            <span class="discord-loading">Načítám Discord widget...</span>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -334,6 +334,11 @@ const BASE_TRANSLATIONS = {
         view_count: 'zobrazení',
         view_count_title: 'zobrazení',
         top_clicked_title: 'Nejproklikávanější položka',
+        // Lazy loading
+        load_more: 'Načíst další',
+        loading_more: 'Načítám...',
+        showing_items: 'Zobrazeno {current} z {total} položek',
+        all_items_loaded: 'Všechny položky načteny',
         // Sections
         section_our_tools: 'Naše nástroje',
         section_our_tools_badge: 'Lokální projekty',
@@ -715,6 +720,11 @@ const BASE_TRANSLATIONS = {
         view_count: 'views',
         view_count_title: 'views',
         top_clicked_title: 'Most clicked item',
+        // Lazy loading
+        load_more: 'Load more',
+        loading_more: 'Loading...',
+        showing_items: 'Showing {current} of {total} items',
+        all_items_loaded: 'All items loaded',
         // Sections
         section_our_tools: 'Our Tools',
         section_our_tools_badge: 'Local projects',
@@ -1155,6 +1165,12 @@ let translationCache = JSON.parse(localStorage.getItem('adhub_translation_cache'
 let allTools = [];
 let allLinks = [];
 let currentFilter = 'all';
+
+// Lazy loading configuration
+const INITIAL_LINKS_COUNT = 24; // Show 24 links initially (4 rows of 6)
+const LOAD_MORE_COUNT = 24; // Load 24 more each time
+let displayedLinksCount = INITIAL_LINKS_COUNT;
+let isLoadingMore = false;
 let currentCategory = null;
 let searchQuery = '';
 let isTranslating = false;
@@ -3164,18 +3180,25 @@ function filterItems() {
     return filtered;
 }
 
-// Render tools
-function renderTools() {
+// Render tools with lazy loading for external links
+function renderTools(resetLazyLoad = true) {
     const toolsGrid = document.getElementById('toolsGrid');
     const linksGrid = document.getElementById('linksGrid');
     const toolsSection = document.getElementById('toolsSection');
     const linksSection = document.getElementById('linksSection');
     const emptyState = document.getElementById('emptyState');
+    const loadMoreContainer = document.getElementById('loadMoreContainer');
+    const itemsCounter = document.getElementById('itemsCounter');
 
     // Re-fetch localized config to get updated translations
     const config = getLocalizedConfig();
     allTools = config.tools || [];
     allLinks = config.links || [];
+
+    // Reset lazy loading count when filters change
+    if (resetLazyLoad) {
+        displayedLinksCount = INITIAL_LINKS_COUNT;
+    }
 
     const filtered = filterItems();
 
@@ -3198,13 +3221,15 @@ function renderTools() {
     if (filteredTools.length === 0 && filteredLinks.length === 0) {
         if (toolsSection) toolsSection.classList.add('hidden');
         if (linksSection) linksSection.classList.add('hidden');
+        if (loadMoreContainer) loadMoreContainer.style.display = 'none';
+        if (itemsCounter) itemsCounter.textContent = '';
         emptyState.style.display = 'block';
         return;
     }
 
     emptyState.style.display = 'none';
 
-    // Render tools section
+    // Render tools section (always show all tools - they are local, only 17)
     if (filteredTools.length > 0) {
         if (toolsSection) toolsSection.classList.remove('hidden');
         toolsGrid.innerHTML = filteredTools.map(item => createToolCard(item, top3Ids)).join('');
@@ -3213,14 +3238,76 @@ function renderTools() {
         toolsGrid.innerHTML = '';
     }
 
-    // Render links section
+    // Render links section with lazy loading
     if (filteredLinks.length > 0) {
         if (linksSection) linksSection.classList.remove('hidden');
-        linksGrid.innerHTML = filteredLinks.map(item => createLinkCard(item, top3Ids)).join('');
+
+        // Only render displayed links (lazy loading)
+        const linksToShow = filteredLinks.slice(0, displayedLinksCount);
+        const remainingLinks = filteredLinks.length - linksToShow.length;
+
+        linksGrid.innerHTML = linksToShow.map(item => createLinkCard(item, top3Ids)).join('');
+
+        // Update load more button
+        if (loadMoreContainer) {
+            if (remainingLinks > 0) {
+                loadMoreContainer.style.display = 'flex';
+                const remainingCount = document.getElementById('remainingCount');
+                if (remainingCount) {
+                    remainingCount.textContent = `(${remainingLinks})`;
+                }
+            } else {
+                loadMoreContainer.style.display = 'none';
+            }
+        }
+
+        // Update items counter
+        if (itemsCounter) {
+            if (linksToShow.length < filteredLinks.length) {
+                itemsCounter.textContent = t('showing_items', {
+                    current: linksToShow.length,
+                    total: filteredLinks.length
+                });
+            } else {
+                itemsCounter.textContent = t('all_items_loaded');
+            }
+        }
     } else {
         if (linksSection) linksSection.classList.add('hidden');
         linksGrid.innerHTML = '';
+        if (loadMoreContainer) loadMoreContainer.style.display = 'none';
+        if (itemsCounter) itemsCounter.textContent = '';
     }
+}
+
+// Load more links (lazy loading)
+function loadMoreLinks() {
+    if (isLoadingMore) return;
+
+    isLoadingMore = true;
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    const btnText = loadMoreBtn?.querySelector('.btn-text');
+
+    if (btnText) {
+        btnText.textContent = t('loading_more');
+    }
+    if (loadMoreBtn) {
+        loadMoreBtn.disabled = true;
+    }
+
+    // Small delay for smooth UX
+    setTimeout(() => {
+        displayedLinksCount += LOAD_MORE_COUNT;
+        renderTools(false); // Don't reset lazy load count
+
+        isLoadingMore = false;
+        if (btnText) {
+            btnText.textContent = t('load_more');
+        }
+        if (loadMoreBtn) {
+            loadMoreBtn.disabled = false;
+        }
+    }, 150);
 }
 
 // Create tool card
@@ -3479,7 +3566,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const fileWarning = document.getElementById('fileProtocolWarning');
     if (startServerBtn) startServerBtn.style.display = 'none';
     if (fileWarning) fileWarning.style.display = 'none';
-    
+
+    // Load More button event listener (lazy loading)
+    const loadMoreBtn = document.getElementById('loadMoreBtn');
+    if (loadMoreBtn) {
+        loadMoreBtn.addEventListener('click', loadMoreLinks);
+    }
+
     // Load data on startup
     useDefaultConfig();
 
@@ -3544,6 +3637,33 @@ function checkYouTubeExtensionStatus() {
 }
 
 // Discord Idea Modal functionality
+// Discord server ID for the widget (set to null to disable widget)
+const DISCORD_SERVER_ID = '1122162195813523487'; // AdHUB Discord server
+
+let discordWidgetLoaded = false;
+
+function loadDiscordWidget() {
+    if (discordWidgetLoaded || !DISCORD_SERVER_ID) return;
+
+    const container = document.getElementById('discordEmbedContainer');
+    if (!container) return;
+
+    // Create and insert Discord widget iframe
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://discord.com/widget?id=${DISCORD_SERVER_ID}&theme=dark`;
+    iframe.width = '100%';
+    iframe.height = '400';
+    iframe.frameBorder = '0';
+    iframe.sandbox = 'allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts';
+    iframe.loading = 'lazy';
+    iframe.title = 'Discord Widget';
+
+    // Clear placeholder and insert iframe
+    container.innerHTML = '';
+    container.appendChild(iframe);
+    discordWidgetLoaded = true;
+}
+
 function initIdeaModal() {
     const ideaButton = document.getElementById('ideaButton');
     const discordModal = document.getElementById('discordModal');
@@ -3555,6 +3675,8 @@ function initIdeaModal() {
     ideaButton.addEventListener('click', () => {
         discordModal.classList.add('active');
         document.body.style.overflow = 'hidden'; // Prevent scrolling when modal is open
+        // Lazy load Discord widget on first open
+        loadDiscordWidget();
     });
 
     // Close modal
