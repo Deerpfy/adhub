@@ -191,13 +191,14 @@ async function init() {
 
 async function loadBackgroundRemovalLibrary() {
     try {
-        // Dynamic import of the background removal library
-        const module = await import('https://cdn.jsdelivr.net/npm/@imgly/background-removal@1.5.1/dist/index.mjs');
+        // Use esm.sh CDN which properly bundles all dependencies
+        const module = await import('https://esm.sh/@imgly/background-removal@1.4.5');
         state.removeBackground = module.default || module.removeBackground;
         console.log('Background removal library loaded successfully');
     } catch (error) {
         console.error('Failed to load background removal library:', error);
-        showToast(translations[state.lang].error_processing, 'error');
+        // Show info toast about first load
+        showToast(translations[state.lang].first_load_info || 'First load may take longer to download AI model (~40 MB)', 'warning');
     }
 }
 
