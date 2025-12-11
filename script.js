@@ -313,6 +313,8 @@ const BASE_TRANSLATIONS = {
         tool_api_catalog_desc: 'Offline-first katalog 10,000+ API. Procházejte, vyhledávejte a spravujte API podle kategorií. PWA s IndexedDB, import/export dat. Založeno na analýze API-mega-list.',
         tool_server_hub_name: 'Server Hub',
         tool_server_hub_desc: 'Offline-first PWA pro správu serverů, webů a záloh. Inspirováno xCloud control panelem. IndexedDB databáze, export/import dat.',
+        tool_paint_studio_name: 'Paint Studio',
+        tool_paint_studio_desc: 'Offline digitální malba inspirovaná Procreate. Vrstvy s blend modes, štětce s citlivostí na tlak, QuickShape, StreamLine vyhlazování. 100% offline PWA.',
         category_gaming: 'gaming',
         category_documentation: 'dokumentace',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
@@ -699,6 +701,8 @@ const BASE_TRANSLATIONS = {
         tool_api_catalog_desc: 'Offline-first catalog of 10,000+ APIs. Browse, search and manage APIs by category. PWA with IndexedDB, data import/export. Based on API-mega-list analysis.',
         tool_server_hub_name: 'Server Hub',
         tool_server_hub_desc: 'Offline-first PWA for managing servers, sites, and backups. Inspired by xCloud control panel. IndexedDB database, data export/import.',
+        tool_paint_studio_name: 'Paint Studio',
+        tool_paint_studio_desc: 'Offline digital painting inspired by Procreate. Layers with blend modes, pressure-sensitive brushes, QuickShape, StreamLine smoothing. 100% offline PWA.',
         category_gaming: 'gaming',
         category_documentation: 'documentation',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
@@ -1616,6 +1620,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["server", "hosting", "management", "offline", "pwa"]
+            },
+            {
+                "id": "paint-studio",
+                "name": t('tool_paint_studio_name'),
+                "description": t('tool_paint_studio_desc'),
+                "category": "design",
+                "icon": "🎨",
+                "url": "projects/paint-studio/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["design", "painting", "drawing", "art", "offline", "pwa", "layers", "brushes"]
             }
         ],
         "links": [

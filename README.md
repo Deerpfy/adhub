@@ -2,7 +2,7 @@
 
 A central hub for various tools, utilities and projects. Everything accessible from one place with a modern and clear interface.
 
-![Status](https://img.shields.io/badge/status-active-success) ![License](https://img.shields.io/badge/license-MIT-blue) ![Version](https://img.shields.io/badge/version-1.3.0-purple) ![Projects](https://img.shields.io/badge/projects-17-orange)
+![Status](https://img.shields.io/badge/status-active-success) ![License](https://img.shields.io/badge/license-MIT-blue) ![Version](https://img.shields.io/badge/version-1.3.1-purple) ![Projects](https://img.shields.io/badge/projects-18-orange)
 
 ## Features
 
@@ -33,6 +33,7 @@ A central hub for various tools, utilities and projects. Everything accessible f
 | [API Catalog](#api-catalog) | PWA | Complete | Yes | CZ/EN | v1.0 |
 | [Server Hub](#server-hub) | PWA | Complete | Yes | CZ | v1.0 |
 | [NIMT Tracker](#nimt-tracker) | PWA | Complete | Yes | CZ | v1.0 |
+| [Paint Studio](#paint-studio) | PWA | Complete | Yes | CZ | v1.0 |
 | [MindHub](#mindhub) | React App | Complete | No | EN | v1.0 |
 | [Resignation Bets](#resignation-bets) | Web App | Complete | Yes | CZ/EN | v1.0 |
 | [Multistream Chat](#multistream-chat-panel) | Web App | Active | No | CZ | v2.0 |
@@ -186,6 +187,30 @@ Offline-first app for tracking brand visibility in AI search engines.
 - Dark/Light theme
 
 **Technology:** IndexedDB, Service Worker
+
+**Status:** Complete | **Version:** 1.0.0
+
+---
+
+### Paint Studio
+Offline-first digital painting application inspired by Procreate.
+
+**Features:**
+- Layer system with 16 blend modes (Normal, Multiply, Screen, Overlay, etc.)
+- Pressure-sensitive brushes (requires compatible stylus)
+- QuickShape detection - hold to convert freehand to geometric shapes
+- StreamLine stroke smoothing for professional linework
+- Multiple tools: Brush, Pencil, Eraser, Fill, Eyedropper, Line, Rectangle, Ellipse
+- Color picker with HSV gradient and presets
+- Undo/Redo with 50-state history
+- Export to PNG, JPEG, WebP
+- Import images as new layers
+- Project save/load with IndexedDB
+- 100% offline functionality
+
+**Technology:** Canvas API, Pointer Events (pressure), IndexedDB, Service Worker
+
+**Inspired by:** Procreate, Kleki, Drawpile
 
 **Status:** Complete | **Version:** 1.0.0
 
@@ -428,6 +453,10 @@ adhub/
     ├── nimt-tracker/       # PWA AI visibility tracker
     │   ├── sw.js           # Service Worker
     │   └── db.js           # IndexedDB layer
+    ├── paint-studio/       # PWA digital painting app
+    │   ├── sw.js           # Service Worker
+    │   ├── app/            # ES modules (PaintApp, Canvas, Layers, Tools)
+    │   └── manifest.json   # PWA manifest
     ├── mindhub/            # React task manager
     │   └── js/             # Storage module
     ├── resignation-bets/   # Casino-style betting game
