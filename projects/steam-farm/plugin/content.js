@@ -3,7 +3,7 @@
  * Bridge mezi webovou stránkou a Background Service Worker
  */
 
-console.log('[SteamFarm Content] Loaded');
+console.log('[SteamFarm Content] Script loaded on:', window.location.href);
 
 // Forward messages from web page to background
 window.addEventListener('message', async (event) => {
@@ -16,8 +16,9 @@ window.addEventListener('message', async (event) => {
     try {
         // Send to background and get response
         const response = await chrome.runtime.sendMessage(event.data);
+        console.log('[SteamFarm Content] Background response:', response);
 
-        // If response contains data, forward back to web
+        // Forward response back to web (even if null, send acknowledgement)
         if (response) {
             window.postMessage(response, '*');
         }
@@ -39,8 +40,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     window.postMessage(message, '*');
 });
 
-// Notify web that content script is ready
-window.postMessage({
-    type: 'STEAM_FARM_CONTENT_READY',
-    source: 'steam-farm-extension'
-}, '*');
+// Notify web that content script is ready (with small delay to ensure page is ready to receive)
+setTimeout(() => {
+    console.log('[SteamFarm Content] Sending CONTENT_READY');
+    window.postMessage({
+        type: 'STEAM_FARM_CONTENT_READY',
+        source: 'steam-farm-extension'
+    }, '*');
+}, 100);

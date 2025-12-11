@@ -150,7 +150,14 @@ function initEventListeners() {
 }
 
 // Check if extension is installed
+let extensionCheckAttempts = 0;
+const MAX_EXTENSION_CHECK_ATTEMPTS = 3;
+
 function checkExtension() {
+    if (state.connected) return; // Already connected
+
+    extensionCheckAttempts++;
+    console.log('[SteamFarm Web] Checking extension... attempt', extensionCheckAttempts);
     updateConnectionStatus('connecting', 'Kontroluji rozšíření...');
 
     // Send ping to extension
@@ -159,13 +166,20 @@ function checkExtension() {
         source: 'steam-farm-web'
     }, '*');
 
-    // Timeout for extension check
+    // Timeout for extension check - with retry
     setTimeout(() => {
         if (!state.connected) {
-            updateConnectionStatus('disconnected', 'Rozšíření nenalezeno');
-            showExtensionRequired();
+            if (extensionCheckAttempts < MAX_EXTENSION_CHECK_ATTEMPTS) {
+                // Retry
+                console.log('[SteamFarm Web] No response, retrying...');
+                checkExtension();
+            } else {
+                console.log('[SteamFarm Web] Extension not found after', extensionCheckAttempts, 'attempts');
+                updateConnectionStatus('disconnected', 'Rozšíření nenalezeno');
+                showExtensionRequired();
+            }
         }
-    }, 2000);
+    }, 1500);
 }
 
 // Handle messages from extension
@@ -173,9 +187,16 @@ function handleExtensionMessage(event) {
     // Only accept messages from our extension
     if (event.data?.source !== 'steam-farm-extension') return;
 
+    console.log('[SteamFarm Web] Received message:', event.data.type);
     const { type, data, error } = event.data;
 
     switch (type) {
+        case 'STEAM_FARM_CONTENT_READY':
+            // Content script is ready - send ping to check status
+            console.log('[SteamFarm] Content script ready, sending ping...');
+            checkExtension();
+            break;
+
         case 'STEAM_FARM_PONG':
             handleExtensionConnected(data);
             break;
