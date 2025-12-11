@@ -346,23 +346,33 @@
                     <div class="install-step">
                         <div class="step-number">3</div>
                         <div class="step-content">
-                            <h3>Spusť Steam Farm Service</h3>
-                            <p class="step-desc">Service běží na pozadí a komunikuje se Steam servery. Otevři terminál a spusť:</p>
-                            <div class="os-tabs">
-                                <button class="os-tab active" data-os="windows">Windows</button>
-                                <button class="os-tab" data-os="linux">Linux/macOS</button>
+                            <h3>Stáhni a spusť Steam Farm Service</h3>
+                            <p class="step-desc">Service běží na pozadí a komunikuje se Steam servery. Stačí stáhnout, rozbalit a spustit!</p>
+
+                            <div class="install-actions" style="margin: 1rem 0;">
+                                <button class="btn btn-primary btn-large" id="downloadServiceBtn">
+                                    <span class="btn-icon">📥</span>
+                                    Stáhnout Service (.zip)
+                                </button>
                             </div>
-                            <div class="os-content" id="os-windows">
-                                <pre><code>cd projects/steam-farm/native-host
-npm install
-node steam-farm-service.js</code></pre>
+
+                            <div class="download-progress" id="serviceDownloadProgress" style="display: none;">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="serviceProgressFill"></div>
+                                </div>
+                                <span id="serviceProgressText">Generuji ZIP...</span>
                             </div>
-                            <div class="os-content" id="os-linux" style="display: none;">
-                                <pre><code>cd projects/steam-farm/native-host
-npm install
-node steam-farm-service.js</code></pre>
+
+                            <div class="service-instructions">
+                                <p><strong>Po stažení:</strong></p>
+                                <ol>
+                                    <li>Rozbal ZIP do libovolné složky</li>
+                                    <li>Spusť <code>run.bat</code> (Windows) nebo <code>run.command</code> (Mac/Linux)</li>
+                                    <li>Nechej okno otevřené dokud chceš farmit</li>
+                                </ol>
                             </div>
-                            <p class="install-note">Service musí běžet na pozadí, aby mohl plugin komunikovat se Steam servery.</p>
+
+                            <p class="install-note">Vyžaduje <a href="https://nodejs.org/" target="_blank">Node.js</a>. Při prvním spuštění se automaticky nainstalují závislosti.</p>
                         </div>
                     </div>
 
