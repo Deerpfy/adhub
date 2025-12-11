@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- SEO Meta Tags -->
+    <title>BG Remover - Offline Background Removal Tool</title>
+    <meta name="description" content="100% offline AI-powered background removal tool. Remove backgrounds from images directly in your browser. No server, no upload, complete privacy.">
+    <meta name="keywords" content="background removal, AI, offline, privacy, image editing, transparent background">
+    <meta name="author" content="Deerpfy">
+
+    <!-- PWA -->
+    <meta name="theme-color" content="#8b5cf6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="BG Remover">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🖼️</text></svg>">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app" class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <a href="../../index.html" class="back-btn" title="Zpět na Hub">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    </svg>
+                    <span>Hub</span>
+                </a>
+            </div>
+
+            <div class="header-center">
+                <h1 class="logo">
+                    <svg class="logo-icon" viewBox="0 0 24 24" width="28" height="28">
+                        <rect x="3" y="3" width="18" height="18" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="12" r="4" fill="currentColor"/>
+                        <path d="M3 3l18 18M3 21l18-18" stroke="currentColor" stroke-width="1" opacity="0.3"/>
+                    </svg>
+                    <span>BG Remover</span>
+                </h1>
+                <span class="offline-badge" id="offlineBadge">
+                    <svg viewBox="0 0 24 24" width="14" height="14">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+                    </svg>
+                    <span data-i18n="offline">100% Offline</span>
+                </span>
+            </div>
+
+            <div class="header-right">
+                <!-- Language Selector -->
+                <div class="lang-selector">
+                    <button class="lang-btn active" data-lang="cs">CZ</button>
+                    <button class="lang-btn" data-lang="en">EN</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Upload Section (Initial State) -->
+            <section class="upload-section" id="uploadSection">
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">
+                        <svg viewBox="0 0 24 24" width="64" height="64">
+                            <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                            <path d="M12 7v4M10 9h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                    </div>
+                    <div class="upload-text">
+                        <h2 data-i18n="upload_title">Nahrajte obrázek</h2>
+                        <p data-i18n="upload_subtitle">Přetáhněte sem obrázek nebo klikněte pro výběr</p>
+                    </div>
+                    <div class="upload-formats">
+                        <span data-i18n="supported_formats">Podporované formáty:</span>
+                        <strong>JPG, PNG, WebP</strong>
+                        <span class="separator">|</span>
+                        <span data-i18n="max_size">Max:</span>
+                        <strong>22 MB</strong>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" hidden>
+                </div>
+
+                <!-- Privacy Notice -->
+                <div class="privacy-notice">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" fill="currentColor"/>
+                    </svg>
+                    <span data-i18n="privacy_notice">Vaše obrázky zůstávají pouze ve vašem prohlížeči. Žádná data se neodesílají na server.</span>
+                </div>
+
+                <!-- Demo Images -->
+                <div class="demo-section">
+                    <p class="demo-title" data-i18n="try_demo">Vyzkoušejte s ukázkovým obrázkem:</p>
+                    <div class="demo-images">
+                        <button class="demo-btn" data-demo="person" title="Osoba">
+                            <span class="demo-emoji">👤</span>
+                            <span data-i18n="demo_person">Osoba</span>
+                        </button>
+                        <button class="demo-btn" data-demo="product" title="Produkt">
+                            <span class="demo-emoji">📦</span>
+                            <span data-i18n="demo_product">Produkt</span>
+                        </button>
+                        <button class="demo-btn" data-demo="animal" title="Zvíře">
+                            <span class="demo-emoji">🐕</span>
+                            <span data-i18n="demo_animal">Zvíře</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Processing Section -->
+            <section class="processing-section hidden" id="processingSection">
+                <div class="processing-content">
+                    <div class="processing-animation">
+                        <div class="processing-ring"></div>
+                        <div class="processing-icon">
+                            <svg viewBox="0 0 24 24" width="48" height="48">
+                                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2z" fill="none" stroke="currentColor" stroke-width="2"/>
+                                <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <h2 class="processing-title" data-i18n="processing">Zpracovávám...</h2>
+                    <p class="processing-status" id="processingStatus" data-i18n="loading_model">Načítám AI model...</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p class="progress-text" id="progressText">0%</p>
+                </div>
+            </section>
+
+            <!-- Editor Section -->
+            <section class="editor-section hidden" id="editorSection">
+                <!-- Toolbar -->
+                <div class="editor-toolbar">
+                    <div class="toolbar-group">
+                        <button class="tool-btn" id="newImageBtn" title="Nový obrázek">
+                            <svg viewBox="0 0 24 24" width="20" height="20">
+                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+                            </svg>
+                            <span data-i18n="new_image">Nový</span>
+                        </button>
+                    </div>
+                    <div class="toolbar-group tabs">
+                        <button class="tab-btn active" data-tab="result" data-i18n="tab_result">Výsledek</button>
+                        <button class="tab-btn" data-tab="compare" data-i18n="tab_compare">Porovnat</button>
+                        <button class="tab-btn" data-tab="brush" data-i18n="tab_brush">Magic Brush</button>
+                        <button class="tab-btn" data-tab="background" data-i18n="tab_background">Pozadí</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button class="btn-primary" id="downloadBtn">
+                            <svg viewBox="0 0 24 24" width="18" height="18">
+                                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
+                            </svg>
+                            <span data-i18n="download">Stáhnout</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Editor Canvas Area -->
+                <div class="editor-canvas-area">
+                    <!-- Result Tab -->
+                    <div class="tab-content active" id="tab-result">
+                        <div class="canvas-container checkered">
+                            <canvas id="resultCanvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Compare Tab -->
+                    <div class="tab-content" id="tab-compare">
+                        <div class="compare-container">
+                            <div class="compare-slider" id="compareSlider">
+                                <div class="compare-original" id="compareOriginal">
+                                    <img id="compareOriginalImg" alt="Original">
+                                    <span class="compare-label" data-i18n="original">Originál</span>
+                                </div>
+                                <div class="compare-result" id="compareResult">
+                                    <canvas id="compareResultCanvas"></canvas>
+                                    <span class="compare-label" data-i18n="result">Výsledek</span>
+                                </div>
+                                <div class="compare-handle" id="compareHandle">
+                                    <div class="handle-line"></div>
+                                    <div class="handle-circle">
+                                        <svg viewBox="0 0 24 24" width="20" height="20">
+                                            <path d="M8 5l-5 7 5 7M16 5l5 7-5 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Magic Brush Tab -->
+                    <div class="tab-content" id="tab-brush">
+                        <div class="brush-controls">
+                            <div class="brush-modes">
+                                <button class="brush-mode-btn active" data-mode="erase" data-i18n="erase">
+                                    <svg viewBox="0 0 24 24" width="18" height="18">
+                                        <path d="M16.24 3.56l4.95 4.94c.78.79.78 2.05 0 2.84L12 20.53c-.79.78-2.05.78-2.84 0l-6.36-6.36c-.78-.78-.78-2.04 0-2.83l6.36-6.36c.79-.78 2.05-.78 2.84 0l4.24-1.42z" fill="currentColor"/>
+                                    </svg>
+                                    Smazat
+                                </button>
+                                <button class="brush-mode-btn" data-mode="restore" data-i18n="restore">
+                                    <svg viewBox="0 0 24 24" width="18" height="18">
+                                        <path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34c-.39-.39-1.02-.39-1.41 0L9 12.25 11.75 15l8.96-8.96c.39-.39.39-1.02 0-1.41z" fill="currentColor"/>
+                                    </svg>
+                                    Obnovit
+                                </button>
+                            </div>
+                            <div class="brush-size-control">
+                                <label data-i18n="brush_size">Velikost štětce:</label>
+                                <input type="range" id="brushSize" min="5" max="100" value="30">
+                                <span id="brushSizeValue">30px</span>
+                            </div>
+                        </div>
+                        <div class="canvas-container checkered brush-canvas">
+                            <canvas id="brushCanvas"></canvas>
+                            <canvas id="brushPreviewCanvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Background Tab -->
+                    <div class="tab-content" id="tab-background">
+                        <div class="background-controls">
+                            <div class="bg-type-selector">
+                                <button class="bg-type-btn active" data-type="transparent" data-i18n="transparent">
+                                    <span class="checkered-icon"></span>
+                                    Průhledné
+                                </button>
+                                <button class="bg-type-btn" data-type="color" data-i18n="solid_color">
+                                    <span class="color-icon"></span>
+                                    Barva
+                                </button>
+                                <button class="bg-type-btn" data-type="image" data-i18n="image_bg">
+                                    <span class="image-icon">🖼️</span>
+                                    Obrázek
+                                </button>
+                                <button class="bg-type-btn" data-type="blur" data-i18n="blur_bg">
+                                    <span class="blur-icon">🌫️</span>
+                                    Rozmazat
+                                </button>
+                            </div>
+
+                            <!-- Color Picker -->
+                            <div class="bg-option-panel" id="colorPanel" style="display: none;">
+                                <div class="color-presets">
+                                    <button class="color-preset" data-color="#ffffff" style="background: #ffffff;"></button>
+                                    <button class="color-preset" data-color="#000000" style="background: #000000;"></button>
+                                    <button class="color-preset" data-color="#8b5cf6" style="background: #8b5cf6;"></button>
+                                    <button class="color-preset" data-color="#ec4899" style="background: #ec4899;"></button>
+                                    <button class="color-preset" data-color="#06b6d4" style="background: #06b6d4;"></button>
+                                    <button class="color-preset" data-color="#10b981" style="background: #10b981;"></button>
+                                    <button class="color-preset" data-color="#f59e0b" style="background: #f59e0b;"></button>
+                                    <button class="color-preset" data-color="#ef4444" style="background: #ef4444;"></button>
+                                </div>
+                                <div class="custom-color">
+                                    <input type="color" id="bgColorPicker" value="#ffffff">
+                                    <span data-i18n="custom_color">Vlastní barva</span>
+                                </div>
+                            </div>
+
+                            <!-- Background Image -->
+                            <div class="bg-option-panel" id="imagePanel" style="display: none;">
+                                <div class="bg-presets">
+                                    <button class="bg-preset" data-bg="gradient1" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></button>
+                                    <button class="bg-preset" data-bg="gradient2" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);"></button>
+                                    <button class="bg-preset" data-bg="gradient3" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);"></button>
+                                    <button class="bg-preset" data-bg="gradient4" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);"></button>
+                                    <button class="bg-preset" data-bg="gradient5" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);"></button>
+                                    <button class="bg-preset" data-bg="gradient6" style="background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);"></button>
+                                </div>
+                                <button class="upload-bg-btn" id="uploadBgBtn">
+                                    <svg viewBox="0 0 24 24" width="18" height="18">
+                                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+                                    </svg>
+                                    <span data-i18n="upload_bg">Nahrát vlastní pozadí</span>
+                                </button>
+                                <input type="file" id="bgFileInput" accept="image/*" hidden>
+                            </div>
+
+                            <!-- Blur Control -->
+                            <div class="bg-option-panel" id="blurPanel" style="display: none;">
+                                <div class="blur-control">
+                                    <label data-i18n="blur_amount">Míra rozmazání:</label>
+                                    <input type="range" id="blurAmount" min="5" max="50" value="20">
+                                    <span id="blurValue">20px</span>
+                                </div>
+                            </div>
+
+                            <!-- Shadow Control -->
+                            <div class="shadow-control">
+                                <label class="shadow-toggle">
+                                    <input type="checkbox" id="shadowToggle">
+                                    <span class="toggle-slider"></span>
+                                    <span data-i18n="add_shadow">Přidat stín</span>
+                                </label>
+                                <div class="shadow-options" id="shadowOptions" style="display: none;">
+                                    <div class="shadow-option">
+                                        <label data-i18n="shadow_opacity">Průhlednost:</label>
+                                        <input type="range" id="shadowOpacity" min="10" max="80" value="40">
+                                        <span id="shadowOpacityValue">40%</span>
+                                    </div>
+                                    <div class="shadow-option">
+                                        <label data-i18n="shadow_blur">Rozmazání:</label>
+                                        <input type="range" id="shadowBlur" min="5" max="50" value="20">
+                                        <span id="shadowBlurValue">20px</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="canvas-container checkered">
+                            <canvas id="backgroundCanvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Export Panel -->
+                <div class="export-panel hidden" id="exportPanel">
+                    <div class="export-content">
+                        <h3 data-i18n="export_options">Možnosti exportu</h3>
+                        <div class="export-formats">
+                            <label class="format-option">
+                                <input type="radio" name="format" value="png" checked>
+                                <span class="format-label">
+                                    <strong>PNG</strong>
+                                    <small data-i18n="png_desc">S průhledností</small>
+                                </span>
+                            </label>
+                            <label class="format-option">
+                                <input type="radio" name="format" value="jpeg">
+                                <span class="format-label">
+                                    <strong>JPG</strong>
+                                    <small data-i18n="jpg_desc">Menší velikost</small>
+                                </span>
+                            </label>
+                            <label class="format-option">
+                                <input type="radio" name="format" value="webp">
+                                <span class="format-label">
+                                    <strong>WebP</strong>
+                                    <small data-i18n="webp_desc">Moderní formát</small>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="quality-control" id="qualityControl" style="display: none;">
+                            <label data-i18n="quality">Kvalita:</label>
+                            <input type="range" id="exportQuality" min="50" max="100" value="92">
+                            <span id="qualityValue">92%</span>
+                        </div>
+                        <div class="export-actions">
+                            <button class="btn-secondary" id="cancelExportBtn" data-i18n="cancel">Zrušit</button>
+                            <button class="btn-primary" id="confirmExportBtn" data-i18n="download">Stáhnout</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Toast Notifications -->
+        <div class="toast-container" id="toastContainer"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>
