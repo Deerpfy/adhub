@@ -205,53 +205,6 @@
             box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
         }
 
-        .install-steps {
-            display: none;
-            margin-top: 12px;
-            padding: 10px;
-            background: #1a1a24;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            color: #a0a0b0;
-        }
-
-        .install-steps.show {
-            display: block;
-        }
-
-        .install-steps ol {
-            margin-left: 16px;
-        }
-
-        .install-steps li {
-            margin-bottom: 4px;
-        }
-
-        .spinner {
-            display: inline-block;
-            width: 14px;
-            height: 14px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 0.8s ease infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .success-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-            padding: 2px 8px;
-            background: rgba(16, 185, 129, 0.2);
-            border: 1px solid rgba(16, 185, 129, 0.3);
-            border-radius: 12px;
-            font-size: 0.7rem;
-            color: #10b981;
-        }
     </style>
 </head>
 <body>
@@ -264,20 +217,13 @@
     <div class="install-section" id="installSection">
         <div class="install-title">Steam Farm Service není spuštěn</div>
         <div class="install-desc">
-            Pro fungování je potřeba nainstalovat a spustit Steam Farm Service.
-            Stačí stáhnout a spustit instalátor - žádné další kroky nejsou potřeba!
+            Pro fungování je potřeba stáhnout a spustit Steam Farm Service.
+            Klikni pro otevření stránky s návodem a stažením.
         </div>
         <button class="btn btn-install" id="installBtn">
             <span>📥</span>
-            <span>Stáhnout instalátor</span>
+            <span>Stáhnout Service</span>
         </button>
-        <div class="install-steps" id="installSteps">
-            <ol>
-                <li>Spusťte stažený instalátor</li>
-                <li>Service se automaticky nainstaluje a spustí</li>
-                <li>Obnovte tuto stránku</li>
-            </ol>
-        </div>
     </div>
 
     <div class="status">
