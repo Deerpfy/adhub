@@ -315,6 +315,8 @@ const BASE_TRANSLATIONS = {
         tool_server_hub_desc: 'Offline-first PWA pro správu serverů, webů a záloh. Inspirováno xCloud control panelem. IndexedDB databáze, export/import dat.',
         tool_paint_studio_name: 'Paint Studio',
         tool_paint_studio_desc: 'Offline digitální malba inspirovaná Procreate. Vrstvy s blend modes, štětce s citlivostí na tlak, QuickShape, StreamLine vyhlazování. 100% offline PWA.',
+        tool_bg_remover_name: 'BG Remover',
+        tool_bg_remover_desc: 'Offline AI nástroj pro odstranění pozadí z obrázků. Magic Brush pro ruční doladění, vlastní pozadí, AI stíny. 100% v prohlížeči, bez serveru.',
         category_gaming: 'gaming',
         category_documentation: 'dokumentace',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
@@ -703,6 +705,8 @@ const BASE_TRANSLATIONS = {
         tool_server_hub_desc: 'Offline-first PWA for managing servers, sites, and backups. Inspired by xCloud control panel. IndexedDB database, data export/import.',
         tool_paint_studio_name: 'Paint Studio',
         tool_paint_studio_desc: 'Offline digital painting inspired by Procreate. Layers with blend modes, pressure-sensitive brushes, QuickShape, StreamLine smoothing. 100% offline PWA.',
+        tool_bg_remover_name: 'BG Remover',
+        tool_bg_remover_desc: 'Offline AI tool for removing backgrounds from images. Magic Brush for manual refinement, custom backgrounds, AI shadows. 100% in browser, no server.',
         category_gaming: 'gaming',
         category_documentation: 'documentation',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
@@ -1631,6 +1635,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["design", "painting", "drawing", "art", "offline", "pwa", "layers", "brushes"]
+            },
+            {
+                "id": "bg-remover",
+                "name": t('tool_bg_remover_name'),
+                "description": t('tool_bg_remover_desc'),
+                "category": "design",
+                "icon": "🖼️",
+                "url": "projects/bg-remover/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["design", "image", "background", "ai", "offline", "pwa", "privacy"]
             }
         ],
         "links": [
