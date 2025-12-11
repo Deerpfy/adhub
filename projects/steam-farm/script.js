@@ -16,6 +16,12 @@ const VERSION = '2.0.0';
 const REPO = 'Deerpfy/adhub';
 const SERVICE_VERSION = '2.0.0';
 
+// GitHub API
+const GITHUB_API_BASE = 'https://api.github.com';
+const GITHUB_REPO = 'Deerpfy/adhub';
+const GITHUB_BRANCH = 'main';
+const PLUGIN_PATH = 'projects/steam-farm/plugin';
+
 // State
 const state = {
     connected: false,
@@ -29,7 +35,8 @@ const state = {
     farmingGames: [],
     cardsData: {},
     filter: 'all',
-    searchQuery: ''
+    searchQuery: '',
+    latestCommit: null
 };
 
 // DOM Elements
@@ -57,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initEventListeners();
     checkExtension();
     loadSavedState();
+    fetchLatestCommitInfo();
 });
 
 // Initialize DOM elements
@@ -133,6 +141,9 @@ function initEventListeners() {
     // Auto-install buttons
     document.getElementById('installWindowsBtn')?.addEventListener('click', () => downloadInstaller('windows'));
     document.getElementById('installUnixBtn')?.addEventListener('click', () => downloadInstaller('unix'));
+
+    // Download plugin button
+    document.getElementById('downloadPluginBtn')?.addEventListener('click', handleDownloadPlugin);
 
     // Listen for messages from extension
     window.addEventListener('message', handleExtensionMessage);
@@ -907,6 +918,179 @@ async function downloadInstaller(os) {
         btn.innerHTML = originalContent;
         btn.disabled = false;
     }, 3000);
+}
+
+// ===========================================
+// PLUGIN DOWNLOAD
+// ===========================================
+
+async function fetchLatestCommitInfo() {
+    const commitLoading = document.getElementById('commitLoading');
+    const commitDetails = document.getElementById('commitDetails');
+
+    try {
+        const url = `${GITHUB_API_BASE}/repos/${GITHUB_REPO}/commits?path=${PLUGIN_PATH}&per_page=1`;
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error(`GitHub API error: ${response.status}`);
+        }
+
+        const commits = await response.json();
+
+        if (commits.length > 0) {
+            state.latestCommit = commits[0];
+
+            // Update UI
+            if (commitLoading) commitLoading.style.display = 'none';
+            if (commitDetails) commitDetails.style.display = 'block';
+
+            const latestCommitId = document.getElementById('latestCommitId');
+            const latestCommitDate = document.getElementById('latestCommitDate');
+            const latestCommitMessage = document.getElementById('latestCommitMessage');
+
+            if (latestCommitId) {
+                latestCommitId.textContent = state.latestCommit.sha.substring(0, 7);
+            }
+
+            if (latestCommitDate) {
+                const date = new Date(state.latestCommit.commit.author.date);
+                latestCommitDate.textContent = date.toLocaleDateString('cs-CZ') + ' ' + date.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' });
+            }
+
+            if (latestCommitMessage) {
+                latestCommitMessage.textContent = state.latestCommit.commit.message.split('\n')[0];
+            }
+        }
+    } catch (error) {
+        console.error('[SteamFarm] Error fetching commit info:', error);
+        if (commitLoading) {
+            commitLoading.innerHTML = '<span style="color: #ef4444;">Nepodařilo se načíst verzi</span>';
+        }
+    }
+}
+
+async function handleDownloadPlugin() {
+    console.log('[SteamFarm] Starting plugin download...');
+
+    const btn = document.getElementById('downloadPluginBtn');
+    const progress = document.getElementById('downloadProgress');
+    const progressFill = document.getElementById('downloadProgressFill');
+    const progressText = document.getElementById('downloadProgressText');
+
+    if (!btn) return;
+
+    const originalBtnHtml = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="btn-icon">⏳</span> Stahuji...';
+    if (progress) progress.style.display = 'block';
+    if (progressText) progressText.textContent = 'Načítám soubory z GitHubu...';
+    if (progressFill) progressFill.style.width = '10%';
+
+    try {
+        // Step 1: Get file list
+        console.log('[SteamFarm] Step 1: Fetching file list');
+        const filesUrl = `${GITHUB_API_BASE}/repos/${GITHUB_REPO}/contents/${PLUGIN_PATH}?ref=${GITHUB_BRANCH}`;
+        const filesResponse = await fetch(filesUrl);
+
+        if (!filesResponse.ok) {
+            throw new Error(`Cannot load file list: ${filesResponse.status}`);
+        }
+
+        const files = await filesResponse.json();
+        if (progressFill) progressFill.style.width = '20%';
+        if (progressText) progressText.textContent = `Nalezeno ${files.length} souborů...`;
+
+        // Step 2: Download all files
+        console.log('[SteamFarm] Step 2: Downloading files');
+        const zip = new JSZip();
+        const pluginFolder = zip.folder('steam-farm-plugin');
+
+        let downloadedCount = 0;
+        for (const file of files) {
+            if (file.type === 'file') {
+                const content = await fetchFileContent(file.download_url);
+                pluginFolder.file(file.name, content);
+                downloadedCount++;
+                if (progressFill) progressFill.style.width = `${20 + (downloadedCount / files.length) * 50}%`;
+                if (progressText) progressText.textContent = `Stahuji: ${file.name}`;
+            } else if (file.type === 'dir' && file.name === 'icons') {
+                // Handle icons folder
+                const iconsFolder = pluginFolder.folder('icons');
+                const iconsUrl = `${GITHUB_API_BASE}/repos/${GITHUB_REPO}/contents/${PLUGIN_PATH}/icons?ref=${GITHUB_BRANCH}`;
+                const iconsResponse = await fetch(iconsUrl);
+                const icons = await iconsResponse.json();
+
+                for (const icon of icons) {
+                    if (icon.type === 'file') {
+                        const iconContent = await fetchFileContent(icon.download_url, true);
+                        iconsFolder.file(icon.name, iconContent);
+                    }
+                }
+            }
+        }
+
+        if (progressFill) progressFill.style.width = '80%';
+        if (progressText) progressText.textContent = 'Generuji ZIP soubor...';
+
+        // Step 3: Generate ZIP
+        console.log('[SteamFarm] Step 3: Generating ZIP');
+        const zipBlob = await zip.generateAsync({
+            type: 'blob',
+            compression: 'DEFLATE',
+            compressionOptions: { level: 9 }
+        });
+
+        if (progressFill) progressFill.style.width = '90%';
+        if (progressText) progressText.textContent = 'Připravuji ke stažení...';
+
+        // Step 4: Download
+        console.log('[SteamFarm] Step 4: Triggering download');
+        const downloadUrl = URL.createObjectURL(zipBlob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+
+        const commitId = state.latestCommit ? state.latestCommit.sha.substring(0, 7) : 'latest';
+        a.download = `steam-farm-plugin-${commitId}.zip`;
+
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(downloadUrl);
+
+        if (progressFill) progressFill.style.width = '100%';
+        if (progressText) progressText.textContent = 'Stahování dokončeno!';
+
+        showToast('Plugin úspěšně stažen! Rozbalte ZIP a nainstalujte podle návodu.', 'success');
+
+        btn.innerHTML = '<span class="btn-icon">✓</span> Staženo!';
+        setTimeout(() => {
+            btn.disabled = false;
+            btn.innerHTML = originalBtnHtml;
+            if (progress) progress.style.display = 'none';
+            if (progressFill) progressFill.style.width = '0%';
+        }, 2000);
+
+    } catch (error) {
+        console.error('[SteamFarm] Download error:', error);
+        showToast('Chyba při stahování: ' + error.message, 'error');
+
+        btn.disabled = false;
+        btn.innerHTML = originalBtnHtml;
+        if (progress) progress.style.display = 'none';
+    }
+}
+
+async function fetchFileContent(url, isBinary = false) {
+    const response = await fetch(url);
+    if (!response.ok) {
+        throw new Error(`Cannot download file: ${url}`);
+    }
+
+    if (isBinary) {
+        return await response.arrayBuffer();
+    }
+    return await response.text();
 }
 
 // Expose for debugging
