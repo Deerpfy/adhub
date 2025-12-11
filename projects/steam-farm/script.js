@@ -138,10 +138,6 @@ function initEventListeners() {
     // Cards refresh
     document.getElementById('refreshCardsBtn')?.addEventListener('click', fetchCardsData);
 
-    // Auto-install buttons
-    document.getElementById('installWindowsBtn')?.addEventListener('click', () => downloadInstaller('windows'));
-    document.getElementById('installUnixBtn')?.addEventListener('click', () => downloadInstaller('unix'));
-
     // Download plugin button
     document.getElementById('downloadPluginBtn')?.addEventListener('click', handleDownloadPlugin);
 
@@ -855,70 +851,6 @@ function showToast(message, type = 'info') {
 }
 
 window.addEventListener('beforeunload', saveState);
-
-// ===== Auto-Install Functions =====
-
-// Download installer for specific OS
-async function downloadInstaller(os) {
-    const baseUrl = `https://github.com/${REPO}/releases/download/steam-farm-v${SERVICE_VERSION}`;
-
-    let url, filename;
-    if (os === 'windows') {
-        url = `${baseUrl}/install-service.ps1`;
-        filename = 'install-service.ps1';
-    } else {
-        url = `${baseUrl}/install-service.sh`;
-        filename = 'install-service.sh';
-    }
-
-    const btn = document.getElementById(os === 'windows' ? 'installWindowsBtn' : 'installUnixBtn');
-    const originalContent = btn.innerHTML;
-
-    btn.innerHTML = '<span class="spinner"></span> Stahuji...';
-    btn.disabled = true;
-
-    try {
-        const response = await fetch(url);
-
-        if (!response.ok) {
-            throw new Error('Instalátor není k dispozici');
-        }
-
-        const blob = await response.blob();
-        const downloadUrl = URL.createObjectURL(blob);
-
-        const a = document.createElement('a');
-        a.href = downloadUrl;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(downloadUrl);
-
-        btn.innerHTML = '<span>✓</span> Staženo!';
-        showToast(`Instalátor stažen: ${filename}. Stačí spustit - žádné další kroky!`, 'success');
-
-    } catch (error) {
-        console.error('Download error:', error);
-        btn.innerHTML = '<span>⚠️</span> Chyba';
-        showToast('Nelze stáhnout instalátor. Zkuste GitHub Releases.', 'error');
-
-        // Open GitHub releases as fallback
-        setTimeout(() => {
-            if (confirm('Chcete otevřít GitHub Releases pro manuální stažení?')) {
-                window.open(`https://github.com/${REPO}/releases/tag/steam-farm-v${SERVICE_VERSION}`, '_blank');
-            }
-            btn.innerHTML = originalContent;
-            btn.disabled = false;
-        }, 1500);
-        return;
-    }
-
-    setTimeout(() => {
-        btn.innerHTML = originalContent;
-        btn.disabled = false;
-    }, 3000);
-}
 
 // ===========================================
 // PLUGIN DOWNLOAD

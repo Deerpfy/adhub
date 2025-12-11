@@ -346,35 +346,23 @@
                     <div class="install-step">
                         <div class="step-number">3</div>
                         <div class="step-content">
-                            <h3>Nainstaluj Steam Farm Service</h3>
-                            <p class="step-desc">Service běží na pozadí a komunikuje se Steam servery. Stáhni a spusť instalátor:</p>
-                            <div class="service-install-buttons">
-                                <button class="btn btn-primary btn-installer" id="installWindowsBtn">
-                                    <span>🪟</span> Windows
-                                </button>
-                                <button class="btn btn-primary btn-installer" id="installUnixBtn">
-                                    <span>🐧</span> Linux / macOS
-                                </button>
+                            <h3>Spusť Steam Farm Service</h3>
+                            <p class="step-desc">Service běží na pozadí a komunikuje se Steam servery. Otevři terminál a spusť:</p>
+                            <div class="os-tabs">
+                                <button class="os-tab active" data-os="windows">Windows</button>
+                                <button class="os-tab" data-os="linux">Linux/macOS</button>
                             </div>
-                            <p class="install-note">Instalátor automaticky stáhne a nakonfiguruje service. Žádné další kroky nejsou potřeba!</p>
-
-                            <details class="manual-install-details">
-                                <summary>Manuální instalace (pro pokročilé)</summary>
-                                <div class="os-tabs">
-                                    <button class="os-tab active" data-os="windows">Windows</button>
-                                    <button class="os-tab" data-os="linux">Linux/macOS</button>
-                                </div>
-                                <div class="os-content" id="os-windows">
-                                    <pre><code>cd projects/steam-farm/native-host
+                            <div class="os-content" id="os-windows">
+                                <pre><code>cd projects/steam-farm/native-host
 npm install
 node steam-farm-service.js</code></pre>
-                                </div>
-                                <div class="os-content" id="os-linux" style="display: none;">
-                                    <pre><code>cd projects/steam-farm/native-host
+                            </div>
+                            <div class="os-content" id="os-linux" style="display: none;">
+                                <pre><code>cd projects/steam-farm/native-host
 npm install
 node steam-farm-service.js</code></pre>
-                                </div>
-                            </details>
+                            </div>
+                            <p class="install-note">Service musí běžet na pozadí, aby mohl plugin komunikovat se Steam servery.</p>
                         </div>
                     </div>
 
