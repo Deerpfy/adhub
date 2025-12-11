@@ -9,6 +9,11 @@ const VERSION = '2.0.0';
 const SERVICE_URL = 'ws://127.0.0.1:17532';
 const STATUS_URL = 'http://127.0.0.1:17532/status';
 
+// Reconnection settings
+const INITIAL_RECONNECT_DELAY = 2000;  // 2 seconds
+const MAX_RECONNECT_DELAY = 60000;     // 1 minute max
+const MAX_RECONNECT_ATTEMPTS = 10;
+
 // State
 let ws = null;
 let connectedTabs = new Set();
@@ -17,6 +22,8 @@ let isLoggedIn = false;
 let currentUser = null;
 let farmingGames = [];
 let reconnectTimer = null;
+let reconnectAttempts = 0;
+let reconnectDelay = INITIAL_RECONNECT_DELAY;
 let messageQueue = [];
 
 // Check if service is running via HTTP
@@ -63,6 +70,10 @@ function connectWebSocket() {
                 console.log('[SteamFarm] WebSocket connected');
                 isServiceRunning = true;
 
+                // Reset reconnection state on successful connection
+                reconnectAttempts = 0;
+                reconnectDelay = INITIAL_RECONNECT_DELAY;
+
                 // Process queued messages
                 while (messageQueue.length > 0) {
                     const msg = messageQueue.shift();
@@ -91,18 +102,13 @@ function connectWebSocket() {
                     type: 'STEAM_FARM_SERVICE_DISCONNECTED'
                 });
 
-                // Try to reconnect after delay
-                if (!reconnectTimer) {
-                    reconnectTimer = setTimeout(() => {
-                        reconnectTimer = null;
-                        connectWebSocket();
-                    }, 5000);
-                }
+                // Try to reconnect with exponential backoff
+                scheduleReconnect();
             };
 
             ws.onerror = (error) => {
                 console.error('[SteamFarm] WebSocket error:', error);
-                ws = null;
+                // Don't set ws to null here - let onclose handle it
                 isServiceRunning = false;
                 resolve(false);
             };
@@ -121,6 +127,47 @@ function connectWebSocket() {
             resolve(false);
         }
     });
+}
+
+// Schedule reconnection with exponential backoff
+function scheduleReconnect() {
+    if (reconnectTimer) {
+        return; // Already scheduled
+    }
+
+    if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+        console.log('[SteamFarm] Max reconnect attempts reached, stopping');
+        reconnectAttempts = 0;
+        reconnectDelay = INITIAL_RECONNECT_DELAY;
+        return;
+    }
+
+    reconnectAttempts++;
+    console.log(`[SteamFarm] Scheduling reconnect attempt ${reconnectAttempts} in ${reconnectDelay}ms`);
+
+    reconnectTimer = setTimeout(async () => {
+        reconnectTimer = null;
+
+        // First check if service is running
+        const status = await checkServiceStatus();
+        if (status) {
+            connectWebSocket();
+        } else {
+            // Service not running, increase delay and try again
+            reconnectDelay = Math.min(reconnectDelay * 2, MAX_RECONNECT_DELAY);
+            scheduleReconnect();
+        }
+    }, reconnectDelay);
+}
+
+// Reset reconnection state (call when user manually triggers connection)
+function resetReconnectState() {
+    reconnectAttempts = 0;
+    reconnectDelay = INITIAL_RECONNECT_DELAY;
+    if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+        reconnectTimer = null;
+    }
 }
 
 // Handle messages from service

@@ -596,13 +596,20 @@ async function handleGetGames(ws) {
     }
 
     try {
-        const result = await client.getUserOwnedApps(client.steamID);
+        // Get all owned apps with all options enabled
+        const result = await client.getUserOwnedApps(client.steamID, {
+            includePlayedFreeGames: true,
+            includeFreeSub: true,
+            includeExtendedAppInfo: true
+        });
+
         ownedGames = result.apps.map(app => ({
             appId: app.appid,
             name: app.name,
             playtimeForever: app.playtime_forever || 0,
             playtime2Weeks: app.playtime_2weeks || 0,
-            iconUrl: app.img_icon_url
+            iconUrl: app.img_icon_url,
+            hasCommunityVisibleStats: app.has_community_visible_stats || false
         }));
 
         log(`Fetched ${ownedGames.length} games`);
@@ -621,11 +628,26 @@ async function handleGetGames(ws) {
 }
 
 async function handleGetCards(ws) {
+    if (!isLoggedIn || !client) {
+        ws.send(JSON.stringify({
+            type: 'ERROR',
+            error: 'Not logged in'
+        }));
+        return;
+    }
+
+    // For now, we'll mark games that potentially have cards
+    // Games with < 2 hours playtime might have remaining card drops
+    // This is an estimate - real card data requires scraping Steam badges page
     const gamesWithCards = {};
 
     for (const game of ownedGames) {
+        // Most games drop cards in first 2 hours of playtime
+        // Games with community stats often have trading cards
         if (game.playtimeForever < 120) {
-            gamesWithCards[game.appId] = 3;
+            // Estimate remaining cards (typically 3-5 per game)
+            const estimatedCards = Math.max(1, Math.ceil((120 - game.playtimeForever) / 30));
+            gamesWithCards[game.appId] = Math.min(estimatedCards, 5);
         }
     }
 
@@ -633,7 +655,10 @@ async function handleGetCards(ws) {
 
     broadcast({
         type: 'CARDS_DATA',
-        data: { cards: cardsData }
+        data: {
+            cards: cardsData,
+            isEstimate: true  // Flag that this is estimated data
+        }
     });
 }
 
@@ -649,7 +674,19 @@ function handleStartFarming(ws, data) {
     }
 
     const gamesToFarm = appIds.slice(0, 32);
+
+    // Check if the games list actually changed
+    const gamesChanged = JSON.stringify(gamesToFarm.sort()) !== JSON.stringify(farmingGames.sort());
+
+    // Throttle updates to avoid spamming Steam
+    const now = Date.now();
+    if (!gamesChanged && now - lastFarmingUpdate < FARMING_UPDATE_THROTTLE) {
+        log('Farming update throttled (no changes)');
+        return;
+    }
+
     farmingGames = gamesToFarm;
+    lastFarmingUpdate = now;
 
     client.gamesPlayed(gamesToFarm);
 
@@ -662,7 +699,15 @@ function handleStartFarming(ws, data) {
 }
 
 function handleStopFarming(ws) {
+    // Only stop if we're actually farming
+    if (farmingGames.length === 0) {
+        log('Already stopped farming');
+        return;
+    }
+
     farmingGames = [];
+    lastFarmingUpdate = Date.now();
+
     if (client) {
         client.gamesPlayed([]);
     }
@@ -798,6 +843,13 @@ const httpServer = http.createServer((req, res) => {
 
 const wss = new WebSocket.Server({ server: httpServer });
 
+// Heartbeat interval (30 seconds)
+const HEARTBEAT_INTERVAL = 30000;
+
+// Track last farming update to avoid spamming
+let lastFarmingUpdate = 0;
+const FARMING_UPDATE_THROTTLE = 5000; // 5 seconds minimum between updates
+
 wss.on('connection', (ws, req) => {
     const clientIp = req.socket.remoteAddress;
 
@@ -810,6 +862,14 @@ wss.on('connection', (ws, req) => {
 
     log(`WebSocket client connected from ${clientIp}`);
     wsConnections.add(ws);
+
+    // Mark connection as alive
+    ws.isAlive = true;
+
+    // Handle pong responses
+    ws.on('pong', () => {
+        ws.isAlive = true;
+    });
 
     // Send initial status
     ws.send(JSON.stringify({
@@ -845,6 +905,20 @@ wss.on('connection', (ws, req) => {
         wsConnections.delete(ws);
     });
 });
+
+// Heartbeat to keep connections alive and detect dead connections
+const heartbeatInterval = setInterval(() => {
+    wss.clients.forEach((ws) => {
+        if (ws.isAlive === false) {
+            log('Terminating inactive WebSocket connection');
+            wsConnections.delete(ws);
+            return ws.terminate();
+        }
+
+        ws.isAlive = false;
+        ws.ping();
+    });
+}, HEARTBEAT_INTERVAL);
 
 // ===========================================
 // MAIN
@@ -914,6 +988,7 @@ function startServer() {
 // Cleanup on exit
 process.on('exit', () => {
     log('Service stopping');
+    clearInterval(heartbeatInterval);
     removePidFile();
     if (client) {
         client.logOff();
