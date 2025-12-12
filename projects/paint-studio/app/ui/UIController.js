@@ -8,6 +8,7 @@ export class UIController {
         this.notificationTimeout = null;
         this.contextMenu = null;
         this.isFullscreen = false;
+        this.draggedLayerIndex = null;
     }
 
     /**
@@ -268,20 +269,35 @@ export class UIController {
 
         list.innerHTML = '';
 
-        // Reverse order so top layer is at top
+        // Add TOP/BOTTOM indicator header
+        const indicator = document.createElement('div');
+        indicator.className = 'layers-header-indicator';
+        indicator.innerHTML = '<span class="top-label">↑ TOP (vykreslí se nahoře)</span>';
+        list.appendChild(indicator);
+
+        // Reverse order so top layer is at top of UI
         const layers = [...this.app.layers.getLayers()].reverse();
         const totalLayers = layers.length;
 
         layers.forEach((layer, i) => {
             const actualIndex = this.app.layers.getLayers().length - 1 - i;
+            const isTopLayer = i === 0; // First in reversed array = top layer
             const isFirst = actualIndex === totalLayers - 1; // Top layer (can't move up)
             const isLast = actualIndex === 0; // Bottom layer (can't move down)
 
             const item = document.createElement('div');
-            item.className = 'layer-item' + (actualIndex === this.app.layers.activeLayerIndex ? ' active' : '');
+            item.className = 'layer-item' +
+                (actualIndex === this.app.layers.activeLayerIndex ? ' active' : '') +
+                (isTopLayer ? ' is-top' : '');
             item.dataset.index = actualIndex;
+            item.draggable = true;
 
             item.innerHTML = `
+                <div class="layer-drag-handle" title="Přetáhněte pro změnu pořadí">
+                    <svg viewBox="0 0 24 24" width="12" height="12">
+                        <path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" fill="currentColor"/>
+                    </svg>
+                </div>
                 <button class="layer-visibility ${layer.visible ? '' : 'hidden'}" title="Viditelnost">
                     <svg viewBox="0 0 24 24" width="16" height="16">
                         ${layer.visible ?
@@ -311,7 +327,9 @@ export class UIController {
 
             // Click to select
             item.addEventListener('click', (e) => {
-                if (!e.target.closest('.layer-visibility') && !e.target.closest('.layer-move-btn')) {
+                if (!e.target.closest('.layer-visibility') &&
+                    !e.target.closest('.layer-move-btn') &&
+                    !e.target.closest('.layer-drag-handle')) {
                     this.app.layers.setActiveLayer(actualIndex);
                     this.updateBlendModeSelect();
                 }
@@ -336,6 +354,65 @@ export class UIController {
                 this.app.layers.moveLayerUp(actualIndex);
             });
 
+            // Drag and drop events
+            item.addEventListener('dragstart', (e) => {
+                item.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', actualIndex.toString());
+                this.draggedLayerIndex = actualIndex;
+            });
+
+            item.addEventListener('dragend', () => {
+                item.classList.remove('dragging');
+                document.querySelectorAll('.layer-item').forEach(el => {
+                    el.classList.remove('drag-over', 'drag-over-bottom');
+                });
+                this.draggedLayerIndex = null;
+            });
+
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+
+                // Remove other drag-over classes
+                document.querySelectorAll('.layer-item').forEach(el => {
+                    if (el !== item) el.classList.remove('drag-over', 'drag-over-bottom');
+                });
+
+                // Determine if dropping above or below
+                const rect = item.getBoundingClientRect();
+                const midY = rect.top + rect.height / 2;
+                if (e.clientY < midY) {
+                    item.classList.add('drag-over');
+                    item.classList.remove('drag-over-bottom');
+                } else {
+                    item.classList.add('drag-over-bottom');
+                    item.classList.remove('drag-over');
+                }
+            });
+
+            item.addEventListener('dragleave', () => {
+                item.classList.remove('drag-over', 'drag-over-bottom');
+            });
+
+            item.addEventListener('drop', (e) => {
+                e.preventDefault();
+                item.classList.remove('drag-over', 'drag-over-bottom');
+
+                const fromIndex = this.draggedLayerIndex;
+                const toIndex = actualIndex;
+
+                if (fromIndex !== null && fromIndex !== toIndex) {
+                    // Determine if dropping above or below
+                    const rect = item.getBoundingClientRect();
+                    const midY = rect.top + rect.height / 2;
+                    const dropAbove = e.clientY < midY;
+
+                    // Move layers appropriately
+                    this.moveLayerToPosition(fromIndex, toIndex, dropAbove);
+                }
+            });
+
             // Add thumbnail
             const thumbContainer = item.querySelector('.layer-thumbnail');
             if (thumbContainer) {
@@ -349,6 +426,45 @@ export class UIController {
         });
 
         this.updateBlendModeSelect();
+    }
+
+    /**
+     * Move layer to a specific position (for drag and drop)
+     */
+    moveLayerToPosition(fromIndex, toIndex, dropAbove) {
+        const layers = this.app.layers.layers;
+
+        // Remove layer from current position
+        const [layer] = layers.splice(fromIndex, 1);
+
+        // Calculate new position
+        // In the UI, dropAbove means we want to place it AFTER (higher index) the target
+        // because layers are displayed in reverse order
+        let newIndex = dropAbove ? toIndex + 1 : toIndex;
+
+        // Adjust for the removal
+        if (fromIndex < newIndex) {
+            newIndex--;
+        }
+
+        // Ensure bounds
+        newIndex = Math.max(0, Math.min(layers.length, newIndex));
+
+        // Insert at new position
+        layers.splice(newIndex, 0, layer);
+
+        // Update active layer index if needed
+        if (this.app.layers.activeLayerIndex === fromIndex) {
+            this.app.layers.activeLayerIndex = newIndex;
+        } else if (fromIndex < this.app.layers.activeLayerIndex && newIndex >= this.app.layers.activeLayerIndex) {
+            this.app.layers.activeLayerIndex--;
+        } else if (fromIndex > this.app.layers.activeLayerIndex && newIndex <= this.app.layers.activeLayerIndex) {
+            this.app.layers.activeLayerIndex++;
+        }
+
+        // Re-render
+        this.app.canvas.render();
+        this.updateLayersList();
     }
 
     /**
@@ -831,10 +947,116 @@ export class UIController {
             }
         });
 
-        // Add fullscreen button to menu
+        // Settings button should open settings modal
         document.getElementById('menuSettings')?.addEventListener('click', () => {
             this.hideMenu();
-            this.toggleFullscreen();
+            this.showSettingsModal();
+        });
+    }
+
+    /**
+     * Show settings modal
+     */
+    showSettingsModal() {
+        const existingModal = document.getElementById('settingsModal');
+        if (existingModal) {
+            existingModal.remove();
+        }
+
+        const modal = document.createElement('div');
+        modal.id = 'settingsModal';
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal modal-large">
+                <div class="modal-header">
+                    <h2>Nastavení</h2>
+                    <button class="btn-icon modal-close">
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Obecné nastavení</label>
+                    </div>
+                    <div class="form-group checkbox-row">
+                        <label>
+                            <input type="checkbox" id="settingPressure" ${this.app.settings.pressureSensitivity ? 'checked' : ''}>
+                            Citlivost na tlak pera
+                        </label>
+                    </div>
+                    <div class="form-group checkbox-row">
+                        <label>
+                            <input type="checkbox" id="settingStreamline" ${this.app.settings.streamlineEnabled ? 'checked' : ''}>
+                            StreamLine (vyhlazování tahů)
+                        </label>
+                    </div>
+                    <div class="form-group checkbox-row">
+                        <label>
+                            <input type="checkbox" id="settingQuickshape" ${this.app.settings.quickshapeEnabled ? 'checked' : ''}>
+                            QuickShape (automatická detekce tvarů)
+                        </label>
+                    </div>
+                    <div class="form-group checkbox-row">
+                        <label>
+                            <input type="checkbox" id="settingQuickshapePreview" ${this.app.settings.quickshapePreview ? 'checked' : ''}>
+                            Zobrazit náhled QuickShape při kreslení
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label>Klávesové zkratky</label>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.8;">
+                            <div><strong>B</strong> - Štětec</div>
+                            <div><strong>E</strong> - Guma</div>
+                            <div><strong>P</strong> - Tužka</div>
+                            <div><strong>G</strong> - Výplň</div>
+                            <div><strong>I</strong> - Kapátko</div>
+                            <div><strong>F</strong> - Fullscreen režim</div>
+                            <div><strong>Ctrl+Z</strong> - Zpět</div>
+                            <div><strong>Ctrl+Y</strong> - Vpřed</div>
+                            <div><strong>Ctrl+S</strong> - Uložit</div>
+                            <div><strong>Space + Drag</strong> - Posun plátna</div>
+                            <div><strong>Scroll</strong> - Zoom</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" id="settingsCancel">Zavřít</button>
+                    <button class="btn-primary" id="settingsSave">Uložit</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Event listeners
+        modal.querySelector('.modal-close')?.addEventListener('click', () => modal.remove());
+        modal.querySelector('#settingsCancel')?.addEventListener('click', () => modal.remove());
+        modal.querySelector('#settingsSave')?.addEventListener('click', () => {
+            // Save settings
+            this.app.settings.pressureSensitivity = document.getElementById('settingPressure')?.checked ?? true;
+            this.app.settings.streamlineEnabled = document.getElementById('settingStreamline')?.checked ?? true;
+            this.app.settings.quickshapeEnabled = document.getElementById('settingQuickshape')?.checked ?? true;
+            this.app.settings.quickshapePreview = document.getElementById('settingQuickshapePreview')?.checked ?? true;
+
+            // Update UI checkboxes
+            const pressureCheckbox = document.getElementById('pressureSensitivity');
+            if (pressureCheckbox) pressureCheckbox.checked = this.app.settings.pressureSensitivity;
+            const streamlineCheckbox = document.getElementById('streamlineEnabled');
+            if (streamlineCheckbox) streamlineCheckbox.checked = this.app.settings.streamlineEnabled;
+            const quickshapeCheckbox = document.getElementById('quickshapeEnabled');
+            if (quickshapeCheckbox) quickshapeCheckbox.checked = this.app.settings.quickshapeEnabled;
+            const quickshapePreviewCheckbox = document.getElementById('quickshapePreview');
+            if (quickshapePreviewCheckbox) quickshapePreviewCheckbox.checked = this.app.settings.quickshapePreview;
+
+            this.showNotification('Nastavení uloženo', 'success');
+            modal.remove();
+        });
+
+        // Close on overlay click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.remove();
         });
     }
 
