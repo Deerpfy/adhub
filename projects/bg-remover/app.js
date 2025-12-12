@@ -844,10 +844,28 @@ function initBrushControls() {
     const brushContainer = document.getElementById('brushCanvasContainer');
     if (!canvas) return;
 
+    // Create overlay canvas for stroke preview (optimized drawing)
+    let strokeCanvas = null;
+    let strokeCtx = null;
+
     let isDrawing = false;
     let currentMode = 'erase'; // 'erase' or 'restore'
     let lastX = 0;
     let lastY = 0;
+
+    function initStrokeCanvas() {
+        if (!state.maskCanvas) return;
+        strokeCanvas = document.createElement('canvas');
+        strokeCanvas.width = state.maskCanvas.width;
+        strokeCanvas.height = state.maskCanvas.height;
+        strokeCtx = strokeCanvas.getContext('2d', { willReadFrequently: true });
+    }
+
+    function clearStrokeCanvas() {
+        if (strokeCtx && strokeCanvas) {
+            strokeCtx.clearRect(0, 0, strokeCanvas.width, strokeCanvas.height);
+        }
+    }
 
     function getCanvasCoords(e) {
         const rect = canvas.getBoundingClientRect();
@@ -882,24 +900,85 @@ function initBrushControls() {
         }
     }
 
-    function draw(e) {
-        if (!isDrawing || !state.maskCanvas) return;
+    function isInsideCanvas(e) {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return clientX >= rect.left && clientX <= rect.right &&
+               clientY >= rect.top && clientY <= rect.bottom;
+    }
+
+    // Draw stroke on preview canvas (fast)
+    function drawStroke(e) {
+        if (!isDrawing || !strokeCtx) return;
 
         const coords = getCanvasCoords(e);
-        const maskCtx = state.maskCanvas.getContext('2d', { willReadFrequently: true });
 
-        maskCtx.beginPath();
-        maskCtx.moveTo(lastX, lastY);
-        maskCtx.lineTo(coords.x, coords.y);
-        maskCtx.strokeStyle = currentMode === 'restore' ? 'white' : 'black';
-        maskCtx.lineWidth = state.brushSize;
-        maskCtx.lineCap = 'round';
-        maskCtx.stroke();
+        strokeCtx.beginPath();
+        strokeCtx.moveTo(lastX, lastY);
+        strokeCtx.lineTo(coords.x, coords.y);
+        strokeCtx.strokeStyle = currentMode === 'restore' ? 'white' : 'black';
+        strokeCtx.lineWidth = state.brushSize;
+        strokeCtx.lineCap = 'round';
+        strokeCtx.stroke();
 
         lastX = coords.x;
         lastY = coords.y;
 
+        // Fast preview render - just composite stroke on current view
+        renderBrushPreview();
+    }
+
+    // Fast preview - composites stroke canvas over base
+    function renderBrushPreview() {
+        if (!canvas || !state.resultImageData) return;
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        // Draw current result
+        ctx.putImageData(state.lastBrushRender || state.resultImageData, 0, 0);
+
+        // Overlay stroke preview with appropriate blend mode
+        if (strokeCanvas) {
+            ctx.save();
+            ctx.globalCompositeOperation = currentMode === 'restore' ? 'destination-over' : 'destination-out';
+            ctx.drawImage(strokeCanvas, 0, 0);
+            ctx.restore();
+
+            // For restore mode, also draw original image through stroke
+            if (currentMode === 'restore') {
+                ctx.save();
+                ctx.globalCompositeOperation = 'destination-over';
+                // Create temp canvas with original masked by stroke
+                const tempCanvas = document.createElement('canvas');
+                tempCanvas.width = canvas.width;
+                tempCanvas.height = canvas.height;
+                const tempCtx = tempCanvas.getContext('2d');
+                tempCtx.putImageData(state.originalImageData, 0, 0);
+                tempCtx.globalCompositeOperation = 'destination-in';
+                tempCtx.drawImage(strokeCanvas, 0, 0);
+                ctx.drawImage(tempCanvas, 0, 0);
+                ctx.restore();
+            }
+        }
+    }
+
+    // Apply stroke to mask and render final result (called on mouse up)
+    function applyStrokeToMask() {
+        if (!strokeCanvas || !state.maskCanvas) return;
+
+        const maskCtx = state.maskCanvas.getContext('2d', { willReadFrequently: true });
+        maskCtx.drawImage(strokeCanvas, 0, 0);
+        clearStrokeCanvas();
+
+        // Full render
         renderBrush();
+        renderResult();
+        renderCompare();
+        renderBackground();
+
+        // Cache current render for next preview
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        state.lastBrushRender = ctx.getImageData(0, 0, canvas.width, canvas.height);
     }
 
     // Prevent context menu on right-click in brush area
@@ -907,11 +986,50 @@ function initBrushControls() {
         brushContainer.addEventListener('contextmenu', (e) => {
             e.preventDefault();
         });
+
+        // Show/hide cursor based on container (not just canvas)
+        brushContainer.addEventListener('mouseenter', () => {
+            if (brushCursor) {
+                brushCursor.classList.add('active');
+                updateBrushCursor();
+            }
+        });
+
+        brushContainer.addEventListener('mouseleave', () => {
+            if (brushCursor) {
+                brushCursor.classList.remove('active');
+            }
+            // Don't stop drawing - user might come back
+        });
+
+        brushContainer.addEventListener('mousemove', (e) => {
+            updateBrushCursor(e);
+
+            // Show custom cursor only over the actual canvas
+            if (brushCursor) {
+                if (isInsideCanvas(e)) {
+                    brushCursor.classList.add('active');
+                    brushContainer.style.cursor = 'none';
+                } else {
+                    brushCursor.classList.remove('active');
+                    brushContainer.style.cursor = 'default';
+                }
+            }
+        });
     }
 
-    // Mouse events
+    // Mouse events on canvas
     canvas.addEventListener('mousedown', (e) => {
         e.preventDefault();
+
+        // Initialize stroke canvas on first draw
+        if (!strokeCanvas) initStrokeCanvas();
+        clearStrokeCanvas();
+
+        // Cache current brush render for fast preview
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        state.lastBrushRender = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
         isDrawing = true;
         // Left button = erase (0), Right button = restore (2)
         currentMode = e.button === 2 ? 'restore' : 'erase';
@@ -926,63 +1044,67 @@ function initBrushControls() {
         lastX = coords.x;
         lastY = coords.y;
 
-        // Draw a dot at the start position
-        if (state.maskCanvas) {
-            const maskCtx = state.maskCanvas.getContext('2d', { willReadFrequently: true });
-            maskCtx.beginPath();
-            maskCtx.arc(coords.x, coords.y, state.brushSize / 2, 0, Math.PI * 2);
-            maskCtx.fillStyle = currentMode === 'restore' ? 'white' : 'black';
-            maskCtx.fill();
-            renderBrush();
+        // Draw a dot at the start position on stroke canvas
+        if (strokeCtx) {
+            strokeCtx.beginPath();
+            strokeCtx.arc(coords.x, coords.y, state.brushSize / 2, 0, Math.PI * 2);
+            strokeCtx.fillStyle = currentMode === 'restore' ? 'white' : 'black';
+            strokeCtx.fill();
+            renderBrushPreview();
         }
     });
 
     canvas.addEventListener('mousemove', (e) => {
-        updateBrushCursor(e);
-        draw(e);
-    });
-
-    canvas.addEventListener('mouseup', () => {
-        isDrawing = false;
-        renderResult();
-        renderCompare();
-        renderBackground();
-    });
-
-    canvas.addEventListener('mouseenter', () => {
-        if (brushCursor) {
-            brushCursor.classList.add('active');
-            updateBrushCursor();
+        if (isDrawing) {
+            drawStroke(e);
         }
     });
 
-    canvas.addEventListener('mouseleave', () => {
-        isDrawing = false;
-        if (brushCursor) {
-            brushCursor.classList.remove('active');
+    // Global mouseup to catch release outside canvas
+    document.addEventListener('mouseup', () => {
+        if (isDrawing) {
+            isDrawing = false;
+            applyStrokeToMask();
         }
     });
 
     // Touch events (use single touch as erase)
     canvas.addEventListener('touchstart', (e) => {
         e.preventDefault();
+
+        if (!strokeCanvas) initStrokeCanvas();
+        clearStrokeCanvas();
+
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        state.lastBrushRender = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
         isDrawing = true;
         currentMode = 'erase';
         const coords = getCanvasCoords(e);
         lastX = coords.x;
         lastY = coords.y;
+
+        if (strokeCtx) {
+            strokeCtx.beginPath();
+            strokeCtx.arc(coords.x, coords.y, state.brushSize / 2, 0, Math.PI * 2);
+            strokeCtx.fillStyle = 'black';
+            strokeCtx.fill();
+            renderBrushPreview();
+        }
     });
 
     canvas.addEventListener('touchmove', (e) => {
         e.preventDefault();
-        draw(e);
+        if (isDrawing) {
+            drawStroke(e);
+        }
     });
 
     canvas.addEventListener('touchend', () => {
-        isDrawing = false;
-        renderResult();
-        renderCompare();
-        renderBackground();
+        if (isDrawing) {
+            isDrawing = false;
+            applyStrokeToMask();
+        }
     });
 }
 
