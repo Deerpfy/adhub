@@ -773,6 +773,7 @@ body::before {
 #brushPreviewCanvas {
     z-index: 2;
     pointer-events: none;
+    display: none; /* Hidden - brush preview not implemented */
 }
 
 /* =============================================
