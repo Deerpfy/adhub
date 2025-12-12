@@ -1,0 +1,16 @@
+{
+  "name": "bg-remover",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@imgly/background-removal": "^1.4.5",
+    "esbuild": "^0.27.1"
+  }
+}

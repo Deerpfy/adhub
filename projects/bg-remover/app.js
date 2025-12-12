@@ -229,10 +229,10 @@ async function init() {
 
 async function loadBackgroundRemovalLibrary() {
     try {
-        // Use esm.sh CDN which properly bundles all dependencies
-        const module = await import('https://esm.sh/@imgly/background-removal@1.4.5');
-        state.removeBackground = module.default || module.removeBackground;
-        console.log('Background removal library loaded successfully');
+        // Use locally bundled library for 100% offline operation
+        const module = await import('./vendor/background-removal.js');
+        state.removeBackground = module.removeBackground;
+        console.log('Background removal library loaded successfully (local bundle)');
     } catch (error) {
         console.error('Failed to load background removal library:', error);
         showToast(translations[state.lang].first_load_info, 'warning');

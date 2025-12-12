@@ -3,26 +3,26 @@
  * Enables offline functionality and caches essential resources
  */
 
-const CACHE_NAME = 'bg-remover-v2';
-const STATIC_CACHE = 'bg-remover-static-v2';
-const DYNAMIC_CACHE = 'bg-remover-dynamic-v2';
+const CACHE_NAME = 'bg-remover-v3';
+const STATIC_CACHE = 'bg-remover-static-v3';
+const DYNAMIC_CACHE = 'bg-remover-dynamic-v3';
 const MODEL_CACHE = 'bg-remover-models-v1';
 
-// Static assets to cache immediately
+// Static assets to cache immediately (includes local library bundle)
 const STATIC_ASSETS = [
     './',
     './index.html',
     './styles.css',
     './app.js',
     './manifest.json',
+    './vendor/background-removal.js',
     './models/resources.json'
 ];
 
-// External resources that should be cached when fetched
+// External resources that should be cached when fetched (minimal - we're mostly offline)
 const EXTERNAL_CACHE_PATTERNS = [
     /cdn\.jsdelivr\.net/,
-    /unpkg\.com/,
-    /esm\.sh/
+    /unpkg\.com/
 ];
 
 // Model files pattern - cache aggressively (they don't change)
