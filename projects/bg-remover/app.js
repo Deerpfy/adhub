@@ -599,14 +599,21 @@ function renderResult() {
 
 function renderCompare() {
     // Original image
-    elements.compareOriginalImg.src = state.originalImage.src;
+    const img = elements.compareOriginalImg;
+    img.src = state.originalImage.src;
 
-    // Result canvas
+    // Result canvas - must match image size exactly
     const canvas = elements.compareResultCanvas;
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
     canvas.width = state.resultImageData.width;
     canvas.height = state.resultImageData.height;
+
+    // Set canvas CSS to match image aspect ratio
+    const aspectRatio = state.resultImageData.height / state.resultImageData.width;
+    canvas.style.width = '100%';
+    canvas.style.height = 'auto';
+    canvas.style.aspectRatio = `${state.resultImageData.width} / ${state.resultImageData.height}`;
 
     const result = applyMaskToImage(state.originalImageData, state.maskCanvas);
     ctx.putImageData(result, 0, 0);
