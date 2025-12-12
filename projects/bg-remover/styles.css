@@ -623,21 +623,9 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-}
-
-.compare-original img {
-    width: 100%;
-    height: auto;
-    display: block;
-}
-
-.compare-result canvas {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-.compare-result {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     clip-path: inset(0 50% 0 0);
     background-image:
         linear-gradient(45deg, #1a1a24 25%, transparent 25%),
@@ -647,6 +635,13 @@ body::before {
     background-size: 20px 20px;
     background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
     background-color: #121218;
+}
+
+.compare-original img,
+.compare-result canvas {
+    width: 100%;
+    height: auto;
+    display: block;
 }
 
 .compare-label {
