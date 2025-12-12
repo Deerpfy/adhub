@@ -9,6 +9,54 @@ export class UIController {
         this.contextMenu = null;
         this.isFullscreen = false;
         this.draggedLayerIndex = null;
+
+        // Keyboard shortcuts presets
+        this.keyboardPresets = {
+            'paint-studio': {
+                name: 'Paint Studio (Výchozí)',
+                shortcuts: {
+                    brush: 'B', pencil: 'P', eraser: 'E', line: 'L',
+                    rectangle: 'U', ellipse: 'O', fill: 'G', eyedropper: 'I',
+                    move: 'V', undo: 'Ctrl+Z', redo: 'Ctrl+Y', save: 'Ctrl+S',
+                    zoomIn: 'Ctrl++', zoomOut: 'Ctrl+-', fitView: 'Ctrl+0',
+                    fullscreen: 'F', swapColors: 'X'
+                }
+            },
+            'photoshop': {
+                name: 'Adobe Photoshop',
+                shortcuts: {
+                    brush: 'B', pencil: 'B', eraser: 'E', line: 'U',
+                    rectangle: 'U', ellipse: 'U', fill: 'G', eyedropper: 'I',
+                    move: 'V', undo: 'Ctrl+Z', redo: 'Ctrl+Shift+Z', save: 'Ctrl+S',
+                    zoomIn: 'Ctrl++', zoomOut: 'Ctrl+-', fitView: 'Ctrl+0',
+                    fullscreen: 'F', swapColors: 'X'
+                }
+            },
+            'photopea': {
+                name: 'Photopea',
+                shortcuts: {
+                    brush: 'B', pencil: 'N', eraser: 'E', line: 'L',
+                    rectangle: 'U', ellipse: 'U', fill: 'G', eyedropper: 'I',
+                    move: 'V', undo: 'Ctrl+Z', redo: 'Ctrl+Y', save: 'Ctrl+S',
+                    zoomIn: 'Ctrl++', zoomOut: 'Ctrl+-', fitView: 'Ctrl+0',
+                    fullscreen: 'F', swapColors: 'X'
+                }
+            },
+            'procreate': {
+                name: 'Procreate Style',
+                shortcuts: {
+                    brush: 'B', pencil: 'P', eraser: 'E', line: 'L',
+                    rectangle: 'R', ellipse: 'O', fill: 'G', eyedropper: 'I',
+                    move: 'M', undo: 'Ctrl+Z', redo: 'Ctrl+Shift+Z', save: 'Ctrl+S',
+                    zoomIn: 'Ctrl++', zoomOut: 'Ctrl+-', fitView: 'Ctrl+0',
+                    fullscreen: 'F', swapColors: 'X'
+                }
+            }
+        };
+
+        // Current keyboard shortcuts (load from storage or use default)
+        this.currentShortcuts = { ...this.keyboardPresets['paint-studio'].shortcuts };
+        this.currentPreset = 'paint-studio';
     }
 
     /**
@@ -25,6 +73,7 @@ export class UIController {
         this.setupContextMenu();
         this.setupFullscreen();
         this.createFullscreenHint();
+        this.loadKeyboardPreset();
     }
 
     /**
@@ -963,6 +1012,28 @@ export class UIController {
             existingModal.remove();
         }
 
+        // Generate preset options
+        const presetOptions = Object.entries(this.keyboardPresets)
+            .map(([key, preset]) => `<option value="${key}" ${key === this.currentPreset ? 'selected' : ''}>${preset.name}</option>`)
+            .join('');
+
+        // Generate shortcuts list
+        const shortcutLabels = {
+            brush: 'Štětec', pencil: 'Tužka', eraser: 'Guma', line: 'Čára',
+            rectangle: 'Obdélník', ellipse: 'Elipsa', fill: 'Výplň', eyedropper: 'Kapátko',
+            move: 'Přesun', undo: 'Zpět', redo: 'Vpřed', save: 'Uložit',
+            zoomIn: 'Přiblížit', zoomOut: 'Oddálit', fitView: 'Přizpůsobit',
+            fullscreen: 'Fullscreen', swapColors: 'Prohodit barvy'
+        };
+
+        const shortcutsList = Object.entries(this.currentShortcuts)
+            .map(([key, value]) => `
+                <div class="shortcut-row">
+                    <span class="shortcut-label">${shortcutLabels[key] || key}</span>
+                    <span class="shortcut-key">${value}</span>
+                </div>
+            `).join('');
+
         const modal = document.createElement('div');
         modal.id = 'settingsModal';
         modal.className = 'modal-overlay';
@@ -976,48 +1047,58 @@ export class UIController {
                         </svg>
                     </button>
                 </div>
-                <div class="modal-body">
-                    <div class="form-group">
-                        <label>Obecné nastavení</label>
+                <div class="modal-body settings-modal-body">
+                    <!-- General Settings Section -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">Obecné nastavení</h3>
+                        <div class="form-group checkbox-row">
+                            <label>
+                                <input type="checkbox" id="settingPressure" ${this.app.settings.pressureSensitivity ? 'checked' : ''}>
+                                Citlivost na tlak pera
+                            </label>
+                        </div>
+                        <div class="form-group checkbox-row">
+                            <label>
+                                <input type="checkbox" id="settingStreamline" ${this.app.settings.streamlineEnabled ? 'checked' : ''}>
+                                StreamLine (vyhlazování tahů)
+                            </label>
+                        </div>
+                        <div class="form-group checkbox-row">
+                            <label>
+                                <input type="checkbox" id="settingQuickshape" ${this.app.settings.quickshapeEnabled ? 'checked' : ''}>
+                                QuickShape (automatická detekce tvarů)
+                            </label>
+                        </div>
+                        <div class="form-group checkbox-row">
+                            <label>
+                                <input type="checkbox" id="settingQuickshapePreview" ${this.app.settings.quickshapePreview ? 'checked' : ''}>
+                                Zobrazit náhled QuickShape při kreslení
+                            </label>
+                        </div>
                     </div>
-                    <div class="form-group checkbox-row">
-                        <label>
-                            <input type="checkbox" id="settingPressure" ${this.app.settings.pressureSensitivity ? 'checked' : ''}>
-                            Citlivost na tlak pera
-                        </label>
-                    </div>
-                    <div class="form-group checkbox-row">
-                        <label>
-                            <input type="checkbox" id="settingStreamline" ${this.app.settings.streamlineEnabled ? 'checked' : ''}>
-                            StreamLine (vyhlazování tahů)
-                        </label>
-                    </div>
-                    <div class="form-group checkbox-row">
-                        <label>
-                            <input type="checkbox" id="settingQuickshape" ${this.app.settings.quickshapeEnabled ? 'checked' : ''}>
-                            QuickShape (automatická detekce tvarů)
-                        </label>
-                    </div>
-                    <div class="form-group checkbox-row">
-                        <label>
-                            <input type="checkbox" id="settingQuickshapePreview" ${this.app.settings.quickshapePreview ? 'checked' : ''}>
-                            Zobrazit náhled QuickShape při kreslení
-                        </label>
-                    </div>
-                    <div class="form-group">
-                        <label>Klávesové zkratky</label>
-                        <div style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.8;">
-                            <div><strong>B</strong> - Štětec</div>
-                            <div><strong>E</strong> - Guma</div>
-                            <div><strong>P</strong> - Tužka</div>
-                            <div><strong>G</strong> - Výplň</div>
-                            <div><strong>I</strong> - Kapátko</div>
-                            <div><strong>F</strong> - Fullscreen režim</div>
-                            <div><strong>Ctrl+Z</strong> - Zpět</div>
-                            <div><strong>Ctrl+Y</strong> - Vpřed</div>
-                            <div><strong>Ctrl+S</strong> - Uložit</div>
-                            <div><strong>Space + Drag</strong> - Posun plátna</div>
-                            <div><strong>Scroll</strong> - Zoom</div>
+
+                    <!-- Keyboard Shortcuts Section -->
+                    <div class="settings-section">
+                        <h3 class="settings-section-title">Klávesové zkratky</h3>
+                        <div class="form-group">
+                            <label for="keyboardPresetSelect">Preset klávesových zkratek</label>
+                            <select id="keyboardPresetSelect" class="preset-select">
+                                ${presetOptions}
+                            </select>
+                            <p class="preset-hint">Vyberte preset podle vašich zvyků z jiných programů</p>
+                        </div>
+                        <div class="shortcuts-list" id="shortcutsList">
+                            ${shortcutsList}
+                        </div>
+                        <div class="shortcuts-extra">
+                            <div class="shortcut-row">
+                                <span class="shortcut-label">Posun plátna</span>
+                                <span class="shortcut-key">Space + Táhnout</span>
+                            </div>
+                            <div class="shortcut-row">
+                                <span class="shortcut-label">Zoom</span>
+                                <span class="shortcut-key">Scroll kolečko</span>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1030,15 +1111,25 @@ export class UIController {
 
         document.body.appendChild(modal);
 
+        // Preset change handler
+        modal.querySelector('#keyboardPresetSelect')?.addEventListener('change', (e) => {
+            const presetKey = e.target.value;
+            this.previewKeyboardPreset(presetKey, modal);
+        });
+
         // Event listeners
         modal.querySelector('.modal-close')?.addEventListener('click', () => modal.remove());
         modal.querySelector('#settingsCancel')?.addEventListener('click', () => modal.remove());
         modal.querySelector('#settingsSave')?.addEventListener('click', () => {
-            // Save settings
+            // Save general settings
             this.app.settings.pressureSensitivity = document.getElementById('settingPressure')?.checked ?? true;
             this.app.settings.streamlineEnabled = document.getElementById('settingStreamline')?.checked ?? true;
             this.app.settings.quickshapeEnabled = document.getElementById('settingQuickshape')?.checked ?? true;
             this.app.settings.quickshapePreview = document.getElementById('settingQuickshapePreview')?.checked ?? true;
+
+            // Save keyboard preset
+            const selectedPreset = document.getElementById('keyboardPresetSelect')?.value || 'paint-studio';
+            this.applyKeyboardPreset(selectedPreset);
 
             // Update UI checkboxes
             const pressureCheckbox = document.getElementById('pressureSensitivity');
@@ -1058,6 +1149,103 @@ export class UIController {
         modal.addEventListener('click', (e) => {
             if (e.target === modal) modal.remove();
         });
+    }
+
+    /**
+     * Preview keyboard preset in settings modal
+     */
+    previewKeyboardPreset(presetKey, modal) {
+        const preset = this.keyboardPresets[presetKey];
+        if (!preset) return;
+
+        const shortcutLabels = {
+            brush: 'Štětec', pencil: 'Tužka', eraser: 'Guma', line: 'Čára',
+            rectangle: 'Obdélník', ellipse: 'Elipsa', fill: 'Výplň', eyedropper: 'Kapátko',
+            move: 'Přesun', undo: 'Zpět', redo: 'Vpřed', save: 'Uložit',
+            zoomIn: 'Přiblížit', zoomOut: 'Oddálit', fitView: 'Přizpůsobit',
+            fullscreen: 'Fullscreen', swapColors: 'Prohodit barvy'
+        };
+
+        const shortcutsList = Object.entries(preset.shortcuts)
+            .map(([key, value]) => `
+                <div class="shortcut-row">
+                    <span class="shortcut-label">${shortcutLabels[key] || key}</span>
+                    <span class="shortcut-key">${value}</span>
+                </div>
+            `).join('');
+
+        const listElement = modal.querySelector('#shortcutsList');
+        if (listElement) {
+            listElement.innerHTML = shortcutsList;
+        }
+    }
+
+    /**
+     * Apply keyboard preset
+     */
+    applyKeyboardPreset(presetKey) {
+        const preset = this.keyboardPresets[presetKey];
+        if (!preset) return;
+
+        this.currentPreset = presetKey;
+        this.currentShortcuts = { ...preset.shortcuts };
+
+        // Update shortcut badges in toolbar
+        this.updateShortcutBadges();
+
+        // Save to storage
+        this.app.storage.setKeyboardPreset(presetKey);
+    }
+
+    /**
+     * Update shortcut badges in the toolbar
+     */
+    updateShortcutBadges() {
+        const toolShortcuts = {
+            brush: this.currentShortcuts.brush,
+            pencil: this.currentShortcuts.pencil,
+            eraser: this.currentShortcuts.eraser,
+            line: this.currentShortcuts.line,
+            rectangle: this.currentShortcuts.rectangle,
+            ellipse: this.currentShortcuts.ellipse,
+            fill: this.currentShortcuts.fill,
+            eyedropper: this.currentShortcuts.eyedropper,
+            move: this.currentShortcuts.move
+        };
+
+        Object.entries(toolShortcuts).forEach(([tool, shortcut]) => {
+            const badge = document.querySelector(`.tool-shortcut[data-shortcut="${tool}"]`);
+            if (badge) {
+                badge.textContent = shortcut;
+            }
+
+            // Update tooltip on tool button
+            const button = document.querySelector(`.tool-btn[data-tool="${tool}"]`);
+            if (button) {
+                const toolNames = {
+                    brush: 'Štětec', pencil: 'Tužka', eraser: 'Guma', line: 'Čára',
+                    rectangle: 'Obdélník', ellipse: 'Elipsa', fill: 'Výplň',
+                    eyedropper: 'Kapátko', move: 'Přesun'
+                };
+                button.title = `${toolNames[tool]} (${shortcut})`;
+            }
+        });
+    }
+
+    /**
+     * Load keyboard preset from storage
+     */
+    async loadKeyboardPreset() {
+        try {
+            const presetKey = await this.app.storage.getKeyboardPreset();
+            if (presetKey && this.keyboardPresets[presetKey]) {
+                this.currentPreset = presetKey;
+                this.currentShortcuts = { ...this.keyboardPresets[presetKey].shortcuts };
+                this.updateShortcutBadges();
+            }
+        } catch (error) {
+            console.warn('Could not load keyboard preset:', error);
+        }
     }
 
     /**

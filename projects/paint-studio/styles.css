@@ -279,6 +279,39 @@ body {
     box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
 }
 
+.tool-btn {
+    position: relative;
+}
+
+/* Tool Keyboard Shortcut Badge */
+.tool-shortcut {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    min-width: 14px;
+    height: 14px;
+    padding: 0 3px;
+    background: rgba(0, 0, 0, 0.6);
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 700;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    pointer-events: none;
+}
+
+.tool-btn.active .tool-shortcut {
+    background: rgba(0, 0, 0, 0.4);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.tool-btn:hover .tool-shortcut {
+    color: var(--text-secondary);
+}
+
 /* Color Selection */
 .color-selection {
     margin-top: auto;
@@ -1012,6 +1045,116 @@ body {
 
 .modal-large {
     max-width: 640px;
+}
+
+/* Settings Modal Styles */
+.settings-modal-body {
+    max-height: 65vh;
+}
+
+.settings-section {
+    margin-bottom: 24px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.settings-section:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.settings-section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--primary-light);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.preset-select {
+    width: 100%;
+    padding: 10px 14px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.preset-select:hover {
+    border-color: var(--border-hover);
+}
+
+.preset-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+}
+
+.preset-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+}
+
+.shortcuts-list {
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 12px;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.shortcut-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.shortcut-row:last-child {
+    border-bottom: none;
+}
+
+.shortcut-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.shortcut-key {
+    font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    font-size: 0.8rem;
+    background: var(--bg-secondary);
+    color: var(--primary-light);
+    padding: 4px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--border-color);
+    min-width: 50px;
+    text-align: center;
+}
+
+.shortcuts-extra {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border-color);
+}
+
+.shortcuts-extra .shortcut-row {
+    border-bottom: none;
+    padding: 4px 0;
+}
+
+.shortcuts-extra .shortcut-key {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
 }
 
 @keyframes scaleIn {

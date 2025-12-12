@@ -184,6 +184,36 @@ export class StorageManager {
     }
 
     /**
+     * Set keyboard preset
+     */
+    async setKeyboardPreset(presetKey) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['settings'], 'readwrite');
+            const store = transaction.objectStore('settings');
+            const request = store.put({ key: 'keyboardPreset', preset: presetKey });
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    /**
+     * Get keyboard preset
+     */
+    async getKeyboardPreset() {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['settings'], 'readonly');
+            const store = transaction.objectStore('settings');
+            const request = store.get('keyboardPreset');
+
+            request.onsuccess = () => {
+                resolve(request.result?.preset || null);
+            };
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    /**
      * Clear all data
      */
     async clearAll() {
