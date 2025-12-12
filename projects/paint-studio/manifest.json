@@ -60,20 +60,6 @@
             "purpose": "any maskable"
         }
     ],
-    "screenshots": [
-        {
-            "src": "screenshots/desktop.png",
-            "sizes": "1920x1080",
-            "type": "image/png",
-            "form_factor": "wide"
-        },
-        {
-            "src": "screenshots/mobile.png",
-            "sizes": "390x844",
-            "type": "image/png",
-            "form_factor": "narrow"
-        }
-    ],
     "shortcuts": [
         {
             "name": "Nový projekt",
