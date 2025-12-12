@@ -475,8 +475,9 @@ async function removeBackgroundFromImage(img) {
 
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
 
-        // Process with background removal
+        // Process with background removal - using local model files
         const resultBlob = await state.removeBackground(blob, {
+            publicPath: './models/', // Use locally hosted model files
             progress: (key, current, total) => {
                 // Better progress reporting
                 const now = Date.now();

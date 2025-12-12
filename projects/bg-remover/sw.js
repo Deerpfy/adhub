@@ -3,9 +3,10 @@
  * Enables offline functionality and caches essential resources
  */
 
-const CACHE_NAME = 'bg-remover-v1';
-const STATIC_CACHE = 'bg-remover-static-v1';
-const DYNAMIC_CACHE = 'bg-remover-dynamic-v1';
+const CACHE_NAME = 'bg-remover-v2';
+const STATIC_CACHE = 'bg-remover-static-v2';
+const DYNAMIC_CACHE = 'bg-remover-dynamic-v2';
+const MODEL_CACHE = 'bg-remover-models-v1';
 
 // Static assets to cache immediately
 const STATIC_ASSETS = [
@@ -13,14 +14,19 @@ const STATIC_ASSETS = [
     './index.html',
     './styles.css',
     './app.js',
-    './manifest.json'
+    './manifest.json',
+    './models/resources.json'
 ];
 
 // External resources that should be cached when fetched
 const EXTERNAL_CACHE_PATTERNS = [
     /cdn\.jsdelivr\.net/,
-    /unpkg\.com/
+    /unpkg\.com/,
+    /esm\.sh/
 ];
+
+// Model files pattern - cache aggressively (they don't change)
+const MODEL_FILE_PATTERN = /\/models\/[a-f0-9]{64}$/;
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
@@ -41,7 +47,7 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// Activate event - clean up old caches
+// Activate event - clean up old caches (keep model cache)
 self.addEventListener('activate', (event) => {
     console.log('[SW] Activating...');
     event.waitUntil(
@@ -50,9 +56,11 @@ self.addEventListener('activate', (event) => {
                 return Promise.all(
                     cacheNames
                         .filter((name) => {
+                            // Keep current caches and model cache
                             return name.startsWith('bg-remover-') &&
                                    name !== STATIC_CACHE &&
-                                   name !== DYNAMIC_CACHE;
+                                   name !== DYNAMIC_CACHE &&
+                                   name !== MODEL_CACHE;
                         })
                         .map((name) => {
                             console.log('[SW] Deleting old cache:', name);
@@ -89,15 +97,18 @@ self.addEventListener('fetch', (event) => {
 async function handleFetch(request) {
     const url = new URL(request.url);
 
+    // Check if this is a model file (cache aggressively, they don't change)
+    const isModelFile = MODEL_FILE_PATTERN.test(url.pathname);
+
     // Check if this is an external resource that should be cached
     const isExternalCacheable = EXTERNAL_CACHE_PATTERNS.some(pattern => pattern.test(url.hostname));
 
-    // Try cache first for static assets
+    // Try cache first for all assets
     const cachedResponse = await caches.match(request);
     if (cachedResponse) {
-        // Return cached version and update cache in background
-        if (isExternalCacheable) {
-            updateCache(request);
+        // Return cached version and update cache in background for external resources
+        if (isExternalCacheable && !isModelFile) {
+            updateCache(request, DYNAMIC_CACHE);
         }
         return cachedResponse;
     }
@@ -106,13 +117,21 @@ async function handleFetch(request) {
     try {
         const networkResponse = await fetch(request);
 
-        // Cache successful responses for external resources
-        if (networkResponse.ok && isExternalCacheable) {
+        // Cache successful responses
+        if (networkResponse.ok) {
             const responseClone = networkResponse.clone();
-            caches.open(DYNAMIC_CACHE)
-                .then((cache) => {
+
+            if (isModelFile) {
+                // Cache model files in dedicated cache (never expires)
+                caches.open(MODEL_CACHE).then((cache) => {
+                    console.log('[SW] Caching model file:', url.pathname);
                     cache.put(request, responseClone);
                 });
+            } else if (isExternalCacheable) {
+                caches.open(DYNAMIC_CACHE).then((cache) => {
+                    cache.put(request, responseClone);
+                });
+            }
         }
 
         return networkResponse;
@@ -135,11 +154,11 @@ async function handleFetch(request) {
     }
 }
 
-async function updateCache(request) {
+async function updateCache(request, cacheName = DYNAMIC_CACHE) {
     try {
         const networkResponse = await fetch(request);
         if (networkResponse.ok) {
-            const cache = await caches.open(DYNAMIC_CACHE);
+            const cache = await caches.open(cacheName);
             cache.put(request, networkResponse);
         }
     } catch (error) {
