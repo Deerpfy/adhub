@@ -431,22 +431,32 @@ export class CanvasManager {
             this.container.style.cursor = 'grab';
         }
 
-        // Tool shortcuts
+        // Get current shortcuts from UI controller
+        const shortcuts = this.app.ui?.currentShortcuts || {
+            brush: 'B', pencil: 'P', eraser: 'E', line: 'L',
+            rectangle: 'U', ellipse: 'O', fill: 'G', eyedropper: 'I',
+            move: 'V', swapColors: 'X'
+        };
+
+        // Tool shortcuts (single keys without Ctrl/Meta)
         if (!e.ctrlKey && !e.metaKey) {
-            switch (e.key.toLowerCase()) {
-                case 'b': this.app.setTool('brush'); break;
-                case 'p': this.app.setTool('pencil'); break;
-                case 'e': this.app.setTool('eraser'); break;
-                case 'g': this.app.setTool('fill'); break;
-                case 'i': this.app.setTool('eyedropper'); break;
-                case 'v': this.app.setTool('move'); break;
-                case 'l': this.app.setTool('line'); break;
-                case 'r': this.app.setTool('rectangle'); break;
-                case 'o': this.app.setTool('ellipse'); break;
-                case 'x': this.app.color?.swapColors(); break;
-                case '[': this.decreaseBrushSize(); break;
-                case ']': this.increaseBrushSize(); break;
-            }
+            const key = e.key.toUpperCase();
+
+            // Check each tool shortcut
+            if (key === shortcuts.brush?.toUpperCase()) { this.app.setTool('brush'); }
+            else if (key === shortcuts.pencil?.toUpperCase()) { this.app.setTool('pencil'); }
+            else if (key === shortcuts.eraser?.toUpperCase()) { this.app.setTool('eraser'); }
+            else if (key === shortcuts.fill?.toUpperCase()) { this.app.setTool('fill'); }
+            else if (key === shortcuts.eyedropper?.toUpperCase()) { this.app.setTool('eyedropper'); }
+            else if (key === shortcuts.move?.toUpperCase()) { this.app.setTool('move'); }
+            else if (key === shortcuts.line?.toUpperCase()) { this.app.setTool('line'); }
+            else if (key === shortcuts.rectangle?.toUpperCase()) { this.app.setTool('rectangle'); }
+            else if (key === shortcuts.ellipse?.toUpperCase()) { this.app.setTool('ellipse'); }
+            else if (key === shortcuts.swapColors?.toUpperCase()) { this.app.color?.swapColors(); }
+
+            // Brush size shortcuts (always [ and ])
+            if (e.key === '[') { this.decreaseBrushSize(); }
+            if (e.key === ']') { this.increaseBrushSize(); }
         }
 
         // Ctrl shortcuts
