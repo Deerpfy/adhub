@@ -72,7 +72,10 @@ const translations = {
         shift_edge: 'Posun hrany',
         smooth: 'Vyhlazení',
         reset_refine: 'Resetovat',
-        apply_refine: 'Použít'
+        apply_refine: 'Použít',
+        // Brush mouse controls
+        brush_left_click: 'Levé',
+        brush_right_click: 'Pravé'
     },
     en: {
         offline: '100% Offline',
@@ -131,7 +134,10 @@ const translations = {
         shift_edge: 'Shift Edge',
         smooth: 'Smooth',
         reset_refine: 'Reset',
-        apply_refine: 'Apply'
+        apply_refine: 'Apply',
+        // Brush mouse controls
+        brush_left_click: 'Left',
+        brush_right_click: 'Right'
     }
 };
 
@@ -823,29 +829,23 @@ function initCompareSlider() {
 // BRUSH CONTROLS
 // =============================================
 function initBrushControls() {
-    // Brush mode buttons
-    document.querySelectorAll('.brush-mode-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            state.brushMode = btn.dataset.mode;
-            document.querySelectorAll('.brush-mode-btn').forEach(b => {
-                b.classList.toggle('active', b.dataset.mode === state.brushMode);
-            });
-        });
-    });
-
     // Brush size slider
     if (elements.brushSize) {
         elements.brushSize.addEventListener('input', (e) => {
             state.brushSize = parseInt(e.target.value);
             elements.brushSizeValue.textContent = `${state.brushSize}px`;
+            updateBrushCursor();
         });
     }
 
     // Brush canvas drawing
     const canvas = elements.brushCanvas;
+    const brushCursor = document.getElementById('brushCursor');
+    const brushContainer = document.getElementById('brushCanvasContainer');
     if (!canvas) return;
 
     let isDrawing = false;
+    let currentMode = 'erase'; // 'erase' or 'restore'
     let lastX = 0;
     let lastY = 0;
 
@@ -863,6 +863,25 @@ function initBrushControls() {
         };
     }
 
+    function updateBrushCursor(e) {
+        if (!brushCursor) return;
+
+        // Calculate display size based on canvas scale
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = rect.width / canvas.width;
+        const displaySize = state.brushSize * scaleX;
+
+        brushCursor.style.width = `${displaySize}px`;
+        brushCursor.style.height = `${displaySize}px`;
+
+        if (e) {
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            brushCursor.style.left = `${clientX}px`;
+            brushCursor.style.top = `${clientY}px`;
+        }
+    }
+
     function draw(e) {
         if (!isDrawing || !state.maskCanvas) return;
 
@@ -872,7 +891,7 @@ function initBrushControls() {
         maskCtx.beginPath();
         maskCtx.moveTo(lastX, lastY);
         maskCtx.lineTo(coords.x, coords.y);
-        maskCtx.strokeStyle = state.brushMode === 'restore' ? 'white' : 'black';
+        maskCtx.strokeStyle = currentMode === 'restore' ? 'white' : 'black';
         maskCtx.lineWidth = state.brushSize;
         maskCtx.lineCap = 'round';
         maskCtx.stroke();
@@ -883,24 +902,43 @@ function initBrushControls() {
         renderBrush();
     }
 
+    // Prevent context menu on right-click in brush area
+    if (brushContainer) {
+        brushContainer.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+    }
+
+    // Mouse events
     canvas.addEventListener('mousedown', (e) => {
+        e.preventDefault();
         isDrawing = true;
+        // Left button = erase (0), Right button = restore (2)
+        currentMode = e.button === 2 ? 'restore' : 'erase';
+
+        // Update cursor color
+        if (brushCursor) {
+            brushCursor.classList.remove('erase', 'restore');
+            brushCursor.classList.add(currentMode);
+        }
+
         const coords = getCanvasCoords(e);
         lastX = coords.x;
         lastY = coords.y;
+
+        // Draw a dot at the start position
+        if (state.maskCanvas) {
+            const maskCtx = state.maskCanvas.getContext('2d', { willReadFrequently: true });
+            maskCtx.beginPath();
+            maskCtx.arc(coords.x, coords.y, state.brushSize / 2, 0, Math.PI * 2);
+            maskCtx.fillStyle = currentMode === 'restore' ? 'white' : 'black';
+            maskCtx.fill();
+            renderBrush();
+        }
     });
 
-    canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        isDrawing = true;
-        const coords = getCanvasCoords(e);
-        lastX = coords.x;
-        lastY = coords.y;
-    });
-
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('touchmove', (e) => {
-        e.preventDefault();
+    canvas.addEventListener('mousemove', (e) => {
+        updateBrushCursor(e);
         draw(e);
     });
 
@@ -911,14 +949,41 @@ function initBrushControls() {
         renderBackground();
     });
 
+    canvas.addEventListener('mouseenter', () => {
+        if (brushCursor) {
+            brushCursor.classList.add('active');
+            updateBrushCursor();
+        }
+    });
+
+    canvas.addEventListener('mouseleave', () => {
+        isDrawing = false;
+        if (brushCursor) {
+            brushCursor.classList.remove('active');
+        }
+    });
+
+    // Touch events (use single touch as erase)
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        isDrawing = true;
+        currentMode = 'erase';
+        const coords = getCanvasCoords(e);
+        lastX = coords.x;
+        lastY = coords.y;
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        draw(e);
+    });
+
     canvas.addEventListener('touchend', () => {
         isDrawing = false;
         renderResult();
         renderCompare();
         renderBackground();
     });
-
-    canvas.addEventListener('mouseleave', () => isDrawing = false);
 }
 
 // =============================================
