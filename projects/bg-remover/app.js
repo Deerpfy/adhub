@@ -476,8 +476,10 @@ async function removeBackgroundFromImage(img) {
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
 
         // Process with background removal - using local model files
+        // Must use absolute URL for publicPath (relative paths fail in URL constructor)
+        const baseUrl = new URL('./models/', window.location.href).href;
         const resultBlob = await state.removeBackground(blob, {
-            publicPath: './models/', // Use locally hosted model files
+            publicPath: baseUrl, // Absolute URL to locally hosted model files
             progress: (key, current, total) => {
                 // Better progress reporting
                 const now = Date.now();
