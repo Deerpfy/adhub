@@ -512,6 +512,35 @@
                     imported: 'Prompts imported successfully!',
                     exportedCount: 'prompts exported',
                     savedCount: 'prompts saved',
+                    // Folders & Tags
+                    folders: {
+                        title: 'Folders',
+                        root: 'Root (No folder)',
+                        newFolder: 'New folder',
+                        editFolder: 'Edit folder',
+                        deleteFolder: 'Delete folder',
+                        folderName: 'Folder name',
+                        selectFolder: 'Select folder',
+                        noFolders: 'No folders yet',
+                        confirmDelete: 'Delete this folder? Prompts will be moved to root.',
+                        manage: 'Manage Folders',
+                    },
+                    tags: {
+                        title: 'Tags',
+                        newTag: 'New tag',
+                        editTag: 'Edit tag',
+                        deleteTag: 'Delete tag',
+                        tagName: 'Tag name',
+                        selectTags: 'Select tags',
+                        noTags: 'No tags yet',
+                        confirmDelete: 'Delete this tag? It will be removed from all prompts.',
+                        manage: 'Manage Tags',
+                        selectColor: 'Select color',
+                        filterByTag: 'Filter by tag',
+                        clearFilter: 'Clear filter',
+                        allTags: 'All tags',
+                    },
+                    organization: 'Organization',
                 },
                 share: {
                     title: 'Share Prompt',
@@ -785,6 +814,35 @@ Prompt to analyze:
                     imported: 'Prompty úspěšně importovány!',
                     exportedCount: 'promptů exportováno',
                     savedCount: 'promptů uloženo',
+                    // Složky & Tagy
+                    folders: {
+                        title: 'Složky',
+                        root: 'Kořen (bez složky)',
+                        newFolder: 'Nová složka',
+                        editFolder: 'Upravit složku',
+                        deleteFolder: 'Smazat složku',
+                        folderName: 'Název složky',
+                        selectFolder: 'Vybrat složku',
+                        noFolders: 'Zatím žádné složky',
+                        confirmDelete: 'Smazat tuto složku? Prompty budou přesunuty do kořene.',
+                        manage: 'Spravovat složky',
+                    },
+                    tags: {
+                        title: 'Tagy',
+                        newTag: 'Nový tag',
+                        editTag: 'Upravit tag',
+                        deleteTag: 'Smazat tag',
+                        tagName: 'Název tagu',
+                        selectTags: 'Vybrat tagy',
+                        noTags: 'Zatím žádné tagy',
+                        confirmDelete: 'Smazat tento tag? Bude odstraněn ze všech promptů.',
+                        manage: 'Spravovat tagy',
+                        selectColor: 'Vybrat barvu',
+                        filterByTag: 'Filtrovat podle tagu',
+                        clearFilter: 'Zrušit filtr',
+                        allTags: 'Všechny tagy',
+                    },
+                    organization: 'Organizace',
                 },
                 share: {
                     title: 'Sdílet prompt',
@@ -1314,6 +1372,32 @@ Prompt k analýze:
 
         // ==================== LOCALSTORAGE DATABASE ====================
         const DB_KEY = 'ai_prompt_formatter_db';
+        const FOLDERS_KEY = 'ai_prompt_formatter_folders';
+        const TAGS_KEY = 'ai_prompt_formatter_tags';
+
+        // Predefined tag colors palette
+        const TAG_COLORS = [
+            { id: 'red', hex: '#ef4444', name: 'Red' },
+            { id: 'orange', hex: '#f97316', name: 'Orange' },
+            { id: 'amber', hex: '#f59e0b', name: 'Amber' },
+            { id: 'yellow', hex: '#eab308', name: 'Yellow' },
+            { id: 'lime', hex: '#84cc16', name: 'Lime' },
+            { id: 'green', hex: '#22c55e', name: 'Green' },
+            { id: 'emerald', hex: '#10b981', name: 'Emerald' },
+            { id: 'teal', hex: '#14b8a6', name: 'Teal' },
+            { id: 'cyan', hex: '#06b6d4', name: 'Cyan' },
+            { id: 'sky', hex: '#0ea5e9', name: 'Sky' },
+            { id: 'blue', hex: '#3b82f6', name: 'Blue' },
+            { id: 'indigo', hex: '#6366f1', name: 'Indigo' },
+            { id: 'violet', hex: '#8b5cf6', name: 'Violet' },
+            { id: 'purple', hex: '#a855f7', name: 'Purple' },
+            { id: 'fuchsia', hex: '#d946ef', name: 'Fuchsia' },
+            { id: 'pink', hex: '#ec4899', name: 'Pink' },
+            { id: 'rose', hex: '#f43f5e', name: 'Rose' },
+            { id: 'slate', hex: '#64748b', name: 'Slate' },
+        ];
+
+        // Prompts database
         const loadDatabase = () => {
             try {
                 const data = localStorage.getItem(DB_KEY);
@@ -1322,6 +1406,28 @@ Prompt k analýze:
         };
         const saveDatabase = (prompts) => {
             localStorage.setItem(DB_KEY, JSON.stringify(prompts));
+        };
+
+        // Folders database
+        const loadFolders = () => {
+            try {
+                const data = localStorage.getItem(FOLDERS_KEY);
+                return data ? JSON.parse(data) : [];
+            } catch { return []; }
+        };
+        const saveFolders = (folders) => {
+            localStorage.setItem(FOLDERS_KEY, JSON.stringify(folders));
+        };
+
+        // Tags database
+        const loadTags = () => {
+            try {
+                const data = localStorage.getItem(TAGS_KEY);
+                return data ? JSON.parse(data) : [];
+            } catch { return []; }
+        };
+        const saveTags = (tags) => {
+            localStorage.setItem(TAGS_KEY, JSON.stringify(tags));
         };
 
         // ==================== SHARE CODE SYSTEM ====================
@@ -1739,6 +1845,29 @@ Prompt k analýze:
             const [exampleHeaders, setExampleHeaders] = useState(''); // Column headers for structured formats
             const [exampleRows, setExampleRows] = useState([{ id: 1, content: '' }]); // Dynamic rows with (+) separator
 
+            // ==================== FOLDERS & TAGS STATE ====================
+            // Folders and tags data
+            const [folders, setFolders] = useState([]);
+            const [tags, setTags] = useState([]);
+
+            // Save modal - folder and tag selection
+            const [selectedFolderId, setSelectedFolderId] = useState(null); // null = root
+            const [selectedTagIds, setSelectedTagIds] = useState([]);
+
+            // Database panel - navigation and filtering
+            const [currentFolderId, setCurrentFolderId] = useState(null); // null = show all/root
+            const [filterTagId, setFilterTagId] = useState(null); // null = no filter
+
+            // Folder/Tag management modals
+            const [showFolderManager, setShowFolderManager] = useState(false);
+            const [showTagManager, setShowTagManager] = useState(false);
+            const [editingFolder, setEditingFolder] = useState(null); // {id, name, color} or null for new
+            const [editingTag, setEditingTag] = useState(null); // {id, name, color} or null for new
+            const [newFolderName, setNewFolderName] = useState('');
+            const [newFolderColor, setNewFolderColor] = useState('blue');
+            const [newTagName, setNewTagName] = useState('');
+            const [newTagColor, setNewTagColor] = useState('blue');
+
             // Get translations for current language (direct lookup, no API)
             const t = getTranslations(lang);
             const selectedLang = AVAILABLE_LANGUAGES.find(l => l.code === lang);
@@ -1760,7 +1889,110 @@ Prompt k analýze:
             // Load database on mount
             useEffect(() => {
                 setSavedPrompts(loadDatabase());
+                setFolders(loadFolders());
+                setTags(loadTags());
             }, []);
+
+            // ==================== FOLDERS & TAGS CRUD FUNCTIONS ====================
+            // Folder CRUD
+            const addFolder = () => {
+                if (!newFolderName.trim()) return;
+                const folder = {
+                    id: Date.now().toString(),
+                    name: newFolderName.trim(),
+                    color: newFolderColor,
+                    createdAt: new Date().toISOString(),
+                };
+                const updated = [...folders, folder];
+                setFolders(updated);
+                saveFolders(updated);
+                setNewFolderName('');
+                setNewFolderColor('blue');
+                showNotification(t.database.folders.newFolder + ': ' + folder.name);
+            };
+
+            const updateFolder = (id, name, color) => {
+                const updated = folders.map(f => f.id === id ? { ...f, name, color } : f);
+                setFolders(updated);
+                saveFolders(updated);
+                setEditingFolder(null);
+            };
+
+            const deleteFolder = (id) => {
+                // Move prompts from this folder to root
+                const updatedPrompts = savedPrompts.map(p => p.folderId === id ? { ...p, folderId: null } : p);
+                setSavedPrompts(updatedPrompts);
+                saveDatabase(updatedPrompts);
+                // Delete folder
+                const updated = folders.filter(f => f.id !== id);
+                setFolders(updated);
+                saveFolders(updated);
+                if (currentFolderId === id) setCurrentFolderId(null);
+            };
+
+            // Tag CRUD
+            const addTag = () => {
+                if (!newTagName.trim()) return;
+                const tag = {
+                    id: Date.now().toString(),
+                    name: newTagName.trim(),
+                    color: newTagColor,
+                    createdAt: new Date().toISOString(),
+                };
+                const updated = [...tags, tag];
+                setTags(updated);
+                saveTags(updated);
+                setNewTagName('');
+                setNewTagColor('blue');
+                showNotification(t.database.tags.newTag + ': ' + tag.name);
+            };
+
+            const updateTag = (id, name, color) => {
+                const updated = tags.map(t => t.id === id ? { ...t, name, color } : t);
+                setTags(updated);
+                saveTags(updated);
+                setEditingTag(null);
+            };
+
+            const deleteTag = (id) => {
+                // Remove tag from all prompts
+                const updatedPrompts = savedPrompts.map(p => ({
+                    ...p,
+                    tags: (p.tags || []).filter(t => t !== id)
+                }));
+                setSavedPrompts(updatedPrompts);
+                saveDatabase(updatedPrompts);
+                // Delete tag
+                const updated = tags.filter(t => t.id !== id);
+                setTags(updated);
+                saveTags(updated);
+                if (filterTagId === id) setFilterTagId(null);
+            };
+
+            // Get filtered prompts based on current folder and tag filter
+            const getFilteredPrompts = useMemo(() => {
+                let filtered = savedPrompts;
+                // Filter by folder
+                if (currentFolderId !== null) {
+                    filtered = filtered.filter(p => p.folderId === currentFolderId);
+                }
+                // Filter by tag
+                if (filterTagId !== null) {
+                    filtered = filtered.filter(p => (p.tags || []).includes(filterTagId));
+                }
+                return filtered;
+            }, [savedPrompts, currentFolderId, filterTagId]);
+
+            // Get prompts in root (no folder)
+            const rootPrompts = useMemo(() => {
+                return savedPrompts.filter(p => !p.folderId);
+            }, [savedPrompts]);
+
+            // Get tag color helper
+            const getTagColor = (colorId) => {
+                const color = TAG_COLORS.find(c => c.id === colorId);
+                return color ? color.hex : '#64748b';
+            };
 
             // Save language
             useEffect(() => {
@@ -2416,6 +2648,7 @@ Prompt k analýze:
             // Database functions
             const savePrompt = () => {
                 if (!promptName.trim()) return;
+                const existingPrompt = editingId ? savedPrompts.find(p => p.id === editingId) : null;
                 const newPrompt = {
                     id: editingId || Date.now().toString(),
                     name: promptName,
@@ -2426,7 +2659,10 @@ Prompt k analýze:
                     selectedFeatures,
                     // Include extended sections
                     extendedFields,
-                    createdAt: editingId ? savedPrompts.find(p => p.id === editingId)?.createdAt : new Date().toISOString(),
+                    // Include folder and tags
+                    folderId: selectedFolderId,
+                    tags: selectedTagIds,
+                    createdAt: existingPrompt?.createdAt || new Date().toISOString(),
                     updatedAt: new Date().toISOString(),
                 };
                 let updated;
@@ -2440,6 +2676,9 @@ Prompt k analýze:
                 setSaveModalOpen(false);
                 setPromptName('');
                 setEditingId(null);
+                // Reset folder/tag selection
+                setSelectedFolderId(null);
+                setSelectedTagIds([]);
                 showNotification(`${updated.length} ${t.database.savedCount}`);
             };
 
@@ -2494,6 +2733,9 @@ Prompt k analýze:
                 loadPrompt(prompt);
                 setEditingId(prompt.id);
                 setPromptName(prompt.name);
+                // Load folder and tags
+                setSelectedFolderId(prompt.folderId || null);
+                setSelectedTagIds(prompt.tags || []);
                 setSaveModalOpen(true);
                 setShowDatabase(false);
             };
@@ -2659,8 +2901,10 @@ Prompt k analýze:
                     {/* Save Modal */}
                     {saveModalOpen && (
                         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setSaveModalOpen(false)}>
-                            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-96" onClick={e => e.stopPropagation()}>
+                            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-[420px] max-w-[95vw]" onClick={e => e.stopPropagation()}>
                                 <h3 className="text-lg font-bold text-white mb-4">{t.database.saveAs}</h3>
+
+                                {/* Prompt name */}
                                 <input
                                     type="text"
                                     value={promptName}
@@ -2669,8 +2913,93 @@ Prompt k analýze:
                                     className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white mb-4 focus:outline-none focus:ring-2 focus:ring-amber-500"
                                     autoFocus
                                 />
+
+                                {/* Organization section */}
+                                <div className="mb-4 p-3 bg-slate-700/50 rounded-lg border border-slate-600">
+                                    <div className="text-xs text-slate-400 mb-3 flex items-center gap-1">
+                                        <Icon name="FolderTree" size={14} />
+                                        {t.database.organization}
+                                    </div>
+
+                                    {/* Folder selection */}
+                                    <div className="mb-3">
+                                        <label className="text-xs text-slate-400 mb-1 block">{t.database.folders.selectFolder}</label>
+                                        <select
+                                            value={selectedFolderId || ''}
+                                            onChange={e => setSelectedFolderId(e.target.value || null)}
+                                            className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                        >
+                                            <option value="">{t.database.folders.root}</option>
+                                            {folders.map(folder => (
+                                                <option key={folder.id} value={folder.id}>
+                                                    {folder.name}
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    {/* Tags selection */}
+                                    <div>
+                                        <label className="text-xs text-slate-400 mb-1 block">{t.database.tags.selectTags}</label>
+                                        {tags.length === 0 ? (
+                                            <div className="text-xs text-slate-500 italic">{t.database.tags.noTags}</div>
+                                        ) : (
+                                            <div className="flex flex-wrap gap-2">
+                                                {tags.map(tag => {
+                                                    const isSelected = selectedTagIds.includes(tag.id);
+                                                    const color = getTagColor(tag.color);
+                                                    return (
+                                                        <button
+                                                            key={tag.id}
+                                                            type="button"
+                                                            onClick={() => setSelectedTagIds(prev =>
+                                                                isSelected ? prev.filter(id => id !== tag.id) : [...prev, tag.id]
+                                                            )}
+                                                            className={`px-2 py-1 rounded-full text-xs font-medium transition-all ${
+                                                                isSelected
+                                                                    ? 'ring-2 ring-white ring-offset-1 ring-offset-slate-800'
+                                                                    : 'opacity-60 hover:opacity-100'
+                                                            }`}
+                                                            style={{
+                                                                backgroundColor: `${color}30`,
+                                                                color: color,
+                                                                borderColor: color,
+                                                                borderWidth: '1px',
+                                                                borderStyle: 'solid'
+                                                            }}
+                                                        >
+                                                            {tag.name}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Quick manage links */}
+                                    <div className="flex gap-2 mt-3 pt-3 border-t border-slate-600">
+                                        <button
+                                            type="button"
+                                            onClick={() => { setSaveModalOpen(false); setShowFolderManager(true); }}
+                                            className="text-xs text-slate-400 hover:text-amber-400 flex items-center gap-1"
+                                        >
+                                            <Icon name="FolderPlus" size={12} />
+                                            {t.database.folders.manage}
+                                        </button>
+                                        <span className="text-slate-600">|</span>
+                                        <button
+                                            type="button"
+                                            onClick={() => { setSaveModalOpen(false); setShowTagManager(true); }}
+                                            className="text-xs text-slate-400 hover:text-amber-400 flex items-center gap-1"
+                                        >
+                                            <Icon name="Tags" size={12} />
+                                            {t.database.tags.manage}
+                                        </button>
+                                    </div>
+                                </div>
+
                                 <div className="flex gap-2">
-                                    <button onClick={() => setSaveModalOpen(false)} className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600">
+                                    <button onClick={() => { setSaveModalOpen(false); setSelectedFolderId(null); setSelectedTagIds([]); }} className="flex-1 px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600">
                                         Cancel
                                     </button>
                                     <button onClick={savePrompt} className="flex-1 px-4 py-2 bg-amber-500 text-slate-900 rounded-lg hover:bg-amber-400 font-medium">
@@ -3193,7 +3522,7 @@ Prompt k analýze:
                     {/* Database Panel */}
                     {showDatabase && (
                         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowDatabase(false)}>
-                            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-[500px] max-h-[80vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+                            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-[700px] max-w-[95vw] max-h-[85vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
                                 <div className="flex justify-between items-center mb-4">
                                     <h3 className="text-lg font-bold text-white flex items-center gap-2">
                                         <Icon name="Database" size={20} className="text-amber-400" />
@@ -3204,45 +3533,420 @@ Prompt k analýze:
                                     </button>
                                 </div>
 
-                                {/* Import/Export */}
-                                <div className="flex gap-2 mb-4">
-                                    <button onClick={exportDatabase} disabled={savedPrompts.length === 0} className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 disabled:opacity-50 text-sm">
+                                {/* Top toolbar: Import/Export + Manage */}
+                                <div className="flex gap-2 mb-4 flex-wrap">
+                                    <button onClick={exportDatabase} disabled={savedPrompts.length === 0} className="flex items-center gap-2 px-3 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 disabled:opacity-50 text-sm">
                                         <Icon name="Download" size={16} /> {t.database.export}
                                     </button>
-                                    <label className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 cursor-pointer text-sm">
+                                    <label className="flex items-center gap-2 px-3 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 cursor-pointer text-sm">
                                         <Icon name="Upload" size={16} /> {t.database.import}
                                         <input type="file" accept=".json" onChange={importDatabase} className="hidden" />
                                     </label>
+                                    <div className="flex-1" />
+                                    <button onClick={() => setShowFolderManager(true)} className="flex items-center gap-2 px-3 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 text-sm">
+                                        <Icon name="FolderPlus" size={16} className="text-amber-400" /> {t.database.folders.manage}
+                                    </button>
+                                    <button onClick={() => setShowTagManager(true)} className="flex items-center gap-2 px-3 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600 text-sm">
+                                        <Icon name="Tags" size={16} className="text-purple-400" /> {t.database.tags.manage}
+                                    </button>
                                 </div>
 
-                                {/* Prompts List */}
-                                <div className="flex-1 overflow-y-auto space-y-2">
-                                    {savedPrompts.length === 0 ? (
-                                        <div className="text-center text-slate-500 py-8">{t.database.noPrompts}</div>
-                                    ) : (
-                                        savedPrompts.map(prompt => (
-                                            <div key={prompt.id} className="bg-slate-700/50 p-3 rounded-lg border border-slate-600">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div>
-                                                        <div className="text-white font-medium">{prompt.name}</div>
-                                                        <div className="text-xs text-slate-400">{new Date(prompt.updatedAt).toLocaleDateString()}</div>
-                                                    </div>
-                                                    <div className="flex gap-1">
-                                                        <button onClick={() => loadPrompt(prompt)} className="p-1.5 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30" title={t.database.load}>
-                                                            <Icon name="FolderOpen" size={14} />
+                                <div className="flex gap-4 flex-1 overflow-hidden">
+                                    {/* Left sidebar: Folders */}
+                                    <div className="w-48 flex-shrink-0 overflow-y-auto">
+                                        <div className="text-xs text-slate-400 mb-2 flex items-center gap-1">
+                                            <Icon name="Folder" size={12} />
+                                            {t.database.folders.title}
+                                        </div>
+                                        <div className="space-y-1">
+                                            {/* All prompts */}
+                                            <button
+                                                onClick={() => setCurrentFolderId(null)}
+                                                className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors ${
+                                                    currentFolderId === null
+                                                        ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30'
+                                                        : 'text-slate-300 hover:bg-slate-700'
+                                                }`}
+                                            >
+                                                <Icon name="FolderOpen" size={14} />
+                                                {t.database.folders.root}
+                                                <span className="ml-auto text-xs text-slate-500">({rootPrompts.length})</span>
+                                            </button>
+                                            {/* Custom folders */}
+                                            {folders.map(folder => {
+                                                const folderColor = getTagColor(folder.color);
+                                                const count = savedPrompts.filter(p => p.folderId === folder.id).length;
+                                                return (
+                                                    <button
+                                                        key={folder.id}
+                                                        onClick={() => setCurrentFolderId(folder.id)}
+                                                        className={`w-full text-left px-3 py-2 rounded-lg text-sm flex items-center gap-2 transition-colors ${
+                                                            currentFolderId === folder.id
+                                                                ? 'bg-slate-600 text-white border border-slate-500'
+                                                                : 'text-slate-300 hover:bg-slate-700'
+                                                        }`}
+                                                    >
+                                                        <Icon name="Folder" size={14} style={{ color: folderColor }} />
+                                                        <span className="truncate flex-1">{folder.name}</span>
+                                                        <span className="text-xs text-slate-500">({count})</span>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {/* Tag filter */}
+                                        {tags.length > 0 && (
+                                            <>
+                                                <div className="text-xs text-slate-400 mt-4 mb-2 flex items-center gap-1">
+                                                    <Icon name="Tags" size={12} />
+                                                    {t.database.tags.filterByTag}
+                                                </div>
+                                                <div className="space-y-1">
+                                                    {filterTagId && (
+                                                        <button
+                                                            onClick={() => setFilterTagId(null)}
+                                                            className="w-full text-left px-3 py-1.5 rounded-lg text-xs text-slate-400 hover:bg-slate-700 flex items-center gap-2"
+                                                        >
+                                                            <Icon name="X" size={12} />
+                                                            {t.database.tags.clearFilter}
                                                         </button>
-                                                        <button onClick={() => editPrompt(prompt)} className="p-1.5 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30" title={t.database.edit}>
+                                                    )}
+                                                    {tags.map(tag => {
+                                                        const color = getTagColor(tag.color);
+                                                        const isActive = filterTagId === tag.id;
+                                                        return (
+                                                            <button
+                                                                key={tag.id}
+                                                                onClick={() => setFilterTagId(isActive ? null : tag.id)}
+                                                                className={`w-full text-left px-2 py-1.5 rounded-lg text-xs flex items-center gap-2 transition-colors ${
+                                                                    isActive ? 'ring-1 ring-white' : 'hover:bg-slate-700'
+                                                                }`}
+                                                                style={{
+                                                                    backgroundColor: `${color}20`,
+                                                                    color: color
+                                                                }}
+                                                            >
+                                                                <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+                                                                {tag.name}
+                                                            </button>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* Right: Prompts List */}
+                                    <div className="flex-1 overflow-y-auto space-y-2">
+                                        {getFilteredPrompts.length === 0 ? (
+                                            <div className="text-center text-slate-500 py-8">{t.database.noPrompts}</div>
+                                        ) : (
+                                            getFilteredPrompts.map(prompt => {
+                                                const promptTags = (prompt.tags || []).map(tagId => tags.find(t => t.id === tagId)).filter(Boolean);
+                                                const folder = folders.find(f => f.id === prompt.folderId);
+                                                return (
+                                                    <div key={prompt.id} className="bg-slate-700/50 p-3 rounded-lg border border-slate-600">
+                                                        <div className="flex justify-between items-start mb-2">
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="text-white font-medium truncate">{prompt.name}</div>
+                                                                <div className="flex items-center gap-2 text-xs text-slate-400 mt-0.5">
+                                                                    <span>{new Date(prompt.updatedAt).toLocaleDateString()}</span>
+                                                                    {folder && (
+                                                                        <span className="flex items-center gap-1" style={{ color: getTagColor(folder.color) }}>
+                                                                            <Icon name="Folder" size={10} />
+                                                                            {folder.name}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                {/* Tags display */}
+                                                                {promptTags.length > 0 && (
+                                                                    <div className="flex flex-wrap gap-1 mt-2">
+                                                                        {promptTags.map(tag => (
+                                                                            <span
+                                                                                key={tag.id}
+                                                                                className="px-1.5 py-0.5 rounded text-xs"
+                                                                                style={{
+                                                                                    backgroundColor: `${getTagColor(tag.color)}25`,
+                                                                                    color: getTagColor(tag.color)
+                                                                                }}
+                                                                            >
+                                                                                {tag.name}
+                                                                            </span>
+                                                                        ))}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex gap-1 ml-2 flex-shrink-0">
+                                                                <button onClick={() => loadPrompt(prompt)} className="p-1.5 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30" title={t.database.load}>
+                                                                    <Icon name="FolderOpen" size={14} />
+                                                                </button>
+                                                                <button onClick={() => editPrompt(prompt)} className="p-1.5 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30" title={t.database.edit}>
+                                                                    <Icon name="Edit3" size={14} />
+                                                                </button>
+                                                                <button onClick={() => duplicatePrompt(prompt)} className="p-1.5 bg-amber-500/20 text-amber-400 rounded hover:bg-amber-500/30" title={t.database.duplicate}>
+                                                                    <Icon name="Copy" size={14} />
+                                                                </button>
+                                                                <button onClick={() => deletePrompt(prompt.id)} className="p-1.5 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30" title={t.database.delete}>
+                                                                    <Icon name="Trash2" size={14} />
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                        <div className="text-xs text-slate-400 truncate">{prompt.fields?.task?.substring(0, 80)}...</div>
+                                                    </div>
+                                                );
+                                            })
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Folder Manager Modal */}
+                    {showFolderManager && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowFolderManager(false)}>
+                            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-[450px] max-w-[95vw] max-h-[80vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Icon name="FolderPlus" size={20} className="text-amber-400" />
+                                        {t.database.folders.manage}
+                                    </h3>
+                                    <button onClick={() => setShowFolderManager(false)} className="text-slate-400 hover:text-white">
+                                        <Icon name="X" size={20} />
+                                    </button>
+                                </div>
+
+                                {/* Add new folder */}
+                                <div className="mb-4 p-3 bg-slate-700/50 rounded-lg border border-slate-600">
+                                    <div className="text-xs text-slate-400 mb-2">{t.database.folders.newFolder}</div>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={newFolderName}
+                                            onChange={e => setNewFolderName(e.target.value)}
+                                            onKeyDown={e => e.key === 'Enter' && addFolder()}
+                                            placeholder={t.database.folders.folderName}
+                                            className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
+                                        />
+                                        {/* Color picker */}
+                                        <div className="relative group">
+                                            <button
+                                                type="button"
+                                                className="w-10 h-10 rounded-lg border border-slate-600 flex items-center justify-center"
+                                                style={{ backgroundColor: getTagColor(newFolderColor) }}
+                                            >
+                                                <Icon name="Palette" size={16} className="text-white drop-shadow" />
+                                            </button>
+                                            <div className="absolute top-full mt-1 right-0 bg-slate-800 border border-slate-600 rounded-lg p-2 hidden group-hover:grid grid-cols-6 gap-1 z-10 w-40">
+                                                {TAG_COLORS.map(color => (
+                                                    <button
+                                                        key={color.id}
+                                                        type="button"
+                                                        onClick={() => setNewFolderColor(color.id)}
+                                                        className={`w-5 h-5 rounded ${newFolderColor === color.id ? 'ring-2 ring-white' : ''}`}
+                                                        style={{ backgroundColor: color.hex }}
+                                                        title={color.name}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={addFolder}
+                                            disabled={!newFolderName.trim()}
+                                            className="px-4 py-2 bg-amber-500 text-slate-900 rounded-lg hover:bg-amber-400 disabled:opacity-50 font-medium text-sm"
+                                        >
+                                            <Icon name="Plus" size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Folders list */}
+                                <div className="flex-1 overflow-y-auto space-y-2">
+                                    {folders.length === 0 ? (
+                                        <div className="text-center text-slate-500 py-8">{t.database.folders.noFolders}</div>
+                                    ) : (
+                                        folders.map(folder => (
+                                            <div key={folder.id} className="flex items-center gap-2 p-3 bg-slate-700/50 rounded-lg border border-slate-600">
+                                                {editingFolder?.id === folder.id ? (
+                                                    <>
+                                                        <input
+                                                            type="text"
+                                                            value={editingFolder.name}
+                                                            onChange={e => setEditingFolder({ ...editingFolder, name: e.target.value })}
+                                                            className="flex-1 px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-sm"
+                                                            autoFocus
+                                                        />
+                                                        <div className="relative group">
+                                                            <button
+                                                                type="button"
+                                                                className="w-8 h-8 rounded border border-slate-600"
+                                                                style={{ backgroundColor: getTagColor(editingFolder.color) }}
+                                                            />
+                                                            <div className="absolute top-full mt-1 right-0 bg-slate-800 border border-slate-600 rounded-lg p-2 hidden group-hover:grid grid-cols-6 gap-1 z-10 w-40">
+                                                                {TAG_COLORS.map(color => (
+                                                                    <button
+                                                                        key={color.id}
+                                                                        type="button"
+                                                                        onClick={() => setEditingFolder({ ...editingFolder, color: color.id })}
+                                                                        className={`w-5 h-5 rounded ${editingFolder.color === color.id ? 'ring-2 ring-white' : ''}`}
+                                                                        style={{ backgroundColor: color.hex }}
+                                                                    />
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                        <button onClick={() => updateFolder(folder.id, editingFolder.name, editingFolder.color)} className="p-1.5 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30">
+                                                            <Icon name="Check" size={14} />
+                                                        </button>
+                                                        <button onClick={() => setEditingFolder(null)} className="p-1.5 bg-slate-600 text-slate-400 rounded hover:bg-slate-500">
+                                                            <Icon name="X" size={14} />
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <Icon name="Folder" size={18} style={{ color: getTagColor(folder.color) }} />
+                                                        <span className="flex-1 text-white">{folder.name}</span>
+                                                        <span className="text-xs text-slate-500">
+                                                            {savedPrompts.filter(p => p.folderId === folder.id).length} prompts
+                                                        </span>
+                                                        <button onClick={() => setEditingFolder({ id: folder.id, name: folder.name, color: folder.color })} className="p-1.5 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30">
                                                             <Icon name="Edit3" size={14} />
                                                         </button>
-                                                        <button onClick={() => duplicatePrompt(prompt)} className="p-1.5 bg-amber-500/20 text-amber-400 rounded hover:bg-amber-500/30" title={t.database.duplicate}>
-                                                            <Icon name="Copy" size={14} />
-                                                        </button>
-                                                        <button onClick={() => deletePrompt(prompt.id)} className="p-1.5 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30" title={t.database.delete}>
+                                                        <button onClick={() => deleteFolder(folder.id)} className="p-1.5 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30">
                                                             <Icon name="Trash2" size={14} />
                                                         </button>
-                                                    </div>
-                                                </div>
-                                                <div className="text-xs text-slate-400 truncate">{prompt.fields?.task?.substring(0, 80)}...</div>
+                                                    </>
+                                                )}
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Tag Manager Modal */}
+                    {showTagManager && (
+                        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowTagManager(false)}>
+                            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700 w-[450px] max-w-[95vw] max-h-[80vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Icon name="Tags" size={20} className="text-purple-400" />
+                                        {t.database.tags.manage}
+                                    </h3>
+                                    <button onClick={() => setShowTagManager(false)} className="text-slate-400 hover:text-white">
+                                        <Icon name="X" size={20} />
+                                    </button>
+                                </div>
+
+                                {/* Add new tag */}
+                                <div className="mb-4 p-3 bg-slate-700/50 rounded-lg border border-slate-600">
+                                    <div className="text-xs text-slate-400 mb-2">{t.database.tags.newTag}</div>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={newTagName}
+                                            onChange={e => setNewTagName(e.target.value)}
+                                            onKeyDown={e => e.key === 'Enter' && addTag()}
+                                            placeholder={t.database.tags.tagName}
+                                            className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                        />
+                                        {/* Color picker */}
+                                        <div className="relative group">
+                                            <button
+                                                type="button"
+                                                className="w-10 h-10 rounded-lg border border-slate-600 flex items-center justify-center"
+                                                style={{ backgroundColor: getTagColor(newTagColor) }}
+                                            >
+                                                <Icon name="Palette" size={16} className="text-white drop-shadow" />
+                                            </button>
+                                            <div className="absolute top-full mt-1 right-0 bg-slate-800 border border-slate-600 rounded-lg p-2 hidden group-hover:grid grid-cols-6 gap-1 z-10 w-40">
+                                                {TAG_COLORS.map(color => (
+                                                    <button
+                                                        key={color.id}
+                                                        type="button"
+                                                        onClick={() => setNewTagColor(color.id)}
+                                                        className={`w-5 h-5 rounded ${newTagColor === color.id ? 'ring-2 ring-white' : ''}`}
+                                                        style={{ backgroundColor: color.hex }}
+                                                        title={color.name}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={addTag}
+                                            disabled={!newTagName.trim()}
+                                            className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-400 disabled:opacity-50 font-medium text-sm"
+                                        >
+                                            <Icon name="Plus" size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Tags list */}
+                                <div className="flex-1 overflow-y-auto space-y-2">
+                                    {tags.length === 0 ? (
+                                        <div className="text-center text-slate-500 py-8">{t.database.tags.noTags}</div>
+                                    ) : (
+                                        tags.map(tag => (
+                                            <div key={tag.id} className="flex items-center gap-2 p-3 bg-slate-700/50 rounded-lg border border-slate-600">
+                                                {editingTag?.id === tag.id ? (
+                                                    <>
+                                                        <input
+                                                            type="text"
+                                                            value={editingTag.name}
+                                                            onChange={e => setEditingTag({ ...editingTag, name: e.target.value })}
+                                                            className="flex-1 px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-sm"
+                                                            autoFocus
+                                                        />
+                                                        <div className="relative group">
+                                                            <button
+                                                                type="button"
+                                                                className="w-8 h-8 rounded border border-slate-600"
+                                                                style={{ backgroundColor: getTagColor(editingTag.color) }}
+                                                            />
+                                                            <div className="absolute top-full mt-1 right-0 bg-slate-800 border border-slate-600 rounded-lg p-2 hidden group-hover:grid grid-cols-6 gap-1 z-10 w-40">
+                                                                {TAG_COLORS.map(color => (
+                                                                    <button
+                                                                        key={color.id}
+                                                                        type="button"
+                                                                        onClick={() => setEditingTag({ ...editingTag, color: color.id })}
+                                                                        className={`w-5 h-5 rounded ${editingTag.color === color.id ? 'ring-2 ring-white' : ''}`}
+                                                                        style={{ backgroundColor: color.hex }}
+                                                                    />
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                        <button onClick={() => updateTag(tag.id, editingTag.name, editingTag.color)} className="p-1.5 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30">
+                                                            <Icon name="Check" size={14} />
+                                                        </button>
+                                                        <button onClick={() => setEditingTag(null)} className="p-1.5 bg-slate-600 text-slate-400 rounded hover:bg-slate-500">
+                                                            <Icon name="X" size={14} />
+                                                        </button>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <span
+                                                            className="px-2 py-1 rounded-full text-xs font-medium"
+                                                            style={{
+                                                                backgroundColor: `${getTagColor(tag.color)}25`,
+                                                                color: getTagColor(tag.color),
+                                                                border: `1px solid ${getTagColor(tag.color)}`
+                                                            }}
+                                                        >
+                                                            {tag.name}
+                                                        </span>
+                                                        <span className="flex-1" />
+                                                        <span className="text-xs text-slate-500">
+                                                            {savedPrompts.filter(p => (p.tags || []).includes(tag.id)).length} prompts
+                                                        </span>
+                                                        <button onClick={() => setEditingTag({ id: tag.id, name: tag.name, color: tag.color })} className="p-1.5 bg-blue-500/20 text-blue-400 rounded hover:bg-blue-500/30">
+                                                            <Icon name="Edit3" size={14} />
+                                                        </button>
+                                                        <button onClick={() => deleteTag(tag.id)} className="p-1.5 bg-red-500/20 text-red-400 rounded hover:bg-red-500/30">
+                                                            <Icon name="Trash2" size={14} />
+                                                        </button>
+                                                    </>
+                                                )}
                                             </div>
                                         ))
                                     )}
