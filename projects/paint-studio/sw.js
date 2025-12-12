@@ -2,12 +2,26 @@
  * Paint Studio - Service Worker for offline functionality
  */
 
-const CACHE_NAME = 'paint-studio-v1.0.0';
+const CACHE_NAME = 'paint-studio-v1.1.0';
 const STATIC_ASSETS = [
+    // Core files
     './',
     './index.html',
     './styles.css',
     './manifest.json',
+    './favicon.ico',
+
+    // PWA Icons (all sizes for offline install)
+    './icons/icon-72.png',
+    './icons/icon-96.png',
+    './icons/icon-128.png',
+    './icons/icon-144.png',
+    './icons/icon-152.png',
+    './icons/icon-192.png',
+    './icons/icon-384.png',
+    './icons/icon-512.png',
+
+    // Application modules
     './app/main.js',
     './app/core/PaintApp.js',
     './app/core/CanvasManager.js',
