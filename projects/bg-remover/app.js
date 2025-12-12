@@ -5,6 +5,7 @@
  * Features:
  * - AI-powered background removal
  * - Magic Brush for manual refinement (erase/restore)
+ * - Refine Edge tools (feather, contrast, shift edge, smooth)
  * - Custom backgrounds (color, gradient, image, blur)
  * - AI shadows
  * - Export to PNG/JPG/WebP
@@ -26,19 +27,24 @@ const translations = {
         demo_product: 'Produkt',
         demo_animal: 'Zvíře',
         processing: 'Zpracovávám...',
-        loading_model: 'Načítám AI model...',
+        loading_model: 'Stahuji AI model (~40 MB)...',
+        downloading_model: 'Stahování modelu',
+        preparing: 'Připravuji zpracování...',
         removing_bg: 'Odstraňuji pozadí...',
+        finalizing: 'Dokončuji...',
         new_image: 'Nový',
         tab_result: 'Výsledek',
         tab_compare: 'Porovnat',
         tab_brush: 'Magic Brush',
+        tab_refine: 'Zjemnit hrany',
         tab_background: 'Pozadí',
         download: 'Stáhnout',
         original: 'Originál',
         result: 'Výsledek',
         erase: 'Smazat',
         restore: 'Obnovit',
-        brush_size: 'Velikost štětce:',
+        brush_size: 'Velikost:',
+        brush_hardness: 'Tvrdost:',
         transparent: 'Průhledné',
         solid_color: 'Barva',
         image_bg: 'Obrázek',
@@ -59,7 +65,14 @@ const translations = {
         error_file_size: 'Soubor je příliš velký. Maximální velikost je 22 MB.',
         error_processing: 'Chyba při zpracování obrázku.',
         success_download: 'Obrázek byl stažen.',
-        first_load_info: 'První zpracování může trvat déle kvůli stahování AI modelu (~40 MB).'
+        first_load_info: 'První zpracování stahuje AI model (~40 MB)',
+        // Refine Edge translations
+        feather: 'Prolnutí',
+        contrast: 'Kontrast',
+        shift_edge: 'Posun hrany',
+        smooth: 'Vyhlazení',
+        reset_refine: 'Resetovat',
+        apply_refine: 'Použít'
     },
     en: {
         offline: '100% Offline',
@@ -73,19 +86,24 @@ const translations = {
         demo_product: 'Product',
         demo_animal: 'Animal',
         processing: 'Processing...',
-        loading_model: 'Loading AI model...',
+        loading_model: 'Downloading AI model (~40 MB)...',
+        downloading_model: 'Downloading model',
+        preparing: 'Preparing...',
         removing_bg: 'Removing background...',
+        finalizing: 'Finalizing...',
         new_image: 'New',
         tab_result: 'Result',
         tab_compare: 'Compare',
         tab_brush: 'Magic Brush',
+        tab_refine: 'Refine Edge',
         tab_background: 'Background',
         download: 'Download',
         original: 'Original',
         result: 'Result',
         erase: 'Erase',
         restore: 'Restore',
-        brush_size: 'Brush size:',
+        brush_size: 'Size:',
+        brush_hardness: 'Hardness:',
         transparent: 'Transparent',
         solid_color: 'Color',
         image_bg: 'Image',
@@ -106,7 +124,14 @@ const translations = {
         error_file_size: 'File is too large. Maximum size is 22 MB.',
         error_processing: 'Error processing the image.',
         success_download: 'Image has been downloaded.',
-        first_load_info: 'First processing may take longer due to AI model download (~40 MB).'
+        first_load_info: 'First processing downloads AI model (~40 MB)',
+        // Refine Edge translations
+        feather: 'Feather',
+        contrast: 'Contrast',
+        shift_edge: 'Shift Edge',
+        smooth: 'Smooth',
+        reset_refine: 'Reset',
+        apply_refine: 'Apply'
     }
 };
 
@@ -120,9 +145,11 @@ const state = {
     resultBlob: null,
     resultImageData: null,
     maskCanvas: null,
+    originalMaskData: null, // Store original mask for refine edge reset
     currentTab: 'result',
     brushMode: 'erase',
     brushSize: 30,
+    brushHardness: 80,
     bgType: 'transparent',
     bgColor: '#ffffff',
     bgGradient: null,
@@ -132,7 +159,12 @@ const state = {
     shadowOpacity: 40,
     shadowBlur: 20,
     isProcessing: false,
-    removeBackground: null
+    removeBackground: null,
+    // Refine Edge settings
+    refineFeather: 0,
+    refineContrast: 0,
+    refineShiftEdge: 0,
+    refineSmooth: 0
 };
 
 // =============================================
@@ -177,6 +209,12 @@ function initElements() {
     elements.imagePanel = document.getElementById('imagePanel');
     elements.blurPanel = document.getElementById('blurPanel');
     elements.bgFileInput = document.getElementById('bgFileInput');
+    // Refine edge elements
+    elements.refineCanvas = document.getElementById('refineCanvas');
+    elements.refineFeather = document.getElementById('refineFeather');
+    elements.refineContrast = document.getElementById('refineContrast');
+    elements.refineShiftEdge = document.getElementById('refineShiftEdge');
+    elements.refineSmooth = document.getElementById('refineSmooth');
 }
 
 // =============================================
@@ -197,8 +235,7 @@ async function loadBackgroundRemovalLibrary() {
         console.log('Background removal library loaded successfully');
     } catch (error) {
         console.error('Failed to load background removal library:', error);
-        // Show info toast about first load
-        showToast(translations[state.lang].first_load_info || 'First load may take longer to download AI model (~40 MB)', 'warning');
+        showToast(translations[state.lang].first_load_info, 'warning');
     }
 }
 
@@ -263,6 +300,9 @@ function initEventListeners() {
     // Brush controls
     initBrushControls();
 
+    // Refine Edge controls
+    initRefineEdgeControls();
+
     // Background controls
     initBackgroundControls();
 
@@ -317,6 +357,7 @@ async function processFile(file) {
 
     // Show processing section
     showSection('processing');
+    updateProgress(5, translations[state.lang].preparing);
 
     // Load image
     const img = new Image();
@@ -336,20 +377,20 @@ async function createImageData(img) {
     const canvas = document.createElement('canvas');
     canvas.width = img.width;
     canvas.height = img.height;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     ctx.drawImage(img, 0, 0);
     return ctx.getImageData(0, 0, canvas.width, canvas.height);
 }
 
 async function loadDemoImage(type) {
     showSection('processing');
-    updateProgress(0, translations[state.lang].loading_model);
+    updateProgress(5, translations[state.lang].preparing);
 
     // Create demo images using canvas
     const canvas = document.createElement('canvas');
     canvas.width = 800;
     canvas.height = 600;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
     // Create a simple demo image
     if (type === 'person') {
@@ -420,24 +461,49 @@ async function removeBackgroundFromImage(img) {
     }
 
     try {
+        let modelDownloaded = false;
+        let lastProgressUpdate = 0;
+
         updateProgress(10, translations[state.lang].loading_model);
 
         // Create blob from image
         const canvas = document.createElement('canvas');
         canvas.width = img.width;
         canvas.height = img.height;
-        const ctx = canvas.getContext('2d');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
         ctx.drawImage(img, 0, 0);
 
         const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
 
-        updateProgress(20, translations[state.lang].removing_bg);
-
         // Process with background removal
         const resultBlob = await state.removeBackground(blob, {
             progress: (key, current, total) => {
-                const percent = Math.round((current / total) * 70) + 20;
-                updateProgress(percent, translations[state.lang].removing_bg);
+                // Better progress reporting
+                const now = Date.now();
+                if (now - lastProgressUpdate < 100) return; // Throttle updates
+                lastProgressUpdate = now;
+
+                let percent, status;
+
+                if (key.includes('model') || key.includes('fetch') || key.includes('download')) {
+                    // Model downloading phase (10-50%)
+                    percent = 10 + Math.round((current / total) * 40);
+                    status = `${translations[state.lang].downloading_model} ${Math.round((current / total) * 100)}%`;
+                    modelDownloaded = false;
+                } else if (key.includes('compute') || key.includes('inference') || key.includes('process')) {
+                    // Processing phase (50-90%)
+                    if (!modelDownloaded) {
+                        modelDownloaded = true;
+                    }
+                    percent = 50 + Math.round((current / total) * 40);
+                    status = translations[state.lang].removing_bg;
+                } else {
+                    // Other phases
+                    percent = Math.min(90, 20 + Math.round((current / total) * 60));
+                    status = translations[state.lang].removing_bg;
+                }
+
+                updateProgress(Math.min(percent, 95), status);
             },
             output: {
                 format: 'image/png',
@@ -445,7 +511,7 @@ async function removeBackgroundFromImage(img) {
             }
         });
 
-        updateProgress(95, translations[state.lang].removing_bg);
+        updateProgress(95, translations[state.lang].finalizing);
 
         state.resultBlob = resultBlob;
 
@@ -460,8 +526,9 @@ async function removeBackgroundFromImage(img) {
                 renderResult();
                 renderCompare();
                 renderBrush();
+                renderRefineEdge();
                 renderBackground();
-            }, 300);
+            }, 200);
         };
         resultImg.src = URL.createObjectURL(resultBlob);
 
@@ -481,20 +548,20 @@ function updateProgress(percent, status) {
 }
 
 // =============================================
-// MASK HANDLING (for Magic Brush)
+// MASK HANDLING (for Magic Brush & Refine Edge)
 // =============================================
 function initializeMask() {
     // Create mask canvas to track manual edits
     state.maskCanvas = document.createElement('canvas');
     state.maskCanvas.width = state.originalImage.width;
     state.maskCanvas.height = state.originalImage.height;
-    const ctx = state.maskCanvas.getContext('2d');
+    const ctx = state.maskCanvas.getContext('2d', { willReadFrequently: true });
 
     // Initialize with the result alpha channel
     const resultCanvas = document.createElement('canvas');
     resultCanvas.width = state.resultImageData.width;
     resultCanvas.height = state.resultImageData.height;
-    const resultCtx = resultCanvas.getContext('2d');
+    const resultCtx = resultCanvas.getContext('2d', { willReadFrequently: true });
     resultCtx.putImageData(state.resultImageData, 0, 0);
 
     // Copy alpha to mask (white = visible, black = hidden)
@@ -510,6 +577,9 @@ function initializeMask() {
     }
 
     ctx.putImageData(maskData, 0, 0);
+
+    // Store original mask for reset
+    state.originalMaskData = ctx.getImageData(0, 0, state.maskCanvas.width, state.maskCanvas.height);
 }
 
 // =============================================
@@ -517,7 +587,7 @@ function initializeMask() {
 // =============================================
 function renderResult() {
     const canvas = elements.resultCanvas;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
     canvas.width = state.resultImageData.width;
     canvas.height = state.resultImageData.height;
@@ -533,7 +603,7 @@ function renderCompare() {
 
     // Result canvas
     const canvas = elements.compareResultCanvas;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
     canvas.width = state.resultImageData.width;
     canvas.height = state.resultImageData.height;
@@ -544,7 +614,20 @@ function renderCompare() {
 
 function renderBrush() {
     const canvas = elements.brushCanvas;
-    const ctx = canvas.getContext('2d');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+    canvas.width = state.resultImageData.width;
+    canvas.height = state.resultImageData.height;
+
+    const result = applyMaskToImage(state.originalImageData, state.maskCanvas);
+    ctx.putImageData(result, 0, 0);
+}
+
+function renderRefineEdge() {
+    const canvas = elements.refineCanvas;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
     canvas.width = state.resultImageData.width;
     canvas.height = state.resultImageData.height;
@@ -555,7 +638,8 @@ function renderBrush() {
 
 function renderBackground() {
     const canvas = elements.backgroundCanvas;
-    const ctx = canvas.getContext('2d');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
     canvas.width = state.originalImage.width;
     canvas.height = state.originalImage.height;
@@ -586,7 +670,7 @@ function renderBackground() {
     const tempCanvas = document.createElement('canvas');
     tempCanvas.width = result.width;
     tempCanvas.height = result.height;
-    const tempCtx = tempCanvas.getContext('2d');
+    const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
     tempCtx.putImageData(result, 0, 0);
 
     ctx.drawImage(tempCanvas, 0, 0);
@@ -597,7 +681,7 @@ function drawShadow(ctx) {
     const shadowCanvas = document.createElement('canvas');
     shadowCanvas.width = state.maskCanvas.width;
     shadowCanvas.height = state.maskCanvas.height;
-    const shadowCtx = shadowCanvas.getContext('2d');
+    const shadowCtx = shadowCanvas.getContext('2d', { willReadFrequently: true });
 
     // Draw mask as shadow
     shadowCtx.filter = `blur(${state.shadowBlur}px)`;
@@ -620,7 +704,7 @@ function applyMaskToImage(imageData, maskCanvas) {
         imageData.height
     );
 
-    const maskCtx = maskCanvas.getContext('2d');
+    const maskCtx = maskCanvas.getContext('2d', { willReadFrequently: true });
     const maskData = maskCtx.getImageData(0, 0, maskCanvas.width, maskCanvas.height);
 
     for (let i = 0; i < result.data.length; i += 4) {
@@ -646,9 +730,14 @@ function resetToUpload() {
     state.resultBlob = null;
     state.resultImageData = null;
     state.maskCanvas = null;
+    state.originalMaskData = null;
     state.bgType = 'transparent';
     state.bgImage = null;
     state.shadowEnabled = false;
+    state.refineFeather = 0;
+    state.refineContrast = 0;
+    state.refineShiftEdge = 0;
+    state.refineSmooth = 0;
 
     elements.fileInput.value = '';
     elements.progressFill.style.width = '0%';
@@ -680,6 +769,8 @@ function switchTab(tab) {
         renderCompare();
     } else if (tab === 'brush') {
         renderBrush();
+    } else if (tab === 'refine') {
+        renderRefineEdge();
     } else if (tab === 'background') {
         renderBackground();
     }
@@ -690,6 +781,7 @@ function switchTab(tab) {
 // =============================================
 function initCompareSlider() {
     const handle = elements.compareHandle;
+    if (!handle) return;
     const result = elements.compareResult;
     let isDragging = false;
 
@@ -732,13 +824,17 @@ function initBrushControls() {
     });
 
     // Brush size slider
-    elements.brushSize.addEventListener('input', (e) => {
-        state.brushSize = parseInt(e.target.value);
-        elements.brushSizeValue.textContent = `${state.brushSize}px`;
-    });
+    if (elements.brushSize) {
+        elements.brushSize.addEventListener('input', (e) => {
+            state.brushSize = parseInt(e.target.value);
+            elements.brushSizeValue.textContent = `${state.brushSize}px`;
+        });
+    }
 
     // Brush canvas drawing
     const canvas = elements.brushCanvas;
+    if (!canvas) return;
+
     let isDrawing = false;
     let lastX = 0;
     let lastY = 0;
@@ -758,10 +854,10 @@ function initBrushControls() {
     }
 
     function draw(e) {
-        if (!isDrawing) return;
+        if (!isDrawing || !state.maskCanvas) return;
 
         const coords = getCanvasCoords(e);
-        const maskCtx = state.maskCanvas.getContext('2d');
+        const maskCtx = state.maskCanvas.getContext('2d', { willReadFrequently: true });
 
         maskCtx.beginPath();
         maskCtx.moveTo(lastX, lastY);
@@ -816,6 +912,170 @@ function initBrushControls() {
 }
 
 // =============================================
+// REFINE EDGE CONTROLS
+// =============================================
+function initRefineEdgeControls() {
+    // Feather slider
+    if (elements.refineFeather) {
+        elements.refineFeather.addEventListener('input', (e) => {
+            state.refineFeather = parseInt(e.target.value);
+            document.getElementById('refineFeatherValue').textContent = `${state.refineFeather}px`;
+            applyRefineEdge();
+        });
+    }
+
+    // Contrast slider
+    if (elements.refineContrast) {
+        elements.refineContrast.addEventListener('input', (e) => {
+            state.refineContrast = parseInt(e.target.value);
+            document.getElementById('refineContrastValue').textContent = `${state.refineContrast}%`;
+            applyRefineEdge();
+        });
+    }
+
+    // Shift Edge slider
+    if (elements.refineShiftEdge) {
+        elements.refineShiftEdge.addEventListener('input', (e) => {
+            state.refineShiftEdge = parseInt(e.target.value);
+            document.getElementById('refineShiftEdgeValue').textContent = `${state.refineShiftEdge}px`;
+            applyRefineEdge();
+        });
+    }
+
+    // Smooth slider
+    if (elements.refineSmooth) {
+        elements.refineSmooth.addEventListener('input', (e) => {
+            state.refineSmooth = parseInt(e.target.value);
+            document.getElementById('refineSmoothValue').textContent = `${state.refineSmooth}px`;
+            applyRefineEdge();
+        });
+    }
+
+    // Reset button
+    const resetBtn = document.getElementById('resetRefineBtn');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', resetRefineEdge);
+    }
+}
+
+function applyRefineEdge() {
+    if (!state.maskCanvas || !state.originalMaskData) return;
+
+    // Start from original mask
+    const ctx = state.maskCanvas.getContext('2d', { willReadFrequently: true });
+    ctx.putImageData(state.originalMaskData, 0, 0);
+
+    // Apply Smooth (blur)
+    if (state.refineSmooth > 0) {
+        ctx.filter = `blur(${state.refineSmooth}px)`;
+        ctx.drawImage(state.maskCanvas, 0, 0);
+        ctx.filter = 'none';
+    }
+
+    // Apply Feather (edge blur)
+    if (state.refineFeather > 0) {
+        // Create edge-only blur effect
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = state.maskCanvas.width;
+        tempCanvas.height = state.maskCanvas.height;
+        const tempCtx = tempCanvas.getContext('2d', { willReadFrequently: true });
+        tempCtx.filter = `blur(${state.refineFeather}px)`;
+        tempCtx.drawImage(state.maskCanvas, 0, 0);
+        ctx.drawImage(tempCanvas, 0, 0);
+    }
+
+    // Apply Contrast
+    if (state.refineContrast !== 0) {
+        const imageData = ctx.getImageData(0, 0, state.maskCanvas.width, state.maskCanvas.height);
+        const factor = (259 * (state.refineContrast + 255)) / (255 * (259 - state.refineContrast));
+
+        for (let i = 0; i < imageData.data.length; i += 4) {
+            let val = imageData.data[i];
+            val = factor * (val - 128) + 128;
+            val = Math.max(0, Math.min(255, val));
+            imageData.data[i] = val;
+            imageData.data[i + 1] = val;
+            imageData.data[i + 2] = val;
+        }
+        ctx.putImageData(imageData, 0, 0);
+    }
+
+    // Apply Shift Edge (erode/dilate)
+    if (state.refineShiftEdge !== 0) {
+        const imageData = ctx.getImageData(0, 0, state.maskCanvas.width, state.maskCanvas.height);
+        const result = new Uint8ClampedArray(imageData.data);
+        const width = state.maskCanvas.width;
+        const height = state.maskCanvas.height;
+        const radius = Math.abs(state.refineShiftEdge);
+        const isExpand = state.refineShiftEdge > 0;
+
+        for (let y = 0; y < height; y++) {
+            for (let x = 0; x < width; x++) {
+                const idx = (y * width + x) * 4;
+                let extremeVal = isExpand ? 0 : 255;
+
+                // Check neighborhood
+                for (let dy = -radius; dy <= radius; dy++) {
+                    for (let dx = -radius; dx <= radius; dx++) {
+                        const nx = x + dx;
+                        const ny = y + dy;
+                        if (nx >= 0 && nx < width && ny >= 0 && ny < height) {
+                            const nIdx = (ny * width + nx) * 4;
+                            const val = imageData.data[nIdx];
+                            if (isExpand) {
+                                extremeVal = Math.max(extremeVal, val);
+                            } else {
+                                extremeVal = Math.min(extremeVal, val);
+                            }
+                        }
+                    }
+                }
+
+                result[idx] = extremeVal;
+                result[idx + 1] = extremeVal;
+                result[idx + 2] = extremeVal;
+            }
+        }
+
+        const newImageData = new ImageData(result, width, height);
+        ctx.putImageData(newImageData, 0, 0);
+    }
+
+    renderRefineEdge();
+    renderResult();
+    renderCompare();
+    renderBackground();
+}
+
+function resetRefineEdge() {
+    state.refineFeather = 0;
+    state.refineContrast = 0;
+    state.refineShiftEdge = 0;
+    state.refineSmooth = 0;
+
+    if (elements.refineFeather) elements.refineFeather.value = 0;
+    if (elements.refineContrast) elements.refineContrast.value = 0;
+    if (elements.refineShiftEdge) elements.refineShiftEdge.value = 0;
+    if (elements.refineSmooth) elements.refineSmooth.value = 0;
+
+    document.getElementById('refineFeatherValue').textContent = '0px';
+    document.getElementById('refineContrastValue').textContent = '0%';
+    document.getElementById('refineShiftEdgeValue').textContent = '0px';
+    document.getElementById('refineSmoothValue').textContent = '0px';
+
+    // Restore original mask
+    if (state.maskCanvas && state.originalMaskData) {
+        const ctx = state.maskCanvas.getContext('2d', { willReadFrequently: true });
+        ctx.putImageData(state.originalMaskData, 0, 0);
+    }
+
+    renderRefineEdge();
+    renderResult();
+    renderCompare();
+    renderBackground();
+}
+
+// =============================================
 // BACKGROUND CONTROLS
 // =============================================
 function initBackgroundControls() {
@@ -829,9 +1089,9 @@ function initBackgroundControls() {
             });
 
             // Show/hide appropriate panel
-            elements.colorPanel.style.display = state.bgType === 'color' ? 'flex' : 'none';
-            elements.imagePanel.style.display = state.bgType === 'image' ? 'flex' : 'none';
-            elements.blurPanel.style.display = state.bgType === 'blur' ? 'flex' : 'none';
+            if (elements.colorPanel) elements.colorPanel.style.display = state.bgType === 'color' ? 'flex' : 'none';
+            if (elements.imagePanel) elements.imagePanel.style.display = state.bgType === 'image' ? 'flex' : 'none';
+            if (elements.blurPanel) elements.blurPanel.style.display = state.bgType === 'blur' ? 'flex' : 'none';
 
             renderBackground();
         });
@@ -841,7 +1101,7 @@ function initBackgroundControls() {
     document.querySelectorAll('.color-preset').forEach(btn => {
         btn.addEventListener('click', () => {
             state.bgColor = btn.dataset.color;
-            elements.bgColorPicker.value = state.bgColor;
+            if (elements.bgColorPicker) elements.bgColorPicker.value = state.bgColor;
 
             document.querySelectorAll('.color-preset').forEach(b => {
                 b.classList.toggle('active', b.dataset.color === state.bgColor);
@@ -852,11 +1112,13 @@ function initBackgroundControls() {
     });
 
     // Custom color picker
-    elements.bgColorPicker.addEventListener('input', (e) => {
-        state.bgColor = e.target.value;
-        document.querySelectorAll('.color-preset').forEach(b => b.classList.remove('active'));
-        renderBackground();
-    });
+    if (elements.bgColorPicker) {
+        elements.bgColorPicker.addEventListener('input', (e) => {
+            state.bgColor = e.target.value;
+            document.querySelectorAll('.color-preset').forEach(b => b.classList.remove('active'));
+            renderBackground();
+        });
+    }
 
     // Gradient presets
     const gradients = {
@@ -883,56 +1145,73 @@ function initBackgroundControls() {
     });
 
     // Upload background image
-    document.getElementById('uploadBgBtn').addEventListener('click', () => {
-        elements.bgFileInput.click();
-    });
+    const uploadBgBtn = document.getElementById('uploadBgBtn');
+    if (uploadBgBtn) {
+        uploadBgBtn.addEventListener('click', () => {
+            elements.bgFileInput.click();
+        });
+    }
 
-    elements.bgFileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const img = new Image();
-            img.onload = () => {
-                state.bgImage = img;
-                renderBackground();
-            };
-            img.src = URL.createObjectURL(file);
-        }
-    });
+    if (elements.bgFileInput) {
+        elements.bgFileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const img = new Image();
+                img.onload = () => {
+                    state.bgImage = img;
+                    renderBackground();
+                };
+                img.src = URL.createObjectURL(file);
+            }
+        });
+    }
 
     // Blur amount
-    elements.blurAmount.addEventListener('input', (e) => {
-        state.blurAmount = parseInt(e.target.value);
-        elements.blurValue.textContent = `${state.blurAmount}px`;
-        renderBackground();
-    });
+    if (elements.blurAmount) {
+        elements.blurAmount.addEventListener('input', (e) => {
+            state.blurAmount = parseInt(e.target.value);
+            elements.blurValue.textContent = `${state.blurAmount}px`;
+            renderBackground();
+        });
+    }
 
     // Shadow toggle
-    elements.shadowToggle.addEventListener('change', (e) => {
-        state.shadowEnabled = e.target.checked;
-        elements.shadowOptions.style.display = state.shadowEnabled ? 'flex' : 'none';
-        renderBackground();
-    });
+    if (elements.shadowToggle) {
+        elements.shadowToggle.addEventListener('change', (e) => {
+            state.shadowEnabled = e.target.checked;
+            if (elements.shadowOptions) {
+                elements.shadowOptions.style.display = state.shadowEnabled ? 'flex' : 'none';
+            }
+            renderBackground();
+        });
+    }
 
     // Shadow opacity
-    elements.shadowOpacity.addEventListener('input', (e) => {
-        state.shadowOpacity = parseInt(e.target.value);
-        elements.shadowOpacityValue.textContent = `${state.shadowOpacity}%`;
-        renderBackground();
-    });
+    if (elements.shadowOpacity) {
+        elements.shadowOpacity.addEventListener('input', (e) => {
+            state.shadowOpacity = parseInt(e.target.value);
+            elements.shadowOpacityValue.textContent = `${state.shadowOpacity}%`;
+            renderBackground();
+        });
+    }
 
     // Shadow blur
-    elements.shadowBlur.addEventListener('input', (e) => {
-        state.shadowBlur = parseInt(e.target.value);
-        elements.shadowBlurValue.textContent = `${state.shadowBlur}px`;
-        renderBackground();
-    });
+    if (elements.shadowBlur) {
+        elements.shadowBlur.addEventListener('input', (e) => {
+            state.shadowBlur = parseInt(e.target.value);
+            elements.shadowBlurValue.textContent = `${state.shadowBlur}px`;
+            renderBackground();
+        });
+    }
 }
 
 function createGradientImage(gradient) {
+    if (!state.originalImage) return;
+
     const canvas = document.createElement('canvas');
     canvas.width = state.originalImage.width;
     canvas.height = state.originalImage.height;
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
     // Parse gradient and create canvas gradient
     const colors = gradient.match(/#[a-fA-F0-9]{6}/g);
@@ -960,40 +1239,57 @@ function initExportPanel() {
     document.querySelectorAll('input[name="format"]').forEach(input => {
         input.addEventListener('change', (e) => {
             const format = e.target.value;
-            elements.qualityControl.style.display = format === 'png' ? 'none' : 'block';
+            if (elements.qualityControl) {
+                elements.qualityControl.style.display = format === 'png' ? 'none' : 'block';
+            }
         });
     });
 
     // Quality slider
-    elements.exportQuality.addEventListener('input', (e) => {
-        elements.qualityValue.textContent = `${e.target.value}%`;
-    });
+    if (elements.exportQuality) {
+        elements.exportQuality.addEventListener('input', (e) => {
+            elements.qualityValue.textContent = `${e.target.value}%`;
+        });
+    }
 
     // Cancel button
-    document.getElementById('cancelExportBtn').addEventListener('click', hideExportPanel);
+    const cancelBtn = document.getElementById('cancelExportBtn');
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', hideExportPanel);
+    }
 
     // Confirm button
-    document.getElementById('confirmExportBtn').addEventListener('click', exportImage);
+    const confirmBtn = document.getElementById('confirmExportBtn');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', exportImage);
+    }
 
     // Close on overlay click
-    elements.exportPanel.addEventListener('click', (e) => {
-        if (e.target === elements.exportPanel) {
-            hideExportPanel();
-        }
-    });
+    if (elements.exportPanel) {
+        elements.exportPanel.addEventListener('click', (e) => {
+            if (e.target === elements.exportPanel) {
+                hideExportPanel();
+            }
+        });
+    }
 }
 
 function showExportPanel() {
-    elements.exportPanel.classList.remove('hidden');
+    if (elements.exportPanel) {
+        elements.exportPanel.classList.remove('hidden');
+    }
 }
 
 function hideExportPanel() {
-    elements.exportPanel.classList.add('hidden');
+    if (elements.exportPanel) {
+        elements.exportPanel.classList.add('hidden');
+    }
 }
 
 async function exportImage() {
-    const format = document.querySelector('input[name="format"]:checked').value;
-    const quality = parseInt(elements.exportQuality.value) / 100;
+    const formatInput = document.querySelector('input[name="format"]:checked');
+    const format = formatInput ? formatInput.value : 'png';
+    const quality = elements.exportQuality ? parseInt(elements.exportQuality.value) / 100 : 0.92;
 
     // Get the appropriate canvas based on current tab
     let sourceCanvas;
@@ -1003,11 +1299,13 @@ async function exportImage() {
         sourceCanvas = elements.resultCanvas;
     }
 
+    if (!sourceCanvas) return;
+
     // Create export canvas
     const exportCanvas = document.createElement('canvas');
     exportCanvas.width = sourceCanvas.width;
     exportCanvas.height = sourceCanvas.height;
-    const ctx = exportCanvas.getContext('2d');
+    const ctx = exportCanvas.getContext('2d', { willReadFrequently: true });
 
     // For JPG, fill with white background first
     if (format === 'jpeg') {
@@ -1041,6 +1339,8 @@ async function exportImage() {
 // TOAST NOTIFICATIONS
 // =============================================
 function showToast(message, type = 'info') {
+    if (!elements.toastContainer) return;
+
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
 
@@ -1061,7 +1361,7 @@ function showToast(message, type = 'info') {
     setTimeout(() => {
         toast.style.animation = 'toastIn 0.3s ease reverse';
         setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    }, 4000);
 }
 
 // =============================================

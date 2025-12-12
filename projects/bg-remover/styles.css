@@ -776,6 +776,56 @@ body::before {
 }
 
 /* =============================================
+   REFINE EDGE
+   ============================================= */
+.refine-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 20px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.refine-sliders {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.refine-control {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.refine-control label {
+    min-width: 80px;
+    text-align: right;
+}
+
+.refine-control input[type="range"] {
+    width: 100px;
+    accent-color: var(--primary-color);
+}
+
+.refine-control span {
+    min-width: 45px;
+    text-align: left;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+.refine-reset-btn {
+    padding: 8px 20px;
+    font-size: 0.85rem;
+}
+
+/* =============================================
    BACKGROUND OPTIONS
    ============================================= */
 .background-controls {
@@ -1310,6 +1360,31 @@ body::before {
     .brush-controls {
         flex-direction: column;
         gap: 12px;
+    }
+
+    .refine-controls {
+        padding: 12px;
+    }
+
+    .refine-sliders {
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+    }
+
+    .refine-control {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .refine-control label {
+        min-width: auto;
+        text-align: left;
+    }
+
+    .refine-control input[type="range"] {
+        flex: 1;
+        max-width: 150px;
     }
 
     .background-controls {

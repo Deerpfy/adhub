@@ -152,6 +152,7 @@
                         <button class="tab-btn active" data-tab="result" data-i18n="tab_result">Výsledek</button>
                         <button class="tab-btn" data-tab="compare" data-i18n="tab_compare">Porovnat</button>
                         <button class="tab-btn" data-tab="brush" data-i18n="tab_brush">Magic Brush</button>
+                        <button class="tab-btn" data-tab="refine" data-i18n="tab_refine">Zjemnit hrany</button>
                         <button class="tab-btn" data-tab="background" data-i18n="tab_background">Pozadí</button>
                     </div>
                     <div class="toolbar-group">
@@ -223,6 +224,38 @@
                         <div class="canvas-container checkered brush-canvas">
                             <canvas id="brushCanvas"></canvas>
                             <canvas id="brushPreviewCanvas"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Refine Edge Tab -->
+                    <div class="tab-content" id="tab-refine">
+                        <div class="refine-controls">
+                            <div class="refine-sliders">
+                                <div class="refine-control">
+                                    <label data-i18n="feather">Prolnutí</label>
+                                    <input type="range" id="refineFeather" min="0" max="20" value="0">
+                                    <span id="refineFeatherValue">0px</span>
+                                </div>
+                                <div class="refine-control">
+                                    <label data-i18n="contrast">Kontrast</label>
+                                    <input type="range" id="refineContrast" min="-100" max="100" value="0">
+                                    <span id="refineContrastValue">0%</span>
+                                </div>
+                                <div class="refine-control">
+                                    <label data-i18n="shift_edge">Posun hrany</label>
+                                    <input type="range" id="refineShiftEdge" min="-10" max="10" value="0">
+                                    <span id="refineShiftEdgeValue">0px</span>
+                                </div>
+                                <div class="refine-control">
+                                    <label data-i18n="smooth">Vyhlazení</label>
+                                    <input type="range" id="refineSmooth" min="0" max="10" value="0">
+                                    <span id="refineSmoothValue">0px</span>
+                                </div>
+                            </div>
+                            <button class="btn-secondary refine-reset-btn" id="resetRefineBtn" data-i18n="reset_refine">Resetovat</button>
+                        </div>
+                        <div class="canvas-container checkered">
+                            <canvas id="refineCanvas"></canvas>
                         </div>
                     </div>
 
