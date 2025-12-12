@@ -623,9 +623,6 @@ body::before {
     left: 0;
     width: 100%;
     height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
     clip-path: inset(0 50% 0 0);
     background-image:
         linear-gradient(45deg, #1a1a24 25%, transparent 25%),
@@ -637,11 +634,19 @@ body::before {
     background-color: #121218;
 }
 
-.compare-original img,
-.compare-result canvas {
+.compare-original img {
     width: 100%;
     height: auto;
     display: block;
+}
+
+.compare-result canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
 }
 
 .compare-label {
@@ -759,8 +764,50 @@ body::before {
     accent-color: var(--primary-color);
 }
 
+.brush-info {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 16px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.brush-info-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.brush-info-item .key {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    padding: 2px 6px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.brush-info-item.erase-info .key {
+    color: var(--danger-color);
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+.brush-info-item.restore-info .key {
+    color: var(--success-color);
+    border-color: rgba(16, 185, 129, 0.3);
+}
+
 .brush-canvas {
     position: relative;
+    cursor: none;
 }
 
 .brush-canvas canvas {
@@ -774,10 +821,35 @@ body::before {
     z-index: 1;
 }
 
+#brushCursor {
+    position: fixed;
+    pointer-events: none;
+    z-index: 1000;
+    border: 2px solid white;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+    transform: translate(-50%, -50%);
+    display: none;
+}
+
+#brushCursor.active {
+    display: block;
+}
+
+#brushCursor.erase {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 0 8px rgba(239, 68, 68, 0.5);
+}
+
+#brushCursor.restore {
+    border-color: #10b981;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), 0 0 8px rgba(16, 185, 129, 0.5);
+}
+
 #brushPreviewCanvas {
     z-index: 2;
     pointer-events: none;
-    display: none; /* Hidden - brush preview not implemented */
+    display: none;
 }
 
 /* =============================================
