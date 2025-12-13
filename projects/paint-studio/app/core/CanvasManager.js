@@ -233,14 +233,28 @@ export class CanvasManager {
         this.lastX = pos.x;
         this.lastY = pos.y;
 
-        // Start history record
-        this.app.history.startAction();
+        // Only start history record for tools that modify the canvas
+        const tool = this.app.tools.currentToolInstance;
+        const isDrawingTool = this.isDrawingTool(tool?.name);
+        if (isDrawingTool) {
+            this.app.history.startAction();
+        }
 
         // Notify tool
-        const tool = this.app.tools.currentToolInstance;
         if (tool && tool.onStart) {
             tool.onStart(pos.x, pos.y, this.pressure);
         }
+    }
+
+    /**
+     * Check if tool is a drawing tool (modifies canvas)
+     */
+    isDrawingTool(toolName) {
+        const drawingTools = [
+            'brush', 'pencil', 'eraser', 'line', 'rectangle', 'ellipse',
+            'fill', 'gradient', 'transform', 'move'
+        ];
+        return drawingTools.includes(toolName);
     }
 
     /**
@@ -290,8 +304,13 @@ export class CanvasManager {
         // Get final position
         const pos = this.screenToCanvas(e.clientX, e.clientY);
 
-        // Check for QuickShape
-        if (this.app.settings.quickshapeEnabled && this.app.quickShape) {
+        // Get current tool
+        const tool = this.app.tools.currentToolInstance;
+        const isDrawingTool = this.isDrawingTool(tool?.name);
+
+        // Check for QuickShape - only for drawing tools that create strokes
+        const quickShapeTools = ['brush', 'pencil'];
+        if (this.app.settings.quickshapeEnabled && this.app.quickShape && quickShapeTools.includes(tool?.name)) {
             const shape = this.app.quickShape.detect(this.currentStroke);
             if (shape) {
                 // Replace freehand with shape (pass original points for clearing)
@@ -301,7 +320,6 @@ export class CanvasManager {
         }
 
         // Notify tool
-        const tool = this.app.tools.currentToolInstance;
         if (tool && tool.onEnd) {
             tool.onEnd(pos.x, pos.y);
         }
@@ -314,11 +332,11 @@ export class CanvasManager {
         // Clear preview
         this.clearPreview();
 
-        // End history record
-        this.app.history.endAction();
-
-        // Mark as unsaved
-        this.app.markUnsaved();
+        // Only end history and mark unsaved for drawing tools
+        if (isDrawingTool) {
+            this.app.history.endAction();
+            this.app.markUnsaved();
+        }
 
         // Re-render
         this.render();
