@@ -15,6 +15,7 @@ import { StreamLine } from '../tools/StreamLine.js';
 import { UIController } from '../ui/UIController.js';
 import { SelectionManager } from '../tools/SelectionManager.js';
 import { CollaborationManager } from './CollaborationManager.js';
+import { BackgroundRemover } from '../utils/BackgroundRemover.js';
 
 export class PaintApp {
     constructor() {
@@ -49,6 +50,7 @@ export class PaintApp {
         this.ui = null;
         this.selection = null;
         this.collab = null;
+        this.bgRemover = null;
     }
 
     /**
@@ -105,6 +107,9 @@ export class PaintApp {
 
             // Initialize collaboration manager
             this.collab = new CollaborationManager(this);
+
+            // Initialize background remover (lazy loading)
+            this.bgRemover = new BackgroundRemover(this);
 
             // Create default project
             await this.newProject({

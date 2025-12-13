@@ -2399,3 +2399,341 @@ body {
     color: white;
     white-space: nowrap;
 }
+
+/* =============================================
+   Background Remover (BG Remover)
+   ============================================= */
+
+/* FREE Badge - Button with badge */
+.btn-with-badge {
+    position: relative;
+}
+
+.btn-badge-free {
+    position: absolute;
+    top: -6px;
+    right: -8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 2px 6px;
+    background: linear-gradient(135deg, var(--success-color), #059669);
+    color: white;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    border-radius: 8px;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+    animation: badgePulse 2s ease-in-out infinite;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.btn-badge-free svg {
+    width: 8px;
+    height: 8px;
+}
+
+@keyframes badgePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* BG Remover Button */
+.btn-bg-remover {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #059669, #10b981);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.btn-bg-remover:hover {
+    background: linear-gradient(135deg, #047857, #059669);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    transform: translateY(-1px);
+}
+
+.btn-bg-remover:active {
+    transform: translateY(0);
+}
+
+/* BG Remover Modal */
+#bgRemoverModal .modal {
+    max-width: 420px;
+}
+
+.bg-remover-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.bg-remover-header {
+    text-align: center;
+}
+
+.bg-remover-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+    border-radius: 16px;
+    color: var(--success-color);
+}
+
+.bg-remover-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+
+.bg-remover-title .free-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 10px;
+    background: linear-gradient(135deg, var(--success-color), #059669);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    border-radius: 12px;
+    letter-spacing: 0.5px;
+}
+
+.bg-remover-title .free-tag svg {
+    width: 12px;
+    height: 12px;
+}
+
+.bg-remover-subtitle {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Preview area */
+.bg-remover-preview {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 150px;
+    padding: 20px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.bg-remover-preview canvas {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    background-image:
+        linear-gradient(45deg, #1a1a24 25%, transparent 25%),
+        linear-gradient(-45deg, #1a1a24 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #1a1a24 75%),
+        linear-gradient(-45deg, transparent 75%, #1a1a24 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+    background-color: #121218;
+}
+
+.bg-remover-preview .empty-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-muted);
+}
+
+.bg-remover-preview .empty-preview svg {
+    opacity: 0.5;
+}
+
+/* Options */
+.bg-remover-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.bg-remover-options label {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.bg-remover-options label:hover {
+    border-color: var(--success-color);
+    background: rgba(16, 185, 129, 0.05);
+}
+
+.bg-remover-options label.selected {
+    border-color: var(--success-color);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.bg-remover-options input[type="radio"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--success-color);
+}
+
+.option-text {
+    flex: 1;
+}
+
+.option-text span {
+    display: block;
+    font-weight: 500;
+}
+
+.option-text small {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}
+
+/* Info notice */
+.bg-remover-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 16px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 10px;
+    font-size: 0.85rem;
+    color: var(--success-color);
+}
+
+.bg-remover-info svg {
+    flex-shrink: 0;
+}
+
+/* Processing state */
+.bg-remover-processing {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 30px 20px;
+}
+
+.bg-remover-processing.active {
+    display: flex;
+}
+
+.bg-remover-processing .spinner {
+    position: relative;
+    width: 80px;
+    height: 80px;
+}
+
+.bg-remover-processing .spinner-ring {
+    position: absolute;
+    inset: 0;
+    border: 3px solid var(--border-color);
+    border-top-color: var(--success-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.bg-remover-processing .spinner-icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--success-color);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.bg-remover-processing .progress-text {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.bg-remover-processing .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.bg-remover-processing .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--success-color), #34d399);
+    border-radius: 4px;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+.bg-remover-processing .progress-status {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Modal Actions */
+.bg-remover-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.bg-remover-actions button {
+    flex: 1;
+}
+
+/* Hide form when processing */
+.bg-remover-form.hidden {
+    display: none;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    #bgRemoverModal .modal {
+        margin: 16px;
+    }
+
+    .bg-remover-title {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .bg-remover-options label {
+        padding: 10px 12px;
+    }
+}

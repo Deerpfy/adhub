@@ -103,6 +103,20 @@
                     </svg>
                     <span>Export</span>
                 </button>
+                <div class="btn-with-badge">
+                    <button class="btn-bg-remover" id="bgRemoverBtn" title="Odstranit pozadí - AI">
+                        <svg viewBox="0 0 24 24" width="18" height="18">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1.75 9c0 .23-.02.46-.05.68l1.48 1.16c.13.11.17.3.08.45l-1.4 2.42c-.09.15-.27.21-.43.15l-1.74-.7c-.36.28-.76.51-1.18.69l-.26 1.85c-.03.17-.18.3-.35.3h-2.8c-.17 0-.32-.13-.35-.29l-.26-1.85c-.43-.18-.82-.41-1.18-.69l-1.74.7c-.16.06-.34 0-.43-.15l-1.4-2.42a.353.353 0 01.08-.45l1.48-1.16c-.03-.23-.05-.46-.05-.69s.02-.46.05-.68l-1.48-1.16a.353.353 0 01-.08-.45l1.4-2.42c.09-.15.27-.21.43-.15l1.74.7c.36-.28.76-.51 1.18-.69l.26-1.85c.03-.17.18-.3.35-.3h2.8c.17 0 .32.13.35.29l.26 1.85c.43.18.82.41 1.18.69l1.74-.7c.16-.06.34 0 .43.15l1.4 2.42c.09.15.05.34-.08.45l-1.48 1.16c.03.23.05.46.05.69zM12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" fill="currentColor"/>
+                        </svg>
+                        <span>BG Remover</span>
+                    </button>
+                    <span class="btn-badge-free" title="Zdarma, bez vodoznaku, 100% offline">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        FREE
+                    </span>
+                </div>
                 <button class="btn-secondary" id="shareBtn" title="Sdílet živě">
                     <svg viewBox="0 0 24 24" width="18" height="18">
                         <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z" fill="currentColor"/>
@@ -800,6 +814,110 @@
                             </svg>
                             Opustit relaci
                         </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BG Remover Modal -->
+        <div id="bgRemoverModal" class="modal-overlay" style="display: none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2>Odstranit pozadí</h2>
+                    <button class="btn-icon modal-close" data-modal="bgRemoverModal">
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="bg-remover-content">
+                        <!-- Header with FREE badge -->
+                        <div class="bg-remover-header">
+                            <div class="bg-remover-icon">
+                                <svg viewBox="0 0 24 24" width="32" height="32">
+                                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-1.75 9c0 .23-.02.46-.05.68l1.48 1.16c.13.11.17.3.08.45l-1.4 2.42c-.09.15-.27.21-.43.15l-1.74-.7c-.36.28-.76.51-1.18.69l-.26 1.85c-.03.17-.18.3-.35.3h-2.8c-.17 0-.32-.13-.35-.29l-.26-1.85c-.43-.18-.82-.41-1.18-.69l-1.74.7c-.16.06-.34 0-.43-.15l-1.4-2.42a.353.353 0 01.08-.45l1.48-1.16c-.03-.23-.05-.46-.05-.69s.02-.46.05-.68l-1.48-1.16a.353.353 0 01-.08-.45l1.4-2.42c.09-.15.27-.21.43-.15l1.74.7c.36-.28.76-.51 1.18-.69l.26-1.85c.03-.17.18-.3.35-.3h2.8c.17 0 .32.13.35.29l.26 1.85c.43.18.82.41 1.18.69l1.74-.7c.16-.06.34 0 .43.15l1.4 2.42c.09.15.05.34-.08.45l-1.48 1.16c.03.23.05.46.05.69zM12 8c-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4-1.79-4-4-4zm0 6c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z" fill="currentColor"/>
+                                </svg>
+                            </div>
+                            <div class="bg-remover-title">
+                                <span>AI Background Remover</span>
+                                <span class="free-tag">
+                                    <svg viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                                    </svg>
+                                    FREE
+                                </span>
+                            </div>
+                            <p class="bg-remover-subtitle">AI odstraní pozadí z aktivní vrstvy</p>
+                        </div>
+
+                        <!-- Form (hidden when processing) -->
+                        <div class="bg-remover-form" id="bgRemoverForm">
+                            <!-- Preview -->
+                            <div class="bg-remover-preview" id="bgRemoverPreview">
+                                <div class="empty-preview" id="bgRemoverEmptyPreview">
+                                    <svg viewBox="0 0 24 24" width="48" height="48">
+                                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" fill="currentColor"/>
+                                    </svg>
+                                    <span>Náhled aktivní vrstvy</span>
+                                </div>
+                                <canvas id="bgRemoverPreviewCanvas" style="display: none;"></canvas>
+                            </div>
+
+                            <!-- Options -->
+                            <div class="bg-remover-options">
+                                <label id="optionCurrentLayer" class="selected">
+                                    <input type="radio" name="bgRemoverTarget" value="current" checked>
+                                    <div class="option-text">
+                                        <span>Nahradit aktuální vrstvu</span>
+                                        <small>Pozadí bude odstraněno přímo z aktivní vrstvy</small>
+                                    </div>
+                                </label>
+                                <label id="optionNewLayer">
+                                    <input type="radio" name="bgRemoverTarget" value="new">
+                                    <div class="option-text">
+                                        <span>Vytvořit novou vrstvu</span>
+                                        <small>Výsledek bude na nové vrstvě "Bez pozadí"</small>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <!-- Info notice -->
+                            <div class="bg-remover-info">
+                                <svg viewBox="0 0 24 24" width="20" height="20">
+                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="currentColor"/>
+                                </svg>
+                                <span>100% offline, bez vodoznaku. První zpracování stáhne AI model (~40 MB).</span>
+                            </div>
+
+                            <!-- Actions -->
+                            <div class="bg-remover-actions">
+                                <button class="btn-secondary" data-modal="bgRemoverModal">Zrušit</button>
+                                <button class="btn-primary" id="bgRemoverApplyBtn" style="background: linear-gradient(135deg, #059669, #10b981);">
+                                    <svg viewBox="0 0 24 24" width="18" height="18">
+                                        <path d="M17.66 7.93L12 2.27 6.34 7.93c-3.12 3.12-3.12 8.19 0 11.31A7.98 7.98 0 0012 21.58c2.05 0 4.1-.78 5.66-2.34 3.12-3.12 3.12-8.19 0-11.31zM12 19.59c-1.6 0-3.11-.62-4.24-1.76C6.62 16.69 6 15.19 6 13.59s.62-3.11 1.76-4.24L12 5.1v14.49z" fill="currentColor"/>
+                                    </svg>
+                                    Odstranit pozadí
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Processing state -->
+                        <div class="bg-remover-processing" id="bgRemoverProcessing">
+                            <div class="spinner">
+                                <div class="spinner-ring"></div>
+                                <div class="spinner-icon">
+                                    <svg viewBox="0 0 24 24" width="32" height="32">
+                                        <path d="M17.66 7.93L12 2.27 6.34 7.93c-3.12 3.12-3.12 8.19 0 11.31A7.98 7.98 0 0012 21.58c2.05 0 4.1-.78 5.66-2.34 3.12-3.12 3.12-8.19 0-11.31zM12 19.59c-1.6 0-3.11-.62-4.24-1.76C6.62 16.69 6 15.19 6 13.59s.62-3.11 1.76-4.24L12 5.1v14.49z" fill="currentColor"/>
+                                    </svg>
+                                </div>
+                            </div>
+                            <div class="progress-text" id="bgRemoverProgressText">Zpracovávám...</div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="bgRemoverProgressFill"></div>
+                            </div>
+                            <div class="progress-status" id="bgRemoverProgressStatus">Načítám AI model...</div>
+                        </div>
                     </div>
                 </div>
             </div>

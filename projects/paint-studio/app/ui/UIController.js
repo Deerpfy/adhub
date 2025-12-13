@@ -75,6 +75,7 @@ export class UIController {
         this.createFullscreenHint();
         this.loadKeyboardPreset();
         this.setupCollaboration();
+        this.setupBgRemover();
     }
 
     /**
@@ -1572,6 +1573,154 @@ export class UIController {
             linkInput.select();
             document.execCommand('copy');
             this.showNotification('Odkaz zkopírován', 'success');
+        }
+    }
+
+    // =============================================
+    // Background Remover UI
+    // =============================================
+
+    /**
+     * Setup Background Remover event handlers
+     */
+    setupBgRemover() {
+        // Open modal button
+        document.getElementById('bgRemoverBtn')?.addEventListener('click', () => {
+            this.showBgRemoverModal();
+        });
+
+        // Close modal
+        document.querySelector('#bgRemoverModal .modal-close')?.addEventListener('click', () => {
+            this.hideModal('bgRemoverModal');
+        });
+
+        document.querySelector('#bgRemoverModal .btn-secondary[data-modal="bgRemoverModal"]')?.addEventListener('click', () => {
+            this.hideModal('bgRemoverModal');
+        });
+
+        // Click outside to close
+        document.getElementById('bgRemoverModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'bgRemoverModal') {
+                this.hideModal('bgRemoverModal');
+            }
+        });
+
+        // Radio button selection styling
+        document.querySelectorAll('#bgRemoverModal input[name="bgRemoverTarget"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                document.querySelectorAll('.bg-remover-options label').forEach(label => {
+                    label.classList.remove('selected');
+                });
+                radio.closest('label')?.classList.add('selected');
+            });
+        });
+
+        // Apply button
+        document.getElementById('bgRemoverApplyBtn')?.addEventListener('click', () => {
+            this.processBgRemover();
+        });
+    }
+
+    /**
+     * Show BG Remover modal with preview
+     */
+    showBgRemoverModal() {
+        const modal = document.getElementById('bgRemoverModal');
+        const form = document.getElementById('bgRemoverForm');
+        const processing = document.getElementById('bgRemoverProcessing');
+        const previewCanvas = document.getElementById('bgRemoverPreviewCanvas');
+        const emptyPreview = document.getElementById('bgRemoverEmptyPreview');
+        const applyBtn = document.getElementById('bgRemoverApplyBtn');
+
+        if (!modal) return;
+
+        // Reset state
+        form.classList.remove('hidden');
+        processing.classList.remove('active');
+
+        // Check if active layer has content
+        if (this.app.bgRemover && this.app.bgRemover.hasLayerContent()) {
+            // Show preview
+            const layer = this.app.layers.getActiveLayer();
+            if (layer && layer.canvas && previewCanvas) {
+                const ctx = previewCanvas.getContext('2d');
+                const maxWidth = 300;
+                const maxHeight = 200;
+                const scale = Math.min(maxWidth / layer.canvas.width, maxHeight / layer.canvas.height, 1);
+
+                previewCanvas.width = layer.canvas.width * scale;
+                previewCanvas.height = layer.canvas.height * scale;
+                ctx.drawImage(layer.canvas, 0, 0, previewCanvas.width, previewCanvas.height);
+
+                previewCanvas.style.display = 'block';
+                if (emptyPreview) emptyPreview.style.display = 'none';
+                if (applyBtn) applyBtn.disabled = false;
+            }
+        } else {
+            // Show empty state
+            if (previewCanvas) previewCanvas.style.display = 'none';
+            if (emptyPreview) emptyPreview.style.display = 'flex';
+            if (applyBtn) applyBtn.disabled = true;
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    /**
+     * Process background removal
+     */
+    async processBgRemover() {
+        const form = document.getElementById('bgRemoverForm');
+        const processing = document.getElementById('bgRemoverProcessing');
+        const progressText = document.getElementById('bgRemoverProgressText');
+        const progressFill = document.getElementById('bgRemoverProgressFill');
+        const progressStatus = document.getElementById('bgRemoverProgressStatus');
+
+        if (!this.app.bgRemover) {
+            this.showNotification('BG Remover není inicializován', 'error');
+            return;
+        }
+
+        // Get target option
+        const targetValue = document.querySelector('input[name="bgRemoverTarget"]:checked')?.value;
+        const applyToNewLayer = targetValue === 'new';
+
+        // Switch to processing state
+        form.classList.add('hidden');
+        processing.classList.add('active');
+
+        // Reset progress
+        if (progressFill) progressFill.style.width = '0%';
+        if (progressText) progressText.textContent = 'Zpracovávám...';
+        if (progressStatus) progressStatus.textContent = 'Načítám AI model...';
+
+        try {
+            await this.app.bgRemover.process({
+                applyToNewLayer,
+                onProgress: (percent, status) => {
+                    if (progressFill) progressFill.style.width = `${percent}%`;
+                    if (progressText) progressText.textContent = `${percent}%`;
+                    if (progressStatus) progressStatus.textContent = status;
+                }
+            });
+
+            // Success
+            if (progressFill) progressFill.style.width = '100%';
+            if (progressText) progressText.textContent = '100%';
+            if (progressStatus) progressStatus.textContent = 'Hotovo!';
+
+            setTimeout(() => {
+                this.hideModal('bgRemoverModal');
+                this.showNotification('Pozadí úspěšně odstraněno', 'success');
+            }, 500);
+
+        } catch (error) {
+            console.error('BG Remover error:', error);
+            this.showNotification(error.message || 'Chyba při odstraňování pozadí', 'error');
+
+            // Return to form
+            form.classList.remove('hidden');
+            processing.classList.remove('active');
         }
     }
 }
