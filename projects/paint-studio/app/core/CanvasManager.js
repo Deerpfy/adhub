@@ -42,6 +42,9 @@ export class CanvasManager {
 
         // RAF for smooth rendering
         this.renderRequested = false;
+
+        // Remote stroke data for collaboration
+        this.remoteStrokes = new Map(); // peerId -> stroke state
     }
 
     /**
@@ -189,6 +192,11 @@ export class CanvasManager {
         const pos = this.screenToCanvas(e.clientX, e.clientY);
         this.app.ui?.updateCursorPosition(Math.round(pos.x), Math.round(pos.y));
 
+        // Broadcast cursor position for collaboration
+        if (this.app.collab) {
+            this.app.collab.broadcastCursor(pos.x, pos.y);
+        }
+
         if (this.isPanning) {
             this.pan(e);
             return;
@@ -244,6 +252,15 @@ export class CanvasManager {
         if (tool && tool.onStart) {
             tool.onStart(pos.x, pos.y, this.pressure);
         }
+
+        // Broadcast stroke start for collaboration
+        if (this.app.collab && isDrawingTool) {
+            this.app.collab.broadcastStrokeStart(
+                { x: pos.x, y: pos.y, pressure: this.pressure },
+                tool?.name,
+                this.app.getBrushSettings()
+            );
+        }
     }
 
     /**
@@ -286,6 +303,11 @@ export class CanvasManager {
             }
 
             tool.onMove(drawPos.x, drawPos.y, this.pressure, this.lastX, this.lastY);
+        }
+
+        // Broadcast stroke move for collaboration
+        if (this.app.collab && this.isDrawingTool(tool?.name)) {
+            this.app.collab.broadcastStrokeMove({ x: pos.x, y: pos.y, pressure: this.pressure });
         }
 
         this.lastX = pos.x;
@@ -336,6 +358,11 @@ export class CanvasManager {
         if (isDrawingTool) {
             this.app.history.endAction();
             this.app.markUnsaved();
+        }
+
+        // Broadcast stroke end for collaboration
+        if (this.app.collab && isDrawingTool) {
+            this.app.collab.broadcastStrokeEnd();
         }
 
         // Re-render
@@ -744,5 +771,111 @@ export class CanvasManager {
      */
     getImageData() {
         return this.mainCtx.getImageData(0, 0, this.width, this.height);
+    }
+
+    // =============================================
+    // Remote Collaboration Methods
+    // =============================================
+
+    /**
+     * Start a remote stroke from another user
+     */
+    startRemoteStroke(data, peerId, color) {
+        // Get the active layer context
+        const layer = this.app.layers.getActiveLayer();
+        if (!layer || layer.locked) return;
+
+        const ctx = layer.canvas.getContext('2d');
+
+        // Store remote stroke state
+        this.remoteStrokes.set(peerId, {
+            ctx: ctx,
+            lastX: data.point.x,
+            lastY: data.point.y,
+            tool: data.tool,
+            settings: data.settings,
+            color: color
+        });
+
+        // Draw initial point
+        this.drawRemotePoint(ctx, data.point.x, data.point.y, data.settings, data.tool);
+    }
+
+    /**
+     * Continue a remote stroke
+     */
+    continueRemoteStroke(data, peerId) {
+        const state = this.remoteStrokes.get(peerId);
+        if (!state) return;
+
+        // Draw line segment
+        this.drawRemoteLine(
+            state.ctx,
+            state.lastX, state.lastY,
+            data.point.x, data.point.y,
+            state.settings,
+            state.tool
+        );
+
+        // Update last position
+        state.lastX = data.point.x;
+        state.lastY = data.point.y;
+
+        // Render changes
+        this.render();
+    }
+
+    /**
+     * End a remote stroke
+     */
+    endRemoteStroke(data, peerId) {
+        this.remoteStrokes.delete(peerId);
+        this.render();
+    }
+
+    /**
+     * Draw a remote point
+     */
+    drawRemotePoint(ctx, x, y, settings, toolName) {
+        const size = settings.size || 10;
+        const opacity = settings.opacity || 1;
+        const color = settings.color || '#000000';
+
+        ctx.save();
+        ctx.globalAlpha = opacity;
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+    }
+
+    /**
+     * Draw a remote line segment
+     */
+    drawRemoteLine(ctx, x1, y1, x2, y2, settings, toolName) {
+        const size = settings.size || 10;
+        const opacity = settings.opacity || 1;
+        const color = settings.color || '#000000';
+
+        ctx.save();
+        ctx.globalAlpha = opacity;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    /**
+     * Get pan object for collaboration cursor positioning
+     */
+    get pan() {
+        return { x: this.panX, y: this.panY };
     }
 }
