@@ -413,6 +413,17 @@ export class CollaborationManager {
         if (!cursor) {
             cursor = this.createRemoteCursor(fromPeerId, participant);
             this.remoteCursors.set(fromPeerId, cursor);
+        } else {
+            // Update cursor name/color if changed
+            const nameEl = cursor.querySelector('.remote-cursor-name');
+            if (nameEl && nameEl.textContent !== participant.name) {
+                nameEl.textContent = participant.name;
+                nameEl.style.background = participant.color;
+            }
+            const svgEl = cursor.querySelector('svg');
+            if (svgEl) {
+                svgEl.style.fill = participant.color;
+            }
         }
 
         // Convert canvas coordinates to screen coordinates
