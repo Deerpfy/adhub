@@ -221,8 +221,8 @@ export class BackgroundRemover {
      * Apply result to canvas
      */
     async applyResult(resultImg, applyToNewLayer) {
-        // Save state for undo
-        this.app.history.saveState();
+        // Start recording for undo
+        this.app.history.startAction();
 
         if (applyToNewLayer) {
             // Create new layer with result
@@ -246,6 +246,9 @@ export class BackgroundRemover {
                 ctx.drawImage(resultImg, x, y);
             }
         }
+
+        // End recording for undo
+        this.app.history.endAction();
 
         // Render and update UI
         this.app.canvas.render();
