@@ -1470,8 +1470,14 @@ export class UIController {
      * Start a collaboration session
      */
     async startCollabSession() {
+        const nickname = document.getElementById('hostNickname')?.value?.trim();
         const password = document.getElementById('collabPassword')?.value || '';
         const allowDraw = document.getElementById('collabAllowDraw')?.checked ?? true;
+
+        // Set nickname before starting
+        if (nickname) {
+            this.app.collab.setNickname(nickname);
+        }
 
         try {
             await this.app.collab.startSession(password, allowDraw);
@@ -1498,8 +1504,14 @@ export class UIController {
      * Join an existing collaboration session
      */
     async joinCollabSession() {
+        const nickname = document.getElementById('guestNickname')?.value?.trim();
         const password = document.getElementById('joinPassword')?.value || '';
         const errorEl = document.getElementById('joinError');
+
+        // Set nickname before joining
+        if (nickname) {
+            this.app.collab.setNickname(nickname);
+        }
 
         if (errorEl) {
             errorEl.style.display = 'none';
