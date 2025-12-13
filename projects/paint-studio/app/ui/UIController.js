@@ -337,20 +337,33 @@ export class UIController {
             const actualIndex = layer.flatIndex;
             const isFolder = layer.type === 'folder';
             const depth = layer.depth || 0;
+            const hasChildren = isFolder && this.app.layers.getFolderChildren(layer.id).length > 0;
 
             const item = document.createElement('div');
-            item.className = 'layer-item' +
-                (actualIndex === this.app.layers.activeLayerIndex ? ' active' : '') +
-                (isFolder ? ' is-folder' : '') +
-                (i === 0 ? ' is-top' : '');
+            let className = 'layer-item';
+            if (actualIndex === this.app.layers.activeLayerIndex) className += ' active';
+            if (isFolder) className += ' is-folder';
+            if (isFolder && hasChildren) className += ' has-children';
+            if (i === 0) className += ' is-top';
+            if (depth > 0) className += ` nested-${Math.min(depth, 4)}`;
+
+            item.className = className;
             item.dataset.index = actualIndex;
             item.dataset.id = layer.id;
             item.dataset.type = layer.type || 'layer';
+            item.dataset.depth = depth;
             item.draggable = true;
-            item.style.paddingLeft = `${8 + depth * 16}px`;
 
             if (isFolder) {
-                // Folder item
+                // Folder item - get children count
+                const childrenCount = this.app.layers.getFolderChildren(layer.id).length;
+                const descendantsCount = this.app.layers.getFolderDescendants(layer.id).length;
+
+                // Use open/closed folder icon
+                const folderIcon = layer.expanded
+                    ? '<path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z" fill="currentColor"/>'
+                    : '<path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="currentColor"/>';
+
                 item.innerHTML = `
                     <button class="folder-expand-btn" title="${layer.expanded ? 'Sbalit' : 'Rozbalit'}">
                         <svg viewBox="0 0 24 24" width="12" height="12" style="transform: rotate(${layer.expanded ? 90 : 0}deg)">
@@ -365,14 +378,14 @@ export class UIController {
                             }
                         </svg>
                     </button>
-                    <div class="folder-icon">
+                    <div class="folder-icon ${layer.expanded ? 'open' : 'closed'}">
                         <svg viewBox="0 0 24 24" width="20" height="20">
-                            <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="currentColor"/>
+                            ${folderIcon}
                         </svg>
                     </div>
                     <div class="layer-info">
                         <span class="layer-name">${layer.name}</span>
-                        <span class="layer-opacity">${Math.round(layer.opacity * 100)}%</span>
+                        <span class="folder-count" title="${descendantsCount} položek">${descendantsCount > 0 ? `(${descendantsCount})` : '(prázdná)'}</span>
                     </div>
                 `;
 
