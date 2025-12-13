@@ -1818,53 +1818,52 @@ body {
 }
 
 /* Nested layer styling - visual hierarchy */
-.layer-item.nested-1,
-.layer-item.nested-2,
-.layer-item.nested-3,
-.layer-item.nested-4 {
+.layer-item.nested-1 { margin-left: 16px; }
+.layer-item.nested-2 { margin-left: 32px; }
+.layer-item.nested-3 { margin-left: 48px; }
+.layer-item.nested-4 { margin-left: 64px; }
+
+.layer-item.nested-1:not(.is-folder),
+.layer-item.nested-2:not(.is-folder),
+.layer-item.nested-3:not(.is-folder),
+.layer-item.nested-4:not(.is-folder) {
+    border-left: 3px solid var(--primary-color);
+    background: rgba(139, 92, 246, 0.08);
+    border-radius: 0 8px 8px 0;
+}
+
+.layer-item.nested-1:not(.is-folder):hover,
+.layer-item.nested-2:not(.is-folder):hover,
+.layer-item.nested-3:not(.is-folder):hover,
+.layer-item.nested-4:not(.is-folder):hover {
+    background: rgba(139, 92, 246, 0.15);
+}
+
+.layer-item.nested-1:not(.is-folder).active,
+.layer-item.nested-2:not(.is-folder).active,
+.layer-item.nested-3:not(.is-folder).active,
+.layer-item.nested-4:not(.is-folder).active {
+    background: rgba(139, 92, 246, 0.25);
+    border-left-color: #a78bfa;
+}
+
+/* Nested folders have different style */
+.layer-item.is-folder.nested-1,
+.layer-item.is-folder.nested-2,
+.layer-item.is-folder.nested-3,
+.layer-item.is-folder.nested-4 {
+    border-left: 2px dashed var(--primary-color);
+    opacity: 0.9;
+}
+
+/* Folder with children - vertical connector line */
+.layer-item.is-folder.has-children {
     position: relative;
-    border-left: 2px solid var(--primary-color);
-    margin-left: 8px;
-    background: rgba(139, 92, 246, 0.05);
 }
 
-.layer-item.nested-2 { margin-left: 24px; border-left-color: #8b5cf6; }
-.layer-item.nested-3 { margin-left: 40px; border-left-color: #a78bfa; }
-.layer-item.nested-4 { margin-left: 56px; border-left-color: #c4b5fd; }
-
-.layer-item.nested-1:hover,
-.layer-item.nested-2:hover,
-.layer-item.nested-3:hover,
-.layer-item.nested-4:hover {
-    background: rgba(139, 92, 246, 0.12);
-}
-
-.layer-item.nested-1.active,
-.layer-item.nested-2.active,
-.layer-item.nested-3.active,
-.layer-item.nested-4.active {
-    background: rgba(139, 92, 246, 0.2);
-}
-
-/* Tree connector lines */
-.layer-item.nested-1::before,
-.layer-item.nested-2::before,
-.layer-item.nested-3::before,
-.layer-item.nested-4::before {
-    content: '';
+.layer-item.is-folder.has-children .folder-connector {
     position: absolute;
-    left: -10px;
-    top: 50%;
-    width: 8px;
-    height: 1px;
-    background: var(--primary-color);
-}
-
-/* Folder with children indicator */
-.layer-item.is-folder.has-children::after {
-    content: '';
-    position: absolute;
-    left: 28px;
+    left: 32px;
     top: 100%;
     width: 2px;
     height: 8px;
