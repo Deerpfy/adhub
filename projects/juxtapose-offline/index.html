@@ -178,6 +178,13 @@
                             <span data-i18n="load_project">Nacist</span>
                         </button>
                     </div>
+                    <div class="toolbar-group">
+                        <label class="toggle-switch" title="Zobrazit popisky">
+                            <input type="checkbox" id="showLabelsToggle" checked>
+                            <span class="toggle-slider"></span>
+                            <span class="toggle-label" data-i18n="show_labels">Popisky</span>
+                        </label>
+                    </div>
                     <div class="toolbar-group export-group">
                         <button class="tool-btn" id="exportGifBtn" title="Exportovat GIF">
                             <svg viewBox="0 0 24 24" width="20" height="20">
@@ -185,12 +192,19 @@
                             </svg>
                             <span>GIF</span>
                         </button>
-                        <button class="btn-primary" id="downloadImageBtn">
-                            <svg viewBox="0 0 24 24" width="18" height="18">
-                                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
-                            </svg>
-                            <span data-i18n="download_image">Stahnout PNG</span>
-                        </button>
+                        <div class="download-group">
+                            <button class="btn-primary" id="downloadImageBtn">
+                                <svg viewBox="0 0 24 24" width="18" height="18">
+                                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
+                                </svg>
+                                <span data-i18n="download_image">Stahnout</span>
+                            </button>
+                            <select id="downloadFormat" class="format-select">
+                                <option value="png">PNG</option>
+                                <option value="jpg">JPG</option>
+                                <option value="webp">WebP</option>
+                            </select>
+                        </div>
                     </div>
                 </div>
 

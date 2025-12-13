@@ -1,5 +1,5 @@
 /**
- * Juxtapose Offline - Before/After Image Comparison PWA
+ * Image Compare Offline - Before/After Image Comparison PWA
  * 100% client-side, no server dependencies
  *
  * Features:
@@ -34,7 +34,8 @@ const TRANSLATIONS = {
         edit: 'Upravit',
         save_project: 'Ulozit',
         load_project: 'Nacist',
-        download_image: 'Stahnout PNG',
+        download_image: 'Stahnout',
+        show_labels: 'Popisky',
         embed_code: 'Embed kod',
         saved_projects: 'Ulozene projekty',
         no_projects: 'Zatim zadne ulozene projekty',
@@ -70,7 +71,8 @@ const TRANSLATIONS = {
         edit: 'Edit',
         save_project: 'Save',
         load_project: 'Load',
-        download_image: 'Download PNG',
+        download_image: 'Download',
+        show_labels: 'Labels',
         embed_code: 'Embed code',
         saved_projects: 'Saved projects',
         no_projects: 'No saved projects yet',
@@ -282,14 +284,19 @@ function initButtons() {
         document.getElementById('projectsSection').scrollIntoView({ behavior: 'smooth' });
     });
 
-    // Download PNG
-    document.getElementById('downloadImageBtn').addEventListener('click', downloadPNG);
+    // Download image
+    document.getElementById('downloadImageBtn').addEventListener('click', downloadImage);
 
     // Export GIF
     document.getElementById('exportGifBtn').addEventListener('click', openGifModal);
 
     // Copy embed code
     document.getElementById('copyEmbedBtn').addEventListener('click', copyEmbedCode);
+
+    // Labels toggle
+    document.getElementById('showLabelsToggle').addEventListener('change', (e) => {
+        updateLabelsVisibility(e.target.checked);
+    });
 }
 
 // ============================================
@@ -363,10 +370,12 @@ function renderSlider(before, after, options) {
     // Labels
     const labelBefore = document.createElement('div');
     labelBefore.className = 'jx-label before';
+    labelBefore.id = 'sliderLabelBefore';
     labelBefore.textContent = options.labelBefore;
 
     const labelAfter = document.createElement('div');
     labelAfter.className = 'jx-label after';
+    labelAfter.id = 'sliderLabelAfter';
     labelAfter.textContent = options.labelAfter;
 
     // Assemble
@@ -376,6 +385,10 @@ function renderSlider(before, after, options) {
     slider.appendChild(labelBefore);
     slider.appendChild(labelAfter);
     container.appendChild(slider);
+
+    // Apply current labels visibility state
+    const showLabels = document.getElementById('showLabelsToggle')?.checked ?? true;
+    updateLabelsVisibility(showLabels);
 
     // Set aspect ratio based on image
     afterImg.onload = () => {
@@ -411,7 +424,7 @@ function initSliderInteraction(slider, isVertical) {
         slider.setAttribute('aria-valuenow', Math.round(position));
     }
 
-    // Mouse events
+    // Mouse events - prevent text selection
     slider.addEventListener('mousedown', (e) => {
         e.preventDefault(); // Prevent text selection
         isDragging = true;
@@ -431,8 +444,9 @@ function initSliderInteraction(slider, isVertical) {
         slider.classList.remove('active');
     });
 
-    // Touch events
+    // Touch events - prevent scrolling while dragging
     slider.addEventListener('touchstart', (e) => {
+        e.preventDefault();
         isDragging = true;
         slider.classList.add('active');
         updatePosition(e);
@@ -474,16 +488,33 @@ function initSliderInteraction(slider, isVertical) {
 }
 
 // ============================================
+// LABELS VISIBILITY
+// ============================================
+
+function updateLabelsVisibility(show) {
+    const labelBefore = document.getElementById('sliderLabelBefore');
+    const labelAfter = document.getElementById('sliderLabelAfter');
+
+    if (labelBefore) {
+        labelBefore.style.display = show ? 'block' : 'none';
+    }
+    if (labelAfter) {
+        labelAfter.style.display = show ? 'block' : 'none';
+    }
+}
+
+// ============================================
 // EMBED CODE
 // ============================================
 
 function generateEmbedCode(options) {
-    const embedCode = `<!-- Image Comparison Slider -->
-<div class="comparison-slider" data-position="${options.startPosition}" data-mode="${options.orientation}">
-    <img src="BEFORE_IMAGE_URL" alt="${options.labelBefore}" />
-    <img src="AFTER_IMAGE_URL" alt="${options.labelAfter}" />
+    // Generate standalone embed code without external dependencies
+    const embedCode = `<!-- Image Compare - Before/After Slider -->
+<div class="image-compare" data-position="${options.startPosition}" data-orientation="${options.orientation}">
+    <img src="BEFORE_IMAGE_URL" alt="${options.labelBefore}" data-label="${options.labelBefore}" />
+    <img src="AFTER_IMAGE_URL" alt="${options.labelAfter}" data-label="${options.labelAfter}" />
 </div>
-<!-- Nahradte URL vasimi obrazky -->`;
+<!-- Note: Include your own slider implementation or host the images for comparison -->`;
 
     document.getElementById('embedCode').value = embedCode;
 }
@@ -496,18 +527,19 @@ function copyEmbedCode() {
 }
 
 // ============================================
-// DOWNLOAD PNG
+// DOWNLOAD IMAGE
 // ============================================
 
-function downloadPNG() {
+function downloadImage() {
     if (!currentSlider) return;
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const slider = currentSlider.element;
-    const rect = slider.getBoundingClientRect();
     const position = parseFloat(slider.style.getPropertyValue('--position')) || 50;
     const isVertical = slider.classList.contains('vertical');
+    const showLabels = document.getElementById('showLabelsToggle')?.checked ?? true;
+    const format = document.getElementById('downloadFormat').value;
 
     // Load images
     const img1 = new Image();
@@ -546,29 +578,50 @@ function downloadPNG() {
             ctx.fillRect(canvas.width * (position / 100) - 2, 0, 4, canvas.height);
         }
 
-        // Draw labels
-        ctx.font = 'bold 14px sans-serif';
-        ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        const labelBefore = currentSlider.options.labelBefore;
-        const labelAfter = currentSlider.options.labelAfter;
+        // Draw labels only if visible
+        if (showLabels) {
+            ctx.font = 'bold 14px sans-serif';
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            const labelBefore = currentSlider.options.labelBefore;
+            const labelAfter = currentSlider.options.labelAfter;
 
-        // Before label
-        const beforeMetrics = ctx.measureText(labelBefore);
-        ctx.fillRect(15, 15, beforeMetrics.width + 20, 28);
-        ctx.fillStyle = '#fff';
-        ctx.fillText(labelBefore, 25, 35);
+            // Before label
+            const beforeMetrics = ctx.measureText(labelBefore);
+            ctx.fillRect(15, 15, beforeMetrics.width + 20, 28);
+            ctx.fillStyle = '#fff';
+            ctx.fillText(labelBefore, 25, 35);
 
-        // After label
-        const afterMetrics = ctx.measureText(labelAfter);
-        ctx.fillStyle = 'rgba(0,0,0,0.7)';
-        ctx.fillRect(canvas.width - afterMetrics.width - 35, 15, afterMetrics.width + 20, 28);
-        ctx.fillStyle = '#fff';
-        ctx.fillText(labelAfter, canvas.width - afterMetrics.width - 25, 35);
+            // After label
+            const afterMetrics = ctx.measureText(labelAfter);
+            ctx.fillStyle = 'rgba(0,0,0,0.7)';
+            ctx.fillRect(canvas.width - afterMetrics.width - 35, 15, afterMetrics.width + 20, 28);
+            ctx.fillStyle = '#fff';
+            ctx.fillText(labelAfter, canvas.width - afterMetrics.width - 25, 35);
+        }
 
-        // Download
+        // Download in selected format
         const link = document.createElement('a');
-        link.download = 'comparison.png';
-        link.href = canvas.toDataURL('image/png');
+        let mimeType, extension, quality;
+
+        switch (format) {
+            case 'jpg':
+                mimeType = 'image/jpeg';
+                extension = 'jpg';
+                quality = 0.92;
+                break;
+            case 'webp':
+                mimeType = 'image/webp';
+                extension = 'webp';
+                quality = 0.92;
+                break;
+            default:
+                mimeType = 'image/png';
+                extension = 'png';
+                quality = undefined;
+        }
+
+        link.download = `image-compare.${extension}`;
+        link.href = canvas.toDataURL(mimeType, quality);
         link.click();
     };
 
@@ -695,7 +748,7 @@ function downloadGif() {
     if (!gifBlob) return;
 
     const link = document.createElement('a');
-    link.download = 'comparison-animation.gif';
+    link.download = 'image-compare-animation.gif';
     link.href = URL.createObjectURL(gifBlob);
     link.click();
 }

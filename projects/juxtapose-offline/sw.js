@@ -1,9 +1,9 @@
 /**
- * Service Worker for Juxtapose Offline PWA
+ * Service Worker for Image Compare Offline PWA
  * Implements cache-first strategy for offline support
  */
 
-const CACHE_NAME = 'juxtapose-offline-v1';
+const CACHE_NAME = 'image-compare-offline-v2';
 const ASSETS = [
     './',
     './index.html',
