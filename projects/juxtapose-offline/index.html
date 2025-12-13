@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
     <!-- SEO Meta Tags -->
-    <title>Image Compare - Offline Before/After Comparison</title>
+    <title>Juxtapose - Offline Before/After Image Comparison</title>
     <meta name="description" content="100% offline before/after image comparison tool. Create interactive image sliders directly in your browser. No server, no upload, complete privacy.">
-    <meta name="keywords" content="before after, image comparison, slider, offline, privacy">
+    <meta name="keywords" content="before after, image comparison, slider, juxtapose, offline, privacy">
     <meta name="author" content="Deerpfy">
 
     <!-- PWA -->
@@ -15,7 +15,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Image Compare">
+    <meta name="apple-mobile-web-app-title" content="Juxtapose">
     <link rel="manifest" href="manifest.json">
     <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
     <link rel="apple-touch-icon" href="icons/icon.svg">
@@ -44,7 +44,7 @@
                         <circle cx="12" cy="12" r="3" fill="currentColor"/>
                         <path d="M9 12l-2-2M9 12l-2 2M15 12l2-2M15 12l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
                     </svg>
-                    <span>Image Compare</span>
+                    <span>Juxtapose</span>
                 </h1>
                 <span class="offline-badge" id="offlineBadge">
                     <svg viewBox="0 0 24 24" width="14" height="14">
@@ -178,13 +178,6 @@
                             <span data-i18n="load_project">Nacist</span>
                         </button>
                     </div>
-                    <div class="toolbar-group">
-                        <label class="toggle-switch" title="Zobrazit popisky">
-                            <input type="checkbox" id="showLabelsToggle" checked>
-                            <span class="toggle-slider"></span>
-                            <span class="toggle-label" data-i18n="show_labels">Popisky</span>
-                        </label>
-                    </div>
                     <div class="toolbar-group export-group">
                         <button class="tool-btn" id="exportGifBtn" title="Exportovat GIF">
                             <svg viewBox="0 0 24 24" width="20" height="20">
@@ -196,7 +189,7 @@
                             <svg viewBox="0 0 24 24" width="18" height="18">
                                 <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
                             </svg>
-                            <span data-i18n="download_image">Stáhnout</span>
+                            <span data-i18n="download_image">Stahnout PNG</span>
                         </button>
                     </div>
                 </div>
@@ -209,11 +202,21 @@
                 </div>
 
                 <!-- Embed Code -->
-                <div class="embed-section">
-                    <h3 data-i18n="embed_code">Embed kod</h3>
-                    <div class="embed-code-container">
+                <div class="embed-section no-frame">
+                    <h3 data-i18n="embed_code">Embed kód</h3>
+                    <div class="embed-url-inputs">
+                        <div class="embed-url-group">
+                            <label data-i18n="embed_before_url">URL obrázku Před:</label>
+                            <input type="url" id="embedBeforeUrl" placeholder="https://example.com/before.jpg">
+                        </div>
+                        <div class="embed-url-group">
+                            <label data-i18n="embed_after_url">URL obrázku Po:</label>
+                            <input type="url" id="embedAfterUrl" placeholder="https://example.com/after.jpg">
+                        </div>
+                    </div>
+                    <div class="embed-code-wrapper">
                         <textarea id="embedCode" readonly></textarea>
-                        <button class="copy-btn" id="copyEmbedBtn" title="Kopirovat">
+                        <button class="copy-btn" id="copyEmbedBtn" title="Kopírovat">
                             <svg viewBox="0 0 24 24" width="20" height="20">
                                 <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" fill="currentColor"/>
                             </svg>
@@ -301,6 +304,27 @@
                             <span class="format-desc">Moderní formát</span>
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Project Modal -->
+        <div class="modal hidden" id="saveProjectModal">
+            <div class="modal-content modal-small">
+                <div class="modal-header">
+                    <h3 data-i18n="project_name">Název projektu</h3>
+                    <button class="close-btn" id="closeSaveProjectModal">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="projectNameInput" class="project-name-input" data-i18n-placeholder="project_name_placeholder" placeholder="Zadejte název projektu...">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" id="cancelSaveProject" data-i18n="cancel">Zrušit</button>
+                    <button class="btn-primary" id="confirmSaveProject" data-i18n="save">Uložit</button>
                 </div>
             </div>
         </div>
