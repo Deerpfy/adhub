@@ -539,6 +539,14 @@ export class CanvasManager {
                 }
             }
 
+            // Delete/Backspace to clear selected area
+            if (e.key === 'Delete' || e.key === 'Backspace') {
+                if (this.app.selection?.hasSelection) {
+                    e.preventDefault();
+                    this.deleteSelection();
+                }
+            }
+
             // Brush size shortcuts (always [ and ])
             if (e.key === '[') { this.decreaseBrushSize(); }
             if (e.key === ']') { this.increaseBrushSize(); }
@@ -771,6 +779,53 @@ export class CanvasManager {
      */
     getImageData() {
         return this.mainCtx.getImageData(0, 0, this.width, this.height);
+    }
+
+    /**
+     * Delete (clear) selected area on active layer
+     */
+    deleteSelection() {
+        const selection = this.app.selection;
+        if (!selection?.hasSelection) return;
+
+        const layer = this.app.layers.getActiveLayer();
+        if (!layer || layer.locked) {
+            this.app.ui?.showNotification('Vrstva je zamčená', 'error');
+            return;
+        }
+
+        // Save for undo
+        this.app.history.startAction();
+
+        const ctx = layer.canvas.getContext('2d');
+        const imageData = ctx.getImageData(0, 0, this.width, this.height);
+        const data = imageData.data;
+
+        // Clear pixels that are selected
+        for (let i = 0; i < selection.selectionMask.length; i++) {
+            if (selection.selectionMask[i] > 0) {
+                const idx = i * 4;
+                // Set to transparent
+                data[idx] = 0;     // R
+                data[idx + 1] = 0; // G
+                data[idx + 2] = 0; // B
+                data[idx + 3] = 0; // A
+            }
+        }
+
+        ctx.putImageData(imageData, 0, 0);
+
+        // End history action
+        this.app.history.endAction();
+
+        // Clear selection after delete
+        selection.clearSelection();
+
+        // Render and update UI
+        this.render();
+        this.app.ui?.updateLayersList();
+        this.app.markUnsaved();
+        this.app.ui?.showNotification('Výběr smazán', 'success');
     }
 
     // =============================================
