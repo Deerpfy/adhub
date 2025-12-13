@@ -16,6 +16,9 @@ import { UIController } from '../ui/UIController.js';
 import { SelectionManager } from '../tools/SelectionManager.js';
 import { CollaborationManager } from './CollaborationManager.js';
 import { BackgroundRemover } from '../utils/BackgroundRemover.js';
+import { PixelArtManager } from '../pixelart/PixelArtManager.js';
+import { AnimationManager } from '../pixelart/AnimationManager.js';
+import { ColorAdjustments } from '../pixelart/ColorAdjustments.js';
 
 export class PaintApp {
     constructor() {
@@ -34,7 +37,8 @@ export class PaintApp {
             streamlineEnabled: true,
             streamlineAmount: 50,
             quickshapeEnabled: true,
-            quickshapePreview: true
+            quickshapePreview: true,
+            pixelArtMode: false
         };
 
         // Managers will be initialized in init()
@@ -51,6 +55,11 @@ export class PaintApp {
         this.selection = null;
         this.collab = null;
         this.bgRemover = null;
+
+        // Pixel Art modules
+        this.pixelArt = null;
+        this.animation = null;
+        this.colorAdjust = null;
     }
 
     /**
@@ -110,6 +119,15 @@ export class PaintApp {
 
             // Initialize background remover (lazy loading)
             this.bgRemover = new BackgroundRemover(this);
+
+            // Initialize Pixel Art modules
+            this.pixelArt = new PixelArtManager(this);
+            this.pixelArt.init();
+
+            this.animation = new AnimationManager(this);
+            this.animation.init();
+
+            this.colorAdjust = new ColorAdjustments(this);
 
             // Create default project
             await this.newProject({

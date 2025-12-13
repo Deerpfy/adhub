@@ -266,6 +266,9 @@
                     <canvas id="previewCanvas" class="preview-canvas"></canvas>
                 </div>
 
+                <!-- Overlay canvas for grid, guides, symmetry lines -->
+                <canvas id="overlayCanvas" class="overlay-canvas"></canvas>
+
                 <!-- QuickShape indicator -->
                 <div class="quickshape-indicator" id="quickshapeIndicator" style="display: none;">
                     <svg viewBox="0 0 24 24" width="16" height="16">
@@ -273,10 +276,288 @@
                     </svg>
                     <span>QuickShape</span>
                 </div>
+
+                <!-- Pixel Art Mode indicator -->
+                <div class="pixel-art-indicator" id="pixelArtIndicator" style="display: none;">
+                    <svg viewBox="0 0 24 24" width="14" height="14">
+                        <path d="M4 4h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 10h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 16h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4z" fill="currentColor"/>
+                    </svg>
+                    <span>PIXEL</span>
+                </div>
             </div>
 
             <!-- Right Panel - Layers & Properties -->
             <aside class="panel panel-right" id="panelRight">
+                <!-- Pixel Art Mode Toggle & Settings -->
+                <section class="panel-section pixel-art-section" id="pixelArtSection">
+                    <div class="panel-header">
+                        <h3>
+                            <svg viewBox="0 0 24 24" width="16" height="16" style="margin-right: 6px; vertical-align: -2px;">
+                                <path d="M4 4h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 10h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 16h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4z" fill="currentColor"/>
+                            </svg>
+                            Pixel Art Mode
+                        </h3>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="pixelArtModeToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="panel-content pixel-art-content" id="pixelArtContent" style="display: none;">
+                        <!-- Grid Settings -->
+                        <div class="setting-group">
+                            <div class="setting-group-header">
+                                <span>Mřížka</span>
+                                <label class="mini-toggle">
+                                    <input type="checkbox" id="gridEnabled">
+                                    <span class="mini-toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-row">
+                                <label>Velikost</label>
+                                <div class="slider-group">
+                                    <input type="range" id="gridSize" min="1" max="64" value="16" class="slider">
+                                    <input type="number" id="gridSizeInput" min="1" max="64" value="16" class="slider-input">
+                                </div>
+                            </div>
+                            <div class="setting-row">
+                                <label>Barva</label>
+                                <input type="color" id="gridColor" value="#888888" class="color-input-small">
+                            </div>
+                            <div class="setting-row">
+                                <label>Průhlednost</label>
+                                <div class="slider-group">
+                                    <input type="range" id="gridOpacity" min="0" max="100" value="30" class="slider">
+                                    <span id="gridOpacityValue" class="slider-value">30%</span>
+                                </div>
+                            </div>
+                            <div class="setting-row checkbox-row">
+                                <label>
+                                    <input type="checkbox" id="snapToGrid" checked>
+                                    Přichytávat k mřížce
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Symmetry Settings -->
+                        <div class="setting-group">
+                            <div class="setting-group-header">
+                                <span>Symetrie</span>
+                            </div>
+                            <div class="symmetry-buttons">
+                                <button class="symmetry-btn active" data-symmetry="none" title="Bez symetrie">
+                                    <svg viewBox="0 0 24 24" width="18" height="18">
+                                        <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                                    </svg>
+                                </button>
+                                <button class="symmetry-btn" data-symmetry="horizontal" title="Horizontální">
+                                    <svg viewBox="0 0 24 24" width="18" height="18">
+                                        <line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" stroke-width="2" stroke-dasharray="2"/>
+                                        <circle cx="8" cy="10" r="2" fill="currentColor"/>
+                                        <circle cx="16" cy="10" r="2" fill="currentColor"/>
+                                    </svg>
+                                </button>
+                                <button class="symmetry-btn" data-symmetry="vertical" title="Vertikální">
+                                    <svg viewBox="0 0 24 24" width="18" height="18">
+                                        <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="2" stroke-dasharray="2"/>
+                                        <circle cx="10" cy="8" r="2" fill="currentColor"/>
+                                        <circle cx="10" cy="16" r="2" fill="currentColor"/>
+                                    </svg>
+                                </button>
+                                <button class="symmetry-btn" data-symmetry="both" title="Obě osy">
+                                    <svg viewBox="0 0 24 24" width="18" height="18">
+                                        <line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" stroke-width="2" stroke-dasharray="2"/>
+                                        <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="2" stroke-dasharray="2"/>
+                                        <circle cx="8" cy="8" r="1.5" fill="currentColor"/>
+                                        <circle cx="16" cy="8" r="1.5" fill="currentColor"/>
+                                        <circle cx="8" cy="16" r="1.5" fill="currentColor"/>
+                                        <circle cx="16" cy="16" r="1.5" fill="currentColor"/>
+                                    </svg>
+                                </button>
+                                <button class="symmetry-btn" data-symmetry="radial" title="Radiální">
+                                    <svg viewBox="0 0 24 24" width="18" height="18">
+                                        <circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="2"/>
+                                        <circle cx="12" cy="5" r="1.5" fill="currentColor"/>
+                                        <circle cx="12" cy="19" r="1.5" fill="currentColor"/>
+                                        <circle cx="5" cy="12" r="1.5" fill="currentColor"/>
+                                        <circle cx="19" cy="12" r="1.5" fill="currentColor"/>
+                                        <circle cx="7" cy="7" r="1.5" fill="currentColor"/>
+                                        <circle cx="17" cy="17" r="1.5" fill="currentColor"/>
+                                        <circle cx="17" cy="7" r="1.5" fill="currentColor"/>
+                                        <circle cx="7" cy="17" r="1.5" fill="currentColor"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="setting-row radial-segments" id="radialSegmentsRow" style="display: none;">
+                                <label>Segmenty</label>
+                                <div class="slider-group">
+                                    <input type="range" id="radialSegments" min="2" max="16" value="8" class="slider">
+                                    <input type="number" id="radialSegmentsInput" min="2" max="16" value="8" class="slider-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tile Mode -->
+                        <div class="setting-group">
+                            <div class="setting-group-header">
+                                <span>Tile mód</span>
+                                <label class="mini-toggle">
+                                    <input type="checkbox" id="tileModeEnabled">
+                                    <span class="mini-toggle-slider"></span>
+                                </label>
+                            </div>
+                            <p class="setting-hint">Náhled opakování textury</p>
+                        </div>
+
+                        <!-- Dithering -->
+                        <div class="setting-group">
+                            <div class="setting-group-header">
+                                <span>Dithering</span>
+                            </div>
+                            <div class="dither-buttons">
+                                <button class="dither-btn active" data-dither="none" title="Bez ditheringu">Žádný</button>
+                                <button class="dither-btn" data-dither="bayer2" title="Bayer 2x2">2x2</button>
+                                <button class="dither-btn" data-dither="bayer4" title="Bayer 4x4">4x4</button>
+                                <button class="dither-btn" data-dither="bayer8" title="Bayer 8x8">8x8</button>
+                            </div>
+                        </div>
+
+                        <!-- Onion Skin -->
+                        <div class="setting-group">
+                            <div class="setting-group-header">
+                                <span>Onion Skin</span>
+                                <label class="mini-toggle">
+                                    <input type="checkbox" id="onionSkinEnabled">
+                                    <span class="mini-toggle-slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-row">
+                                <label>Předchozí snímky</label>
+                                <input type="number" id="onionSkinPrev" min="0" max="5" value="2" class="slider-input">
+                            </div>
+                            <div class="setting-row">
+                                <label>Následující snímky</label>
+                                <input type="number" id="onionSkinNext" min="0" max="5" value="1" class="slider-input">
+                            </div>
+                            <div class="setting-row">
+                                <label>Průhlednost</label>
+                                <div class="slider-group">
+                                    <input type="range" id="onionSkinOpacity" min="10" max="80" value="30" class="slider">
+                                    <span id="onionSkinOpacityValue" class="slider-value">30%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quick Actions -->
+                        <div class="setting-group">
+                            <div class="setting-group-header">
+                                <span>Úpravy barev</span>
+                            </div>
+                            <div class="quick-actions-grid">
+                                <button class="quick-action-btn" id="adjustHSBBtn" title="HSB úpravy">
+                                    <svg viewBox="0 0 24 24" width="16" height="16">
+                                        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                                        <path d="M12 2v10l7 7" stroke="currentColor" stroke-width="2" fill="none"/>
+                                    </svg>
+                                    HSB
+                                </button>
+                                <button class="quick-action-btn" id="posterizeBtn" title="Posterizace">
+                                    <svg viewBox="0 0 24 24" width="16" height="16">
+                                        <rect x="3" y="3" width="6" height="6" fill="currentColor" opacity="0.3"/>
+                                        <rect x="9" y="3" width="6" height="6" fill="currentColor" opacity="0.5"/>
+                                        <rect x="15" y="3" width="6" height="6" fill="currentColor" opacity="0.7"/>
+                                        <rect x="3" y="9" width="18" height="12" fill="currentColor"/>
+                                    </svg>
+                                    Poster
+                                </button>
+                                <button class="quick-action-btn" id="invertBtn" title="Invertovat">
+                                    <svg viewBox="0 0 24 24" width="16" height="16">
+                                        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                                        <path d="M12 2a10 10 0 0 1 0 20" fill="currentColor"/>
+                                    </svg>
+                                    Invert
+                                </button>
+                                <button class="quick-action-btn" id="desaturateBtn" title="Desaturace">
+                                    <svg viewBox="0 0 24 24" width="16" height="16">
+                                        <rect x="4" y="4" width="16" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+                                        <line x1="4" y1="12" x2="20" y2="12" stroke="currentColor" stroke-width="2"/>
+                                    </svg>
+                                    Šedá
+                                </button>
+                                <button class="quick-action-btn" id="outlineBtn" title="Vytvořit obrys">
+                                    <svg viewBox="0 0 24 24" width="16" height="16">
+                                        <rect x="5" y="5" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3"/>
+                                    </svg>
+                                    Obrys
+                                </button>
+                                <button class="quick-action-btn" id="flipHBtn" title="Převrátit horizontálně">
+                                    <svg viewBox="0 0 24 24" width="16" height="16">
+                                        <path d="M15 21h2v-2h-2v2zm4-12h2V7h-2v2zM3 5v14c0 1.1.9 2 2 2h4v-2H5V5h4V3H5c-1.1 0-2 .9-2 2zm16-2v2h2c0-1.1-.9-2-2-2zm-8 20h2V1h-2v22zm8-6h2v-2h-2v2zM15 5h2V3h-2v2zm4 8h2v-2h-2v2zm0 8c1.1 0 2-.9 2-2h-2v2z" fill="currentColor"/>
+                                    </svg>
+                                    Flip H
+                                </button>
+                                <button class="quick-action-btn" id="flipVBtn" title="Převrátit vertikálně">
+                                    <svg viewBox="0 0 24 24" width="16" height="16">
+                                        <path d="M3 15v2h2v-2H3zM3 19v2h2v-2H3zM3 11v2h2v-2H3zM3 7v2h2v-2H3zM21 3H3v2h18V3zM3 19h18v2H3v-2zM3 11h18v2H3v-2zM15 7v2h2V7h-2zm4 0v2h2V7h-2zM7 15v2h2v-2H7zm4 0v2h2v-2h-2zm4 0v2h2v-2h-2z" fill="currentColor" transform="rotate(90 12 12)"/>
+                                    </svg>
+                                    Flip V
+                                </button>
+                                <button class="quick-action-btn" id="rotate90Btn" title="Otočit 90°">
+                                    <svg viewBox="0 0 24 24" width="16" height="16">
+                                        <path d="M7.11 8.53L5.7 7.11C4.8 8.27 4.24 9.61 4.07 11h2.02c.14-.87.49-1.72 1.02-2.47zM6.09 13H4.07c.17 1.39.72 2.73 1.62 3.89l1.41-1.42c-.52-.75-.87-1.59-1.01-2.47zm1.01 5.32c1.16.9 2.51 1.44 3.9 1.61V17.9c-.87-.15-1.71-.49-2.46-1.03L7.1 18.32zM13 4.07V1L8.45 5.55 13 10V6.09c2.84.48 5 2.94 5 5.91s-2.16 5.43-5 5.91v2.02c3.95-.49 7-3.85 7-7.93s-3.05-7.44-7-7.93z" fill="currentColor"/>
+                                    </svg>
+                                    90°
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Color Palette (for Pixel Art) -->
+                <section class="panel-section palette-section" id="paletteSection" style="display: none;">
+                    <div class="panel-header">
+                        <h3>Paleta barev</h3>
+                        <div class="palette-actions">
+                            <select id="paletteSelect" class="palette-select">
+                                <option value="custom">Vlastní</option>
+                                <option value="db32">DB32</option>
+                                <option value="pico8">PICO-8</option>
+                                <option value="gameboy">GameBoy</option>
+                                <option value="nes">NES</option>
+                                <option value="cga">CGA</option>
+                            </select>
+                            <button class="btn-icon" id="importPaletteBtn" title="Importovat paletu">
+                                <svg viewBox="0 0 24 24" width="16" height="16">
+                                    <path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                            <button class="btn-icon" id="exportPaletteBtn" title="Exportovat paletu">
+                                <svg viewBox="0 0 24 24" width="16" height="16">
+                                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panel-content">
+                        <div class="palette-grid" id="paletteGrid">
+                            <!-- Palette colors will be dynamically added -->
+                        </div>
+                        <div class="palette-footer">
+                            <button class="btn-small" id="addToPaletteBtn">
+                                <svg viewBox="0 0 24 24" width="14" height="14">
+                                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+                                </svg>
+                                Přidat barvu
+                            </button>
+                            <button class="btn-small" id="extractColorsBtn">
+                                <svg viewBox="0 0 24 24" width="14" height="14">
+                                    <path d="M20.71 5.63l-2.34-2.34a.996.996 0 00-1.41 0l-3.12 3.12-1.93-1.91-1.41 1.41 1.42 1.42L3 16.25V21h4.75l8.92-8.92 1.42 1.42 1.41-1.41-1.92-1.92 3.12-3.12c.4-.39.4-1.03.01-1.42z" fill="currentColor"/>
+                                </svg>
+                                Z obrázku
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Brush Settings -->
                 <section class="panel-section brush-settings" id="brushSettings">
                     <div class="panel-header">
@@ -499,6 +780,85 @@
                 </section>
             </aside>
         </main>
+
+        <!-- Animation Timeline (for Pixel Art) -->
+        <div class="animation-timeline" id="animationTimeline" style="display: none;">
+            <div class="timeline-controls">
+                <button class="timeline-btn" id="timelineFirstBtn" title="První snímek">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" fill="currentColor"/>
+                    </svg>
+                </button>
+                <button class="timeline-btn" id="timelinePrevBtn" title="Předchozí snímek">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M6 6h2v12H6zm3.5 6l8.5 6V6z" fill="currentColor"/>
+                    </svg>
+                </button>
+                <button class="timeline-btn play-btn" id="timelinePlayBtn" title="Přehrát">
+                    <svg viewBox="0 0 24 24" width="18" height="18" class="play-icon">
+                        <path d="M8 5v14l11-7z" fill="currentColor"/>
+                    </svg>
+                    <svg viewBox="0 0 24 24" width="18" height="18" class="pause-icon" style="display: none;">
+                        <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" fill="currentColor"/>
+                    </svg>
+                </button>
+                <button class="timeline-btn" id="timelineNextBtn" title="Další snímek">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" fill="currentColor"/>
+                    </svg>
+                </button>
+                <button class="timeline-btn" id="timelineLastBtn" title="Poslední snímek">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z" fill="currentColor"/>
+                    </svg>
+                </button>
+                <div class="timeline-divider"></div>
+                <div class="fps-control">
+                    <label>FPS:</label>
+                    <input type="number" id="timelineFPS" min="1" max="60" value="12" class="fps-input">
+                </div>
+                <span class="frame-counter" id="frameCounter">1 / 1</span>
+            </div>
+            <div class="timeline-frames" id="timelineFrames">
+                <!-- Frames will be dynamically added -->
+                <div class="frame-item active" data-frame="0">
+                    <div class="frame-preview">
+                        <canvas width="48" height="48"></canvas>
+                    </div>
+                    <span class="frame-number">1</span>
+                </div>
+            </div>
+            <div class="timeline-actions">
+                <button class="timeline-btn" id="addFrameBtn" title="Přidat snímek">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+                    </svg>
+                </button>
+                <button class="timeline-btn" id="duplicateFrameBtn" title="Duplikovat snímek">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" fill="currentColor"/>
+                    </svg>
+                </button>
+                <button class="timeline-btn" id="deleteFrameBtn" title="Smazat snímek">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                    </svg>
+                </button>
+                <div class="timeline-divider"></div>
+                <button class="timeline-btn" id="exportGifBtn" title="Export GIF">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
+                    </svg>
+                    GIF
+                </button>
+                <button class="timeline-btn" id="exportSpriteBtn" title="Export Sprite Sheet">
+                    <svg viewBox="0 0 24 24" width="16" height="16">
+                        <path d="M4 4h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 10h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 16h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4z" fill="currentColor"/>
+                    </svg>
+                    Sprite
+                </button>
+            </div>
+        </div>
 
         <!-- Bottom Status Bar -->
         <footer class="status-bar">
@@ -926,6 +1286,163 @@
 
         <!-- Remote Cursors Container -->
         <div id="remoteCursors" class="remote-cursors-container"></div>
+
+        <!-- HSB Adjustments Modal -->
+        <div class="modal-overlay" id="hsbModal" style="display: none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2>HSB úpravy</h2>
+                    <button class="btn-icon modal-close" data-modal="hsbModal">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="hsb-preview">
+                        <canvas id="hsbPreviewCanvas" width="200" height="150"></canvas>
+                    </div>
+                    <div class="form-group">
+                        <label>Odstín (Hue)</label>
+                        <div class="slider-group">
+                            <input type="range" id="hsbHue" min="-180" max="180" value="0" class="slider hue-range">
+                            <input type="number" id="hsbHueInput" min="-180" max="180" value="0" class="slider-input">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Sytost (Saturation)</label>
+                        <div class="slider-group">
+                            <input type="range" id="hsbSaturation" min="-100" max="100" value="0" class="slider">
+                            <input type="number" id="hsbSaturationInput" min="-100" max="100" value="0" class="slider-input">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Jas (Brightness)</label>
+                        <div class="slider-group">
+                            <input type="range" id="hsbBrightness" min="-100" max="100" value="0" class="slider">
+                            <input type="number" id="hsbBrightnessInput" min="-100" max="100" value="0" class="slider-input">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" id="hsbResetBtn">Reset</button>
+                    <button class="btn-secondary modal-cancel" data-modal="hsbModal">Zrušit</button>
+                    <button class="btn-primary" id="hsbApplyBtn">Použít</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas Resize Modal -->
+        <div class="modal-overlay" id="resizeModal" style="display: none;">
+            <div class="modal">
+                <div class="modal-header">
+                    <h2>Změnit velikost plátna</h2>
+                    <button class="btn-icon modal-close" data-modal="resizeModal">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="resizeWidth">Nová šířka (px)</label>
+                            <input type="number" id="resizeWidth" value="64" min="1" max="4096">
+                        </div>
+                        <div class="form-group">
+                            <label for="resizeHeight">Nová výška (px)</label>
+                            <input type="number" id="resizeHeight" value="64" min="1" max="4096">
+                        </div>
+                    </div>
+                    <div class="form-group checkbox-row">
+                        <label>
+                            <input type="checkbox" id="resizeMaintainRatio" checked>
+                            Zachovat poměr stran
+                        </label>
+                    </div>
+                    <div class="preset-sizes pixel-presets">
+                        <span class="preset-label">Pixelart předvolby:</span>
+                        <button class="preset-btn" data-width="16" data-height="16">16x16</button>
+                        <button class="preset-btn" data-width="32" data-height="32">32x32</button>
+                        <button class="preset-btn" data-width="64" data-height="64">64x64</button>
+                        <button class="preset-btn" data-width="128" data-height="128">128x128</button>
+                        <button class="preset-btn" data-width="256" data-height="256">256x256</button>
+                    </div>
+                    <div class="form-group">
+                        <label>Metoda změny velikosti</label>
+                        <select id="resizeMethod">
+                            <option value="nearest">Nejbližší soused (pixel art)</option>
+                            <option value="bilinear">Bilineární (hladký)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary modal-cancel" data-modal="resizeModal">Zrušit</button>
+                    <button class="btn-primary" id="resizeApplyBtn">Změnit velikost</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Posterize Modal -->
+        <div class="modal-overlay" id="posterizeModal" style="display: none;">
+            <div class="modal modal-small">
+                <div class="modal-header">
+                    <h2>Posterizace</h2>
+                    <button class="btn-icon modal-close" data-modal="posterizeModal">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Počet úrovní</label>
+                        <div class="slider-group">
+                            <input type="range" id="posterizeLevels" min="2" max="32" value="8" class="slider">
+                            <input type="number" id="posterizeLevelsInput" min="2" max="32" value="8" class="slider-input">
+                        </div>
+                    </div>
+                    <div class="posterize-preview">
+                        <canvas id="posterizePreviewCanvas" width="200" height="150"></canvas>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary modal-cancel" data-modal="posterizeModal">Zrušit</button>
+                    <button class="btn-primary" id="posterizeApplyBtn">Použít</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Outline Modal -->
+        <div class="modal-overlay" id="outlineModal" style="display: none;">
+            <div class="modal modal-small">
+                <div class="modal-header">
+                    <h2>Vytvořit obrys</h2>
+                    <button class="btn-icon modal-close" data-modal="outlineModal">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>Barva obrysu</label>
+                        <input type="color" id="outlineColor" value="#000000" class="color-input">
+                    </div>
+                    <div class="form-group">
+                        <label>Šířka obrysu (px)</label>
+                        <div class="slider-group">
+                            <input type="range" id="outlineWidth" min="1" max="10" value="1" class="slider">
+                            <input type="number" id="outlineWidthInput" min="1" max="10" value="1" class="slider-input">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary modal-cancel" data-modal="outlineModal">Zrušit</button>
+                    <button class="btn-primary" id="outlineApplyBtn">Vytvořit</button>
+                </div>
+            </div>
+        </div>
 
         <!-- Layer Context Menu (Procreate/Photoshop style) -->
         <div id="layerContextMenu" class="layer-context-menu">

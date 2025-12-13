@@ -56,6 +56,7 @@ export class CanvasManager {
         this.wrapper = document.getElementById('canvasWrapper');
         this.mainCanvas = document.getElementById('mainCanvas');
         this.previewCanvas = document.getElementById('previewCanvas');
+        this.overlayCanvas = document.getElementById('overlayCanvas');
 
         if (!this.container || !this.mainCanvas) {
             throw new Error('Canvas elements not found');
@@ -63,6 +64,7 @@ export class CanvasManager {
 
         this.mainCtx = this.mainCanvas.getContext('2d', { willReadFrequently: true });
         this.previewCtx = this.previewCanvas.getContext('2d');
+        this.overlayCtx = this.overlayCanvas?.getContext('2d');
 
         // Setup event listeners
         this.setupEventListeners();
@@ -88,6 +90,12 @@ export class CanvasManager {
         // Resize preview canvas
         this.previewCanvas.width = width;
         this.previewCanvas.height = height;
+
+        // Resize overlay canvas
+        if (this.overlayCanvas) {
+            this.overlayCanvas.width = width;
+            this.overlayCanvas.height = height;
+        }
 
         // Update wrapper size
         this.wrapper.style.width = `${width}px`;
