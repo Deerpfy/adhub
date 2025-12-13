@@ -662,7 +662,7 @@ export class PixelArtUI {
         if (!this.elements.timelineFrames) return;
 
         const frames = this.app.animation.frames;
-        const currentFrame = this.app.animation.currentFrame;
+        const currentFrame = this.app.animation.currentFrameIndex;
 
         this.elements.timelineFrames.innerHTML = '';
 
@@ -709,17 +709,27 @@ export class PixelArtUI {
     }
 
     togglePlayback() {
-        if (this.app.animation.isPlaying) {
+        if (this.app.animation.playing) {
             this.app.animation.stop();
             this.elements.timelinePlayBtn?.classList.remove('playing');
+            // Show play icon, hide pause icon
+            const playIcon = this.elements.timelinePlayBtn?.querySelector('.play-icon');
+            const pauseIcon = this.elements.timelinePlayBtn?.querySelector('.pause-icon');
+            if (playIcon) playIcon.style.display = 'block';
+            if (pauseIcon) pauseIcon.style.display = 'none';
         } else {
-            this.app.animation.play(() => this.updateTimeline());
+            this.app.animation.play();
             this.elements.timelinePlayBtn?.classList.add('playing');
+            // Show pause icon, hide play icon
+            const playIcon = this.elements.timelinePlayBtn?.querySelector('.play-icon');
+            const pauseIcon = this.elements.timelinePlayBtn?.querySelector('.pause-icon');
+            if (playIcon) playIcon.style.display = 'none';
+            if (pauseIcon) pauseIcon.style.display = 'block';
         }
     }
 
     goToPrevFrame() {
-        const current = this.app.animation.currentFrame;
+        const current = this.app.animation.currentFrameIndex;
         if (current > 0) {
             this.app.animation.goToFrame(current - 1);
             this.updateTimeline();
@@ -727,7 +737,7 @@ export class PixelArtUI {
     }
 
     goToNextFrame() {
-        const current = this.app.animation.currentFrame;
+        const current = this.app.animation.currentFrameIndex;
         if (current < this.app.animation.frames.length - 1) {
             this.app.animation.goToFrame(current + 1);
             this.updateTimeline();
@@ -750,13 +760,13 @@ export class PixelArtUI {
     }
 
     duplicateFrame() {
-        this.app.animation.duplicateFrame(this.app.animation.currentFrame);
+        this.app.animation.duplicateFrame(this.app.animation.currentFrameIndex);
         this.updateTimeline();
     }
 
     deleteFrame() {
         if (this.app.animation.frames.length > 1) {
-            this.app.animation.deleteFrame(this.app.animation.currentFrame);
+            this.app.animation.deleteFrame(this.app.animation.currentFrameIndex);
             this.updateTimeline();
         }
     }

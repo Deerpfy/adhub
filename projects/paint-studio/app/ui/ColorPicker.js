@@ -106,7 +106,11 @@ export class ColorPicker {
             });
         }
         if (swapBtn) {
-            swapBtn.addEventListener('click', () => this.swapColors());
+            swapBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                this.swapColors();
+            });
         }
 
         // Close popup on outside click
