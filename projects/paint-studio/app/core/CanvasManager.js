@@ -654,16 +654,64 @@ export class CanvasManager {
         // Clear main canvas
         this.mainCtx.clearRect(0, 0, this.width, this.height);
 
-        // Composite all visible layers
+        // Composite all visible layers (respecting folder hierarchy)
         this.app.layers.getLayers().forEach(layer => {
+            // Skip folders - they don't have canvas
+            if (layer.type === 'folder') return;
+
+            // Check if layer itself is visible
             if (!layer.visible) return;
 
+            // Check if all parent folders are visible
+            if (!this.isLayerVisible(layer)) return;
+
+            // Calculate effective opacity (multiply with parent folder opacities)
+            const effectiveOpacity = this.getEffectiveOpacity(layer);
+
             this.mainCtx.save();
-            this.mainCtx.globalAlpha = layer.opacity;
+            this.mainCtx.globalAlpha = effectiveOpacity;
             this.mainCtx.globalCompositeOperation = layer.blendMode;
             this.mainCtx.drawImage(layer.canvas, 0, 0);
             this.mainCtx.restore();
         });
+    }
+
+    /**
+     * Check if layer is visible (including parent folder visibility)
+     */
+    isLayerVisible(layer) {
+        if (!layer.visible) return false;
+
+        // Check parent folders
+        let parentId = layer.parentId;
+        while (parentId) {
+            const parent = this.app.layers.getLayers().find(l => l.id === parentId);
+            if (!parent || !parent.visible) return false;
+            parentId = parent.parentId;
+        }
+
+        return true;
+    }
+
+    /**
+     * Get effective opacity (multiplied with parent folder opacities)
+     */
+    getEffectiveOpacity(layer) {
+        let opacity = layer.opacity;
+
+        // Multiply with parent folder opacities
+        let parentId = layer.parentId;
+        while (parentId) {
+            const parent = this.app.layers.getLayers().find(l => l.id === parentId);
+            if (parent) {
+                opacity *= parent.opacity;
+                parentId = parent.parentId;
+            } else {
+                break;
+            }
+        }
+
+        return opacity;
     }
 
     /**
