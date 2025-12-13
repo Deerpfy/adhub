@@ -717,6 +717,10 @@
                     <div id="collabHostView">
                         <p class="collab-description">Vytvořte živou relaci a pozvěte ostatní ke spolupráci.</p>
                         <div class="form-group">
+                            <label for="hostNickname">Vaše přezdívka</label>
+                            <input type="text" id="hostNickname" placeholder="Zadejte přezdívku" maxlength="20">
+                        </div>
+                        <div class="form-group">
                             <label for="collabPassword">Heslo relace (volitelné)</label>
                             <input type="password" id="collabPassword" placeholder="Zadejte heslo pro ochranu">
                         </div>
@@ -766,6 +770,10 @@
                     <!-- Join session view -->
                     <div id="collabJoinView" style="display: none;">
                         <p class="collab-description">Připojení k živé relaci</p>
+                        <div class="form-group">
+                            <label for="guestNickname">Vaše přezdívka</label>
+                            <input type="text" id="guestNickname" placeholder="Zadejte přezdívku" maxlength="20">
+                        </div>
                         <div class="form-group">
                             <label for="joinPassword">Heslo relace</label>
                             <input type="password" id="joinPassword" placeholder="Zadejte heslo">

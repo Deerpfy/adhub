@@ -393,7 +393,19 @@ export class CollaborationManager {
 
     // Remote cursor handling
     handleRemoteCursor(data, fromPeerId) {
-        const participant = this.participants.get(fromPeerId);
+        let participant = this.participants.get(fromPeerId);
+
+        // For host cursor (when we're guest) - use data from message
+        if (!participant && fromPeerId === 'host') {
+            participant = { name: data.name || 'Host', color: data.color || '#8b5cf6' };
+        }
+        // Update participant info if provided in message
+        if (participant && data.name) {
+            participant.name = data.name;
+        }
+        if (participant && data.color) {
+            participant.color = data.color;
+        }
         if (!participant) return;
 
         let cursor = this.remoteCursors.get(fromPeerId);
@@ -401,16 +413,27 @@ export class CollaborationManager {
         if (!cursor) {
             cursor = this.createRemoteCursor(fromPeerId, participant);
             this.remoteCursors.set(fromPeerId, cursor);
+        } else {
+            // Update cursor name/color if changed
+            const nameEl = cursor.querySelector('.remote-cursor-name');
+            if (nameEl && nameEl.textContent !== participant.name) {
+                nameEl.textContent = participant.name;
+                nameEl.style.background = participant.color;
+            }
+            const svgEl = cursor.querySelector('svg');
+            if (svgEl) {
+                svgEl.style.fill = participant.color;
+            }
         }
 
         // Convert canvas coordinates to screen coordinates
         const wrapper = document.getElementById('canvasWrapper');
         const rect = wrapper.getBoundingClientRect();
         const zoom = this.app.canvas.zoom;
-        const pan = this.app.canvas.pan;
 
-        const screenX = rect.left + (data.x * zoom) + pan.x;
-        const screenY = rect.top + (data.y * zoom) + pan.y;
+        // Correct calculation: canvas coords * zoom + wrapper position
+        const screenX = rect.left + (data.x * zoom);
+        const screenY = rect.top + (data.y * zoom);
 
         cursor.style.left = screenX + 'px';
         cursor.style.top = screenY + 'px';
@@ -474,8 +497,17 @@ export class CollaborationManager {
         this.send({
             type: 'cursor-move',
             x: x,
-            y: y
+            y: y,
+            name: this.myName,
+            color: this.myColor
         });
+    }
+
+    /**
+     * Set user nickname
+     */
+    setNickname(name) {
+        this.myName = name || 'Uživatel ' + Math.floor(Math.random() * 1000);
     }
 
     /**
