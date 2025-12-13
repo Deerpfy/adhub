@@ -2,6 +2,8 @@
  * UIController - Manages all UI interactions
  */
 
+import { PixelArtUI } from './PixelArtUI.js';
+
 export class UIController {
     constructor(app) {
         this.app = app;
@@ -11,6 +13,7 @@ export class UIController {
         this.isFullscreen = false;
         this.draggedLayerIndex = null;
         this.selectedLayers = new Set(); // Multi-select support
+        this.pixelArtUI = null; // Pixel Art UI controller
 
         // Keyboard shortcuts presets
         this.keyboardPresets = {
@@ -75,6 +78,10 @@ export class UIController {
         this.setupContextMenu();
         this.setupFullscreen();
         this.createFullscreenHint();
+
+        // Initialize Pixel Art UI
+        this.pixelArtUI = new PixelArtUI(this.app);
+        this.pixelArtUI.init();
         this.loadKeyboardPreset();
         this.setupCollaboration();
         this.setupBgRemover();
