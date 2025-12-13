@@ -2,13 +2,18 @@
  * UIController - Manages all UI interactions
  */
 
+import { PixelArtUI } from './PixelArtUI.js';
+
 export class UIController {
     constructor(app) {
         this.app = app;
         this.notificationTimeout = null;
         this.contextMenu = null;
+        this.layerContextMenu = null;
         this.isFullscreen = false;
         this.draggedLayerIndex = null;
+        this.selectedLayers = new Set(); // Multi-select support
+        this.pixelArtUI = null; // Pixel Art UI controller
 
         // Keyboard shortcuts presets
         this.keyboardPresets = {
@@ -73,8 +78,14 @@ export class UIController {
         this.setupContextMenu();
         this.setupFullscreen();
         this.createFullscreenHint();
+
+        // Initialize Pixel Art UI
+        this.pixelArtUI = new PixelArtUI(this.app);
+        this.pixelArtUI.init();
         this.loadKeyboardPreset();
         this.setupCollaboration();
+        this.setupBgRemover();
+        this.setupLayerContextMenu();
     }
 
     /**
@@ -244,10 +255,23 @@ export class UIController {
         });
         document.getElementById('quickshapeEnabled')?.addEventListener('change', (e) => {
             this.app.settings.quickshapeEnabled = e.target.checked;
+            this.updateQuickShapeToggleButton();
         });
         document.getElementById('quickshapePreview')?.addEventListener('change', (e) => {
             this.app.settings.quickshapePreview = e.target.checked;
         });
+
+        // Floating QuickShape toggle button
+        document.getElementById('quickshapeToggleBtn')?.addEventListener('click', () => {
+            this.app.settings.quickshapeEnabled = !this.app.settings.quickshapeEnabled;
+            this.updateQuickShapeToggleButton();
+            // Sync with checkbox in brush settings
+            const checkbox = document.getElementById('quickshapeEnabled');
+            if (checkbox) checkbox.checked = this.app.settings.quickshapeEnabled;
+        });
+
+        // Initialize button state
+        this.updateQuickShapeToggleButton();
 
         // Brush type buttons
         document.querySelectorAll('.brush-type-btn').forEach(btn => {
@@ -352,6 +376,7 @@ export class UIController {
             if (isFolder && hasChildren) className += ' has-children';
             if (i === 0) className += ' is-top';
             if (depth > 0) className += ` nested-${Math.min(depth, 4)}`;
+            if (layer.locked) className += ' locked';
 
             item.className = className;
             item.dataset.index = actualIndex;
@@ -438,8 +463,49 @@ export class UIController {
                 if (!e.target.closest('.layer-visibility') &&
                     !e.target.closest('.folder-expand-btn') &&
                     !e.target.closest('.layer-drag-handle')) {
-                    this.app.layers.setActiveLayer(actualIndex);
+
+                    if (e.ctrlKey || e.metaKey) {
+                        // Ctrl+click: toggle selection
+                        if (this.selectedLayers.has(actualIndex)) {
+                            this.selectedLayers.delete(actualIndex);
+                        } else {
+                            this.selectedLayers.add(actualIndex);
+                        }
+                        // Also set as active layer
+                        this.app.layers.setActiveLayer(actualIndex);
+                        this.updateLayerSelection();
+                    } else if (e.shiftKey && this.selectedLayers.size > 0) {
+                        // Shift+click: select range
+                        const lastSelected = Math.max(...this.selectedLayers);
+                        const minIndex = Math.min(lastSelected, actualIndex);
+                        const maxIndex = Math.max(lastSelected, actualIndex);
+                        for (let i = minIndex; i <= maxIndex; i++) {
+                            this.selectedLayers.add(i);
+                        }
+                        this.app.layers.setActiveLayer(actualIndex);
+                        this.updateLayerSelection();
+                    } else {
+                        // Normal click: clear selection, select only this layer
+                        this.selectedLayers.clear();
+                        this.selectedLayers.add(actualIndex);
+                        this.app.layers.setActiveLayer(actualIndex);
+                        this.updateLayerSelection();
+                    }
                     this.updateBlendModeSelect();
+                }
+            });
+
+            // Right-click context menu (Procreate/Photoshop style)
+            item.addEventListener('contextmenu', (e) => {
+                this.showLayerContextMenu(e, actualIndex);
+            });
+
+            // Double-click to rename
+            item.addEventListener('dblclick', (e) => {
+                if (!e.target.closest('.layer-visibility') &&
+                    !e.target.closest('.folder-expand-btn') &&
+                    !e.target.closest('.layer-drag-handle')) {
+                    this.startLayerRename(actualIndex);
                 }
             });
 
@@ -572,6 +638,39 @@ export class UIController {
         if (select && layer) {
             select.value = layer.blendMode;
         }
+    }
+
+    /**
+     * Update layer selection visual state
+     */
+    updateLayerSelection() {
+        document.querySelectorAll('.layer-item').forEach(item => {
+            const index = parseInt(item.dataset.index);
+            if (this.selectedLayers.has(index)) {
+                item.classList.add('multi-selected');
+            } else {
+                item.classList.remove('multi-selected');
+            }
+        });
+
+        // Update selection count indicator if exists
+        const countEl = document.getElementById('selectedLayersCount');
+        if (countEl) {
+            if (this.selectedLayers.size > 1) {
+                countEl.textContent = `${this.selectedLayers.size} vrstev vybráno`;
+                countEl.style.display = 'block';
+            } else {
+                countEl.style.display = 'none';
+            }
+        }
+    }
+
+    /**
+     * Clear layer selection
+     */
+    clearLayerSelection() {
+        this.selectedLayers.clear();
+        this.updateLayerSelection();
     }
 
     /**
@@ -831,6 +930,20 @@ export class UIController {
             setTimeout(() => {
                 el.style.display = 'none';
             }, 1500);
+        }
+    }
+
+    /**
+     * Update QuickShape toggle button state
+     */
+    updateQuickShapeToggleButton() {
+        const btn = document.getElementById('quickshapeToggleBtn');
+        if (btn) {
+            const isEnabled = this.app.settings.quickshapeEnabled;
+            btn.classList.toggle('disabled', !isEnabled);
+            btn.title = isEnabled
+                ? 'QuickShape zapnuto - klikni pro vypnutí'
+                : 'QuickShape vypnuto - klikni pro zapnutí';
         }
     }
 
@@ -1573,5 +1686,744 @@ export class UIController {
             document.execCommand('copy');
             this.showNotification('Odkaz zkopírován', 'success');
         }
+    }
+
+    // =============================================
+    // Background Remover UI
+    // =============================================
+
+    /**
+     * Setup Background Remover event handlers
+     */
+    setupBgRemover() {
+        // Open modal button
+        document.getElementById('bgRemoverBtn')?.addEventListener('click', () => {
+            this.showBgRemoverModal();
+        });
+
+        // Close modal
+        document.querySelector('#bgRemoverModal .modal-close')?.addEventListener('click', () => {
+            this.hideModal('bgRemoverModal');
+        });
+
+        document.querySelector('#bgRemoverModal .btn-secondary[data-modal="bgRemoverModal"]')?.addEventListener('click', () => {
+            this.hideModal('bgRemoverModal');
+        });
+
+        // Click outside to close
+        document.getElementById('bgRemoverModal')?.addEventListener('click', (e) => {
+            if (e.target.id === 'bgRemoverModal') {
+                this.hideModal('bgRemoverModal');
+            }
+        });
+
+        // Radio button selection styling
+        document.querySelectorAll('#bgRemoverModal input[name="bgRemoverTarget"]').forEach(radio => {
+            radio.addEventListener('change', () => {
+                document.querySelectorAll('.bg-remover-options label').forEach(label => {
+                    label.classList.remove('selected');
+                });
+                radio.closest('label')?.classList.add('selected');
+            });
+        });
+
+        // Apply button
+        document.getElementById('bgRemoverApplyBtn')?.addEventListener('click', () => {
+            this.processBgRemover();
+        });
+    }
+
+    /**
+     * Show BG Remover modal with preview
+     */
+    showBgRemoverModal() {
+        const modal = document.getElementById('bgRemoverModal');
+        const form = document.getElementById('bgRemoverForm');
+        const processing = document.getElementById('bgRemoverProcessing');
+        const previewCanvas = document.getElementById('bgRemoverPreviewCanvas');
+        const emptyPreview = document.getElementById('bgRemoverEmptyPreview');
+        const applyBtn = document.getElementById('bgRemoverApplyBtn');
+
+        if (!modal) return;
+
+        // Reset state
+        form.classList.remove('hidden');
+        processing.classList.remove('active');
+
+        // Check if active layer has content
+        if (this.app.bgRemover && this.app.bgRemover.hasLayerContent()) {
+            // Show preview
+            const layer = this.app.layers.getActiveLayer();
+            if (layer && layer.canvas && previewCanvas) {
+                const ctx = previewCanvas.getContext('2d');
+                const maxWidth = 300;
+                const maxHeight = 200;
+                const scale = Math.min(maxWidth / layer.canvas.width, maxHeight / layer.canvas.height, 1);
+
+                previewCanvas.width = layer.canvas.width * scale;
+                previewCanvas.height = layer.canvas.height * scale;
+                ctx.drawImage(layer.canvas, 0, 0, previewCanvas.width, previewCanvas.height);
+
+                previewCanvas.style.display = 'block';
+                if (emptyPreview) emptyPreview.style.display = 'none';
+                if (applyBtn) applyBtn.disabled = false;
+            }
+        } else {
+            // Show empty state
+            if (previewCanvas) previewCanvas.style.display = 'none';
+            if (emptyPreview) emptyPreview.style.display = 'flex';
+            if (applyBtn) applyBtn.disabled = true;
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    /**
+     * Process background removal
+     */
+    async processBgRemover() {
+        const form = document.getElementById('bgRemoverForm');
+        const processing = document.getElementById('bgRemoverProcessing');
+        const progressText = document.getElementById('bgRemoverProgressText');
+        const progressFill = document.getElementById('bgRemoverProgressFill');
+        const progressStatus = document.getElementById('bgRemoverProgressStatus');
+
+        if (!this.app.bgRemover) {
+            this.showNotification('BG Remover není inicializován', 'error');
+            return;
+        }
+
+        // Get target option
+        const targetValue = document.querySelector('input[name="bgRemoverTarget"]:checked')?.value;
+        const applyToNewLayer = targetValue === 'new';
+
+        // Switch to processing state
+        form.classList.add('hidden');
+        processing.classList.add('active');
+
+        // Reset progress
+        if (progressFill) progressFill.style.width = '0%';
+        if (progressText) progressText.textContent = 'Zpracovávám...';
+        if (progressStatus) progressStatus.textContent = 'Načítám AI model...';
+
+        try {
+            await this.app.bgRemover.process({
+                applyToNewLayer,
+                onProgress: (percent, status) => {
+                    if (progressFill) progressFill.style.width = `${percent}%`;
+                    if (progressText) progressText.textContent = `${percent}%`;
+                    if (progressStatus) progressStatus.textContent = status;
+                }
+            });
+
+            // Success
+            if (progressFill) progressFill.style.width = '100%';
+            if (progressText) progressText.textContent = '100%';
+            if (progressStatus) progressStatus.textContent = 'Hotovo!';
+
+            setTimeout(() => {
+                this.hideModal('bgRemoverModal');
+                this.showNotification('Pozadí úspěšně odstraněno', 'success');
+            }, 500);
+
+        } catch (error) {
+            console.error('BG Remover error:', error);
+            this.showNotification(error.message || 'Chyba při odstraňování pozadí', 'error');
+
+            // Return to form
+            form.classList.remove('hidden');
+            processing.classList.remove('active');
+        }
+    }
+
+    // =============================================
+    // Layer Context Menu (Procreate/Photoshop style)
+    // =============================================
+
+    /**
+     * Setup Layer Context Menu
+     */
+    setupLayerContextMenu() {
+        this.contextMenuLayerIndex = null;
+        this.layerContextMenu = document.getElementById('layerContextMenu');
+
+        if (!this.layerContextMenu) return;
+
+        // Close menu on click outside
+        document.addEventListener('click', (e) => {
+            if (!this.layerContextMenu.contains(e.target)) {
+                this.hideLayerContextMenu();
+            }
+        });
+
+        // Close menu on escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.hideLayerContextMenu();
+            }
+        });
+
+        // Setup menu item actions
+        this.layerContextMenu.querySelectorAll('.context-menu-item[data-action]').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const action = item.dataset.action;
+                this.handleLayerContextAction(action);
+            });
+        });
+
+        // Opacity slider
+        const opacitySlider = document.getElementById('contextMenuOpacitySlider');
+        const opacityContainer = document.getElementById('opacitySliderContainer');
+        const opacityBtn = this.layerContextMenu.querySelector('[data-action="opacity"]');
+
+        if (opacityBtn && opacitySlider) {
+            opacityBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                opacityContainer.classList.toggle('visible');
+            });
+
+            // Track if we're dragging the slider for undo support
+            let opacityDragging = false;
+
+            opacitySlider.addEventListener('mousedown', () => {
+                if (this.contextMenuLayerIndex !== null) {
+                    opacityDragging = true;
+                    this.app.history.startAction();
+                }
+            });
+
+            opacitySlider.addEventListener('input', (e) => {
+                if (this.contextMenuLayerIndex !== null) {
+                    const opacity = parseInt(e.target.value) / 100;
+                    this.app.layers.setLayerOpacity(this.contextMenuLayerIndex, opacity);
+                    document.getElementById('contextMenuOpacity').textContent = `${e.target.value}%`;
+                }
+            });
+
+            opacitySlider.addEventListener('mouseup', () => {
+                if (opacityDragging) {
+                    opacityDragging = false;
+                    this.app.history.endAction();
+                }
+            });
+
+            // Also handle if mouse leaves while dragging
+            opacitySlider.addEventListener('mouseleave', () => {
+                if (opacityDragging) {
+                    opacityDragging = false;
+                    this.app.history.endAction();
+                }
+            });
+        }
+
+        // Blend mode submenu
+        const blendModeBtn = this.layerContextMenu.querySelector('[data-action="blendMode"]');
+        const blendModeSubmenu = document.getElementById('blendModeSubmenu');
+
+        if (blendModeBtn && blendModeSubmenu) {
+            blendModeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                blendModeSubmenu.classList.toggle('visible');
+            });
+
+            blendModeSubmenu.querySelectorAll('[data-blend]').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const blendMode = item.dataset.blend;
+                    if (this.contextMenuLayerIndex !== null) {
+                        this.app.history.startAction();
+                        this.app.layers.setLayerBlendMode(this.contextMenuLayerIndex, blendMode);
+                        this.app.history.endAction();
+                        this.updateBlendModeDisplay(blendMode);
+                        blendModeSubmenu.classList.remove('visible');
+                    }
+                });
+            });
+        }
+    }
+
+    /**
+     * Show layer context menu
+     */
+    showLayerContextMenu(e, layerIndex) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!this.layerContextMenu) return;
+
+        this.contextMenuLayerIndex = layerIndex;
+        const layer = this.app.layers.getLayer(layerIndex);
+        if (!layer) return;
+
+        // Update menu state
+        document.getElementById('contextMenuLayerName').textContent = layer.name;
+        document.getElementById('contextMenuOpacity').textContent = `${Math.round(layer.opacity * 100)}%`;
+        document.getElementById('contextMenuOpacitySlider').value = Math.round(layer.opacity * 100);
+        this.updateBlendModeDisplay(layer.blendMode);
+
+        // Update visibility button
+        const visibilityText = document.getElementById('contextMenuVisibilityText');
+        const visibilityIcon = document.getElementById('contextMenuVisibilityIcon');
+        if (visibilityText) {
+            visibilityText.textContent = layer.visible ? 'Skrýt vrstvu' : 'Zobrazit vrstvu';
+        }
+        if (visibilityIcon) {
+            visibilityIcon.innerHTML = layer.visible
+                ? '<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="currentColor"/>'
+                : '<path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z" fill="currentColor"/>';
+        }
+
+        // Update lock button
+        const lockText = document.getElementById('contextMenuLockText');
+        const lockIcon = document.getElementById('contextMenuLockIcon');
+        if (lockText) {
+            lockText.textContent = layer.locked ? 'Odemknout vrstvu' : 'Zamknout vrstvu';
+        }
+        if (lockIcon) {
+            lockIcon.innerHTML = layer.locked
+                ? '<path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z" fill="currentColor"/>'
+                : '<path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" fill="currentColor"/>';
+        }
+
+        // Disable merge down for first layer
+        const mergeDownBtn = this.layerContextMenu.querySelector('[data-action="mergeDown"]');
+        if (mergeDownBtn) {
+            mergeDownBtn.disabled = layerIndex === 0;
+        }
+
+        // Disable delete if only one layer
+        const deleteBtn = this.layerContextMenu.querySelector('[data-action="delete"]');
+        if (deleteBtn) {
+            deleteBtn.disabled = this.app.layers.layers.length <= 1;
+        }
+
+        // Handle multi-selection UI
+        const mergeSelectedBtn = document.getElementById('mergeSelectedBtn');
+        const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+        const deleteSingleBtn = document.getElementById('deleteSingleBtn');
+        const multiSelectCount = this.selectedLayers.size;
+
+        if (multiSelectCount > 1) {
+            // Show multi-select options
+            if (mergeSelectedBtn) {
+                mergeSelectedBtn.style.display = 'flex';
+                document.getElementById('mergeSelectedText').textContent = `Sloučit vybrané (${multiSelectCount})`;
+            }
+            if (deleteSelectedBtn) {
+                deleteSelectedBtn.style.display = 'flex';
+                document.getElementById('deleteSelectedText').textContent = `Smazat vybrané (${multiSelectCount})`;
+                // Only enable if we have more layers than selected
+                deleteSelectedBtn.disabled = this.app.layers.layers.length <= multiSelectCount;
+            }
+            if (deleteSingleBtn) {
+                deleteSingleBtn.style.display = 'none';
+            }
+        } else {
+            // Hide multi-select options, show single layer options
+            if (mergeSelectedBtn) {
+                mergeSelectedBtn.style.display = 'none';
+            }
+            if (deleteSelectedBtn) {
+                deleteSelectedBtn.style.display = 'none';
+            }
+            if (deleteSingleBtn) {
+                deleteSingleBtn.style.display = 'flex';
+            }
+        }
+
+        // Reset submenus
+        document.getElementById('opacitySliderContainer')?.classList.remove('visible');
+        document.getElementById('blendModeSubmenu')?.classList.remove('visible');
+
+        // Position menu
+        const menuWidth = 240;
+        const menuHeight = 500;
+        let x = e.clientX;
+        let y = e.clientY;
+
+        // Adjust if menu would go off screen
+        if (x + menuWidth > window.innerWidth) {
+            x = window.innerWidth - menuWidth - 10;
+        }
+        if (y + menuHeight > window.innerHeight) {
+            y = window.innerHeight - menuHeight - 10;
+        }
+
+        this.layerContextMenu.style.left = `${x}px`;
+        this.layerContextMenu.style.top = `${y}px`;
+        this.layerContextMenu.classList.add('visible');
+
+        // Highlight the layer item
+        document.querySelectorAll('.layer-item').forEach(item => item.classList.remove('context-active'));
+        const layerItem = document.querySelector(`.layer-item[data-index="${layerIndex}"]`);
+        if (layerItem) {
+            layerItem.classList.add('context-active');
+        }
+    }
+
+    /**
+     * Hide layer context menu
+     */
+    hideLayerContextMenu() {
+        if (this.layerContextMenu) {
+            this.layerContextMenu.classList.remove('visible');
+        }
+        document.querySelectorAll('.layer-item').forEach(item => item.classList.remove('context-active'));
+        this.contextMenuLayerIndex = null;
+    }
+
+    /**
+     * Update blend mode display in context menu
+     */
+    updateBlendModeDisplay(blendMode) {
+        const blendModeNames = {
+            'source-over': 'Normální',
+            'multiply': 'Násobit',
+            'screen': 'Závoj',
+            'overlay': 'Překryv',
+            'darken': 'Ztmavit',
+            'lighten': 'Zesvětlit',
+            'color-dodge': 'Zesvětlit barvy',
+            'color-burn': 'Ztmavit barvy',
+            'hard-light': 'Tvrdé světlo',
+            'soft-light': 'Měkké světlo',
+            'difference': 'Rozdíl',
+            'exclusion': 'Vyloučení',
+            'hue': 'Odstín',
+            'saturation': 'Sytost',
+            'color': 'Barva',
+            'luminosity': 'Světlost'
+        };
+
+        const display = document.getElementById('contextMenuBlendMode');
+        if (display) {
+            display.textContent = blendModeNames[blendMode] || blendMode;
+        }
+
+        // Update active state in submenu
+        document.querySelectorAll('#blendModeSubmenu [data-blend]').forEach(item => {
+            item.classList.toggle('active', item.dataset.blend === blendMode);
+        });
+    }
+
+    /**
+     * Handle layer context menu action
+     */
+    handleLayerContextAction(action) {
+        const index = this.contextMenuLayerIndex;
+        if (index === null) return;
+
+        const layer = this.app.layers.getLayer(index);
+        if (!layer) return;
+
+        switch (action) {
+            case 'rename':
+                this.hideLayerContextMenu();
+                this.startLayerRename(index);
+                break;
+
+            case 'duplicate':
+                this.app.history.startAction();
+                this.app.layers.duplicateLayer(index);
+                this.app.history.endAction();
+                this.hideLayerContextMenu();
+                this.showNotification('Vrstva duplikována', 'success');
+                break;
+
+            case 'toggleVisibility':
+                this.app.history.startAction();
+                this.app.layers.toggleVisibility(index);
+                this.app.history.endAction();
+                this.hideLayerContextMenu();
+                break;
+
+            case 'toggleLock':
+                this.app.history.startAction();
+                this.app.layers.toggleLock(index);
+                this.app.history.endAction();
+                this.hideLayerContextMenu();
+                this.showNotification(layer.locked ? 'Vrstva odemknuta' : 'Vrstva zamknuta', 'info');
+                break;
+
+            case 'mergeDown':
+                if (index > 0) {
+                    this.app.history.startAction();
+                    this.app.layers.mergeDown(index);
+                    this.app.history.endAction();
+                    this.hideLayerContextMenu();
+                    this.showNotification('Vrstvy sloučeny', 'success');
+                }
+                break;
+
+            case 'flattenVisible':
+                this.app.history.startAction();
+                this.mergeVisibleLayers();
+                this.app.history.endAction();
+                this.hideLayerContextMenu();
+                this.showNotification('Viditelné vrstvy sloučeny', 'success');
+                break;
+
+            case 'flattenAll':
+                this.app.history.startAction();
+                this.app.layers.flattenAll();
+                this.app.history.endAction();
+                this.hideLayerContextMenu();
+                this.showNotification('Všechny vrstvy sloučeny', 'success');
+                break;
+
+            case 'clearLayer':
+                if (!layer.locked) {
+                    this.app.history.startAction();
+                    this.app.layers.clearLayer(index);
+                    this.app.history.endAction();
+                    this.hideLayerContextMenu();
+                    this.showNotification('Vrstva vymazána', 'success');
+                } else {
+                    this.showNotification('Vrstva je zamčená', 'error');
+                }
+                break;
+
+            case 'delete':
+                if (this.app.layers.layers.length > 1) {
+                    this.app.history.startAction();
+                    this.app.layers.removeLayer(index);
+                    this.app.history.endAction();
+                    this.hideLayerContextMenu();
+                    this.showNotification('Vrstva smazána', 'success');
+                } else {
+                    this.showNotification('Nelze smazat poslední vrstvu', 'error');
+                }
+                break;
+
+            case 'mergeSelected':
+                if (this.selectedLayers.size > 1) {
+                    this.app.history.startAction();
+                    this.mergeSelectedLayers();
+                    this.app.history.endAction();
+                    this.hideLayerContextMenu();
+                    this.showNotification(`${this.selectedLayers.size} vrstev sloučeno`, 'success');
+                    this.clearLayerSelection();
+                }
+                break;
+
+            case 'deleteSelected':
+                if (this.selectedLayers.size > 0 && this.app.layers.layers.length > this.selectedLayers.size) {
+                    this.app.history.startAction();
+                    this.deleteSelectedLayers();
+                    this.app.history.endAction();
+                    this.hideLayerContextMenu();
+                    this.showNotification(`${this.selectedLayers.size} vrstev smazáno`, 'success');
+                    this.clearLayerSelection();
+                } else {
+                    this.showNotification('Nelze smazat všechny vrstvy', 'error');
+                }
+                break;
+        }
+    }
+
+    /**
+     * Start renaming a layer
+     */
+    startLayerRename(index) {
+        const layer = this.app.layers.getLayer(index);
+        if (!layer) return;
+
+        const layerItem = document.querySelector(`.layer-item[data-index="${index}"]`);
+        if (!layerItem) return;
+
+        const nameSpan = layerItem.querySelector('.layer-name');
+        if (!nameSpan) return;
+
+        const currentName = layer.name;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'layer-rename-input';
+        input.value = currentName;
+
+        nameSpan.replaceWith(input);
+        input.focus();
+        input.select();
+
+        const finishRename = () => {
+            const newName = input.value.trim() || currentName;
+            if (newName !== currentName) {
+                this.app.history.startAction();
+                this.app.layers.renameLayer(index, newName);
+                this.app.history.endAction();
+            } else {
+                this.app.layers.renameLayer(index, newName);
+            }
+        };
+
+        input.addEventListener('blur', finishRename);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                input.blur();
+            } else if (e.key === 'Escape') {
+                input.value = currentName;
+                input.blur();
+            }
+        });
+    }
+
+    /**
+     * Merge all visible layers
+     */
+    mergeVisibleLayers() {
+        const layers = this.app.layers.layers;
+        const visibleLayers = layers.filter(l => l.visible && l.type !== 'folder');
+
+        if (visibleLayers.length <= 1) {
+            this.showNotification('Není co sloučit', 'info');
+            return;
+        }
+
+        // Create temp canvas for merged result
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = this.app.canvas.width;
+        tempCanvas.height = this.app.canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+
+        // Composite visible layers (in correct order - bottom to top)
+        for (let i = 0; i < layers.length; i++) {
+            const layer = layers[i];
+            if (!layer.visible || layer.type === 'folder') continue;
+
+            tempCtx.save();
+            tempCtx.globalAlpha = layer.opacity;
+            tempCtx.globalCompositeOperation = layer.blendMode;
+            tempCtx.drawImage(layer.canvas, 0, 0);
+            tempCtx.restore();
+        }
+
+        // Remove all visible layers except first, put merged content in first visible
+        let firstVisibleIndex = null;
+        for (let i = layers.length - 1; i >= 0; i--) {
+            const layer = layers[i];
+            if (layer.visible && layer.type !== 'folder') {
+                if (firstVisibleIndex === null) {
+                    firstVisibleIndex = i;
+                } else {
+                    layers.splice(i, 1);
+                    if (this.app.layers.activeLayerIndex >= i) {
+                        this.app.layers.activeLayerIndex--;
+                    }
+                }
+            }
+        }
+
+        // Update first visible layer with merged content
+        if (firstVisibleIndex !== null) {
+            const targetLayer = this.app.layers.getLayer(firstVisibleIndex);
+            if (targetLayer) {
+                const ctx = targetLayer.canvas.getContext('2d');
+                ctx.clearRect(0, 0, targetLayer.canvas.width, targetLayer.canvas.height);
+                ctx.drawImage(tempCanvas, 0, 0);
+                targetLayer.name = 'Sloučené vrstvy';
+                targetLayer.opacity = 1;
+                targetLayer.blendMode = 'source-over';
+            }
+        }
+
+        this.app.canvas.render();
+        this.updateLayersList();
+    }
+
+    /**
+     * Merge selected layers
+     */
+    mergeSelectedLayers() {
+        if (this.selectedLayers.size <= 1) {
+            this.showNotification('Vyberte alespoň 2 vrstvy', 'info');
+            return;
+        }
+
+        const layers = this.app.layers.layers;
+        const selectedIndices = Array.from(this.selectedLayers).sort((a, b) => a - b);
+
+        // Filter out folders and get actual layers
+        const selectedLayerData = selectedIndices
+            .map(i => ({ index: i, layer: layers[i] }))
+            .filter(d => d.layer && d.layer.type !== 'folder');
+
+        if (selectedLayerData.length <= 1) {
+            this.showNotification('Vyberte alespoň 2 vrstvy (ne složky)', 'info');
+            return;
+        }
+
+        // Create temp canvas for merged result
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = this.app.canvas.width;
+        tempCanvas.height = this.app.canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+
+        // Composite selected layers (in correct order - bottom to top)
+        for (const { layer } of selectedLayerData) {
+            tempCtx.save();
+            tempCtx.globalAlpha = layer.opacity;
+            tempCtx.globalCompositeOperation = layer.blendMode;
+            tempCtx.drawImage(layer.canvas, 0, 0);
+            tempCtx.restore();
+        }
+
+        // Remove all selected layers except the first one
+        const firstIndex = selectedLayerData[0].index;
+        for (let i = selectedLayerData.length - 1; i > 0; i--) {
+            const idx = selectedLayerData[i].index;
+            layers.splice(idx, 1);
+            if (this.app.layers.activeLayerIndex >= idx) {
+                this.app.layers.activeLayerIndex = Math.max(0, this.app.layers.activeLayerIndex - 1);
+            }
+        }
+
+        // Update first selected layer with merged content
+        const targetLayer = this.app.layers.getLayer(firstIndex);
+        if (targetLayer) {
+            const ctx = targetLayer.canvas.getContext('2d');
+            ctx.clearRect(0, 0, targetLayer.canvas.width, targetLayer.canvas.height);
+            ctx.drawImage(tempCanvas, 0, 0);
+            targetLayer.name = 'Sloučené vrstvy';
+            targetLayer.opacity = 1;
+            targetLayer.blendMode = 'source-over';
+        }
+
+        this.app.canvas.render();
+        this.updateLayersList();
+    }
+
+    /**
+     * Delete selected layers
+     */
+    deleteSelectedLayers() {
+        if (this.selectedLayers.size === 0) return;
+
+        const layers = this.app.layers.layers;
+
+        // Can't delete all layers
+        if (this.selectedLayers.size >= layers.length) {
+            this.showNotification('Nelze smazat všechny vrstvy', 'error');
+            return;
+        }
+
+        // Sort indices in descending order to delete from end first
+        const selectedIndices = Array.from(this.selectedLayers).sort((a, b) => b - a);
+
+        for (const idx of selectedIndices) {
+            if (layers.length > 1) {
+                layers.splice(idx, 1);
+                if (this.app.layers.activeLayerIndex >= idx) {
+                    this.app.layers.activeLayerIndex = Math.max(0, this.app.layers.activeLayerIndex - 1);
+                }
+            }
+        }
+
+        // Make sure we have a valid active layer
+        if (this.app.layers.activeLayerIndex >= layers.length) {
+            this.app.layers.activeLayerIndex = layers.length - 1;
+        }
+
+        this.app.canvas.render();
+        this.updateLayersList();
     }
 }

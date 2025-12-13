@@ -452,6 +452,19 @@ export class LayerManager {
     }
 
     /**
+     * Clear layer by index
+     */
+    clearLayer(index) {
+        if (index < 0 || index >= this.layers.length) return;
+        const layer = this.layers[index];
+        if (!layer || layer.locked) return;
+
+        const ctx = layer.canvas.getContext('2d');
+        ctx.clearRect(0, 0, layer.canvas.width, layer.canvas.height);
+        this.app.canvas.render();
+    }
+
+    /**
      * Serialize layers for saving
      */
     async serialize() {
