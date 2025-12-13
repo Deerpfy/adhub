@@ -599,7 +599,11 @@ export class UIController {
      * Hide modal
      */
     hideModal(modalId) {
-        document.getElementById(modalId).style.display = 'none';
+        if (!modalId) return;
+        const modal = document.getElementById(modalId);
+        if (modal) {
+            modal.style.display = 'none';
+        }
     }
 
     /**

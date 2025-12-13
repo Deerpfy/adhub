@@ -16,6 +16,7 @@ export class CollaborationManager {
         this.myColor = this.generateColor();
         this.myName = 'Uživatel ' + Math.floor(Math.random() * 1000);
         this.remoteCursors = new Map(); // peerId -> cursor element
+        this.isJoining = false; // Prevent multiple join attempts
 
         // Check if joining a room from URL
         this.checkUrlForRoom();
@@ -156,12 +157,58 @@ export class CollaborationManager {
      * Join an existing session as guest
      */
     async joinSession(roomId, password = '') {
+        // Prevent multiple simultaneous join attempts
+        if (this.isJoining) {
+            console.log('[Collab] Already joining, ignoring...');
+            return Promise.reject(new Error('Připojování již probíhá'));
+        }
+
+        // Cleanup any existing peer
+        if (this.peer) {
+            this.peer.destroy();
+            this.peer = null;
+        }
+
+        this.isJoining = true;
         this.roomId = roomId;
         this.isHost = false;
 
+        const CONNECTION_TIMEOUT = 15000; // 15 seconds timeout
+
         return new Promise((resolve, reject) => {
+            let timeoutId = null;
+            let resolved = false;
+
+            const cleanup = () => {
+                if (timeoutId) clearTimeout(timeoutId);
+                this.isJoining = false;
+            };
+
+            const doReject = (error) => {
+                if (resolved) return;
+                resolved = true;
+                cleanup();
+                if (this.peer) {
+                    this.peer.destroy();
+                    this.peer = null;
+                }
+                reject(error);
+            };
+
+            const doResolve = (result) => {
+                if (resolved) return;
+                resolved = true;
+                cleanup();
+                resolve(result);
+            };
+
+            // Set timeout
+            timeoutId = setTimeout(() => {
+                doReject(new Error('Připojení vypršelo. Host neodpovídá.'));
+            }, CONNECTION_TIMEOUT);
+
             this.peer = new Peer({
-                debug: 1
+                debug: 0 // Reduce debug noise
             });
 
             this.peer.on('open', (myId) => {
@@ -173,6 +220,8 @@ export class CollaborationManager {
                 });
 
                 conn.on('open', () => {
+                    console.log('[Collab] Connection opened, sending auth...');
+
                     // Send authentication
                     conn.send({
                         type: 'auth',
@@ -183,10 +232,11 @@ export class CollaborationManager {
 
                     // Wait for response
                     conn.once('data', (data) => {
+                        console.log('[Collab] Received response:', data.type);
+
                         if (data.type === 'auth-failed') {
                             conn.close();
-                            this.peer.destroy();
-                            reject(new Error(data.reason || 'Připojení odmítnuto'));
+                            doReject(new Error(data.reason || 'Připojení odmítnuto'));
                         } else if (data.type === 'auth-success') {
                             this.hostConnection = conn;
                             this.allowDraw = data.canDraw;
@@ -211,20 +261,24 @@ export class CollaborationManager {
                                 this.handleHostDisconnected();
                             });
 
-                            resolve({ canDraw: this.allowDraw });
+                            doResolve({ canDraw: this.allowDraw });
                         }
                     });
                 });
 
                 conn.on('error', (err) => {
                     console.error('[Collab] Connection error:', err);
-                    reject(new Error('Nepodařilo se připojit k relaci'));
+                    doReject(new Error('Nepodařilo se připojit k relaci'));
                 });
             });
 
             this.peer.on('error', (err) => {
                 console.error('[Collab] Peer error:', err);
-                reject(new Error('Chyba připojení: ' + err.message));
+                if (err.type === 'peer-unavailable') {
+                    doReject(new Error('Relace neexistuje nebo host není dostupný'));
+                } else {
+                    doReject(new Error('Chyba připojení: ' + err.message));
+                }
             });
         });
     }
