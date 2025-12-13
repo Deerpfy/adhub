@@ -435,7 +435,9 @@ export class CanvasManager {
         const shortcuts = this.app.ui?.currentShortcuts || {
             brush: 'B', pencil: 'P', eraser: 'E', line: 'L',
             rectangle: 'U', ellipse: 'O', fill: 'G', eyedropper: 'I',
-            move: 'V', swapColors: 'X'
+            move: 'V', swapColors: 'X', gradient: 'D',
+            'select-rectangle': 'M', 'select-lasso': 'Q', 'magic-wand': 'W',
+            transform: 'T'
         };
 
         // Tool shortcuts (single keys without Ctrl/Meta)
@@ -453,6 +455,44 @@ export class CanvasManager {
             else if (key === shortcuts.rectangle?.toUpperCase()) { this.app.setTool('rectangle'); }
             else if (key === shortcuts.ellipse?.toUpperCase()) { this.app.setTool('ellipse'); }
             else if (key === shortcuts.swapColors?.toUpperCase()) { this.app.color?.swapColors(); }
+            else if (key === shortcuts.gradient?.toUpperCase()) { this.app.setTool('gradient'); }
+            else if (key === shortcuts['select-rectangle']?.toUpperCase()) { this.app.setTool('select-rectangle'); }
+            else if (key === shortcuts['select-lasso']?.toUpperCase()) { this.app.setTool('select-lasso'); }
+            else if (key === shortcuts['magic-wand']?.toUpperCase()) { this.app.setTool('magic-wand'); }
+            else if (key === shortcuts.transform?.toUpperCase()) { this.app.setTool('transform'); }
+
+            // Selection shortcuts
+            if (key === 'A' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                this.app.selection?.selectAll();
+            }
+            if (key === 'D' && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                this.app.selection?.clearSelection();
+            }
+            if (key === 'I' && (e.ctrlKey || e.metaKey) && e.shiftKey) {
+                e.preventDefault();
+                this.app.selection?.invertSelection();
+            }
+
+            // Escape to deselect or cancel transform
+            if (e.key === 'Escape') {
+                if (this.app.selection?.hasSelection) {
+                    this.app.selection.clearSelection();
+                }
+                const transformTool = this.app.tools?.getTool('transform');
+                if (transformTool?.isTransforming) {
+                    transformTool.cancelTransform();
+                }
+            }
+
+            // Enter to apply transform
+            if (e.key === 'Enter') {
+                const transformTool = this.app.tools?.getTool('transform');
+                if (transformTool?.isTransforming) {
+                    transformTool.applyTransform();
+                }
+            }
 
             // Brush size shortcuts (always [ and ])
             if (e.key === '[') { this.decreaseBrushSize(); }
@@ -490,6 +530,26 @@ export class CanvasManager {
                 case '-':
                     e.preventDefault();
                     this.zoomOut();
+                    break;
+                case 'v':
+                    e.preventDefault();
+                    this.app.pasteFromClipboard();
+                    break;
+                case 'c':
+                    e.preventDefault();
+                    this.app.copyToClipboard();
+                    break;
+                case 'x':
+                    e.preventDefault();
+                    this.app.cutToClipboard();
+                    break;
+                case 'a':
+                    e.preventDefault();
+                    this.app.selection?.selectAll();
+                    break;
+                case 'd':
+                    e.preventDefault();
+                    this.app.selection?.clearSelection();
                     break;
             }
         }
