@@ -43,6 +43,7 @@ const TRANSLATIONS = {
         embed_after_url: 'URL obrázku Po:',
         embed_variant_inline: 'Varianta A: Vše inline',
         embed_variant_hosted: 'Varianta B: Hostované soubory',
+        embed_preview: 'Náhled',
         saved_projects: 'Uložené projekty',
         no_projects: 'Zatím žádné uložené projekty',
         gif_export: 'Export GIF',
@@ -90,6 +91,7 @@ const TRANSLATIONS = {
         embed_after_url: 'After image URL:',
         embed_variant_inline: 'Variant A: All inline',
         embed_variant_hosted: 'Variant B: Hosted files',
+        embed_preview: 'Preview',
         saved_projects: 'Saved projects',
         no_projects: 'No saved projects yet',
         gif_export: 'GIF Export',
@@ -128,7 +130,7 @@ let gifBlob = null;
 // INITIALIZATION
 // ============================================
 
-document.addEventListener('DOMContentLoaded', () => {
+function init() {
     initLanguage();
     initUploadZones();
     initOptions();
@@ -136,7 +138,14 @@ document.addEventListener('DOMContentLoaded', () => {
     initModal();
     loadProjects();
     registerServiceWorker();
-});
+}
+
+// Handle both cases: DOM already loaded or not yet
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+} else {
+    init();
+}
 
 function registerServiceWorker() {
     if ('serviceWorker' in navigator) {
@@ -312,6 +321,9 @@ function initButtons() {
 
     // Copy embed code
     document.getElementById('copyEmbedBtn').addEventListener('click', copyEmbedCode);
+
+    // Preview embed code
+    document.getElementById('previewEmbedBtn')?.addEventListener('click', previewEmbedCode);
 
     // Labels toggle
     const labelsToggle = document.getElementById('showLabelsToggle');
@@ -581,6 +593,59 @@ function copyEmbedCode() {
     textarea.select();
     document.execCommand('copy');
     showToast(t('copied'), 'success');
+}
+
+function previewEmbedCode() {
+    const embedCode = document.getElementById('embedCode').value;
+    if (!embedCode) return;
+
+    const previewHTML = `<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Embed Preview</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .preview-container {
+            width: 100%;
+            max-width: 800px;
+            background: #16213e;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #8b5cf6;
+            font-size: 14px;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container">
+        <h1>Embed Preview</h1>
+        ${embedCode}
+    </div>
+</body>
+</html>`;
+
+    const previewWindow = window.open('', '_blank', 'width=900,height=700');
+    if (previewWindow) {
+        previewWindow.document.write(previewHTML);
+        previewWindow.document.close();
+    }
 }
 
 // ============================================
