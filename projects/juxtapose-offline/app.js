@@ -127,6 +127,16 @@ let currentProject = null;
 let gifBlob = null;
 
 // ============================================
+// EMBED CONSTANTS (must be defined early)
+// ============================================
+
+const EMBED_BASE_URL = 'https://deerpfy.github.io/adhub/projects/juxtapose-offline';
+
+const EMBED_CSS_INLINE = `.image-compare{position:relative;width:100%;max-width:100%;overflow:hidden;cursor:ew-resize;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;touch-action:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}.image-compare.vertical{cursor:ns-resize}.image-compare *{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.image-compare__before,.image-compare__after{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden}.image-compare__before img,.image-compare__after img{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none}.image-compare__before{clip-path:inset(0 50% 0 0)}.image-compare.vertical .image-compare__before{clip-path:inset(0 0 50% 0)}.image-compare__handle{position:absolute;top:0;left:50%;width:4px;height:100%;background:#fff;transform:translateX(-50%);z-index:10;box-shadow:0 0 8px rgba(0,0,0,0.5)}.image-compare.vertical .image-compare__handle{top:50%;left:0;width:100%;height:4px;transform:translateY(-50%)}.image-compare__handle-circle{position:absolute;top:50%;left:50%;width:44px;height:44px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.3)}.image-compare__arrows{display:flex;gap:4px;color:#333}.image-compare.vertical .image-compare__arrows{flex-direction:column}.image-compare__arrows svg{width:12px;height:12px}.image-compare__label{position:absolute;padding:6px 14px;background:rgba(0,0,0,0.7);color:#fff;font-size:12px;font-weight:600;border-radius:4px;z-index:5;pointer-events:none;text-transform:uppercase;letter-spacing:.5px}.image-compare__label--before{top:12px;left:12px}.image-compare__label--after{top:12px;right:12px}.image-compare.vertical .image-compare__label--before{top:12px;left:12px}.image-compare.vertical .image-compare__label--after{bottom:12px;left:12px;top:auto}`;
+
+const EMBED_JS_INLINE = `(function(){'use strict';function initImageCompare(e){const t=e.querySelectorAll('img');if(t.length<2)return;const n=t[0],o=t[1],i='vertical'===e.dataset.orientation,s=parseInt(e.dataset.position)||50,a=n.dataset.label||'Before',r=o.dataset.label||'After';e.innerHTML='';const c=document.createElement('div');c.className='image-compare__after',c.appendChild(o.cloneNode(!0));const l=document.createElement('div');l.className='image-compare__before',l.appendChild(n.cloneNode(!0));const d=document.createElement('div');d.className='image-compare__handle',d.innerHTML='<div class="image-compare__handle-circle"><div class="image-compare__arrows"><svg viewBox="0 0 24 24" fill="currentColor"><path d="'+(i?'M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z':'M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z')+'"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="'+(i?'M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z':'M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z')+'"/></svg></div></div>';const m=document.createElement('div');m.className='image-compare__label image-compare__label--before',m.textContent=a;const p=document.createElement('div');p.className='image-compare__label image-compare__label--after',p.textContent=r;e.appendChild(c),e.appendChild(l),e.appendChild(d),e.appendChild(m),e.appendChild(p),i&&e.classList.add('vertical'),u(s);let f=!1;function u(t){t=Math.max(0,Math.min(100,t)),i?(l.style.clipPath='inset(0 0 '+(100-t)+'% 0)',d.style.top=t+'%',d.style.left='0',d.style.transform='translateY(-50%)'):(l.style.clipPath='inset(0 '+(100-t)+'% 0 0)',d.style.left=t+'%',d.style.top='0',d.style.transform='translateX(-50%)')}function g(t){const n=e.getBoundingClientRect();return i?((t.touches?t.touches[0].clientY:t.clientY)-n.top)/n.height*100:((t.touches?t.touches[0].clientX:t.clientX)-n.left)/n.width*100}e.addEventListener('mousedown',function(e){e.preventDefault(),f=!0,u(g(e))}),document.addEventListener('mousemove',function(e){f&&(e.preventDefault(),u(g(e)))}),document.addEventListener('mouseup',function(){f=!1}),e.addEventListener('touchstart',function(e){e.preventDefault(),f=!0,u(g(e))},{passive:!1}),e.addEventListener('touchmove',function(e){f&&(e.preventDefault(),u(g(e)))},{passive:!1}),e.addEventListener('touchend',function(){f=!1});const h=n.cloneNode(!0);h.onload=function(){const t=h.naturalHeight/h.naturalWidth;e.style.paddingBottom=100*t+'%'},h.complete&&(e.style.paddingBottom=100*(h.naturalHeight/h.naturalWidth)+'%')}function init(){document.querySelectorAll('.image-compare').forEach(initImageCompare)}'loading'===document.readyState?document.addEventListener('DOMContentLoaded',init):init(),window.ImageCompare={init:init,initSlider:initImageCompare}})();`;
+
+// ============================================
 // INITIALIZATION
 // ============================================
 
@@ -548,14 +558,6 @@ function initSliderInteraction(slider, isVertical) {
 // EMBED CODE
 // ============================================
 
-const EMBED_BASE_URL = 'https://deerpfy.github.io/adhub/projects/juxtapose-offline';
-
-// Inline CSS for Variant A
-const EMBED_CSS_INLINE = `.image-compare{position:relative;width:100%;max-width:100%;overflow:hidden;cursor:ew-resize;-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;touch-action:none;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}.image-compare.vertical{cursor:ns-resize}.image-compare *{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.image-compare__before,.image-compare__after{position:absolute;top:0;left:0;width:100%;height:100%;overflow:hidden}.image-compare__before img,.image-compare__after img{display:block;width:100%;height:100%;object-fit:cover;pointer-events:none}.image-compare__before{clip-path:inset(0 50% 0 0)}.image-compare.vertical .image-compare__before{clip-path:inset(0 0 50% 0)}.image-compare__handle{position:absolute;top:0;left:50%;width:4px;height:100%;background:#fff;transform:translateX(-50%);z-index:10;box-shadow:0 0 8px rgba(0,0,0,0.5)}.image-compare.vertical .image-compare__handle{top:50%;left:0;width:100%;height:4px;transform:translateY(-50%)}.image-compare__handle-circle{position:absolute;top:50%;left:50%;width:44px;height:44px;background:#fff;border-radius:50%;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,0.3)}.image-compare__arrows{display:flex;gap:4px;color:#333}.image-compare.vertical .image-compare__arrows{flex-direction:column}.image-compare__arrows svg{width:12px;height:12px}.image-compare__label{position:absolute;padding:6px 14px;background:rgba(0,0,0,0.7);color:#fff;font-size:12px;font-weight:600;border-radius:4px;z-index:5;pointer-events:none;text-transform:uppercase;letter-spacing:.5px}.image-compare__label--before{top:12px;left:12px}.image-compare__label--after{top:12px;right:12px}.image-compare.vertical .image-compare__label--before{top:12px;left:12px}.image-compare.vertical .image-compare__label--after{bottom:12px;left:12px;top:auto}`;
-
-// Inline JS for Variant A
-const EMBED_JS_INLINE = `(function(){'use strict';function initImageCompare(e){const t=e.querySelectorAll('img');if(t.length<2)return;const n=t[0],o=t[1],i='vertical'===e.dataset.orientation,s=parseInt(e.dataset.position)||50,a=n.dataset.label||'Before',r=o.dataset.label||'After';e.innerHTML='';const c=document.createElement('div');c.className='image-compare__after',c.appendChild(o.cloneNode(!0));const l=document.createElement('div');l.className='image-compare__before',l.appendChild(n.cloneNode(!0));const d=document.createElement('div');d.className='image-compare__handle',d.innerHTML='<div class="image-compare__handle-circle"><div class="image-compare__arrows"><svg viewBox="0 0 24 24" fill="currentColor"><path d="'+(i?'M7.41 15.41L12 10.83l4.59 4.58L18 14l-6-6-6 6z':'M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z')+'"/></svg><svg viewBox="0 0 24 24" fill="currentColor"><path d="'+(i?'M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6z':'M8.59 16.59L10 18l6-6-6-6-1.41 1.41L13.17 12z')+'"/></svg></div></div>';const m=document.createElement('div');m.className='image-compare__label image-compare__label--before',m.textContent=a;const p=document.createElement('div');p.className='image-compare__label image-compare__label--after',p.textContent=r;e.appendChild(c),e.appendChild(l),e.appendChild(d),e.appendChild(m),e.appendChild(p),i&&e.classList.add('vertical'),u(s);let f=!1;function u(t){t=Math.max(0,Math.min(100,t)),i?(l.style.clipPath='inset(0 0 '+(100-t)+'% 0)',d.style.top=t+'%',d.style.left='0',d.style.transform='translateY(-50%)'):(l.style.clipPath='inset(0 '+(100-t)+'% 0 0)',d.style.left=t+'%',d.style.top='0',d.style.transform='translateX(-50%)')}function g(t){const n=e.getBoundingClientRect();return i?((t.touches?t.touches[0].clientY:t.clientY)-n.top)/n.height*100:((t.touches?t.touches[0].clientX:t.clientX)-n.left)/n.width*100}e.addEventListener('mousedown',function(e){e.preventDefault(),f=!0,u(g(e))}),document.addEventListener('mousemove',function(e){f&&(e.preventDefault(),u(g(e)))}),document.addEventListener('mouseup',function(){f=!1}),e.addEventListener('touchstart',function(e){e.preventDefault(),f=!0,u(g(e))},{passive:!1}),e.addEventListener('touchmove',function(e){f&&(e.preventDefault(),u(g(e)))},{passive:!1}),e.addEventListener('touchend',function(){f=!1});const h=n.cloneNode(!0);h.onload=function(){const t=h.naturalHeight/h.naturalWidth;e.style.paddingBottom=100*t+'%'},h.complete&&(e.style.paddingBottom=100*(h.naturalHeight/h.naturalWidth)+'%')}function init(){document.querySelectorAll('.image-compare').forEach(initImageCompare)}'loading'===document.readyState?document.addEventListener('DOMContentLoaded',init):init(),window.ImageCompare={init:init,initSlider:initImageCompare}})();`;
-
 function generateEmbedCode(options) {
     const variant = document.querySelector('.embed-variant-toggle .toggle-btn.active')?.dataset.variant || 'inline';
 
@@ -649,10 +651,38 @@ function previewEmbedCode() {
 }
 
 // ============================================
-// DOWNLOAD PNG
+// DOWNLOAD IMAGE
 // ============================================
 
-function downloadPNG() {
+function openDownloadModal() {
+    document.getElementById('downloadModal').classList.remove('hidden');
+}
+
+function closeDownloadModal() {
+    document.getElementById('downloadModal').classList.add('hidden');
+}
+
+function initDownloadModal() {
+    document.getElementById('closeDownloadModal')?.addEventListener('click', closeDownloadModal);
+
+    // Close on background click
+    document.getElementById('downloadModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'downloadModal') {
+            closeDownloadModal();
+        }
+    });
+
+    // Format buttons
+    document.querySelectorAll('.format-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const format = btn.dataset.format;
+            downloadImage(format);
+            closeDownloadModal();
+        });
+    });
+}
+
+function downloadImage(format = 'png') {
     if (!currentSlider) return;
 
     const canvas = document.createElement('canvas');
@@ -718,10 +748,16 @@ function downloadPNG() {
         ctx.fillStyle = '#fff';
         ctx.fillText(labelAfter, canvas.width - afterMetrics.width - 25, 35);
 
-        // Download
+        // Download with selected format
         const link = document.createElement('a');
-        link.download = 'juxtapose-comparison.png';
-        link.href = canvas.toDataURL('image/png');
+        const mimeTypes = {
+            png: 'image/png',
+            jpg: 'image/jpeg',
+            webp: 'image/webp'
+        };
+        const mimeType = mimeTypes[format] || 'image/png';
+        link.download = `image-compare.${format}`;
+        link.href = canvas.toDataURL(mimeType, format === 'jpg' ? 0.92 : undefined);
         link.click();
     };
 
@@ -729,6 +765,11 @@ function downloadPNG() {
     img2.onload = draw;
     img1.src = currentSlider.before;
     img2.src = currentSlider.after;
+}
+
+// Keep old function for backwards compatibility
+function downloadPNG() {
+    downloadImage('png');
 }
 
 // ============================================
