@@ -294,54 +294,73 @@
 
             <!-- Right Panel - Layers & Properties -->
             <aside class="panel panel-right" id="panelRight">
-                <!-- Layers Panel (most important - first) -->
-                <section class="panel-section layers-panel" id="layersPanel">
+                <!-- Pixel Art Mode Toggle (compact, at top) -->
+                <section class="panel-section pixel-art-toggle-section" id="pixelArtToggleSection">
+                    <div class="panel-header" style="padding: 8px 16px;">
+                        <h3 style="display: flex; align-items: center; gap: 8px;">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M4 4h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 10h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 16h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4z" fill="currentColor"/>
+                            </svg>
+                            Pixel Art
+                        </h3>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="pixelArtModeToggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </section>
+
+                <!-- Color Picker -->
+                <section class="panel-section color-picker-section" id="colorPickerSection">
                     <div class="panel-header">
-                        <h3>Vrstvy</h3>
-                        <div class="layer-actions">
-                            <button class="btn-icon" id="addLayerBtn" title="Přidat vrstvu">
-                                <svg viewBox="0 0 24 24" width="18" height="18">
-                                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
-                                </svg>
-                            </button>
-                            <button class="btn-icon" id="addFolderBtn" title="Přidat složku">
-                                <svg viewBox="0 0 24 24" width="18" height="18">
-                                    <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-1 8h-3v3h-2v-3h-3v-2h3V9h2v3h3v2z" fill="currentColor"/>
-                                </svg>
-                            </button>
-                            <button class="btn-icon" id="deleteLayerBtn" title="Smazat vrstvu">
-                                <svg viewBox="0 0 24 24" width="18" height="18">
-                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
-                                </svg>
-                            </button>
-                        </div>
+                        <h3>Barva</h3>
+                        <button class="btn-icon btn-collapse" data-collapse="colorPickerSection">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" fill="currentColor"/>
+                            </svg>
+                        </button>
                     </div>
-                    <div class="panel-content layers-content">
-                        <div id="selectedLayersCount"></div>
-                        <div class="layers-list" id="layersList">
-                            <!-- Layers will be dynamically added here -->
+                    <div class="panel-content">
+                        <div class="color-picker-wrapper">
+                            <div class="color-gradient" id="colorGradient">
+                                <div class="color-gradient-picker" id="colorGradientPicker"></div>
+                            </div>
+                            <div class="color-hue-slider">
+                                <input type="range" id="hueSlider" min="0" max="360" value="0" class="hue-slider">
+                            </div>
                         </div>
-                    </div>
-                    <div class="blend-mode-selector">
-                        <label>Blend Mode</label>
-                        <select id="blendModeSelect">
-                            <option value="source-over">Normal</option>
-                            <option value="multiply">Multiply</option>
-                            <option value="screen">Screen</option>
-                            <option value="overlay">Overlay</option>
-                            <option value="darken">Darken</option>
-                            <option value="lighten">Lighten</option>
-                            <option value="color-dodge">Color Dodge</option>
-                            <option value="color-burn">Color Burn</option>
-                            <option value="hard-light">Hard Light</option>
-                            <option value="soft-light">Soft Light</option>
-                            <option value="difference">Difference</option>
-                            <option value="exclusion">Exclusion</option>
-                            <option value="hue">Hue</option>
-                            <option value="saturation">Saturation</option>
-                            <option value="color">Color</option>
-                            <option value="luminosity">Luminosity</option>
-                        </select>
+                        <div class="color-inputs">
+                            <div class="color-input-group">
+                                <label>Hex</label>
+                                <input type="text" id="colorHex" value="#ffffff" maxlength="7">
+                            </div>
+                            <div class="color-input-row">
+                                <div class="color-input-group small">
+                                    <label>R</label>
+                                    <input type="number" id="colorR" min="0" max="255" value="255">
+                                </div>
+                                <div class="color-input-group small">
+                                    <label>G</label>
+                                    <input type="number" id="colorG" min="0" max="255" value="255">
+                                </div>
+                                <div class="color-input-group small">
+                                    <label>B</label>
+                                    <input type="number" id="colorB" min="0" max="255" value="255">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="color-presets" id="colorPresets">
+                            <div class="preset-color" style="background: #ffffff;" data-color="#ffffff"></div>
+                            <div class="preset-color" style="background: #000000;" data-color="#000000"></div>
+                            <div class="preset-color" style="background: #ef4444;" data-color="#ef4444"></div>
+                            <div class="preset-color" style="background: #f97316;" data-color="#f97316"></div>
+                            <div class="preset-color" style="background: #eab308;" data-color="#eab308"></div>
+                            <div class="preset-color" style="background: #22c55e;" data-color="#22c55e"></div>
+                            <div class="preset-color" style="background: #06b6d4;" data-color="#06b6d4"></div>
+                            <div class="preset-color" style="background: #3b82f6;" data-color="#3b82f6"></div>
+                            <div class="preset-color" style="background: #8b5cf6;" data-color="#8b5cf6"></div>
+                            <div class="preset-color" style="background: #ec4899;" data-color="#ec4899"></div>
+                        </div>
                     </div>
                 </section>
 
@@ -461,75 +480,68 @@
                     </div>
                 </section>
 
-                <!-- Color Picker -->
-                <section class="panel-section color-picker-section" id="colorPickerSection">
+                <!-- Layers Panel -->
+                <section class="panel-section layers-panel" id="layersPanel">
                     <div class="panel-header">
-                        <h3>Barva</h3>
-                        <button class="btn-icon btn-collapse" data-collapse="colorPickerSection">
+                        <h3>Vrstvy</h3>
+                        <div class="layer-actions">
+                            <button class="btn-icon" id="addLayerBtn" title="Přidat vrstvu">
+                                <svg viewBox="0 0 24 24" width="18" height="18">
+                                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                            <button class="btn-icon" id="addFolderBtn" title="Přidat složku">
+                                <svg viewBox="0 0 24 24" width="18" height="18">
+                                    <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-1 8h-3v3h-2v-3h-3v-2h3V9h2v3h3v2z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                            <button class="btn-icon" id="deleteLayerBtn" title="Smazat vrstvu">
+                                <svg viewBox="0 0 24 24" width="18" height="18">
+                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panel-content layers-content">
+                        <div id="selectedLayersCount"></div>
+                        <div class="layers-list" id="layersList">
+                            <!-- Layers will be dynamically added here -->
+                        </div>
+                    </div>
+                    <div class="blend-mode-selector">
+                        <label>Blend Mode</label>
+                        <select id="blendModeSelect">
+                            <option value="source-over">Normal</option>
+                            <option value="multiply">Multiply</option>
+                            <option value="screen">Screen</option>
+                            <option value="overlay">Overlay</option>
+                            <option value="darken">Darken</option>
+                            <option value="lighten">Lighten</option>
+                            <option value="color-dodge">Color Dodge</option>
+                            <option value="color-burn">Color Burn</option>
+                            <option value="hard-light">Hard Light</option>
+                            <option value="soft-light">Soft Light</option>
+                            <option value="difference">Difference</option>
+                            <option value="exclusion">Exclusion</option>
+                            <option value="hue">Hue</option>
+                            <option value="saturation">Saturation</option>
+                            <option value="color">Color</option>
+                            <option value="luminosity">Luminosity</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- Pixel Art Mode Settings (shown when enabled) -->
+                <section class="panel-section pixel-art-section" id="pixelArtSection" style="display: none;">
+                    <div class="panel-header">
+                        <h3>Pixel Art Nastavení</h3>
+                        <button class="btn-icon btn-collapse" data-collapse="pixelArtSection">
                             <svg viewBox="0 0 24 24" width="16" height="16">
                                 <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" fill="currentColor"/>
                             </svg>
                         </button>
                     </div>
-                    <div class="panel-content">
-                        <div class="color-picker-wrapper">
-                            <div class="color-gradient" id="colorGradient">
-                                <div class="color-gradient-picker" id="colorGradientPicker"></div>
-                            </div>
-                            <div class="color-hue-slider">
-                                <input type="range" id="hueSlider" min="0" max="360" value="0" class="hue-slider">
-                            </div>
-                        </div>
-                        <div class="color-inputs">
-                            <div class="color-input-group">
-                                <label>Hex</label>
-                                <input type="text" id="colorHex" value="#ffffff" maxlength="7">
-                            </div>
-                            <div class="color-input-row">
-                                <div class="color-input-group small">
-                                    <label>R</label>
-                                    <input type="number" id="colorR" min="0" max="255" value="255">
-                                </div>
-                                <div class="color-input-group small">
-                                    <label>G</label>
-                                    <input type="number" id="colorG" min="0" max="255" value="255">
-                                </div>
-                                <div class="color-input-group small">
-                                    <label>B</label>
-                                    <input type="number" id="colorB" min="0" max="255" value="255">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="color-presets" id="colorPresets">
-                            <div class="preset-color" style="background: #ffffff;" data-color="#ffffff"></div>
-                            <div class="preset-color" style="background: #000000;" data-color="#000000"></div>
-                            <div class="preset-color" style="background: #ef4444;" data-color="#ef4444"></div>
-                            <div class="preset-color" style="background: #f97316;" data-color="#f97316"></div>
-                            <div class="preset-color" style="background: #eab308;" data-color="#eab308"></div>
-                            <div class="preset-color" style="background: #22c55e;" data-color="#22c55e"></div>
-                            <div class="preset-color" style="background: #06b6d4;" data-color="#06b6d4"></div>
-                            <div class="preset-color" style="background: #3b82f6;" data-color="#3b82f6"></div>
-                            <div class="preset-color" style="background: #8b5cf6;" data-color="#8b5cf6"></div>
-                            <div class="preset-color" style="background: #ec4899;" data-color="#ec4899"></div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Pixel Art Mode Toggle & Settings -->
-                <section class="panel-section pixel-art-section" id="pixelArtSection">
-                    <div class="panel-header">
-                        <h3>
-                            <svg viewBox="0 0 24 24" width="16" height="16" style="margin-right: 6px; vertical-align: -2px;">
-                                <path d="M4 4h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 10h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4zM4 16h4v4H4zm6 0h4v4h-4zm6 0h4v4h-4z" fill="currentColor"/>
-                            </svg>
-                            Pixel Art Mode
-                        </h3>
-                        <label class="toggle-switch">
-                            <input type="checkbox" id="pixelArtModeToggle">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <div class="panel-content pixel-art-content" id="pixelArtContent" style="display: none;">
+                    <div class="panel-content pixel-art-content" id="pixelArtContent">
                         <!-- Grid Settings -->
                         <div class="setting-group">
                             <div class="setting-group-header">
