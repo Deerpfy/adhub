@@ -7,6 +7,7 @@ export class UIController {
         this.app = app;
         this.notificationTimeout = null;
         this.contextMenu = null;
+        this.layerContextMenu = null;
         this.isFullscreen = false;
         this.draggedLayerIndex = null;
 
@@ -1749,13 +1750,13 @@ export class UIController {
      */
     setupLayerContextMenu() {
         this.contextMenuLayerIndex = null;
-        this.contextMenu = document.getElementById('layerContextMenu');
+        this.layerContextMenu = document.getElementById('layerContextMenu');
 
-        if (!this.contextMenu) return;
+        if (!this.layerContextMenu) return;
 
         // Close menu on click outside
         document.addEventListener('click', (e) => {
-            if (!this.contextMenu.contains(e.target)) {
+            if (!this.layerContextMenu.contains(e.target)) {
                 this.hideLayerContextMenu();
             }
         });
@@ -1768,7 +1769,7 @@ export class UIController {
         });
 
         // Setup menu item actions
-        this.contextMenu.querySelectorAll('.context-menu-item[data-action]').forEach(item => {
+        this.layerContextMenu.querySelectorAll('.context-menu-item[data-action]').forEach(item => {
             item.addEventListener('click', (e) => {
                 e.stopPropagation();
                 const action = item.dataset.action;
@@ -1779,7 +1780,7 @@ export class UIController {
         // Opacity slider
         const opacitySlider = document.getElementById('contextMenuOpacitySlider');
         const opacityContainer = document.getElementById('opacitySliderContainer');
-        const opacityBtn = this.contextMenu.querySelector('[data-action="opacity"]');
+        const opacityBtn = this.layerContextMenu.querySelector('[data-action="opacity"]');
 
         if (opacityBtn && opacitySlider) {
             opacityBtn.addEventListener('click', (e) => {
@@ -1797,7 +1798,7 @@ export class UIController {
         }
 
         // Blend mode submenu
-        const blendModeBtn = this.contextMenu.querySelector('[data-action="blendMode"]');
+        const blendModeBtn = this.layerContextMenu.querySelector('[data-action="blendMode"]');
         const blendModeSubmenu = document.getElementById('blendModeSubmenu');
 
         if (blendModeBtn && blendModeSubmenu) {
@@ -1827,7 +1828,7 @@ export class UIController {
         e.preventDefault();
         e.stopPropagation();
 
-        if (!this.contextMenu) return;
+        if (!this.layerContextMenu) return;
 
         this.contextMenuLayerIndex = layerIndex;
         const layer = this.app.layers.getLayer(layerIndex);
@@ -1864,13 +1865,13 @@ export class UIController {
         }
 
         // Disable merge down for first layer
-        const mergeDownBtn = this.contextMenu.querySelector('[data-action="mergeDown"]');
+        const mergeDownBtn = this.layerContextMenu.querySelector('[data-action="mergeDown"]');
         if (mergeDownBtn) {
             mergeDownBtn.disabled = layerIndex === 0;
         }
 
         // Disable delete if only one layer
-        const deleteBtn = this.contextMenu.querySelector('[data-action="delete"]');
+        const deleteBtn = this.layerContextMenu.querySelector('[data-action="delete"]');
         if (deleteBtn) {
             deleteBtn.disabled = this.app.layers.layers.length <= 1;
         }
@@ -1893,9 +1894,9 @@ export class UIController {
             y = window.innerHeight - menuHeight - 10;
         }
 
-        this.contextMenu.style.left = `${x}px`;
-        this.contextMenu.style.top = `${y}px`;
-        this.contextMenu.classList.add('visible');
+        this.layerContextMenu.style.left = `${x}px`;
+        this.layerContextMenu.style.top = `${y}px`;
+        this.layerContextMenu.classList.add('visible');
 
         // Highlight the layer item
         document.querySelectorAll('.layer-item').forEach(item => item.classList.remove('context-active'));
@@ -1909,8 +1910,8 @@ export class UIController {
      * Hide layer context menu
      */
     hideLayerContextMenu() {
-        if (this.contextMenu) {
-            this.contextMenu.classList.remove('visible');
+        if (this.layerContextMenu) {
+            this.layerContextMenu.classList.remove('visible');
         }
         document.querySelectorAll('.layer-item').forEach(item => item.classList.remove('context-active'));
         this.contextMenuLayerIndex = null;
