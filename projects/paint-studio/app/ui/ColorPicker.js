@@ -26,6 +26,11 @@ export class ColorPicker {
 
         // Dragging state
         this.isDraggingGradient = false;
+
+        // Popup state
+        this.popupColorPicker = null;
+        this.isEditingSecondary = false;
+        this.popupDragging = false;
     }
 
     /**
@@ -83,27 +88,33 @@ export class ColorPicker {
             this.bInput.addEventListener('change', this.handleRgbInput.bind(this));
         }
 
-        // Color swatches
+        // Color swatches - show popup picker
         const primarySwatch = document.getElementById('primaryColor');
         const secondarySwatch = document.getElementById('secondaryColor');
         const swapBtn = document.getElementById('swapColorsBtn');
 
         if (primarySwatch) {
-            primarySwatch.addEventListener('click', () => this.updateFromColor(this.primaryColor));
+            primarySwatch.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.showColorPopup(false, primarySwatch);
+            });
         }
         if (secondarySwatch) {
-            secondarySwatch.addEventListener('click', () => {
-                // Swap and select secondary
-                const temp = this.primaryColor;
-                this.primaryColor = this.secondaryColor;
-                this.secondaryColor = temp;
-                this.updateSwatches();
-                this.updateFromColor(this.primaryColor);
+            secondarySwatch.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.showColorPopup(true, secondarySwatch);
             });
         }
         if (swapBtn) {
             swapBtn.addEventListener('click', () => this.swapColors());
         }
+
+        // Close popup on outside click
+        document.addEventListener('click', (e) => {
+            if (this.popupColorPicker && !this.popupColorPicker.contains(e.target)) {
+                this.hideColorPopup();
+            }
+        });
 
         // Color presets
         document.querySelectorAll('.preset-color').forEach(preset => {
@@ -347,6 +358,272 @@ export class ColorPicker {
 
         this.updateFromColor(this.primaryColor);
         this.updateSwatches();
+    }
+
+    /**
+     * Show color popup picker
+     */
+    showColorPopup(isSecondary, anchorElement) {
+        // Remove existing popup
+        this.hideColorPopup();
+
+        this.isEditingSecondary = isSecondary;
+        const currentColor = isSecondary ? this.secondaryColor : this.primaryColor;
+
+        // Create popup element
+        this.popupColorPicker = document.createElement('div');
+        this.popupColorPicker.className = 'color-popup-picker';
+        this.popupColorPicker.innerHTML = `
+            <div class="color-popup-header">
+                <span class="color-popup-title">${isSecondary ? 'Sekundární barva' : 'Primární barva'}</span>
+                <button class="color-popup-close" title="Zavřít">×</button>
+            </div>
+            <div class="color-popup-body">
+                <div class="color-popup-gradient" id="popupGradient">
+                    <div class="color-popup-gradient-picker" id="popupGradientPicker"></div>
+                </div>
+                <div class="color-popup-hue-slider">
+                    <input type="range" id="popupHueSlider" min="0" max="360" value="0" class="hue-slider">
+                </div>
+                <div class="color-popup-inputs">
+                    <div class="color-popup-input-group">
+                        <label>Hex</label>
+                        <input type="text" id="popupColorHex" value="${currentColor}" maxlength="7">
+                    </div>
+                </div>
+                <div class="color-popup-presets">
+                    <div class="popup-preset-color" style="background: #ffffff;" data-color="#ffffff"></div>
+                    <div class="popup-preset-color" style="background: #000000;" data-color="#000000"></div>
+                    <div class="popup-preset-color" style="background: #ef4444;" data-color="#ef4444"></div>
+                    <div class="popup-preset-color" style="background: #f97316;" data-color="#f97316"></div>
+                    <div class="popup-preset-color" style="background: #eab308;" data-color="#eab308"></div>
+                    <div class="popup-preset-color" style="background: #22c55e;" data-color="#22c55e"></div>
+                    <div class="popup-preset-color" style="background: #06b6d4;" data-color="#06b6d4"></div>
+                    <div class="popup-preset-color" style="background: #3b82f6;" data-color="#3b82f6"></div>
+                    <div class="popup-preset-color" style="background: #8b5cf6;" data-color="#8b5cf6"></div>
+                    <div class="popup-preset-color" style="background: #ec4899;" data-color="#ec4899"></div>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(this.popupColorPicker);
+
+        // Position popup near anchor
+        const rect = anchorElement.getBoundingClientRect();
+        this.popupColorPicker.style.left = `${rect.right + 10}px`;
+        this.popupColorPicker.style.top = `${rect.top}px`;
+
+        // Make sure popup is visible
+        const popupRect = this.popupColorPicker.getBoundingClientRect();
+        if (popupRect.bottom > window.innerHeight) {
+            this.popupColorPicker.style.top = `${window.innerHeight - popupRect.height - 10}px`;
+        }
+
+        // Setup popup event listeners
+        this.setupPopupEventListeners(currentColor);
+    }
+
+    /**
+     * Setup popup event listeners
+     */
+    setupPopupEventListeners(initialColor) {
+        const popup = this.popupColorPicker;
+        if (!popup) return;
+
+        // Close button
+        popup.querySelector('.color-popup-close')?.addEventListener('click', () => {
+            this.hideColorPopup();
+        });
+
+        // Gradient picker
+        const gradient = popup.querySelector('#popupGradient');
+        const gradientPicker = popup.querySelector('#popupGradientPicker');
+        const hueSlider = popup.querySelector('#popupHueSlider');
+        const hexInput = popup.querySelector('#popupColorHex');
+
+        // Initialize from color
+        const rgb = this.hexToRgb(initialColor);
+        if (rgb) {
+            const hsv = this.rgbToHsv(rgb.r, rgb.g, rgb.b);
+            this.popupHue = hsv.h;
+            this.popupSaturation = hsv.s;
+            this.popupValue = hsv.v;
+
+            if (hueSlider) hueSlider.value = hsv.h;
+            this.updatePopupGradient(gradient, hsv.h);
+            if (gradientPicker) {
+                gradientPicker.style.left = `${hsv.s}%`;
+                gradientPicker.style.top = `${100 - hsv.v}%`;
+            }
+        }
+
+        // Gradient mouse events
+        if (gradient) {
+            const handleGradientMove = (clientX, clientY) => {
+                const rect = gradient.getBoundingClientRect();
+                let x = (clientX - rect.left) / rect.width;
+                let y = (clientY - rect.top) / rect.height;
+                x = Math.max(0, Math.min(1, x));
+                y = Math.max(0, Math.min(1, y));
+
+                this.popupSaturation = x * 100;
+                this.popupValue = (1 - y) * 100;
+
+                if (gradientPicker) {
+                    gradientPicker.style.left = `${x * 100}%`;
+                    gradientPicker.style.top = `${y * 100}%`;
+                }
+
+                this.updatePopupColor(hexInput);
+            };
+
+            gradient.addEventListener('mousedown', (e) => {
+                this.popupDragging = true;
+                handleGradientMove(e.clientX, e.clientY);
+            });
+
+            document.addEventListener('mousemove', (e) => {
+                if (this.popupDragging) {
+                    handleGradientMove(e.clientX, e.clientY);
+                }
+            });
+
+            document.addEventListener('mouseup', () => {
+                this.popupDragging = false;
+            });
+
+            // Touch support
+            gradient.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.popupDragging = true;
+                handleGradientMove(e.touches[0].clientX, e.touches[0].clientY);
+            }, { passive: false });
+
+            document.addEventListener('touchmove', (e) => {
+                if (this.popupDragging) {
+                    e.preventDefault();
+                    handleGradientMove(e.touches[0].clientX, e.touches[0].clientY);
+                }
+            }, { passive: false });
+
+            document.addEventListener('touchend', () => {
+                this.popupDragging = false;
+            });
+        }
+
+        // Hue slider
+        if (hueSlider) {
+            hueSlider.addEventListener('input', (e) => {
+                this.popupHue = parseInt(e.target.value);
+                this.updatePopupGradient(gradient, this.popupHue);
+                this.updatePopupColor(hexInput);
+            });
+        }
+
+        // Hex input
+        if (hexInput) {
+            hexInput.addEventListener('change', (e) => {
+                let hex = e.target.value;
+                if (!hex.startsWith('#')) hex = '#' + hex;
+                if (/^#[0-9A-Fa-f]{6}$/.test(hex)) {
+                    this.setPopupColor(hex);
+                    const rgb = this.hexToRgb(hex);
+                    if (rgb) {
+                        const hsv = this.rgbToHsv(rgb.r, rgb.g, rgb.b);
+                        this.popupHue = hsv.h;
+                        this.popupSaturation = hsv.s;
+                        this.popupValue = hsv.v;
+
+                        if (hueSlider) hueSlider.value = hsv.h;
+                        this.updatePopupGradient(gradient, hsv.h);
+                        if (gradientPicker) {
+                            gradientPicker.style.left = `${hsv.s}%`;
+                            gradientPicker.style.top = `${100 - hsv.v}%`;
+                        }
+                    }
+                }
+            });
+        }
+
+        // Preset colors
+        popup.querySelectorAll('.popup-preset-color').forEach(preset => {
+            preset.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const color = preset.dataset.color;
+                if (color) {
+                    this.setPopupColor(color);
+                    const rgb = this.hexToRgb(color);
+                    if (rgb) {
+                        const hsv = this.rgbToHsv(rgb.r, rgb.g, rgb.b);
+                        this.popupHue = hsv.h;
+                        this.popupSaturation = hsv.s;
+                        this.popupValue = hsv.v;
+
+                        if (hueSlider) hueSlider.value = hsv.h;
+                        this.updatePopupGradient(gradient, hsv.h);
+                        if (gradientPicker) {
+                            gradientPicker.style.left = `${hsv.s}%`;
+                            gradientPicker.style.top = `${100 - hsv.v}%`;
+                        }
+                        if (hexInput) hexInput.value = color;
+                    }
+                }
+            });
+        });
+
+        // Prevent popup from closing when clicking inside
+        popup.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+    }
+
+    /**
+     * Update popup gradient background
+     */
+    updatePopupGradient(gradient, hue) {
+        if (gradient) {
+            const hueColor = `hsl(${hue}, 100%, 50%)`;
+            gradient.style.background = `
+                linear-gradient(to bottom, transparent, black),
+                linear-gradient(to right, white, ${hueColor})
+            `;
+        }
+    }
+
+    /**
+     * Update popup color
+     */
+    updatePopupColor(hexInput) {
+        const rgb = this.hsvToRgb(this.popupHue, this.popupSaturation, this.popupValue);
+        const hex = this.rgbToHex(rgb.r, rgb.g, rgb.b);
+
+        if (hexInput) hexInput.value = hex;
+        this.setPopupColor(hex);
+    }
+
+    /**
+     * Set color from popup
+     */
+    setPopupColor(hex) {
+        if (this.isEditingSecondary) {
+            this.secondaryColor = hex;
+        } else {
+            this.primaryColor = hex;
+            // Also update main picker
+            this.updateFromColor(hex);
+        }
+        this.updateSwatches();
+    }
+
+    /**
+     * Hide color popup
+     */
+    hideColorPopup() {
+        if (this.popupColorPicker) {
+            this.popupColorPicker.remove();
+            this.popupColorPicker = null;
+        }
+        this.popupDragging = false;
     }
 
     // Color conversion utilities
