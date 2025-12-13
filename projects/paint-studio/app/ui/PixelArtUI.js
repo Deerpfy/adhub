@@ -709,23 +709,26 @@ export class PixelArtUI {
     }
 
     togglePlayback() {
-        if (this.app.animation.playing) {
-            this.app.animation.stop();
-            this.elements.timelinePlayBtn?.classList.remove('playing');
-            // Show play icon, hide pause icon
-            const playIcon = this.elements.timelinePlayBtn?.querySelector('.play-icon');
-            const pauseIcon = this.elements.timelinePlayBtn?.querySelector('.pause-icon');
-            if (playIcon) playIcon.style.display = 'block';
-            if (pauseIcon) pauseIcon.style.display = 'none';
-        } else {
-            this.app.animation.play();
+        console.log('togglePlayback called, current state:', this.app.animation.playing);
+
+        // Use AnimationManager's togglePlay method
+        this.app.animation.togglePlay();
+
+        // Update button visual state
+        const isPlaying = this.app.animation.playing;
+        console.log('After toggle, playing:', isPlaying);
+
+        if (isPlaying) {
             this.elements.timelinePlayBtn?.classList.add('playing');
-            // Show pause icon, hide play icon
-            const playIcon = this.elements.timelinePlayBtn?.querySelector('.play-icon');
-            const pauseIcon = this.elements.timelinePlayBtn?.querySelector('.pause-icon');
-            if (playIcon) playIcon.style.display = 'none';
-            if (pauseIcon) pauseIcon.style.display = 'block';
+        } else {
+            this.elements.timelinePlayBtn?.classList.remove('playing');
         }
+
+        // Toggle play/pause icons
+        const playIcon = this.elements.timelinePlayBtn?.querySelector('.play-icon');
+        const pauseIcon = this.elements.timelinePlayBtn?.querySelector('.pause-icon');
+        if (playIcon) playIcon.style.display = isPlaying ? 'none' : 'block';
+        if (pauseIcon) pauseIcon.style.display = isPlaying ? 'block' : 'none';
     }
 
     goToPrevFrame() {
