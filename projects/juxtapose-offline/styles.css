@@ -486,6 +486,91 @@ body::before {
     border-color: var(--primary-color);
 }
 
+/* Toggle Switch for Labels */
+.toggle-switch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.toggle-switch input {
+    display: none;
+}
+
+.toggle-slider {
+    width: 36px;
+    height: 20px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    position: relative;
+    transition: var(--transition);
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 14px;
+    height: 14px;
+    background: var(--text-muted);
+    border-radius: 50%;
+    transition: var(--transition);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(16px);
+    background: white;
+}
+
+.toggle-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* Download Group */
+.download-group {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+}
+
+.download-group .btn-primary {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.format-select {
+    padding: 8px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--primary-dark);
+    border-left: none;
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.format-select:hover {
+    background: var(--bg-hover);
+}
+
+.format-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
 /* Juxtapose Container */
 .juxtapose-wrapper {
     background: var(--bg-card);
