@@ -1751,6 +1751,62 @@ body {
     border-bottom: 2px solid var(--primary-color);
 }
 
+.layer-item.drag-over-folder {
+    background: rgba(139, 92, 246, 0.3);
+    border: 2px dashed var(--primary-color);
+}
+
+/* Folder-specific styles */
+.layer-item.is-folder {
+    background: var(--bg-tertiary);
+}
+
+.layer-item.is-folder:hover {
+    background: var(--bg-hover);
+}
+
+.layer-item.is-folder.active {
+    background: rgba(139, 92, 246, 0.2);
+}
+
+.folder-expand-btn {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+}
+
+.folder-expand-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.folder-expand-btn svg {
+    transition: transform 0.2s ease;
+}
+
+.folder-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #f59e0b;
+    flex-shrink: 0;
+}
+
+.layer-item.is-folder .layer-info {
+    margin-left: 4px;
+}
+
 /* Layer Groups/Folders */
 .layer-group {
     margin-bottom: 4px;
