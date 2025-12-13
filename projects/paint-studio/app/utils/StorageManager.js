@@ -214,6 +214,44 @@ export class StorageManager {
     }
 
     /**
+     * Generic get method for any setting
+     */
+    async get(key) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['settings'], 'readonly');
+            const store = transaction.objectStore('settings');
+            const request = store.get(key);
+
+            request.onsuccess = () => {
+                const result = request.result;
+                if (result) {
+                    // Return value without key property
+                    const { key: _, ...data } = result;
+                    resolve(Object.keys(data).length === 1 && data.value !== undefined ? data.value : data);
+                } else {
+                    resolve(null);
+                }
+            };
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    /**
+     * Generic set method for any setting
+     */
+    async set(key, value) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['settings'], 'readwrite');
+            const store = transaction.objectStore('settings');
+            const data = typeof value === 'object' ? { key, ...value } : { key, value };
+            const request = store.put(data);
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    /**
      * Clear all data
      */
     async clearAll() {

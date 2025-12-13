@@ -790,6 +790,39 @@ export class CanvasManager {
     }
 
     /**
+     * Get composite canvas with all visible layers rendered
+     * Used for thumbnails, exports, etc.
+     */
+    getCompositeCanvas() {
+        // Create a new canvas for the composite
+        const compositeCanvas = document.createElement('canvas');
+        compositeCanvas.width = this.width;
+        compositeCanvas.height = this.height;
+        const ctx = compositeCanvas.getContext('2d');
+
+        // Composite all visible layers
+        this.app.layers.getLayers().forEach(layer => {
+            // Skip folders
+            if (layer.type === 'folder') return;
+
+            // Check visibility
+            if (!layer.visible) return;
+            if (!this.isLayerVisible(layer)) return;
+
+            // Get effective opacity
+            const effectiveOpacity = this.getEffectiveOpacity(layer);
+
+            ctx.save();
+            ctx.globalAlpha = effectiveOpacity;
+            ctx.globalCompositeOperation = layer.blendMode || 'source-over';
+            ctx.drawImage(layer.canvas, 0, 0);
+            ctx.restore();
+        });
+
+        return compositeCanvas;
+    }
+
+    /**
      * Delete (clear) selected area on active layer
      */
     deleteSelection() {
