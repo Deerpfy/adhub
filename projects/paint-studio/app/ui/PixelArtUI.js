@@ -27,6 +27,7 @@ export class PixelArtUI {
     cacheElements() {
         // Main toggle
         this.elements.pixelArtModeToggle = document.getElementById('pixelArtModeToggle');
+        this.elements.pixelArtSection = document.getElementById('pixelArtSection');
         this.elements.pixelArtContent = document.getElementById('pixelArtContent');
         this.elements.pixelArtIndicator = document.getElementById('pixelArtIndicator');
         this.elements.paletteSection = document.getElementById('paletteSection');
@@ -255,9 +256,9 @@ export class PixelArtUI {
         // Toggle body class
         document.body.classList.toggle('pixel-art-mode', enabled);
 
-        // Show/hide pixel art content
-        if (this.elements.pixelArtContent) {
-            this.elements.pixelArtContent.style.display = enabled ? 'block' : 'none';
+        // Show/hide pixel art settings section
+        if (this.elements.pixelArtSection) {
+            this.elements.pixelArtSection.style.display = enabled ? 'block' : 'none';
         }
 
         // Show/hide indicator
