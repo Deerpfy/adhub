@@ -240,26 +240,32 @@
                     </button>
                 </div>
 
-                <div class="tool-divider"></div>
+            </aside>
 
-                <!-- Color Selection -->
-                <div class="color-selection">
-                    <div class="color-swatches" id="colorSwatches">
+            <!-- Canvas Container -->
+            <div class="canvas-container" id="canvasContainer">
+                <!-- Floating Color & Controls Panel (top-left) -->
+                <div class="floating-controls" id="floatingControls">
+                    <div class="color-swatches-float" id="colorSwatches">
                         <div class="color-swatch-wrapper">
                             <div class="color-swatch primary-color" id="primaryColor" title="Primární barva" style="background: #ffffff;"></div>
                             <div class="color-swatch secondary-color" id="secondaryColor" title="Sekundární barva" style="background: #000000;"></div>
                         </div>
                         <button class="swap-colors-btn" id="swapColorsBtn" title="Prohodit barvy (X)">
-                            <svg viewBox="0 0 24 24" width="16" height="16">
+                            <svg viewBox="0 0 24 24" width="14" height="14">
                                 <path d="M6.99 11L3 15l3.99 4v-3H14v-2H6.99v-3zM21 9l-3.99-4v3H10v2h7.01v3L21 9z" fill="currentColor"/>
                             </svg>
                         </button>
                     </div>
+                    <div class="floating-divider"></div>
+                    <button class="floating-toggle-btn" id="quickshapeToggleBtn" title="QuickShape zapnuto - klikni pro vypnutí">
+                        <svg viewBox="0 0 24 24" width="18" height="18">
+                            <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z" fill="currentColor"/>
+                        </svg>
+                        <span class="toggle-label">QS</span>
+                    </button>
                 </div>
-            </aside>
 
-            <!-- Canvas Container -->
-            <div class="canvas-container" id="canvasContainer">
                 <div class="canvas-wrapper" id="canvasWrapper">
                     <!-- Canvas layers will be inserted here -->
                     <canvas id="mainCanvas" class="main-canvas"></canvas>
@@ -288,6 +294,227 @@
 
             <!-- Right Panel - Layers & Properties -->
             <aside class="panel panel-right" id="panelRight">
+                <!-- Layers Panel (most important - first) -->
+                <section class="panel-section layers-panel" id="layersPanel">
+                    <div class="panel-header">
+                        <h3>Vrstvy</h3>
+                        <div class="layer-actions">
+                            <button class="btn-icon" id="addLayerBtn" title="Přidat vrstvu">
+                                <svg viewBox="0 0 24 24" width="18" height="18">
+                                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                            <button class="btn-icon" id="addFolderBtn" title="Přidat složku">
+                                <svg viewBox="0 0 24 24" width="18" height="18">
+                                    <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-1 8h-3v3h-2v-3h-3v-2h3V9h2v3h3v2z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                            <button class="btn-icon" id="deleteLayerBtn" title="Smazat vrstvu">
+                                <svg viewBox="0 0 24 24" width="18" height="18">
+                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="panel-content layers-content">
+                        <div id="selectedLayersCount"></div>
+                        <div class="layers-list" id="layersList">
+                            <!-- Layers will be dynamically added here -->
+                        </div>
+                    </div>
+                    <div class="blend-mode-selector">
+                        <label>Blend Mode</label>
+                        <select id="blendModeSelect">
+                            <option value="source-over">Normal</option>
+                            <option value="multiply">Multiply</option>
+                            <option value="screen">Screen</option>
+                            <option value="overlay">Overlay</option>
+                            <option value="darken">Darken</option>
+                            <option value="lighten">Lighten</option>
+                            <option value="color-dodge">Color Dodge</option>
+                            <option value="color-burn">Color Burn</option>
+                            <option value="hard-light">Hard Light</option>
+                            <option value="soft-light">Soft Light</option>
+                            <option value="difference">Difference</option>
+                            <option value="exclusion">Exclusion</option>
+                            <option value="hue">Hue</option>
+                            <option value="saturation">Saturation</option>
+                            <option value="color">Color</option>
+                            <option value="luminosity">Luminosity</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- Brush Settings -->
+                <section class="panel-section brush-settings" id="brushSettings">
+                    <div class="panel-header">
+                        <h3>Štětec</h3>
+                        <button class="btn-icon btn-collapse" data-collapse="brushSettings">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="panel-content">
+                        <!-- Brush Type Selector -->
+                        <div class="setting-row">
+                            <label>Typ štětce</label>
+                            <div class="brush-type-grid" id="brushTypeGrid">
+                                <button class="brush-type-btn active" data-brush-type="round" title="Kulatý">
+                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="soft" title="Měkký">
+                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor" opacity="0.5"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="airbrush" title="Airbrush">
+                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.2"/><circle cx="12" cy="12" r="6" fill="currentColor" opacity="0.3"/><circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.4"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="marker" title="Fix">
+                                    <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8" ry="5" fill="currentColor"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="charcoal" title="Uhel">
+                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor" opacity="0.7"/><rect x="8" y="10" width="2" height="2" fill="currentColor" opacity="0.3"/><rect x="14" y="14" width="2" height="2" fill="currentColor" opacity="0.3"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="watercolor" title="Akvarel">
+                                    <svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6" fill="currentColor" opacity="0.3"/><circle cx="14" cy="14" r="6" fill="currentColor" opacity="0.3"/><circle cx="12" cy="12" r="5" fill="currentColor" opacity="0.2"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="ink" title="Inkoust">
+                                    <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(45 12 12)" fill="currentColor"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="calligraphy" title="Kaligrafie">
+                                    <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="4" transform="rotate(-30 12 12)" fill="currentColor"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="chalk" title="Křída">
+                                    <svg viewBox="0 0 24 24"><circle cx="8" cy="10" r="2" fill="currentColor" opacity="0.6"/><circle cx="14" cy="8" r="1.5" fill="currentColor" opacity="0.5"/><circle cx="12" cy="14" r="2" fill="currentColor" opacity="0.7"/><circle cx="16" cy="13" r="1" fill="currentColor" opacity="0.4"/><circle cx="10" cy="16" r="1.5" fill="currentColor" opacity="0.5"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="splatter" title="Sprej">
+                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="8" cy="10" r="0.8" fill="currentColor"/><circle cx="15" cy="9" r="0.6" fill="currentColor"/><circle cx="10" cy="15" r="0.7" fill="currentColor"/><circle cx="16" cy="14" r="0.5" fill="currentColor"/><circle cx="6" cy="13" r="0.4" fill="currentColor"/><circle cx="14" cy="17" r="0.6" fill="currentColor"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="square" title="Čtverec">
+                                    <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" fill="currentColor"/></svg>
+                                </button>
+                                <button class="brush-type-btn" data-brush-type="pixel" title="Pixel">
+                                    <svg viewBox="0 0 24 24"><rect x="10" y="10" width="4" height="4" fill="currentColor"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Brush Preview -->
+                        <div class="brush-preview" id="brushPreview">
+                            <canvas id="brushPreviewCanvas" width="240" height="50"></canvas>
+                        </div>
+                        <div class="setting-row">
+                            <label>Velikost</label>
+                            <div class="slider-group">
+                                <input type="range" id="brushSize" min="1" max="200" value="10" class="slider">
+                                <input type="number" id="brushSizeInput" min="1" max="200" value="10" class="slider-input">
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <label>Průhlednost</label>
+                            <div class="slider-group">
+                                <input type="range" id="brushOpacity" min="0" max="100" value="100" class="slider">
+                                <input type="number" id="brushOpacityInput" min="0" max="100" value="100" class="slider-input">
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <label>Tvrdost</label>
+                            <div class="slider-group">
+                                <input type="range" id="brushHardness" min="0" max="100" value="100" class="slider">
+                                <input type="number" id="brushHardnessInput" min="0" max="100" value="100" class="slider-input">
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <label>Rozestup</label>
+                            <div class="slider-group">
+                                <input type="range" id="brushSpacing" min="5" max="100" value="25" class="slider">
+                                <input type="number" id="brushSpacingInput" min="5" max="100" value="25" class="slider-input">
+                            </div>
+                        </div>
+                        <div class="setting-row">
+                            <label>
+                                <input type="checkbox" id="streamlineEnabled" checked>
+                                StreamLine (vyhlazování)
+                            </label>
+                            <div class="slider-group">
+                                <input type="range" id="streamlineAmount" min="0" max="100" value="50" class="slider">
+                                <input type="number" id="streamlineAmountInput" min="0" max="100" value="50" class="slider-input">
+                            </div>
+                        </div>
+                        <div class="setting-row checkbox-row">
+                            <label>
+                                <input type="checkbox" id="pressureSensitivity" checked>
+                                Citlivost na tlak
+                            </label>
+                        </div>
+                        <div class="setting-row checkbox-row">
+                            <label>
+                                <input type="checkbox" id="quickshapeEnabled" checked>
+                                QuickShape (držet pro tvar)
+                            </label>
+                        </div>
+                        <div class="setting-row checkbox-row">
+                            <label>
+                                <input type="checkbox" id="quickshapePreview" checked>
+                                Zobrazit náhled QuickShape
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Color Picker -->
+                <section class="panel-section color-picker-section" id="colorPickerSection">
+                    <div class="panel-header">
+                        <h3>Barva</h3>
+                        <button class="btn-icon btn-collapse" data-collapse="colorPickerSection">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="panel-content">
+                        <div class="color-picker-wrapper">
+                            <div class="color-gradient" id="colorGradient">
+                                <div class="color-gradient-picker" id="colorGradientPicker"></div>
+                            </div>
+                            <div class="color-hue-slider">
+                                <input type="range" id="hueSlider" min="0" max="360" value="0" class="hue-slider">
+                            </div>
+                        </div>
+                        <div class="color-inputs">
+                            <div class="color-input-group">
+                                <label>Hex</label>
+                                <input type="text" id="colorHex" value="#ffffff" maxlength="7">
+                            </div>
+                            <div class="color-input-row">
+                                <div class="color-input-group small">
+                                    <label>R</label>
+                                    <input type="number" id="colorR" min="0" max="255" value="255">
+                                </div>
+                                <div class="color-input-group small">
+                                    <label>G</label>
+                                    <input type="number" id="colorG" min="0" max="255" value="255">
+                                </div>
+                                <div class="color-input-group small">
+                                    <label>B</label>
+                                    <input type="number" id="colorB" min="0" max="255" value="255">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="color-presets" id="colorPresets">
+                            <div class="preset-color" style="background: #ffffff;" data-color="#ffffff"></div>
+                            <div class="preset-color" style="background: #000000;" data-color="#000000"></div>
+                            <div class="preset-color" style="background: #ef4444;" data-color="#ef4444"></div>
+                            <div class="preset-color" style="background: #f97316;" data-color="#f97316"></div>
+                            <div class="preset-color" style="background: #eab308;" data-color="#eab308"></div>
+                            <div class="preset-color" style="background: #22c55e;" data-color="#22c55e"></div>
+                            <div class="preset-color" style="background: #06b6d4;" data-color="#06b6d4"></div>
+                            <div class="preset-color" style="background: #3b82f6;" data-color="#3b82f6"></div>
+                            <div class="preset-color" style="background: #8b5cf6;" data-color="#8b5cf6"></div>
+                            <div class="preset-color" style="background: #ec4899;" data-color="#ec4899"></div>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Pixel Art Mode Toggle & Settings -->
                 <section class="panel-section pixel-art-section" id="pixelArtSection">
                     <div class="panel-header">
@@ -555,227 +782,6 @@
                                 Z obrázku
                             </button>
                         </div>
-                    </div>
-                </section>
-
-                <!-- Brush Settings -->
-                <section class="panel-section brush-settings" id="brushSettings">
-                    <div class="panel-header">
-                        <h3>Štětec</h3>
-                        <button class="btn-icon btn-collapse" data-collapse="brushSettings">
-                            <svg viewBox="0 0 24 24" width="16" height="16">
-                                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" fill="currentColor"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="panel-content">
-                        <!-- Brush Type Selector -->
-                        <div class="setting-row">
-                            <label>Typ štětce</label>
-                            <div class="brush-type-grid" id="brushTypeGrid">
-                                <button class="brush-type-btn active" data-brush-type="round" title="Kulatý">
-                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor"/></svg>
-                                </button>
-                                <button class="brush-type-btn" data-brush-type="soft" title="Měkký">
-                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor" opacity="0.5"/></svg>
-                                </button>
-                                <button class="brush-type-btn" data-brush-type="airbrush" title="Airbrush">
-                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="currentColor" opacity="0.2"/><circle cx="12" cy="12" r="6" fill="currentColor" opacity="0.3"/><circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.4"/></svg>
-                                </button>
-                                <button class="brush-type-btn" data-brush-type="marker" title="Fix">
-                                    <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="8" ry="5" fill="currentColor"/></svg>
-                                </button>
-                                <button class="brush-type-btn" data-brush-type="charcoal" title="Uhel">
-                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="currentColor" opacity="0.7"/><rect x="8" y="10" width="2" height="2" fill="currentColor" opacity="0.3"/><rect x="14" y="14" width="2" height="2" fill="currentColor" opacity="0.3"/></svg>
-                                </button>
-                                <button class="brush-type-btn" data-brush-type="watercolor" title="Akvarel">
-                                    <svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="6" fill="currentColor" opacity="0.3"/><circle cx="14" cy="14" r="6" fill="currentColor" opacity="0.3"/><circle cx="12" cy="12" r="5" fill="currentColor" opacity="0.2"/></svg>
-                                </button>
-                                <button class="brush-type-btn" data-brush-type="ink" title="Inkoust">
-                                    <svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(45 12 12)" fill="currentColor"/></svg>
-                                </button>
-                                <button class="brush-type-btn" data-brush-type="calligraphy" title="Kaligrafie">
-                                    <svg viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="4" transform="rotate(-30 12 12)" fill="currentColor"/></svg>
-                                </button>
-                                <button class="brush-type-btn" data-brush-type="chalk" title="Křída">
-                                    <svg viewBox="0 0 24 24"><circle cx="8" cy="10" r="2" fill="currentColor" opacity="0.6"/><circle cx="14" cy="8" r="1.5" fill="currentColor" opacity="0.5"/><circle cx="12" cy="14" r="2" fill="currentColor" opacity="0.7"/><circle cx="16" cy="13" r="1" fill="currentColor" opacity="0.4"/><circle cx="10" cy="16" r="1.5" fill="currentColor" opacity="0.5"/></svg>
-                                </button>
-                                <button class="brush-type-btn" data-brush-type="splatter" title="Sprej">
-                                    <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="8" cy="10" r="0.8" fill="currentColor"/><circle cx="15" cy="9" r="0.6" fill="currentColor"/><circle cx="10" cy="15" r="0.7" fill="currentColor"/><circle cx="16" cy="14" r="0.5" fill="currentColor"/><circle cx="6" cy="13" r="0.4" fill="currentColor"/><circle cx="14" cy="17" r="0.6" fill="currentColor"/></svg>
-                                </button>
-                                <button class="brush-type-btn" data-brush-type="square" title="Čtverec">
-                                    <svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" fill="currentColor"/></svg>
-                                </button>
-                                <button class="brush-type-btn" data-brush-type="pixel" title="Pixel">
-                                    <svg viewBox="0 0 24 24"><rect x="10" y="10" width="4" height="4" fill="currentColor"/></svg>
-                                </button>
-                            </div>
-                        </div>
-                        <!-- Brush Preview -->
-                        <div class="brush-preview" id="brushPreview">
-                            <canvas id="brushPreviewCanvas" width="240" height="50"></canvas>
-                        </div>
-                        <div class="setting-row">
-                            <label>Velikost</label>
-                            <div class="slider-group">
-                                <input type="range" id="brushSize" min="1" max="200" value="10" class="slider">
-                                <input type="number" id="brushSizeInput" min="1" max="200" value="10" class="slider-input">
-                            </div>
-                        </div>
-                        <div class="setting-row">
-                            <label>Průhlednost</label>
-                            <div class="slider-group">
-                                <input type="range" id="brushOpacity" min="0" max="100" value="100" class="slider">
-                                <input type="number" id="brushOpacityInput" min="0" max="100" value="100" class="slider-input">
-                            </div>
-                        </div>
-                        <div class="setting-row">
-                            <label>Tvrdost</label>
-                            <div class="slider-group">
-                                <input type="range" id="brushHardness" min="0" max="100" value="100" class="slider">
-                                <input type="number" id="brushHardnessInput" min="0" max="100" value="100" class="slider-input">
-                            </div>
-                        </div>
-                        <div class="setting-row">
-                            <label>Rozestup</label>
-                            <div class="slider-group">
-                                <input type="range" id="brushSpacing" min="5" max="100" value="25" class="slider">
-                                <input type="number" id="brushSpacingInput" min="5" max="100" value="25" class="slider-input">
-                            </div>
-                        </div>
-                        <div class="setting-row">
-                            <label>
-                                <input type="checkbox" id="streamlineEnabled" checked>
-                                StreamLine (vyhlazování)
-                            </label>
-                            <div class="slider-group">
-                                <input type="range" id="streamlineAmount" min="0" max="100" value="50" class="slider">
-                                <input type="number" id="streamlineAmountInput" min="0" max="100" value="50" class="slider-input">
-                            </div>
-                        </div>
-                        <div class="setting-row checkbox-row">
-                            <label>
-                                <input type="checkbox" id="pressureSensitivity" checked>
-                                Citlivost na tlak
-                            </label>
-                        </div>
-                        <div class="setting-row checkbox-row">
-                            <label>
-                                <input type="checkbox" id="quickshapeEnabled" checked>
-                                QuickShape (držet pro tvar)
-                            </label>
-                        </div>
-                        <div class="setting-row checkbox-row">
-                            <label>
-                                <input type="checkbox" id="quickshapePreview" checked>
-                                Zobrazit náhled QuickShape
-                            </label>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Color Picker -->
-                <section class="panel-section color-picker-section" id="colorPickerSection">
-                    <div class="panel-header">
-                        <h3>Barva</h3>
-                        <button class="btn-icon btn-collapse" data-collapse="colorPickerSection">
-                            <svg viewBox="0 0 24 24" width="16" height="16">
-                                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" fill="currentColor"/>
-                            </svg>
-                        </button>
-                    </div>
-                    <div class="panel-content">
-                        <div class="color-picker-wrapper">
-                            <div class="color-gradient" id="colorGradient">
-                                <div class="color-gradient-picker" id="colorGradientPicker"></div>
-                            </div>
-                            <div class="color-hue-slider">
-                                <input type="range" id="hueSlider" min="0" max="360" value="0" class="hue-slider">
-                            </div>
-                        </div>
-                        <div class="color-inputs">
-                            <div class="color-input-group">
-                                <label>Hex</label>
-                                <input type="text" id="colorHex" value="#ffffff" maxlength="7">
-                            </div>
-                            <div class="color-input-row">
-                                <div class="color-input-group small">
-                                    <label>R</label>
-                                    <input type="number" id="colorR" min="0" max="255" value="255">
-                                </div>
-                                <div class="color-input-group small">
-                                    <label>G</label>
-                                    <input type="number" id="colorG" min="0" max="255" value="255">
-                                </div>
-                                <div class="color-input-group small">
-                                    <label>B</label>
-                                    <input type="number" id="colorB" min="0" max="255" value="255">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="color-presets" id="colorPresets">
-                            <div class="preset-color" style="background: #ffffff;" data-color="#ffffff"></div>
-                            <div class="preset-color" style="background: #000000;" data-color="#000000"></div>
-                            <div class="preset-color" style="background: #ef4444;" data-color="#ef4444"></div>
-                            <div class="preset-color" style="background: #f97316;" data-color="#f97316"></div>
-                            <div class="preset-color" style="background: #eab308;" data-color="#eab308"></div>
-                            <div class="preset-color" style="background: #22c55e;" data-color="#22c55e"></div>
-                            <div class="preset-color" style="background: #06b6d4;" data-color="#06b6d4"></div>
-                            <div class="preset-color" style="background: #3b82f6;" data-color="#3b82f6"></div>
-                            <div class="preset-color" style="background: #8b5cf6;" data-color="#8b5cf6"></div>
-                            <div class="preset-color" style="background: #ec4899;" data-color="#ec4899"></div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- Layers Panel -->
-                <section class="panel-section layers-panel" id="layersPanel">
-                    <div class="panel-header">
-                        <h3>Vrstvy</h3>
-                        <div class="layer-actions">
-                            <button class="btn-icon" id="addLayerBtn" title="Přidat vrstvu">
-                                <svg viewBox="0 0 24 24" width="18" height="18">
-                                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
-                                </svg>
-                            </button>
-                            <button class="btn-icon" id="addFolderBtn" title="Přidat složku">
-                                <svg viewBox="0 0 24 24" width="18" height="18">
-                                    <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-1 8h-3v3h-2v-3h-3v-2h3V9h2v3h3v2z" fill="currentColor"/>
-                                </svg>
-                            </button>
-                            <button class="btn-icon" id="deleteLayerBtn" title="Smazat vrstvu">
-                                <svg viewBox="0 0 24 24" width="18" height="18">
-                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                    <div class="panel-content layers-content">
-                        <div id="selectedLayersCount"></div>
-                        <div class="layers-list" id="layersList">
-                            <!-- Layers will be dynamically added here -->
-                        </div>
-                    </div>
-                    <div class="blend-mode-selector">
-                        <label>Blend Mode</label>
-                        <select id="blendModeSelect">
-                            <option value="source-over">Normal</option>
-                            <option value="multiply">Multiply</option>
-                            <option value="screen">Screen</option>
-                            <option value="overlay">Overlay</option>
-                            <option value="darken">Darken</option>
-                            <option value="lighten">Lighten</option>
-                            <option value="color-dodge">Color Dodge</option>
-                            <option value="color-burn">Color Burn</option>
-                            <option value="hard-light">Hard Light</option>
-                            <option value="soft-light">Soft Light</option>
-                            <option value="difference">Difference</option>
-                            <option value="exclusion">Exclusion</option>
-                            <option value="hue">Hue</option>
-                            <option value="saturation">Saturation</option>
-                            <option value="color">Color</option>
-                            <option value="luminosity">Luminosity</option>
-                        </select>
                     </div>
                 </section>
             </aside>

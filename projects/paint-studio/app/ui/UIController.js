@@ -255,10 +255,23 @@ export class UIController {
         });
         document.getElementById('quickshapeEnabled')?.addEventListener('change', (e) => {
             this.app.settings.quickshapeEnabled = e.target.checked;
+            this.updateQuickShapeToggleButton();
         });
         document.getElementById('quickshapePreview')?.addEventListener('change', (e) => {
             this.app.settings.quickshapePreview = e.target.checked;
         });
+
+        // Floating QuickShape toggle button
+        document.getElementById('quickshapeToggleBtn')?.addEventListener('click', () => {
+            this.app.settings.quickshapeEnabled = !this.app.settings.quickshapeEnabled;
+            this.updateQuickShapeToggleButton();
+            // Sync with checkbox in brush settings
+            const checkbox = document.getElementById('quickshapeEnabled');
+            if (checkbox) checkbox.checked = this.app.settings.quickshapeEnabled;
+        });
+
+        // Initialize button state
+        this.updateQuickShapeToggleButton();
 
         // Brush type buttons
         document.querySelectorAll('.brush-type-btn').forEach(btn => {
@@ -917,6 +930,20 @@ export class UIController {
             setTimeout(() => {
                 el.style.display = 'none';
             }, 1500);
+        }
+    }
+
+    /**
+     * Update QuickShape toggle button state
+     */
+    updateQuickShapeToggleButton() {
+        const btn = document.getElementById('quickshapeToggleBtn');
+        if (btn) {
+            const isEnabled = this.app.settings.quickshapeEnabled;
+            btn.classList.toggle('disabled', !isEnabled);
+            btn.title = isEnabled
+                ? 'QuickShape zapnuto - klikni pro vypnutí'
+                : 'QuickShape vypnuto - klikni pro zapnutí';
         }
     }
 

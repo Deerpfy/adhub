@@ -110,7 +110,16 @@ export class PaintApp {
             // Initialize selection manager
             this.selection = new SelectionManager(this);
 
-            // Initialize UI controller
+            // Initialize Pixel Art modules (before UI so PixelArtUI can access them)
+            this.pixelArt = new PixelArtManager(this);
+            this.pixelArt.init();
+
+            this.animation = new AnimationManager(this);
+            this.animation.init();
+
+            this.colorAdjust = new ColorAdjustments(this);
+
+            // Initialize UI controller (after pixel art modules)
             this.ui = new UIController(this);
             this.ui.init();
 
@@ -119,15 +128,6 @@ export class PaintApp {
 
             // Initialize background remover (lazy loading)
             this.bgRemover = new BackgroundRemover(this);
-
-            // Initialize Pixel Art modules
-            this.pixelArt = new PixelArtManager(this);
-            this.pixelArt.init();
-
-            this.animation = new AnimationManager(this);
-            this.animation.init();
-
-            this.colorAdjust = new ColorAdjustments(this);
 
             // Create default project
             await this.newProject({
