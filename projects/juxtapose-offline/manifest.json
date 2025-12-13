@@ -1,6 +1,6 @@
 {
-    "name": "Juxtapose Offline",
-    "short_name": "Juxtapose",
+    "name": "Image Compare",
+    "short_name": "Compare",
     "description": "100% offline before/after image comparison tool",
     "start_url": "./index.html",
     "display": "standalone",

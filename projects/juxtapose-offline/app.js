@@ -413,6 +413,7 @@ function initSliderInteraction(slider, isVertical) {
 
     // Mouse events
     slider.addEventListener('mousedown', (e) => {
+        e.preventDefault(); // Prevent text selection
         isDragging = true;
         slider.classList.add('active');
         updatePosition(e);
@@ -420,6 +421,7 @@ function initSliderInteraction(slider, isVertical) {
 
     document.addEventListener('mousemove', (e) => {
         if (isDragging) {
+            e.preventDefault(); // Prevent text selection while dragging
             updatePosition(e);
         }
     });
@@ -434,13 +436,14 @@ function initSliderInteraction(slider, isVertical) {
         isDragging = true;
         slider.classList.add('active');
         updatePosition(e);
-    }, { passive: true });
+    }, { passive: false });
 
     slider.addEventListener('touchmove', (e) => {
         if (isDragging) {
+            e.preventDefault(); // Prevent scrolling while dragging
             updatePosition(e);
         }
-    }, { passive: true });
+    }, { passive: false });
 
     slider.addEventListener('touchend', () => {
         isDragging = false;
@@ -475,12 +478,12 @@ function initSliderInteraction(slider, isVertical) {
 // ============================================
 
 function generateEmbedCode(options) {
-    const embedCode = `<div class="juxtapose" data-startingposition="${options.startPosition}%" data-mode="${options.orientation}">
-    <img src="BEFORE_IMAGE_URL" data-label="${options.labelBefore}" />
-    <img src="AFTER_IMAGE_URL" data-label="${options.labelAfter}" />
+    const embedCode = `<!-- Image Comparison Slider -->
+<div class="comparison-slider" data-position="${options.startPosition}" data-mode="${options.orientation}">
+    <img src="BEFORE_IMAGE_URL" alt="${options.labelBefore}" />
+    <img src="AFTER_IMAGE_URL" alt="${options.labelAfter}" />
 </div>
-<link rel="stylesheet" href="https://cdn.knightlab.com/libs/juxtapose/latest/css/juxtapose.css">
-<script src="https://cdn.knightlab.com/libs/juxtapose/latest/js/juxtapose.min.js"><\/script>`;
+<!-- Nahradte URL vasimi obrazky -->`;
 
     document.getElementById('embedCode').value = embedCode;
 }
@@ -564,7 +567,7 @@ function downloadPNG() {
 
         // Download
         const link = document.createElement('a');
-        link.download = 'juxtapose-comparison.png';
+        link.download = 'comparison.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
     };
@@ -692,7 +695,7 @@ function downloadGif() {
     if (!gifBlob) return;
 
     const link = document.createElement('a');
-    link.download = 'juxtapose-animation.gif';
+    link.download = 'comparison-animation.gif';
     link.href = URL.createObjectURL(gifBlob);
     link.click();
 }
