@@ -269,6 +269,11 @@ export class UIController {
             this.updateLayersList();
         });
 
+        document.getElementById('addFolderBtn')?.addEventListener('click', () => {
+            this.app.layers.addFolder();
+            this.updateLayersList();
+        });
+
         document.getElementById('deleteLayerBtn')?.addEventListener('click', () => {
             this.app.layers.removeLayer(this.app.layers.activeLayerIndex);
             this.updateLayersList();
@@ -324,60 +329,95 @@ export class UIController {
         indicator.innerHTML = '<span class="top-label">↑ TOP (vykreslí se nahoře)</span>';
         list.appendChild(indicator);
 
-        // Reverse order so top layer is at top of UI
-        const layers = [...this.app.layers.getLayers()].reverse();
-        const totalLayers = layers.length;
+        // Get hierarchical layer tree (reversed for UI display)
+        const layerTree = [...this.app.layers.getLayerTree()].reverse();
+        const allLayers = this.app.layers.getLayers();
 
-        layers.forEach((layer, i) => {
-            const actualIndex = this.app.layers.getLayers().length - 1 - i;
-            const isTopLayer = i === 0; // First in reversed array = top layer
-            const isFirst = actualIndex === totalLayers - 1; // Top layer (can't move up)
-            const isLast = actualIndex === 0; // Bottom layer (can't move down)
+        layerTree.forEach((layer, i) => {
+            const actualIndex = layer.flatIndex;
+            const isFolder = layer.type === 'folder';
+            const depth = layer.depth || 0;
 
             const item = document.createElement('div');
             item.className = 'layer-item' +
                 (actualIndex === this.app.layers.activeLayerIndex ? ' active' : '') +
-                (isTopLayer ? ' is-top' : '');
+                (isFolder ? ' is-folder' : '') +
+                (i === 0 ? ' is-top' : '');
             item.dataset.index = actualIndex;
+            item.dataset.id = layer.id;
+            item.dataset.type = layer.type || 'layer';
             item.draggable = true;
+            item.style.paddingLeft = `${8 + depth * 16}px`;
 
-            item.innerHTML = `
-                <div class="layer-drag-handle" title="Přetáhněte pro změnu pořadí">
-                    <svg viewBox="0 0 24 24" width="12" height="12">
-                        <path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" fill="currentColor"/>
-                    </svg>
-                </div>
-                <button class="layer-visibility ${layer.visible ? '' : 'hidden'}" title="Viditelnost">
-                    <svg viewBox="0 0 24 24" width="16" height="16">
-                        ${layer.visible ?
-                            '<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="currentColor"/>' :
-                            '<path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z" fill="currentColor"/>'
-                        }
-                    </svg>
-                </button>
-                <div class="layer-thumbnail"></div>
-                <div class="layer-info">
-                    <span class="layer-name">${layer.name}</span>
-                    <span class="layer-opacity">${Math.round(layer.opacity * 100)}%</span>
-                </div>
-                <div class="layer-item-actions">
-                    <button class="layer-move-btn move-up" title="Posunout nahoru" ${isFirst ? 'disabled' : ''}>
-                        <svg viewBox="0 0 24 24" width="12" height="12">
-                            <path d="M7 14l5-5 5 5H7z" fill="currentColor"/>
+            if (isFolder) {
+                // Folder item
+                item.innerHTML = `
+                    <button class="folder-expand-btn" title="${layer.expanded ? 'Sbalit' : 'Rozbalit'}">
+                        <svg viewBox="0 0 24 24" width="12" height="12" style="transform: rotate(${layer.expanded ? 90 : 0}deg)">
+                            <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6-6-6z" fill="currentColor"/>
                         </svg>
                     </button>
-                    <button class="layer-move-btn move-down" title="Posunout dolů" ${isLast ? 'disabled' : ''}>
-                        <svg viewBox="0 0 24 24" width="12" height="12">
-                            <path d="M7 10l5 5 5-5H7z" fill="currentColor"/>
+                    <button class="layer-visibility ${layer.visible ? '' : 'hidden'}" title="Viditelnost">
+                        <svg viewBox="0 0 24 24" width="16" height="16">
+                            ${layer.visible ?
+                                '<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="currentColor"/>' :
+                                '<path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z" fill="currentColor"/>'
+                            }
                         </svg>
                     </button>
-                </div>
-            `;
+                    <div class="folder-icon">
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+                            <path d="M10 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <div class="layer-info">
+                        <span class="layer-name">${layer.name}</span>
+                        <span class="layer-opacity">${Math.round(layer.opacity * 100)}%</span>
+                    </div>
+                `;
 
-            // Click to select
+                // Folder expand/collapse
+                item.querySelector('.folder-expand-btn')?.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.app.layers.toggleFolderExpand(layer.id);
+                });
+            } else {
+                // Regular layer item
+                item.innerHTML = `
+                    <div class="layer-drag-handle" title="Přetáhněte pro změnu pořadí">
+                        <svg viewBox="0 0 24 24" width="12" height="12">
+                            <path d="M11 18c0 1.1-.9 2-2 2s-2-.9-2-2 .9-2 2-2 2 .9 2 2zm-2-8c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm6 4c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z" fill="currentColor"/>
+                        </svg>
+                    </div>
+                    <button class="layer-visibility ${layer.visible ? '' : 'hidden'}" title="Viditelnost">
+                        <svg viewBox="0 0 24 24" width="16" height="16">
+                            ${layer.visible ?
+                                '<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="currentColor"/>' :
+                                '<path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z" fill="currentColor"/>'
+                            }
+                        </svg>
+                    </button>
+                    <div class="layer-thumbnail"></div>
+                    <div class="layer-info">
+                        <span class="layer-name">${layer.name}</span>
+                        <span class="layer-opacity">${Math.round(layer.opacity * 100)}%</span>
+                    </div>
+                `;
+
+                // Add thumbnail
+                const thumbContainer = item.querySelector('.layer-thumbnail');
+                if (thumbContainer) {
+                    const thumb = this.app.layers.getLayerThumbnail(actualIndex);
+                    if (thumb) {
+                        thumbContainer.appendChild(thumb);
+                    }
+                }
+            }
+
+            // Click to select (for both layers and folders)
             item.addEventListener('click', (e) => {
                 if (!e.target.closest('.layer-visibility') &&
-                    !e.target.closest('.layer-move-btn') &&
+                    !e.target.closest('.folder-expand-btn') &&
                     !e.target.closest('.layer-drag-handle')) {
                     this.app.layers.setActiveLayer(actualIndex);
                     this.updateBlendModeSelect();
@@ -385,38 +425,27 @@ export class UIController {
             });
 
             // Visibility toggle
-            item.querySelector('.layer-visibility')?.addEventListener('click', () => {
+            item.querySelector('.layer-visibility')?.addEventListener('click', (e) => {
+                e.stopPropagation();
                 this.app.layers.toggleVisibility(actualIndex);
-            });
-
-            // Move up button
-            item.querySelector('.move-up')?.addEventListener('click', (e) => {
-                e.stopPropagation();
-                // Moving up in UI means moving to higher index (later in array)
-                this.app.layers.moveLayerDown(actualIndex);
-            });
-
-            // Move down button
-            item.querySelector('.move-down')?.addEventListener('click', (e) => {
-                e.stopPropagation();
-                // Moving down in UI means moving to lower index (earlier in array)
-                this.app.layers.moveLayerUp(actualIndex);
             });
 
             // Drag and drop events
             item.addEventListener('dragstart', (e) => {
                 item.classList.add('dragging');
                 e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/plain', actualIndex.toString());
+                e.dataTransfer.setData('text/plain', JSON.stringify({ index: actualIndex, id: layer.id }));
                 this.draggedLayerIndex = actualIndex;
+                this.draggedLayerId = layer.id;
             });
 
             item.addEventListener('dragend', () => {
                 item.classList.remove('dragging');
                 document.querySelectorAll('.layer-item').forEach(el => {
-                    el.classList.remove('drag-over', 'drag-over-bottom');
+                    el.classList.remove('drag-over', 'drag-over-bottom', 'drag-over-folder');
                 });
                 this.draggedLayerIndex = null;
+                this.draggedLayerId = null;
             });
 
             item.addEventListener('dragover', (e) => {
@@ -425,51 +454,50 @@ export class UIController {
 
                 // Remove other drag-over classes
                 document.querySelectorAll('.layer-item').forEach(el => {
-                    if (el !== item) el.classList.remove('drag-over', 'drag-over-bottom');
+                    if (el !== item) el.classList.remove('drag-over', 'drag-over-bottom', 'drag-over-folder');
                 });
 
-                // Determine if dropping above or below
                 const rect = item.getBoundingClientRect();
                 const midY = rect.top + rect.height / 2;
-                if (e.clientY < midY) {
+
+                // If dropping on a folder, show folder highlight
+                if (isFolder && e.clientY > rect.top + 10 && e.clientY < rect.bottom - 10) {
+                    item.classList.add('drag-over-folder');
+                    item.classList.remove('drag-over', 'drag-over-bottom');
+                } else if (e.clientY < midY) {
                     item.classList.add('drag-over');
-                    item.classList.remove('drag-over-bottom');
+                    item.classList.remove('drag-over-bottom', 'drag-over-folder');
                 } else {
                     item.classList.add('drag-over-bottom');
-                    item.classList.remove('drag-over');
+                    item.classList.remove('drag-over', 'drag-over-folder');
                 }
             });
 
             item.addEventListener('dragleave', () => {
-                item.classList.remove('drag-over', 'drag-over-bottom');
+                item.classList.remove('drag-over', 'drag-over-bottom', 'drag-over-folder');
             });
 
             item.addEventListener('drop', (e) => {
                 e.preventDefault();
-                item.classList.remove('drag-over', 'drag-over-bottom');
+                item.classList.remove('drag-over', 'drag-over-bottom', 'drag-over-folder');
 
                 const fromIndex = this.draggedLayerIndex;
+                const fromId = this.draggedLayerId;
                 const toIndex = actualIndex;
 
                 if (fromIndex !== null && fromIndex !== toIndex) {
-                    // Determine if dropping above or below
                     const rect = item.getBoundingClientRect();
                     const midY = rect.top + rect.height / 2;
-                    const dropAbove = e.clientY < midY;
 
-                    // Move layers appropriately
-                    this.moveLayerToPosition(fromIndex, toIndex, dropAbove);
+                    // Check if dropping into folder
+                    if (isFolder && e.clientY > rect.top + 10 && e.clientY < rect.bottom - 10) {
+                        this.app.layers.moveToFolder(fromId, layer.id);
+                    } else {
+                        const dropAbove = e.clientY < midY;
+                        this.moveLayerToPosition(fromIndex, toIndex, dropAbove);
+                    }
                 }
             });
-
-            // Add thumbnail
-            const thumbContainer = item.querySelector('.layer-thumbnail');
-            if (thumbContainer) {
-                const thumb = this.app.layers.getLayerThumbnail(actualIndex);
-                if (thumb) {
-                    thumbContainer.appendChild(thumb);
-                }
-            }
 
             list.appendChild(item);
         });

@@ -1,5 +1,5 @@
 /**
- * LayerManager - Manages layers with blend modes
+ * LayerManager - Manages layers with blend modes and folders
  */
 
 export class LayerManager {
@@ -8,6 +8,7 @@ export class LayerManager {
         this.layers = [];
         this.activeLayerIndex = 0;
         this.maxLayers = 32; // Similar to Procreate's limit concept
+        this.selectedLayers = [];
     }
 
     /**
@@ -28,7 +29,7 @@ export class LayerManager {
     /**
      * Add a new layer
      */
-    addLayer(name = 'Nová vrstva', index = null) {
+    addLayer(name = 'Nová vrstva', index = null, parentId = null) {
         if (this.layers.length >= this.maxLayers) {
             console.warn('Maximum number of layers reached');
             return null;
@@ -41,6 +42,8 @@ export class LayerManager {
         const layer = {
             id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
             name,
+            type: 'layer',
+            parentId: parentId,
             canvas,
             visible: true,
             locked: false,
@@ -59,6 +62,128 @@ export class LayerManager {
     }
 
     /**
+     * Add a new folder
+     */
+    addFolder(name = 'Nová složka', index = null, parentId = null) {
+        const folder = {
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            name,
+            type: 'folder',
+            parentId: parentId,
+            expanded: true,
+            visible: true,
+            locked: false,
+            opacity: 1,
+            blendMode: 'source-over'
+        };
+
+        if (index !== null && index >= 0 && index <= this.layers.length) {
+            this.layers.splice(index, 0, folder);
+        } else {
+            this.layers.push(folder);
+        }
+
+        this.app.ui?.updateLayersList();
+        return folder;
+    }
+
+    /**
+     * Toggle folder expanded state
+     */
+    toggleFolderExpand(folderId) {
+        const folder = this.layers.find(l => l.id === folderId && l.type === 'folder');
+        if (folder) {
+            folder.expanded = !folder.expanded;
+            this.app.ui?.updateLayersList();
+        }
+    }
+
+    /**
+     * Get children of a folder
+     */
+    getFolderChildren(folderId) {
+        return this.layers.filter(l => l.parentId === folderId);
+    }
+
+    /**
+     * Get all descendants of a folder (recursive)
+     */
+    getFolderDescendants(folderId) {
+        const descendants = [];
+        const children = this.getFolderChildren(folderId);
+
+        for (const child of children) {
+            descendants.push(child);
+            if (child.type === 'folder') {
+                descendants.push(...this.getFolderDescendants(child.id));
+            }
+        }
+
+        return descendants;
+    }
+
+    /**
+     * Move layer/folder into a folder
+     */
+    moveToFolder(itemId, targetFolderId) {
+        const item = this.layers.find(l => l.id === itemId);
+        if (!item) return false;
+
+        // Prevent moving folder into itself or its descendants
+        if (item.type === 'folder') {
+            const descendants = this.getFolderDescendants(item.id);
+            if (targetFolderId === item.id || descendants.some(d => d.id === targetFolderId)) {
+                return false;
+            }
+        }
+
+        item.parentId = targetFolderId;
+        this.app.ui?.updateLayersList();
+        return true;
+    }
+
+    /**
+     * Move layer/folder out of folder (to root)
+     */
+    moveOutOfFolder(itemId) {
+        const item = this.layers.find(l => l.id === itemId);
+        if (item) {
+            item.parentId = null;
+            this.app.ui?.updateLayersList();
+        }
+    }
+
+    /**
+     * Get hierarchical layer structure for UI
+     */
+    getLayerTree() {
+        const buildTree = (parentId = null, depth = 0) => {
+            const items = this.layers
+                .map((layer, index) => ({ ...layer, flatIndex: index }))
+                .filter(l => l.parentId === parentId);
+
+            const result = [];
+            for (const item of items) {
+                result.push({ ...item, depth });
+                if (item.type === 'folder' && item.expanded) {
+                    result.push(...buildTree(item.id, depth + 1));
+                }
+            }
+            return result;
+        };
+
+        return buildTree();
+    }
+
+    /**
+     * Check if folder contains visible layers
+     */
+    folderHasVisibleContent(folderId) {
+        const descendants = this.getFolderDescendants(folderId);
+        return descendants.some(d => d.type === 'layer' && d.visible);
+    }
+
+    /**
      * Remove a layer by index
      */
     removeLayer(index) {
@@ -71,13 +196,30 @@ export class LayerManager {
             return false;
         }
 
+        const item = this.layers[index];
+
         // Check if layer is locked
-        if (this.layers[index].locked) {
+        if (item.locked) {
             console.warn('Cannot remove locked layer');
             return false;
         }
 
-        this.layers.splice(index, 1);
+        // If it's a folder, remove all descendants first
+        if (item.type === 'folder') {
+            const descendants = this.getFolderDescendants(item.id);
+            for (const desc of descendants.reverse()) {
+                const descIndex = this.layers.findIndex(l => l.id === desc.id);
+                if (descIndex !== -1) {
+                    this.layers.splice(descIndex, 1);
+                }
+            }
+        }
+
+        // Remove the item itself
+        const currentIndex = this.layers.findIndex(l => l.id === item.id);
+        if (currentIndex !== -1) {
+            this.layers.splice(currentIndex, 1);
+        }
 
         // Adjust active layer index
         if (this.activeLayerIndex >= this.layers.length) {
@@ -313,15 +455,27 @@ export class LayerManager {
      * Serialize layers for saving
      */
     async serialize() {
-        return this.layers.map(layer => ({
-            id: layer.id,
-            name: layer.name,
-            visible: layer.visible,
-            locked: layer.locked,
-            opacity: layer.opacity,
-            blendMode: layer.blendMode,
-            data: layer.canvas.toDataURL('image/png')
-        }));
+        return this.layers.map(layer => {
+            const serialized = {
+                id: layer.id,
+                name: layer.name,
+                type: layer.type || 'layer',
+                parentId: layer.parentId || null,
+                visible: layer.visible,
+                locked: layer.locked,
+                opacity: layer.opacity,
+                blendMode: layer.blendMode
+            };
+
+            // Only layers have canvas data
+            if (layer.type !== 'folder') {
+                serialized.data = layer.canvas.toDataURL('image/png');
+            } else {
+                serialized.expanded = layer.expanded;
+            }
+
+            return serialized;
+        });
     }
 
     /**
@@ -331,16 +485,34 @@ export class LayerManager {
         this.clear();
 
         for (const data of layersData) {
-            const layer = this.addLayer(data.name);
-            if (layer) {
-                layer.id = data.id;
-                layer.visible = data.visible;
-                layer.locked = data.locked;
-                layer.opacity = data.opacity;
-                layer.blendMode = data.blendMode;
+            if (data.type === 'folder') {
+                // Create folder
+                const folder = this.addFolder(data.name);
+                if (folder) {
+                    folder.id = data.id;
+                    folder.parentId = data.parentId || null;
+                    folder.expanded = data.expanded !== false;
+                    folder.visible = data.visible;
+                    folder.locked = data.locked;
+                    folder.opacity = data.opacity;
+                    folder.blendMode = data.blendMode;
+                }
+            } else {
+                // Create layer
+                const layer = this.addLayer(data.name);
+                if (layer) {
+                    layer.id = data.id;
+                    layer.parentId = data.parentId || null;
+                    layer.visible = data.visible;
+                    layer.locked = data.locked;
+                    layer.opacity = data.opacity;
+                    layer.blendMode = data.blendMode;
 
-                // Load image data
-                await this.loadLayerImage(layer, data.data);
+                    // Load image data
+                    if (data.data) {
+                        await this.loadLayerImage(layer, data.data);
+                    }
+                }
             }
         }
 
