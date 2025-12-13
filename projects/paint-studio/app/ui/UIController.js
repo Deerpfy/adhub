@@ -74,6 +74,7 @@ export class UIController {
         this.setupFullscreen();
         this.createFullscreenHint();
         this.loadKeyboardPreset();
+        this.setupCollaboration();
     }
 
     /**
@@ -102,6 +103,11 @@ export class UIController {
         // Menu button
         document.getElementById('menuBtn')?.addEventListener('click', () => {
             this.showMenu();
+        });
+
+        // Share button (collaboration)
+        document.getElementById('shareBtn')?.addEventListener('click', () => {
+            this.showCollabModal();
         });
     }
 
@@ -1404,6 +1410,142 @@ export class UIController {
                 points[i].pressure,
                 color
             );
+        }
+    }
+
+    // =============================================
+    // Collaboration UI
+    // =============================================
+
+    /**
+     * Setup collaboration event handlers
+     */
+    setupCollaboration() {
+        // Start session button
+        document.getElementById('startSessionBtn')?.addEventListener('click', () => {
+            this.startCollabSession();
+        });
+
+        // End session button
+        document.getElementById('endSessionBtn')?.addEventListener('click', () => {
+            this.endCollabSession();
+        });
+
+        // Join session button
+        document.getElementById('joinSessionBtn')?.addEventListener('click', () => {
+            this.joinCollabSession();
+        });
+
+        // Leave session button
+        document.getElementById('leaveSessionBtn')?.addEventListener('click', () => {
+            this.leaveCollabSession();
+        });
+
+        // Copy link button
+        document.getElementById('copyLinkBtn')?.addEventListener('click', () => {
+            this.copyCollabLink();
+        });
+    }
+
+    /**
+     * Show collaboration modal
+     */
+    showCollabModal() {
+        const modal = document.getElementById('collabModal');
+        if (!modal) return;
+
+        // Update UI based on current connection state
+        if (this.app.collab) {
+            this.app.collab.updateUI();
+        }
+
+        modal.style.display = 'flex';
+    }
+
+    /**
+     * Start a collaboration session
+     */
+    async startCollabSession() {
+        const password = document.getElementById('collabPassword')?.value || '';
+        const allowDraw = document.getElementById('collabAllowDraw')?.checked ?? true;
+
+        try {
+            await this.app.collab.startSession(password, allowDraw);
+            this.app.collab.updateUI();
+            this.showNotification('Relace spuštěna', 'success');
+        } catch (error) {
+            console.error('[Collab] Start session error:', error);
+            this.showNotification(error.message || 'Nepodařilo se spustit relaci', 'error');
+        }
+    }
+
+    /**
+     * End collaboration session (host only)
+     */
+    endCollabSession() {
+        if (this.app.collab) {
+            this.app.collab.endSession();
+            this.app.collab.updateUI();
+            this.showNotification('Relace ukončena', 'info');
+        }
+    }
+
+    /**
+     * Join an existing collaboration session
+     */
+    async joinCollabSession() {
+        const password = document.getElementById('joinPassword')?.value || '';
+        const errorEl = document.getElementById('joinError');
+
+        if (errorEl) {
+            errorEl.style.display = 'none';
+        }
+
+        try {
+            const result = await this.app.collab.joinSession(this.app.collab.roomId, password);
+            this.app.collab.updateUI();
+
+            if (result.canDraw) {
+                this.showNotification('Připojeno - můžete kreslit', 'success');
+            } else {
+                this.showNotification('Připojeno - pouze sledování', 'info');
+            }
+        } catch (error) {
+            console.error('[Collab] Join session error:', error);
+            if (errorEl) {
+                errorEl.textContent = error.message || 'Nepodařilo se připojit';
+                errorEl.style.display = 'block';
+            }
+        }
+    }
+
+    /**
+     * Leave collaboration session (guest only)
+     */
+    leaveCollabSession() {
+        if (this.app.collab) {
+            this.app.collab.leaveSession();
+            this.app.collab.updateUI();
+            this.showNotification('Odpojeno z relace', 'info');
+            this.hideModal('collabModal');
+        }
+    }
+
+    /**
+     * Copy collaboration link to clipboard
+     */
+    async copyCollabLink() {
+        const linkInput = document.getElementById('collabLink');
+        if (!linkInput) return;
+
+        try {
+            await navigator.clipboard.writeText(linkInput.value);
+            this.showNotification('Odkaz zkopírován', 'success');
+        } catch (error) {
+            // Fallback for older browsers
+            linkInput.select();
+            document.execCommand('copy');
+            this.showNotification('Odkaz zkopírován', 'success');
         }
     }
 }

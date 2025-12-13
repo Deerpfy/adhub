@@ -14,6 +14,7 @@ import { QuickShape } from '../tools/QuickShape.js';
 import { StreamLine } from '../tools/StreamLine.js';
 import { UIController } from '../ui/UIController.js';
 import { SelectionManager } from '../tools/SelectionManager.js';
+import { CollaborationManager } from './CollaborationManager.js';
 
 export class PaintApp {
     constructor() {
@@ -47,6 +48,7 @@ export class PaintApp {
         this.streamLine = null;
         this.ui = null;
         this.selection = null;
+        this.collab = null;
     }
 
     /**
@@ -100,6 +102,9 @@ export class PaintApp {
             // Initialize UI controller
             this.ui = new UIController(this);
             this.ui.init();
+
+            // Initialize collaboration manager
+            this.collab = new CollaborationManager(this);
 
             // Create default project
             await this.newProject({
