@@ -1788,11 +1788,36 @@ export class UIController {
                 opacityContainer.classList.toggle('visible');
             });
 
+            // Track if we're dragging the slider for undo support
+            let opacityDragging = false;
+
+            opacitySlider.addEventListener('mousedown', () => {
+                if (this.contextMenuLayerIndex !== null) {
+                    opacityDragging = true;
+                    this.app.history.startAction();
+                }
+            });
+
             opacitySlider.addEventListener('input', (e) => {
                 if (this.contextMenuLayerIndex !== null) {
                     const opacity = parseInt(e.target.value) / 100;
                     this.app.layers.setLayerOpacity(this.contextMenuLayerIndex, opacity);
                     document.getElementById('contextMenuOpacity').textContent = `${e.target.value}%`;
+                }
+            });
+
+            opacitySlider.addEventListener('mouseup', () => {
+                if (opacityDragging) {
+                    opacityDragging = false;
+                    this.app.history.endAction();
+                }
+            });
+
+            // Also handle if mouse leaves while dragging
+            opacitySlider.addEventListener('mouseleave', () => {
+                if (opacityDragging) {
+                    opacityDragging = false;
+                    this.app.history.endAction();
                 }
             });
         }
@@ -1812,7 +1837,9 @@ export class UIController {
                     e.stopPropagation();
                     const blendMode = item.dataset.blend;
                     if (this.contextMenuLayerIndex !== null) {
+                        this.app.history.startAction();
                         this.app.layers.setLayerBlendMode(this.contextMenuLayerIndex, blendMode);
+                        this.app.history.endAction();
                         this.updateBlendModeDisplay(blendMode);
                         blendModeSubmenu.classList.remove('visible');
                     }
@@ -1976,12 +2003,16 @@ export class UIController {
                 break;
 
             case 'toggleVisibility':
+                this.app.history.startAction();
                 this.app.layers.toggleVisibility(index);
+                this.app.history.endAction();
                 this.hideLayerContextMenu();
                 break;
 
             case 'toggleLock':
+                this.app.history.startAction();
                 this.app.layers.toggleLock(index);
+                this.app.history.endAction();
                 this.hideLayerContextMenu();
                 this.showNotification(layer.locked ? 'Vrstva odemknuta' : 'Vrstva zamknuta', 'info');
                 break;
@@ -2015,7 +2046,7 @@ export class UIController {
             case 'clearLayer':
                 if (!layer.locked) {
                     this.app.history.startAction();
-                    this.app.layers.clearActiveLayer();
+                    this.app.layers.clearLayer(index);
                     this.app.history.endAction();
                     this.hideLayerContextMenu();
                     this.showNotification('Vrstva vymazána', 'success');
@@ -2063,7 +2094,13 @@ export class UIController {
 
         const finishRename = () => {
             const newName = input.value.trim() || currentName;
-            this.app.layers.renameLayer(index, newName);
+            if (newName !== currentName) {
+                this.app.history.startAction();
+                this.app.layers.renameLayer(index, newName);
+                this.app.history.endAction();
+            } else {
+                this.app.layers.renameLayer(index, newName);
+            }
         };
 
         input.addEventListener('blur', finishRename);
