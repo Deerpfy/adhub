@@ -1,5 +1,5 @@
 /**
- * Image Compare Offline - Before/After Image Comparison PWA
+ * Juxtapose Offline - Before/After Image Comparison PWA
  * 100% client-side, no server dependencies
  *
  * Features:
@@ -19,42 +19,48 @@
 const TRANSLATIONS = {
     cs: {
         offline: '100% Offline',
-        before_image: 'BEFORE',
-        after_image: 'AFTER',
-        upload_hint: 'Pretahnete nebo kliknete',
-        before_label: 'Popisek Before:',
-        after_label: 'Popisek After:',
+        before_image: 'PŘED',
+        after_image: 'PO',
+        upload_hint: 'Přetáhněte nebo klikněte',
+        before_label: 'Popisek Před:',
+        after_label: 'Popisek Po:',
         orientation: 'Orientace:',
-        horizontal: 'Horizontalni',
-        vertical: 'Vertikalni',
-        start_position: 'Vychozi pozice:',
-        create_comparison: 'Vytvorit porovnani',
-        privacy_notice: 'Vase obrazky zustavaji pouze ve vasem prohlizeci. Zadna data se neodesilaji na server.',
-        new: 'Novy',
+        horizontal: 'Horizontální',
+        vertical: 'Vertikální',
+        start_position: 'Výchozí pozice:',
+        create_comparison: 'Vytvořit porovnání',
+        privacy_notice: 'Vaše obrázky zůstávají pouze ve vašem prohlížeči. Žádná data se neodesílají na server.',
+        new: 'Nový',
         edit: 'Upravit',
-        save_project: 'Ulozit',
-        load_project: 'Nacist',
+        save_project: 'Uložit',
+        load_project: 'Načíst',
         download_image: 'Stáhnout',
         download_title: 'Stáhnout obrázek',
         select_format: 'Vyberte formát:',
         show_labels: 'Popisky',
-        embed_code: 'Embed kod',
-        saved_projects: 'Ulozene projekty',
-        no_projects: 'Zatim zadne ulozene projekty',
+        embed_code: 'Embed kód',
+        embed_before_url: 'URL obrázku Před:',
+        embed_after_url: 'URL obrázku Po:',
+        saved_projects: 'Uložené projekty',
+        no_projects: 'Zatím žádné uložené projekty',
         gif_export: 'Export GIF',
         generating_gif: 'Generuji GIF...',
         gif_speed: 'Rychlost:',
         gif_quality: 'Kvalita:',
-        quality_low: 'Nizka (mensi soubor)',
-        quality_medium: 'Stredni',
-        quality_high: 'Vysoka (vetsi soubor)',
-        regenerate: 'Pregenerovat',
-        download_gif: 'Stahnout GIF',
-        copied: 'Zkopirováno!',
-        project_saved: 'Projekt ulozen',
-        project_deleted: 'Projekt smazan',
-        error_images_required: 'Nahrajte oba obrazky',
-        error_gif_failed: 'Chyba pri generovani GIF'
+        quality_low: 'Nízká (menší soubor)',
+        quality_medium: 'Střední',
+        quality_high: 'Vysoká (větší soubor)',
+        regenerate: 'Přegenerovat',
+        download_gif: 'Stáhnout GIF',
+        copied: 'Zkopírováno!',
+        project_saved: 'Projekt uložen',
+        project_deleted: 'Projekt smazán',
+        project_name: 'Název projektu',
+        project_name_placeholder: 'Zadejte název projektu...',
+        save: 'Uložit',
+        cancel: 'Zrušit',
+        error_images_required: 'Nahrajte oba obrázky',
+        error_gif_failed: 'Chyba při generování GIF'
     },
     en: {
         offline: '100% Offline',
@@ -78,6 +84,8 @@ const TRANSLATIONS = {
         select_format: 'Select format:',
         show_labels: 'Labels',
         embed_code: 'Embed code',
+        embed_before_url: 'Before image URL:',
+        embed_after_url: 'After image URL:',
         saved_projects: 'Saved projects',
         no_projects: 'No saved projects yet',
         gif_export: 'GIF Export',
@@ -92,6 +100,10 @@ const TRANSLATIONS = {
         copied: 'Copied!',
         project_saved: 'Project saved',
         project_deleted: 'Project deleted',
+        project_name: 'Project name',
+        project_name_placeholder: 'Enter project name...',
+        save: 'Save',
+        cancel: 'Cancel',
         error_images_required: 'Please upload both images',
         error_gif_failed: 'Error generating GIF'
     }
@@ -280,15 +292,15 @@ function initButtons() {
     // Edit
     document.getElementById('editBtn').addEventListener('click', editComparison);
 
-    // Save project
-    document.getElementById('saveProjectBtn').addEventListener('click', saveProject);
+    // Save project - open modal for name
+    document.getElementById('saveProjectBtn').addEventListener('click', openSaveProjectModal);
 
     // Load project (show saved projects)
     document.getElementById('loadProjectBtn').addEventListener('click', () => {
         document.getElementById('projectsSection').scrollIntoView({ behavior: 'smooth' });
     });
 
-    // Download image - open modal
+    // Download image - open format modal
     document.getElementById('downloadImageBtn').addEventListener('click', openDownloadModal);
 
     // Export GIF
@@ -298,12 +310,26 @@ function initButtons() {
     document.getElementById('copyEmbedBtn').addEventListener('click', copyEmbedCode);
 
     // Labels toggle
-    document.getElementById('showLabelsToggle').addEventListener('change', (e) => {
-        updateLabelsVisibility(e.target.checked);
-    });
+    const labelsToggle = document.getElementById('showLabelsToggle');
+    if (labelsToggle) {
+        labelsToggle.addEventListener('change', (e) => {
+            updateLabelsVisibility(e.target.checked);
+        });
+    }
 
-    // Download modal
+    // Embed URL inputs
+    const embedBeforeUrl = document.getElementById('embedBeforeUrl');
+    const embedAfterUrl = document.getElementById('embedAfterUrl');
+    if (embedBeforeUrl) {
+        embedBeforeUrl.addEventListener('input', updateEmbedCodeWithUrls);
+    }
+    if (embedAfterUrl) {
+        embedAfterUrl.addEventListener('input', updateEmbedCodeWithUrls);
+    }
+
+    // Initialize modals
     initDownloadModal();
+    initSaveProjectModal();
 }
 
 // ============================================
@@ -377,12 +403,10 @@ function renderSlider(before, after, options) {
     // Labels
     const labelBefore = document.createElement('div');
     labelBefore.className = 'jx-label before';
-    labelBefore.id = 'sliderLabelBefore';
     labelBefore.textContent = options.labelBefore;
 
     const labelAfter = document.createElement('div');
     labelAfter.className = 'jx-label after';
-    labelAfter.id = 'sliderLabelAfter';
     labelAfter.textContent = options.labelAfter;
 
     // Assemble
@@ -392,10 +416,6 @@ function renderSlider(before, after, options) {
     slider.appendChild(labelBefore);
     slider.appendChild(labelAfter);
     container.appendChild(slider);
-
-    // Apply current labels visibility state
-    const showLabels = document.getElementById('showLabelsToggle')?.checked ?? true;
-    updateLabelsVisibility(showLabels);
 
     // Set aspect ratio based on image
     afterImg.onload = () => {
@@ -431,9 +451,8 @@ function initSliderInteraction(slider, isVertical) {
         slider.setAttribute('aria-valuenow', Math.round(position));
     }
 
-    // Mouse events - prevent text selection
+    // Mouse events
     slider.addEventListener('mousedown', (e) => {
-        e.preventDefault(); // Prevent text selection
         isDragging = true;
         slider.classList.add('active');
         updatePosition(e);
@@ -441,7 +460,6 @@ function initSliderInteraction(slider, isVertical) {
 
     document.addEventListener('mousemove', (e) => {
         if (isDragging) {
-            e.preventDefault(); // Prevent text selection while dragging
             updatePosition(e);
         }
     });
@@ -451,20 +469,18 @@ function initSliderInteraction(slider, isVertical) {
         slider.classList.remove('active');
     });
 
-    // Touch events - prevent scrolling while dragging
+    // Touch events
     slider.addEventListener('touchstart', (e) => {
-        e.preventDefault();
         isDragging = true;
         slider.classList.add('active');
         updatePosition(e);
-    }, { passive: false });
+    }, { passive: true });
 
     slider.addEventListener('touchmove', (e) => {
         if (isDragging) {
-            e.preventDefault(); // Prevent scrolling while dragging
             updatePosition(e);
         }
-    }, { passive: false });
+    }, { passive: true });
 
     slider.addEventListener('touchend', () => {
         isDragging = false;
@@ -495,35 +511,27 @@ function initSliderInteraction(slider, isVertical) {
 }
 
 // ============================================
-// LABELS VISIBILITY
-// ============================================
-
-function updateLabelsVisibility(show) {
-    const labelBefore = document.getElementById('sliderLabelBefore');
-    const labelAfter = document.getElementById('sliderLabelAfter');
-
-    if (labelBefore) {
-        labelBefore.style.display = show ? 'block' : 'none';
-    }
-    if (labelAfter) {
-        labelAfter.style.display = show ? 'block' : 'none';
-    }
-}
-
-// ============================================
 // EMBED CODE
 // ============================================
 
 function generateEmbedCode(options) {
-    // Generate standalone embed code without external dependencies
+    // Get URLs from inputs or use placeholders
+    const beforeUrl = document.getElementById('embedBeforeUrl')?.value || 'BEFORE_IMAGE_URL';
+    const afterUrl = document.getElementById('embedAfterUrl')?.value || 'AFTER_IMAGE_URL';
+
     const embedCode = `<!-- Image Compare - Before/After Slider -->
 <div class="image-compare" data-position="${options.startPosition}" data-orientation="${options.orientation}">
-    <img src="BEFORE_IMAGE_URL" alt="${options.labelBefore}" data-label="${options.labelBefore}" />
-    <img src="AFTER_IMAGE_URL" alt="${options.labelAfter}" data-label="${options.labelAfter}" />
+    <img src="${beforeUrl}" alt="${options.labelBefore}" data-label="${options.labelBefore}" />
+    <img src="${afterUrl}" alt="${options.labelAfter}" data-label="${options.labelAfter}" />
 </div>
-<!-- Note: Include your own slider implementation or host the images for comparison -->`;
+<!-- Note: Include your own slider implementation -->`;
 
     document.getElementById('embedCode').value = embedCode;
+}
+
+function updateEmbedCodeWithUrls() {
+    if (!currentSlider) return;
+    generateEmbedCode(currentSlider.options);
 }
 
 function copyEmbedCode() {
@@ -534,49 +542,18 @@ function copyEmbedCode() {
 }
 
 // ============================================
-// DOWNLOAD MODAL
+// DOWNLOAD PNG
 // ============================================
 
-function initDownloadModal() {
-    document.getElementById('closeDownloadModal').addEventListener('click', closeDownloadModal);
-
-    // Close on background click
-    document.getElementById('downloadModal').addEventListener('click', (e) => {
-        if (e.target.id === 'downloadModal') {
-            closeDownloadModal();
-        }
-    });
-
-    // Format buttons
-    document.querySelectorAll('.format-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const format = btn.dataset.format;
-            downloadImage(format);
-            closeDownloadModal();
-        });
-    });
-}
-
-function openDownloadModal() {
-    document.getElementById('downloadModal').classList.remove('hidden');
-}
-
-function closeDownloadModal() {
-    document.getElementById('downloadModal').classList.add('hidden');
-}
-
-function downloadImage(format) {
+function downloadPNG() {
     if (!currentSlider) return;
 
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     const slider = currentSlider.element;
+    const rect = slider.getBoundingClientRect();
     const position = parseFloat(slider.style.getPropertyValue('--position')) || 50;
     const isVertical = slider.classList.contains('vertical');
-
-    // Get labels toggle state directly from checkbox
-    const labelsToggle = document.getElementById('showLabelsToggle');
-    const showLabels = labelsToggle ? labelsToggle.checked : true;
 
     // Load images
     const img1 = new Image();
@@ -615,50 +592,29 @@ function downloadImage(format) {
             ctx.fillRect(canvas.width * (position / 100) - 2, 0, 4, canvas.height);
         }
 
-        // Draw labels only if toggle is checked
-        if (showLabels) {
-            ctx.font = 'bold 14px sans-serif';
-            ctx.fillStyle = 'rgba(0,0,0,0.7)';
-            const labelBefore = currentSlider.options.labelBefore;
-            const labelAfter = currentSlider.options.labelAfter;
+        // Draw labels
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        const labelBefore = currentSlider.options.labelBefore;
+        const labelAfter = currentSlider.options.labelAfter;
 
-            // Before label
-            const beforeMetrics = ctx.measureText(labelBefore);
-            ctx.fillRect(15, 15, beforeMetrics.width + 20, 28);
-            ctx.fillStyle = '#fff';
-            ctx.fillText(labelBefore, 25, 35);
+        // Before label
+        const beforeMetrics = ctx.measureText(labelBefore);
+        ctx.fillRect(15, 15, beforeMetrics.width + 20, 28);
+        ctx.fillStyle = '#fff';
+        ctx.fillText(labelBefore, 25, 35);
 
-            // After label
-            const afterMetrics = ctx.measureText(labelAfter);
-            ctx.fillStyle = 'rgba(0,0,0,0.7)';
-            ctx.fillRect(canvas.width - afterMetrics.width - 35, 15, afterMetrics.width + 20, 28);
-            ctx.fillStyle = '#fff';
-            ctx.fillText(labelAfter, canvas.width - afterMetrics.width - 25, 35);
-        }
+        // After label
+        const afterMetrics = ctx.measureText(labelAfter);
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(canvas.width - afterMetrics.width - 35, 15, afterMetrics.width + 20, 28);
+        ctx.fillStyle = '#fff';
+        ctx.fillText(labelAfter, canvas.width - afterMetrics.width - 25, 35);
 
-        // Download in selected format
+        // Download
         const link = document.createElement('a');
-        let mimeType, extension, quality;
-
-        switch (format) {
-            case 'jpg':
-                mimeType = 'image/jpeg';
-                extension = 'jpg';
-                quality = 0.92;
-                break;
-            case 'webp':
-                mimeType = 'image/webp';
-                extension = 'webp';
-                quality = 0.92;
-                break;
-            default:
-                mimeType = 'image/png';
-                extension = 'png';
-                quality = undefined;
-        }
-
-        link.download = `image-compare.${extension}`;
-        link.href = canvas.toDataURL(mimeType, quality);
+        link.download = 'juxtapose-comparison.png';
+        link.href = canvas.toDataURL('image/png');
         link.click();
     };
 
@@ -744,40 +700,35 @@ function generateGif() {
         canvas.height = height;
         const ctx = canvas.getContext('2d');
 
-        try {
-            const gif = new GIF({
-                quality: quality,
-                width: width,
-                height: height,
-                repeat: 0
-            });
+        const gif = new GIF({
+            workers: 2,
+            quality: quality,
+            width: width,
+            height: height,
+            workerScript: 'gif.worker.js'
+        });
 
-            // Frame 1: Before
-            ctx.drawImage(img1, 0, 0, width, height);
-            gif.addFrame(ctx, { copy: true, delay: speed });
+        // Frame 1: Before
+        ctx.drawImage(img1, 0, 0, width, height);
+        gif.addFrame(ctx, { copy: true, delay: speed });
 
-            // Frame 2: After
-            ctx.drawImage(img2, 0, 0, width, height);
-            gif.addFrame(ctx, { copy: true, delay: speed });
+        // Frame 2: After
+        ctx.drawImage(img2, 0, 0, width, height);
+        gif.addFrame(ctx, { copy: true, delay: speed });
 
-            gif.on('progress', (p) => {
-                const percent = Math.round(p * 100);
-                const progressEl = document.getElementById('gifProgress');
-                if (progressEl) progressEl.textContent = `${percent}%`;
-            });
+        gif.on('progress', (p) => {
+            const percent = Math.round(p * 100);
+            document.getElementById('gifProgress').textContent = `${percent}%`;
+        });
 
-            gif.on('finished', (blob) => {
-                gifBlob = blob;
-                const url = URL.createObjectURL(blob);
-                preview.innerHTML = `<img src="${url}" alt="GIF Preview">`;
-                downloadBtn.disabled = false;
-            });
+        gif.on('finished', (blob) => {
+            gifBlob = blob;
+            const url = URL.createObjectURL(blob);
+            preview.innerHTML = `<img src="${url}" alt="GIF Preview">`;
+            downloadBtn.disabled = false;
+        });
 
-            gif.render();
-        } catch (err) {
-            console.error('GIF generation error:', err);
-            preview.innerHTML = `<p style="color: var(--danger-color);">${t('error_gif_failed')}: ${err.message}</p>`;
-        }
+        gif.render();
     };
 
     img1.onload = createGif;
@@ -790,16 +741,67 @@ function downloadGif() {
     if (!gifBlob) return;
 
     const link = document.createElement('a');
-    link.download = 'image-compare-animation.gif';
+    link.download = 'juxtapose-animation.gif';
     link.href = URL.createObjectURL(gifBlob);
     link.click();
+}
+
+// ============================================
+// SAVE PROJECT MODAL
+// ============================================
+
+function initSaveProjectModal() {
+    document.getElementById('closeSaveProjectModal').addEventListener('click', closeSaveProjectModal);
+    document.getElementById('cancelSaveProject').addEventListener('click', closeSaveProjectModal);
+    document.getElementById('confirmSaveProject').addEventListener('click', confirmSaveProject);
+
+    // Close on background click
+    document.getElementById('saveProjectModal').addEventListener('click', (e) => {
+        if (e.target.id === 'saveProjectModal') {
+            closeSaveProjectModal();
+        }
+    });
+
+    // Enter key to save
+    document.getElementById('projectNameInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            confirmSaveProject();
+        }
+    });
+}
+
+function openSaveProjectModal() {
+    if (!currentSlider) return;
+
+    // Generate default name based on date
+    const now = new Date();
+    const defaultName = `Projekt ${now.toLocaleDateString('cs-CZ')} ${now.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })}`;
+
+    document.getElementById('projectNameInput').value = defaultName;
+    document.getElementById('saveProjectModal').classList.remove('hidden');
+    document.getElementById('projectNameInput').select();
+}
+
+function closeSaveProjectModal() {
+    document.getElementById('saveProjectModal').classList.add('hidden');
+}
+
+async function confirmSaveProject() {
+    const name = document.getElementById('projectNameInput').value.trim();
+    if (!name) {
+        document.getElementById('projectNameInput').focus();
+        return;
+    }
+
+    await saveProject(name);
+    closeSaveProjectModal();
 }
 
 // ============================================
 // PROJECT STORAGE (IndexedDB)
 // ============================================
 
-const DB_NAME = 'JuxtaposeOffline';
+const DB_NAME = 'ImageCompareOffline';
 const DB_VERSION = 1;
 const STORE_NAME = 'projects';
 
@@ -815,15 +817,17 @@ function openDB() {
             if (!db.objectStoreNames.contains(STORE_NAME)) {
                 const store = db.createObjectStore(STORE_NAME, { keyPath: 'id', autoIncrement: true });
                 store.createIndex('created', 'created');
+                store.createIndex('name', 'name');
             }
         };
     });
 }
 
-async function saveProject() {
+async function saveProject(name) {
     if (!currentSlider) return;
 
     const project = {
+        name: name,
         before: currentSlider.before,
         after: currentSlider.after,
         options: currentSlider.options,
@@ -896,6 +900,7 @@ function createProjectCard(project) {
 
     const date = new Date(project.created);
     const dateStr = date.toLocaleDateString();
+    const projectName = project.name || `${project.options.labelBefore} / ${project.options.labelAfter}`;
 
     card.innerHTML = `
         <div class="project-preview">
@@ -903,7 +908,7 @@ function createProjectCard(project) {
         </div>
         <div class="project-info">
             <div>
-                <div class="project-name">${project.options.labelBefore} / ${project.options.labelAfter}</div>
+                <div class="project-name">${projectName}</div>
                 <div class="project-date">${dateStr}</div>
             </div>
             <button class="project-delete" data-id="${project.id}" title="Smazat">
