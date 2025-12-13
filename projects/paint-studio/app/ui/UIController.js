@@ -792,6 +792,16 @@ export class UIController {
     }
 
     /**
+     * Update brush opacity display
+     */
+    updateBrushOpacity(opacity) {
+        const slider = document.getElementById('brushOpacity');
+        const input = document.getElementById('brushOpacityInput');
+        if (slider) slider.value = opacity;
+        if (input) input.value = opacity;
+    }
+
+    /**
      * Update canvas info
      */
     updateCanvasInfo() {
