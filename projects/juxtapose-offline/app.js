@@ -321,14 +321,21 @@ function initButtons() {
         });
     }
 
-    // Embed URL inputs
+    // Embed URL inputs - use both input and change events for better compatibility
     const embedBeforeUrl = document.getElementById('embedBeforeUrl');
     const embedAfterUrl = document.getElementById('embedAfterUrl');
+    const updateEmbed = () => {
+        if (currentSlider) {
+            generateEmbedCode(currentSlider.options);
+        }
+    };
     if (embedBeforeUrl) {
-        embedBeforeUrl.addEventListener('input', updateEmbedCodeWithUrls);
+        embedBeforeUrl.addEventListener('input', updateEmbed);
+        embedBeforeUrl.addEventListener('change', updateEmbed);
     }
     if (embedAfterUrl) {
-        embedAfterUrl.addEventListener('input', updateEmbedCodeWithUrls);
+        embedAfterUrl.addEventListener('input', updateEmbed);
+        embedAfterUrl.addEventListener('change', updateEmbed);
     }
 
     // Embed variant toggle
@@ -336,7 +343,9 @@ function initButtons() {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.embed-variant-toggle .toggle-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            updateEmbedCodeWithUrls();
+            if (currentSlider) {
+                generateEmbedCode(currentSlider.options);
+            }
         });
     });
 
@@ -565,11 +574,6 @@ function generateEmbedCode(options) {
     }
 
     document.getElementById('embedCode').value = embedCode;
-}
-
-function updateEmbedCodeWithUrls() {
-    if (!currentSlider) return;
-    generateEmbedCode(currentSlider.options);
 }
 
 function copyEmbedCode() {
