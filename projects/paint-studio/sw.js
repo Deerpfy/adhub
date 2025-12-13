@@ -2,7 +2,7 @@
  * Paint Studio - Service Worker for offline functionality
  */
 
-const CACHE_NAME = 'paint-studio-v1.1.0';
+const CACHE_NAME = 'paint-studio-v1.2.0';
 const STATIC_ASSETS = [
     // Core files
     './',
