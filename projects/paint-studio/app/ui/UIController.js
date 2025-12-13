@@ -10,6 +10,7 @@ export class UIController {
         this.layerContextMenu = null;
         this.isFullscreen = false;
         this.draggedLayerIndex = null;
+        this.selectedLayers = new Set(); // Multi-select support
 
         // Keyboard shortcuts presets
         this.keyboardPresets = {
@@ -442,7 +443,34 @@ export class UIController {
                 if (!e.target.closest('.layer-visibility') &&
                     !e.target.closest('.folder-expand-btn') &&
                     !e.target.closest('.layer-drag-handle')) {
-                    this.app.layers.setActiveLayer(actualIndex);
+
+                    if (e.ctrlKey || e.metaKey) {
+                        // Ctrl+click: toggle selection
+                        if (this.selectedLayers.has(actualIndex)) {
+                            this.selectedLayers.delete(actualIndex);
+                        } else {
+                            this.selectedLayers.add(actualIndex);
+                        }
+                        // Also set as active layer
+                        this.app.layers.setActiveLayer(actualIndex);
+                        this.updateLayerSelection();
+                    } else if (e.shiftKey && this.selectedLayers.size > 0) {
+                        // Shift+click: select range
+                        const lastSelected = Math.max(...this.selectedLayers);
+                        const minIndex = Math.min(lastSelected, actualIndex);
+                        const maxIndex = Math.max(lastSelected, actualIndex);
+                        for (let i = minIndex; i <= maxIndex; i++) {
+                            this.selectedLayers.add(i);
+                        }
+                        this.app.layers.setActiveLayer(actualIndex);
+                        this.updateLayerSelection();
+                    } else {
+                        // Normal click: clear selection, select only this layer
+                        this.selectedLayers.clear();
+                        this.selectedLayers.add(actualIndex);
+                        this.app.layers.setActiveLayer(actualIndex);
+                        this.updateLayerSelection();
+                    }
                     this.updateBlendModeSelect();
                 }
             });
@@ -590,6 +618,39 @@ export class UIController {
         if (select && layer) {
             select.value = layer.blendMode;
         }
+    }
+
+    /**
+     * Update layer selection visual state
+     */
+    updateLayerSelection() {
+        document.querySelectorAll('.layer-item').forEach(item => {
+            const index = parseInt(item.dataset.index);
+            if (this.selectedLayers.has(index)) {
+                item.classList.add('multi-selected');
+            } else {
+                item.classList.remove('multi-selected');
+            }
+        });
+
+        // Update selection count indicator if exists
+        const countEl = document.getElementById('selectedLayersCount');
+        if (countEl) {
+            if (this.selectedLayers.size > 1) {
+                countEl.textContent = `${this.selectedLayers.size} vrstev vybráno`;
+                countEl.style.display = 'block';
+            } else {
+                countEl.style.display = 'none';
+            }
+        }
+    }
+
+    /**
+     * Clear layer selection
+     */
+    clearLayerSelection() {
+        this.selectedLayers.clear();
+        this.updateLayerSelection();
     }
 
     /**
@@ -1903,6 +1964,40 @@ export class UIController {
             deleteBtn.disabled = this.app.layers.layers.length <= 1;
         }
 
+        // Handle multi-selection UI
+        const mergeSelectedBtn = document.getElementById('mergeSelectedBtn');
+        const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+        const deleteSingleBtn = document.getElementById('deleteSingleBtn');
+        const multiSelectCount = this.selectedLayers.size;
+
+        if (multiSelectCount > 1) {
+            // Show multi-select options
+            if (mergeSelectedBtn) {
+                mergeSelectedBtn.style.display = 'flex';
+                document.getElementById('mergeSelectedText').textContent = `Sloučit vybrané (${multiSelectCount})`;
+            }
+            if (deleteSelectedBtn) {
+                deleteSelectedBtn.style.display = 'flex';
+                document.getElementById('deleteSelectedText').textContent = `Smazat vybrané (${multiSelectCount})`;
+                // Only enable if we have more layers than selected
+                deleteSelectedBtn.disabled = this.app.layers.layers.length <= multiSelectCount;
+            }
+            if (deleteSingleBtn) {
+                deleteSingleBtn.style.display = 'none';
+            }
+        } else {
+            // Hide multi-select options, show single layer options
+            if (mergeSelectedBtn) {
+                mergeSelectedBtn.style.display = 'none';
+            }
+            if (deleteSelectedBtn) {
+                deleteSelectedBtn.style.display = 'none';
+            }
+            if (deleteSingleBtn) {
+                deleteSingleBtn.style.display = 'flex';
+            }
+        }
+
         // Reset submenus
         document.getElementById('opacitySliderContainer')?.classList.remove('visible');
         document.getElementById('blendModeSubmenu')?.classList.remove('visible');
@@ -2066,6 +2161,30 @@ export class UIController {
                     this.showNotification('Nelze smazat poslední vrstvu', 'error');
                 }
                 break;
+
+            case 'mergeSelected':
+                if (this.selectedLayers.size > 1) {
+                    this.app.history.startAction();
+                    this.mergeSelectedLayers();
+                    this.app.history.endAction();
+                    this.hideLayerContextMenu();
+                    this.showNotification(`${this.selectedLayers.size} vrstev sloučeno`, 'success');
+                    this.clearLayerSelection();
+                }
+                break;
+
+            case 'deleteSelected':
+                if (this.selectedLayers.size > 0 && this.app.layers.layers.length > this.selectedLayers.size) {
+                    this.app.history.startAction();
+                    this.deleteSelectedLayers();
+                    this.app.history.endAction();
+                    this.hideLayerContextMenu();
+                    this.showNotification(`${this.selectedLayers.size} vrstev smazáno`, 'success');
+                    this.clearLayerSelection();
+                } else {
+                    this.showNotification('Nelze smazat všechny vrstvy', 'error');
+                }
+                break;
         }
     }
 
@@ -2171,6 +2290,103 @@ export class UIController {
                 targetLayer.opacity = 1;
                 targetLayer.blendMode = 'source-over';
             }
+        }
+
+        this.app.canvas.render();
+        this.updateLayersList();
+    }
+
+    /**
+     * Merge selected layers
+     */
+    mergeSelectedLayers() {
+        if (this.selectedLayers.size <= 1) {
+            this.showNotification('Vyberte alespoň 2 vrstvy', 'info');
+            return;
+        }
+
+        const layers = this.app.layers.layers;
+        const selectedIndices = Array.from(this.selectedLayers).sort((a, b) => a - b);
+
+        // Filter out folders and get actual layers
+        const selectedLayerData = selectedIndices
+            .map(i => ({ index: i, layer: layers[i] }))
+            .filter(d => d.layer && d.layer.type !== 'folder');
+
+        if (selectedLayerData.length <= 1) {
+            this.showNotification('Vyberte alespoň 2 vrstvy (ne složky)', 'info');
+            return;
+        }
+
+        // Create temp canvas for merged result
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = this.app.canvas.width;
+        tempCanvas.height = this.app.canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+
+        // Composite selected layers (in correct order - bottom to top)
+        for (const { layer } of selectedLayerData) {
+            tempCtx.save();
+            tempCtx.globalAlpha = layer.opacity;
+            tempCtx.globalCompositeOperation = layer.blendMode;
+            tempCtx.drawImage(layer.canvas, 0, 0);
+            tempCtx.restore();
+        }
+
+        // Remove all selected layers except the first one
+        const firstIndex = selectedLayerData[0].index;
+        for (let i = selectedLayerData.length - 1; i > 0; i--) {
+            const idx = selectedLayerData[i].index;
+            layers.splice(idx, 1);
+            if (this.app.layers.activeLayerIndex >= idx) {
+                this.app.layers.activeLayerIndex = Math.max(0, this.app.layers.activeLayerIndex - 1);
+            }
+        }
+
+        // Update first selected layer with merged content
+        const targetLayer = this.app.layers.getLayer(firstIndex);
+        if (targetLayer) {
+            const ctx = targetLayer.canvas.getContext('2d');
+            ctx.clearRect(0, 0, targetLayer.canvas.width, targetLayer.canvas.height);
+            ctx.drawImage(tempCanvas, 0, 0);
+            targetLayer.name = 'Sloučené vrstvy';
+            targetLayer.opacity = 1;
+            targetLayer.blendMode = 'source-over';
+        }
+
+        this.app.canvas.render();
+        this.updateLayersList();
+    }
+
+    /**
+     * Delete selected layers
+     */
+    deleteSelectedLayers() {
+        if (this.selectedLayers.size === 0) return;
+
+        const layers = this.app.layers.layers;
+
+        // Can't delete all layers
+        if (this.selectedLayers.size >= layers.length) {
+            this.showNotification('Nelze smazat všechny vrstvy', 'error');
+            return;
+        }
+
+        // Sort indices in descending order to delete from end first
+        const selectedIndices = Array.from(this.selectedLayers).sort((a, b) => b - a);
+
+        for (const idx of selectedIndices) {
+            if (layers.length > 1) {
+                layers.splice(idx, 1);
+                if (this.app.layers.activeLayerIndex >= idx) {
+                    this.app.layers.activeLayerIndex = Math.max(0, this.app.layers.activeLayerIndex - 1);
+                }
+            }
+        }
+
+        // Make sure we have a valid active layer
+        if (this.app.layers.activeLayerIndex >= layers.length) {
+            this.app.layers.activeLayerIndex = layers.length - 1;
         }
 
         this.app.canvas.render();

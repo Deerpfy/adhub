@@ -470,6 +470,7 @@
                         </div>
                     </div>
                     <div class="panel-content layers-content">
+                        <div id="selectedLayersCount"></div>
                         <div class="layers-list" id="layersList">
                             <!-- Layers will be dynamically added here -->
                         </div>
@@ -1008,6 +1009,12 @@
                 <span>Sloučit dolů</span>
                 <span class="shortcut">Ctrl+E</span>
             </button>
+            <button class="context-menu-item" data-action="mergeSelected" id="mergeSelectedBtn" style="display: none;">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm16-4H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H8V4h12v12z" fill="currentColor"/>
+                </svg>
+                <span id="mergeSelectedText">Sloučit vybrané (0)</span>
+            </button>
             <button class="context-menu-item" data-action="flattenVisible">
                 <svg viewBox="0 0 24 24" width="16" height="16">
                     <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM9 8h2v8H9zm4 0h2v8h-2z" fill="currentColor"/>
@@ -1027,7 +1034,13 @@
                 </svg>
                 <span>Vymazat vrstvu</span>
             </button>
-            <button class="context-menu-item danger" data-action="delete">
+            <button class="context-menu-item danger" data-action="deleteSelected" id="deleteSelectedBtn" style="display: none;">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                </svg>
+                <span id="deleteSelectedText">Smazat vybrané (0)</span>
+            </button>
+            <button class="context-menu-item danger" data-action="delete" id="deleteSingleBtn">
                 <svg viewBox="0 0 24 24" width="16" height="16">
                     <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
                 </svg>
