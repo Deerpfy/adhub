@@ -76,6 +76,7 @@ export class UIController {
         this.loadKeyboardPreset();
         this.setupCollaboration();
         this.setupBgRemover();
+        this.setupLayerContextMenu();
     }
 
     /**
@@ -353,6 +354,7 @@ export class UIController {
             if (isFolder && hasChildren) className += ' has-children';
             if (i === 0) className += ' is-top';
             if (depth > 0) className += ` nested-${Math.min(depth, 4)}`;
+            if (layer.locked) className += ' locked';
 
             item.className = className;
             item.dataset.index = actualIndex;
@@ -441,6 +443,20 @@ export class UIController {
                     !e.target.closest('.layer-drag-handle')) {
                     this.app.layers.setActiveLayer(actualIndex);
                     this.updateBlendModeSelect();
+                }
+            });
+
+            // Right-click context menu (Procreate/Photoshop style)
+            item.addEventListener('contextmenu', (e) => {
+                this.showLayerContextMenu(e, actualIndex);
+            });
+
+            // Double-click to rename
+            item.addEventListener('dblclick', (e) => {
+                if (!e.target.closest('.layer-visibility') &&
+                    !e.target.closest('.folder-expand-btn') &&
+                    !e.target.closest('.layer-drag-handle')) {
+                    this.startLayerRename(actualIndex);
                 }
             });
 
@@ -1722,5 +1738,404 @@ export class UIController {
             form.classList.remove('hidden');
             processing.classList.remove('active');
         }
+    }
+
+    // =============================================
+    // Layer Context Menu (Procreate/Photoshop style)
+    // =============================================
+
+    /**
+     * Setup Layer Context Menu
+     */
+    setupLayerContextMenu() {
+        this.contextMenuLayerIndex = null;
+        this.contextMenu = document.getElementById('layerContextMenu');
+
+        if (!this.contextMenu) return;
+
+        // Close menu on click outside
+        document.addEventListener('click', (e) => {
+            if (!this.contextMenu.contains(e.target)) {
+                this.hideLayerContextMenu();
+            }
+        });
+
+        // Close menu on escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.hideLayerContextMenu();
+            }
+        });
+
+        // Setup menu item actions
+        this.contextMenu.querySelectorAll('.context-menu-item[data-action]').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const action = item.dataset.action;
+                this.handleLayerContextAction(action);
+            });
+        });
+
+        // Opacity slider
+        const opacitySlider = document.getElementById('contextMenuOpacitySlider');
+        const opacityContainer = document.getElementById('opacitySliderContainer');
+        const opacityBtn = this.contextMenu.querySelector('[data-action="opacity"]');
+
+        if (opacityBtn && opacitySlider) {
+            opacityBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                opacityContainer.classList.toggle('visible');
+            });
+
+            opacitySlider.addEventListener('input', (e) => {
+                if (this.contextMenuLayerIndex !== null) {
+                    const opacity = parseInt(e.target.value) / 100;
+                    this.app.layers.setLayerOpacity(this.contextMenuLayerIndex, opacity);
+                    document.getElementById('contextMenuOpacity').textContent = `${e.target.value}%`;
+                }
+            });
+        }
+
+        // Blend mode submenu
+        const blendModeBtn = this.contextMenu.querySelector('[data-action="blendMode"]');
+        const blendModeSubmenu = document.getElementById('blendModeSubmenu');
+
+        if (blendModeBtn && blendModeSubmenu) {
+            blendModeBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                blendModeSubmenu.classList.toggle('visible');
+            });
+
+            blendModeSubmenu.querySelectorAll('[data-blend]').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const blendMode = item.dataset.blend;
+                    if (this.contextMenuLayerIndex !== null) {
+                        this.app.layers.setLayerBlendMode(this.contextMenuLayerIndex, blendMode);
+                        this.updateBlendModeDisplay(blendMode);
+                        blendModeSubmenu.classList.remove('visible');
+                    }
+                });
+            });
+        }
+    }
+
+    /**
+     * Show layer context menu
+     */
+    showLayerContextMenu(e, layerIndex) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        if (!this.contextMenu) return;
+
+        this.contextMenuLayerIndex = layerIndex;
+        const layer = this.app.layers.getLayer(layerIndex);
+        if (!layer) return;
+
+        // Update menu state
+        document.getElementById('contextMenuLayerName').textContent = layer.name;
+        document.getElementById('contextMenuOpacity').textContent = `${Math.round(layer.opacity * 100)}%`;
+        document.getElementById('contextMenuOpacitySlider').value = Math.round(layer.opacity * 100);
+        this.updateBlendModeDisplay(layer.blendMode);
+
+        // Update visibility button
+        const visibilityText = document.getElementById('contextMenuVisibilityText');
+        const visibilityIcon = document.getElementById('contextMenuVisibilityIcon');
+        if (visibilityText) {
+            visibilityText.textContent = layer.visible ? 'Skrýt vrstvu' : 'Zobrazit vrstvu';
+        }
+        if (visibilityIcon) {
+            visibilityIcon.innerHTML = layer.visible
+                ? '<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="currentColor"/>'
+                : '<path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z" fill="currentColor"/>';
+        }
+
+        // Update lock button
+        const lockText = document.getElementById('contextMenuLockText');
+        const lockIcon = document.getElementById('contextMenuLockIcon');
+        if (lockText) {
+            lockText.textContent = layer.locked ? 'Odemknout vrstvu' : 'Zamknout vrstvu';
+        }
+        if (lockIcon) {
+            lockIcon.innerHTML = layer.locked
+                ? '<path d="M12 17c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm6-9h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6h1.9c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm0 12H6V10h12v10z" fill="currentColor"/>'
+                : '<path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" fill="currentColor"/>';
+        }
+
+        // Disable merge down for first layer
+        const mergeDownBtn = this.contextMenu.querySelector('[data-action="mergeDown"]');
+        if (mergeDownBtn) {
+            mergeDownBtn.disabled = layerIndex === 0;
+        }
+
+        // Disable delete if only one layer
+        const deleteBtn = this.contextMenu.querySelector('[data-action="delete"]');
+        if (deleteBtn) {
+            deleteBtn.disabled = this.app.layers.layers.length <= 1;
+        }
+
+        // Reset submenus
+        document.getElementById('opacitySliderContainer')?.classList.remove('visible');
+        document.getElementById('blendModeSubmenu')?.classList.remove('visible');
+
+        // Position menu
+        const menuWidth = 240;
+        const menuHeight = 500;
+        let x = e.clientX;
+        let y = e.clientY;
+
+        // Adjust if menu would go off screen
+        if (x + menuWidth > window.innerWidth) {
+            x = window.innerWidth - menuWidth - 10;
+        }
+        if (y + menuHeight > window.innerHeight) {
+            y = window.innerHeight - menuHeight - 10;
+        }
+
+        this.contextMenu.style.left = `${x}px`;
+        this.contextMenu.style.top = `${y}px`;
+        this.contextMenu.classList.add('visible');
+
+        // Highlight the layer item
+        document.querySelectorAll('.layer-item').forEach(item => item.classList.remove('context-active'));
+        const layerItem = document.querySelector(`.layer-item[data-index="${layerIndex}"]`);
+        if (layerItem) {
+            layerItem.classList.add('context-active');
+        }
+    }
+
+    /**
+     * Hide layer context menu
+     */
+    hideLayerContextMenu() {
+        if (this.contextMenu) {
+            this.contextMenu.classList.remove('visible');
+        }
+        document.querySelectorAll('.layer-item').forEach(item => item.classList.remove('context-active'));
+        this.contextMenuLayerIndex = null;
+    }
+
+    /**
+     * Update blend mode display in context menu
+     */
+    updateBlendModeDisplay(blendMode) {
+        const blendModeNames = {
+            'source-over': 'Normální',
+            'multiply': 'Násobit',
+            'screen': 'Závoj',
+            'overlay': 'Překryv',
+            'darken': 'Ztmavit',
+            'lighten': 'Zesvětlit',
+            'color-dodge': 'Zesvětlit barvy',
+            'color-burn': 'Ztmavit barvy',
+            'hard-light': 'Tvrdé světlo',
+            'soft-light': 'Měkké světlo',
+            'difference': 'Rozdíl',
+            'exclusion': 'Vyloučení',
+            'hue': 'Odstín',
+            'saturation': 'Sytost',
+            'color': 'Barva',
+            'luminosity': 'Světlost'
+        };
+
+        const display = document.getElementById('contextMenuBlendMode');
+        if (display) {
+            display.textContent = blendModeNames[blendMode] || blendMode;
+        }
+
+        // Update active state in submenu
+        document.querySelectorAll('#blendModeSubmenu [data-blend]').forEach(item => {
+            item.classList.toggle('active', item.dataset.blend === blendMode);
+        });
+    }
+
+    /**
+     * Handle layer context menu action
+     */
+    handleLayerContextAction(action) {
+        const index = this.contextMenuLayerIndex;
+        if (index === null) return;
+
+        const layer = this.app.layers.getLayer(index);
+        if (!layer) return;
+
+        switch (action) {
+            case 'rename':
+                this.hideLayerContextMenu();
+                this.startLayerRename(index);
+                break;
+
+            case 'duplicate':
+                this.app.history.startAction();
+                this.app.layers.duplicateLayer(index);
+                this.app.history.endAction();
+                this.hideLayerContextMenu();
+                this.showNotification('Vrstva duplikována', 'success');
+                break;
+
+            case 'toggleVisibility':
+                this.app.layers.toggleVisibility(index);
+                this.hideLayerContextMenu();
+                break;
+
+            case 'toggleLock':
+                this.app.layers.toggleLock(index);
+                this.hideLayerContextMenu();
+                this.showNotification(layer.locked ? 'Vrstva odemknuta' : 'Vrstva zamknuta', 'info');
+                break;
+
+            case 'mergeDown':
+                if (index > 0) {
+                    this.app.history.startAction();
+                    this.app.layers.mergeDown(index);
+                    this.app.history.endAction();
+                    this.hideLayerContextMenu();
+                    this.showNotification('Vrstvy sloučeny', 'success');
+                }
+                break;
+
+            case 'flattenVisible':
+                this.app.history.startAction();
+                this.mergeVisibleLayers();
+                this.app.history.endAction();
+                this.hideLayerContextMenu();
+                this.showNotification('Viditelné vrstvy sloučeny', 'success');
+                break;
+
+            case 'flattenAll':
+                this.app.history.startAction();
+                this.app.layers.flattenAll();
+                this.app.history.endAction();
+                this.hideLayerContextMenu();
+                this.showNotification('Všechny vrstvy sloučeny', 'success');
+                break;
+
+            case 'clearLayer':
+                if (!layer.locked) {
+                    this.app.history.startAction();
+                    this.app.layers.clearActiveLayer();
+                    this.app.history.endAction();
+                    this.hideLayerContextMenu();
+                    this.showNotification('Vrstva vymazána', 'success');
+                } else {
+                    this.showNotification('Vrstva je zamčená', 'error');
+                }
+                break;
+
+            case 'delete':
+                if (this.app.layers.layers.length > 1) {
+                    this.app.history.startAction();
+                    this.app.layers.removeLayer(index);
+                    this.app.history.endAction();
+                    this.hideLayerContextMenu();
+                    this.showNotification('Vrstva smazána', 'success');
+                } else {
+                    this.showNotification('Nelze smazat poslední vrstvu', 'error');
+                }
+                break;
+        }
+    }
+
+    /**
+     * Start renaming a layer
+     */
+    startLayerRename(index) {
+        const layer = this.app.layers.getLayer(index);
+        if (!layer) return;
+
+        const layerItem = document.querySelector(`.layer-item[data-index="${index}"]`);
+        if (!layerItem) return;
+
+        const nameSpan = layerItem.querySelector('.layer-name');
+        if (!nameSpan) return;
+
+        const currentName = layer.name;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'layer-rename-input';
+        input.value = currentName;
+
+        nameSpan.replaceWith(input);
+        input.focus();
+        input.select();
+
+        const finishRename = () => {
+            const newName = input.value.trim() || currentName;
+            this.app.layers.renameLayer(index, newName);
+        };
+
+        input.addEventListener('blur', finishRename);
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                input.blur();
+            } else if (e.key === 'Escape') {
+                input.value = currentName;
+                input.blur();
+            }
+        });
+    }
+
+    /**
+     * Merge all visible layers
+     */
+    mergeVisibleLayers() {
+        const layers = this.app.layers.layers;
+        const visibleLayers = layers.filter(l => l.visible && l.type !== 'folder');
+
+        if (visibleLayers.length <= 1) {
+            this.showNotification('Není co sloučit', 'info');
+            return;
+        }
+
+        // Create temp canvas for merged result
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = this.app.canvas.width;
+        tempCanvas.height = this.app.canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+
+        // Composite visible layers (in correct order - bottom to top)
+        for (let i = 0; i < layers.length; i++) {
+            const layer = layers[i];
+            if (!layer.visible || layer.type === 'folder') continue;
+
+            tempCtx.save();
+            tempCtx.globalAlpha = layer.opacity;
+            tempCtx.globalCompositeOperation = layer.blendMode;
+            tempCtx.drawImage(layer.canvas, 0, 0);
+            tempCtx.restore();
+        }
+
+        // Remove all visible layers except first, put merged content in first visible
+        let firstVisibleIndex = null;
+        for (let i = layers.length - 1; i >= 0; i--) {
+            const layer = layers[i];
+            if (layer.visible && layer.type !== 'folder') {
+                if (firstVisibleIndex === null) {
+                    firstVisibleIndex = i;
+                } else {
+                    layers.splice(i, 1);
+                    if (this.app.layers.activeLayerIndex >= i) {
+                        this.app.layers.activeLayerIndex--;
+                    }
+                }
+            }
+        }
+
+        // Update first visible layer with merged content
+        if (firstVisibleIndex !== null) {
+            const targetLayer = this.app.layers.getLayer(firstVisibleIndex);
+            if (targetLayer) {
+                const ctx = targetLayer.canvas.getContext('2d');
+                ctx.clearRect(0, 0, targetLayer.canvas.width, targetLayer.canvas.height);
+                ctx.drawImage(tempCanvas, 0, 0);
+                targetLayer.name = 'Sloučené vrstvy';
+                targetLayer.opacity = 1;
+                targetLayer.blendMode = 'source-over';
+            }
+        }
+
+        this.app.canvas.render();
+        this.updateLayersList();
     }
 }

@@ -925,6 +925,116 @@
 
         <!-- Remote Cursors Container -->
         <div id="remoteCursors" class="remote-cursors-container"></div>
+
+        <!-- Layer Context Menu (Procreate/Photoshop style) -->
+        <div id="layerContextMenu" class="layer-context-menu">
+            <div class="context-menu-header">
+                <span id="contextMenuLayerName">Vrstva</span>
+            </div>
+            <div class="context-menu-divider"></div>
+            <button class="context-menu-item" data-action="rename">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
+                </svg>
+                <span>Přejmenovat</span>
+            </button>
+            <button class="context-menu-item" data-action="duplicate">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" fill="currentColor"/>
+                </svg>
+                <span>Duplikovat</span>
+                <span class="shortcut">Ctrl+J</span>
+            </button>
+            <div class="context-menu-divider"></div>
+            <button class="context-menu-item" data-action="opacity">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M17.66 8L12 2.35 6.34 8C4.78 9.56 4 11.64 4 13.64s.78 4.11 2.34 5.67 3.61 2.35 5.66 2.35 4.1-.79 5.66-2.35S20 15.64 20 13.64 19.22 9.56 17.66 8zM6 14c.01-2 .62-3.27 1.76-4.4L12 5.27l4.24 4.38C17.38 10.77 17.99 12 18 14H6z" fill="currentColor"/>
+                </svg>
+                <span>Průhlednost</span>
+                <span class="opacity-value" id="contextMenuOpacity">100%</span>
+            </button>
+            <div class="context-menu-slider" id="opacitySliderContainer">
+                <input type="range" id="contextMenuOpacitySlider" min="0" max="100" value="100">
+            </div>
+            <button class="context-menu-item" data-action="blendMode">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" fill="currentColor"/>
+                </svg>
+                <span>Režim prolnutí</span>
+                <span class="blend-mode-value" id="contextMenuBlendMode">Normální</span>
+            </button>
+            <div class="context-menu-submenu" id="blendModeSubmenu">
+                <button class="context-menu-item submenu-item" data-blend="source-over">Normální</button>
+                <div class="context-menu-divider"></div>
+                <button class="context-menu-item submenu-item" data-blend="multiply">Násobit</button>
+                <button class="context-menu-item submenu-item" data-blend="screen">Závoj</button>
+                <button class="context-menu-item submenu-item" data-blend="overlay">Překryv</button>
+                <div class="context-menu-divider"></div>
+                <button class="context-menu-item submenu-item" data-blend="darken">Ztmavit</button>
+                <button class="context-menu-item submenu-item" data-blend="lighten">Zesvětlit</button>
+                <div class="context-menu-divider"></div>
+                <button class="context-menu-item submenu-item" data-blend="color-dodge">Zesvětlit barvy</button>
+                <button class="context-menu-item submenu-item" data-blend="color-burn">Ztmavit barvy</button>
+                <div class="context-menu-divider"></div>
+                <button class="context-menu-item submenu-item" data-blend="hard-light">Tvrdé světlo</button>
+                <button class="context-menu-item submenu-item" data-blend="soft-light">Měkké světlo</button>
+                <div class="context-menu-divider"></div>
+                <button class="context-menu-item submenu-item" data-blend="difference">Rozdíl</button>
+                <button class="context-menu-item submenu-item" data-blend="exclusion">Vyloučení</button>
+                <div class="context-menu-divider"></div>
+                <button class="context-menu-item submenu-item" data-blend="hue">Odstín</button>
+                <button class="context-menu-item submenu-item" data-blend="saturation">Sytost</button>
+                <button class="context-menu-item submenu-item" data-blend="color">Barva</button>
+                <button class="context-menu-item submenu-item" data-blend="luminosity">Světlost</button>
+            </div>
+            <div class="context-menu-divider"></div>
+            <button class="context-menu-item" data-action="toggleVisibility">
+                <svg viewBox="0 0 24 24" width="16" height="16" id="contextMenuVisibilityIcon">
+                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="currentColor"/>
+                </svg>
+                <span id="contextMenuVisibilityText">Skrýt vrstvu</span>
+            </button>
+            <button class="context-menu-item" data-action="toggleLock">
+                <svg viewBox="0 0 24 24" width="16" height="16" id="contextMenuLockIcon">
+                    <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" fill="currentColor"/>
+                </svg>
+                <span id="contextMenuLockText">Zamknout vrstvu</span>
+            </button>
+            <div class="context-menu-divider"></div>
+            <button class="context-menu-item" data-action="mergeDown">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M16 13h-3V3h-2v10H8l4 4 4-4zM4 19v2h16v-2H4z" fill="currentColor"/>
+                </svg>
+                <span>Sloučit dolů</span>
+                <span class="shortcut">Ctrl+E</span>
+            </button>
+            <button class="context-menu-item" data-action="flattenVisible">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zM9 8h2v8H9zm4 0h2v8h-2z" fill="currentColor"/>
+                </svg>
+                <span>Sloučit viditelné</span>
+            </button>
+            <button class="context-menu-item" data-action="flattenAll">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z" fill="currentColor"/>
+                </svg>
+                <span>Sloučit vše</span>
+            </button>
+            <div class="context-menu-divider"></div>
+            <button class="context-menu-item" data-action="clearLayer">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" fill="currentColor"/>
+                </svg>
+                <span>Vymazat vrstvu</span>
+            </button>
+            <button class="context-menu-item danger" data-action="delete">
+                <svg viewBox="0 0 24 24" width="16" height="16">
+                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                </svg>
+                <span>Smazat vrstvu</span>
+                <span class="shortcut">Del</span>
+            </button>
+        </div>
     </div>
 
     <!-- App Scripts (ES Modules) -->

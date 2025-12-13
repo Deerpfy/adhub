@@ -2737,3 +2737,234 @@ body {
         padding: 10px 12px;
     }
 }
+
+/* =============================================
+   Layer Context Menu (Procreate/Photoshop style)
+   ============================================= */
+
+.layer-context-menu {
+    position: fixed;
+    z-index: 10000;
+    min-width: 220px;
+    max-width: 280px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
+    padding: 6px 0;
+    display: none;
+    animation: contextMenuFadeIn 0.15s ease-out;
+    backdrop-filter: blur(10px);
+}
+
+.layer-context-menu.visible {
+    display: block;
+}
+
+@keyframes contextMenuFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-4px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.context-menu-header {
+    padding: 8px 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.context-menu-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 4px 8px;
+}
+
+.context-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 8px 12px;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    text-align: left;
+    transition: background-color 0.1s, color 0.1s;
+}
+
+.context-menu-item:hover {
+    background: var(--bg-hover);
+}
+
+.context-menu-item:active {
+    background: var(--primary-color);
+}
+
+.context-menu-item svg {
+    flex-shrink: 0;
+    opacity: 0.7;
+}
+
+.context-menu-item:hover svg {
+    opacity: 1;
+}
+
+.context-menu-item span:first-of-type {
+    flex: 1;
+}
+
+.context-menu-item .shortcut {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    font-family: monospace;
+}
+
+.context-menu-item .opacity-value,
+.context-menu-item .blend-mode-value {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    background: var(--bg-tertiary);
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.context-menu-item.danger {
+    color: var(--error-color);
+}
+
+.context-menu-item.danger:hover {
+    background: rgba(239, 68, 68, 0.15);
+}
+
+.context-menu-item.danger svg {
+    color: var(--error-color);
+}
+
+.context-menu-item:disabled {
+    opacity: 0.4;
+    pointer-events: none;
+}
+
+/* Opacity Slider in Context Menu */
+.context-menu-slider {
+    padding: 4px 12px 8px;
+    display: none;
+}
+
+.context-menu-slider.visible {
+    display: block;
+}
+
+.context-menu-slider input[type="range"] {
+    width: 100%;
+    height: 4px;
+    background: var(--bg-tertiary);
+    border-radius: 2px;
+    appearance: none;
+    cursor: pointer;
+}
+
+.context-menu-slider input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+
+.context-menu-slider input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+.context-menu-slider input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    background: var(--primary-color);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+/* Blend Mode Submenu */
+.context-menu-submenu {
+    display: none;
+    max-height: 300px;
+    overflow-y: auto;
+    background: var(--bg-tertiary);
+    margin: 4px 8px;
+    border-radius: 6px;
+    padding: 4px 0;
+}
+
+.context-menu-submenu.visible {
+    display: block;
+}
+
+.context-menu-submenu .submenu-item {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+}
+
+.context-menu-submenu .submenu-item:hover {
+    background: var(--bg-hover);
+}
+
+.context-menu-submenu .submenu-item.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.context-menu-submenu .context-menu-divider {
+    margin: 2px 4px;
+}
+
+/* Layer item active state indicator */
+.layer-item.context-active {
+    background: var(--bg-hover) !important;
+    box-shadow: inset 0 0 0 1px var(--primary-color);
+}
+
+/* Rename input in layer list */
+.layer-rename-input {
+    background: var(--bg-primary);
+    border: 1px solid var(--primary-color);
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    width: 100%;
+    outline: none;
+}
+
+.layer-rename-input:focus {
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+}
+
+/* Lock indicator on layer */
+.layer-item.locked::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 12px;
+    height: 12px;
+    background: url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' fill='%23f59e0b' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2z'/%3E%3C/svg%3E") no-repeat center;
+    background-size: contain;
+}
