@@ -598,52 +598,53 @@ function copyEmbedCode() {
 }
 
 function previewEmbedCode() {
-    const embedCode = document.getElementById('embedCode').value;
-    if (!embedCode) return;
+    if (!currentSlider) return;
 
+    // Get image URLs - prefer custom URLs, fallback to uploaded images
+    const customBeforeUrl = document.getElementById('embedBeforeUrl')?.value;
+    const customAfterUrl = document.getElementById('embedAfterUrl')?.value;
+    const beforeUrl = customBeforeUrl || currentSlider.before;
+    const afterUrl = customAfterUrl || currentSlider.after;
+
+    const options = currentSlider.options;
+
+    // Generate clean embed code with actual images
     const previewHTML = `<!DOCTYPE html>
 <html lang="cs">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Embed Preview</title>
+    <title>Image Compare Preview</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #1a1a2e;
+            background: #f5f5f5;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
         }
-        .preview-container {
+        .preview-wrapper {
             width: 100%;
-            max-width: 800px;
-            background: #16213e;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            max-width: 900px;
         }
-        h1 {
-            color: #8b5cf6;
-            font-size: 14px;
-            margin-bottom: 16px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
+        ${EMBED_CSS_INLINE}
     </style>
 </head>
 <body>
-    <div class="preview-container">
-        <h1>Embed Preview</h1>
-        ${embedCode}
+    <div class="preview-wrapper">
+        <div class="image-compare" data-position="${options.startPosition}" data-orientation="${options.orientation}">
+            <img src="${beforeUrl}" alt="${options.labelBefore}" data-label="${options.labelBefore}" />
+            <img src="${afterUrl}" alt="${options.labelAfter}" data-label="${options.labelAfter}" />
+        </div>
     </div>
+    <script>${EMBED_JS_INLINE}<\/script>
 </body>
 </html>`;
 
-    const previewWindow = window.open('', '_blank', 'width=900,height=700');
+    const previewWindow = window.open('', '_blank', 'width=1000,height=700');
     if (previewWindow) {
         previewWindow.document.write(previewHTML);
         previewWindow.document.close();
