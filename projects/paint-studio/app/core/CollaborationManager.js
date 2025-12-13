@@ -105,9 +105,12 @@ export class CollaborationManager {
 
         conn.on('open', () => {
             // Wait for authentication message
-            conn.once('data', (data) => {
+            conn.once('data', async (data) => {
                 if (data.type === 'auth') {
+                    console.log('[Collab] Received auth request from:', conn.peer);
+
                     if (this.password && data.password !== this.password) {
+                        console.log('[Collab] Auth failed - wrong password');
                         conn.send({ type: 'auth-failed', reason: 'Nesprávné heslo' });
                         conn.close();
                         return;
@@ -123,11 +126,15 @@ export class CollaborationManager {
                     this.participants.set(conn.peer, participant);
                     this.connections.set(conn.peer, conn);
 
+                    // Get canvas state (async)
+                    const canvasState = await this.getCanvasState();
+                    console.log('[Collab] Sending auth-success with canvas state');
+
                     // Send auth success with current canvas state
                     conn.send({
                         type: 'auth-success',
                         canDraw: this.allowDraw,
-                        canvasState: this.getCanvasState(),
+                        canvasState: canvasState,
                         participants: Array.from(this.participants.entries())
                     });
 
@@ -148,6 +155,7 @@ export class CollaborationManager {
 
                     // Update UI
                     this.updateParticipantUI();
+                    this.showNotification(`${participant.name} se připojil`, 'success');
                 }
             });
         });
@@ -348,9 +356,10 @@ export class CollaborationManager {
     /**
      * Get current canvas state for syncing
      */
-    getCanvasState() {
+    async getCanvasState() {
+        const layers = await this.app.layers.serialize();
         return {
-            layers: this.app.layers.serialize(),
+            layers: layers,
             width: this.app.canvas.width,
             height: this.app.canvas.height
         };
