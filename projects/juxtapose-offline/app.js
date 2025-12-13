@@ -34,7 +34,9 @@ const TRANSLATIONS = {
         edit: 'Upravit',
         save_project: 'Ulozit',
         load_project: 'Nacist',
-        download_image: 'Stahnout',
+        download_image: 'Stáhnout',
+        download_title: 'Stáhnout obrázek',
+        select_format: 'Vyberte formát:',
         show_labels: 'Popisky',
         embed_code: 'Embed kod',
         saved_projects: 'Ulozene projekty',
@@ -72,6 +74,8 @@ const TRANSLATIONS = {
         save_project: 'Save',
         load_project: 'Load',
         download_image: 'Download',
+        download_title: 'Download image',
+        select_format: 'Select format:',
         show_labels: 'Labels',
         embed_code: 'Embed code',
         saved_projects: 'Saved projects',
@@ -284,8 +288,8 @@ function initButtons() {
         document.getElementById('projectsSection').scrollIntoView({ behavior: 'smooth' });
     });
 
-    // Download image
-    document.getElementById('downloadImageBtn').addEventListener('click', downloadImage);
+    // Download image - open modal
+    document.getElementById('downloadImageBtn').addEventListener('click', openDownloadModal);
 
     // Export GIF
     document.getElementById('exportGifBtn').addEventListener('click', openGifModal);
@@ -297,6 +301,9 @@ function initButtons() {
     document.getElementById('showLabelsToggle').addEventListener('change', (e) => {
         updateLabelsVisibility(e.target.checked);
     });
+
+    // Download modal
+    initDownloadModal();
 }
 
 // ============================================
@@ -527,10 +534,38 @@ function copyEmbedCode() {
 }
 
 // ============================================
-// DOWNLOAD IMAGE
+// DOWNLOAD MODAL
 // ============================================
 
-function downloadImage() {
+function initDownloadModal() {
+    document.getElementById('closeDownloadModal').addEventListener('click', closeDownloadModal);
+
+    // Close on background click
+    document.getElementById('downloadModal').addEventListener('click', (e) => {
+        if (e.target.id === 'downloadModal') {
+            closeDownloadModal();
+        }
+    });
+
+    // Format buttons
+    document.querySelectorAll('.format-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const format = btn.dataset.format;
+            downloadImage(format);
+            closeDownloadModal();
+        });
+    });
+}
+
+function openDownloadModal() {
+    document.getElementById('downloadModal').classList.remove('hidden');
+}
+
+function closeDownloadModal() {
+    document.getElementById('downloadModal').classList.add('hidden');
+}
+
+function downloadImage(format) {
     if (!currentSlider) return;
 
     const canvas = document.createElement('canvas');
@@ -538,8 +573,10 @@ function downloadImage() {
     const slider = currentSlider.element;
     const position = parseFloat(slider.style.getPropertyValue('--position')) || 50;
     const isVertical = slider.classList.contains('vertical');
-    const showLabels = document.getElementById('showLabelsToggle')?.checked ?? true;
-    const format = document.getElementById('downloadFormat').value;
+
+    // Get labels toggle state directly from checkbox
+    const labelsToggle = document.getElementById('showLabelsToggle');
+    const showLabels = labelsToggle ? labelsToggle.checked : true;
 
     // Load images
     const img1 = new Image();
@@ -578,7 +615,7 @@ function downloadImage() {
             ctx.fillRect(canvas.width * (position / 100) - 2, 0, 4, canvas.height);
         }
 
-        // Draw labels only if visible
+        // Draw labels only if toggle is checked
         if (showLabels) {
             ctx.font = 'bold 14px sans-serif';
             ctx.fillStyle = 'rgba(0,0,0,0.7)';
@@ -707,35 +744,40 @@ function generateGif() {
         canvas.height = height;
         const ctx = canvas.getContext('2d');
 
-        const gif = new GIF({
-            workers: 2,
-            quality: quality,
-            width: width,
-            height: height,
-            workerScript: 'gif.worker.js'
-        });
+        try {
+            const gif = new GIF({
+                quality: quality,
+                width: width,
+                height: height,
+                repeat: 0
+            });
 
-        // Frame 1: Before
-        ctx.drawImage(img1, 0, 0, width, height);
-        gif.addFrame(ctx, { copy: true, delay: speed });
+            // Frame 1: Before
+            ctx.drawImage(img1, 0, 0, width, height);
+            gif.addFrame(ctx, { copy: true, delay: speed });
 
-        // Frame 2: After
-        ctx.drawImage(img2, 0, 0, width, height);
-        gif.addFrame(ctx, { copy: true, delay: speed });
+            // Frame 2: After
+            ctx.drawImage(img2, 0, 0, width, height);
+            gif.addFrame(ctx, { copy: true, delay: speed });
 
-        gif.on('progress', (p) => {
-            const percent = Math.round(p * 100);
-            document.getElementById('gifProgress').textContent = `${percent}%`;
-        });
+            gif.on('progress', (p) => {
+                const percent = Math.round(p * 100);
+                const progressEl = document.getElementById('gifProgress');
+                if (progressEl) progressEl.textContent = `${percent}%`;
+            });
 
-        gif.on('finished', (blob) => {
-            gifBlob = blob;
-            const url = URL.createObjectURL(blob);
-            preview.innerHTML = `<img src="${url}" alt="GIF Preview">`;
-            downloadBtn.disabled = false;
-        });
+            gif.on('finished', (blob) => {
+                gifBlob = blob;
+                const url = URL.createObjectURL(blob);
+                preview.innerHTML = `<img src="${url}" alt="GIF Preview">`;
+                downloadBtn.disabled = false;
+            });
 
-        gif.render();
+            gif.render();
+        } catch (err) {
+            console.error('GIF generation error:', err);
+            preview.innerHTML = `<p style="color: var(--danger-color);">${t('error_gif_failed')}: ${err.message}</p>`;
+        }
     };
 
     img1.onload = createGif;

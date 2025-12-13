@@ -192,19 +192,12 @@
                             </svg>
                             <span>GIF</span>
                         </button>
-                        <div class="download-group">
-                            <button class="btn-primary" id="downloadImageBtn">
-                                <svg viewBox="0 0 24 24" width="18" height="18">
-                                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
-                                </svg>
-                                <span data-i18n="download_image">Stahnout</span>
-                            </button>
-                            <select id="downloadFormat" class="format-select">
-                                <option value="png">PNG</option>
-                                <option value="jpg">JPG</option>
-                                <option value="webp">WebP</option>
-                            </select>
-                        </div>
+                        <button class="btn-primary" id="downloadImageBtn">
+                            <svg viewBox="0 0 24 24" width="18" height="18">
+                                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
+                            </svg>
+                            <span data-i18n="download_image">Stáhnout</span>
+                        </button>
                     </div>
                 </div>
 
@@ -277,6 +270,37 @@
                 <div class="modal-footer">
                     <button class="btn-secondary" id="regenerateGifBtn" data-i18n="regenerate">Pregenerovat</button>
                     <button class="btn-primary" id="downloadGifBtn" disabled data-i18n="download_gif">Stahnout GIF</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Download Modal -->
+        <div class="modal hidden" id="downloadModal">
+            <div class="modal-content modal-small">
+                <div class="modal-header">
+                    <h3 data-i18n="download_title">Stáhnout obrázek</h3>
+                    <button class="close-btn" id="closeDownloadModal">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-description" data-i18n="select_format">Vyberte formát:</p>
+                    <div class="format-buttons">
+                        <button class="format-btn" data-format="png">
+                            <span class="format-name">PNG</span>
+                            <span class="format-desc">Bezeztrátový</span>
+                        </button>
+                        <button class="format-btn" data-format="jpg">
+                            <span class="format-name">JPG</span>
+                            <span class="format-desc">Menší soubor</span>
+                        </button>
+                        <button class="format-btn" data-format="webp">
+                            <span class="format-name">WebP</span>
+                            <span class="format-desc">Moderní formát</span>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

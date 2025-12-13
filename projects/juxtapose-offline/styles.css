@@ -571,6 +571,55 @@ body::before {
     border-color: var(--primary-color);
 }
 
+/* Download Modal */
+.modal-small {
+    max-width: 360px;
+}
+
+.modal-description {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+
+.format-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.format-btn {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.format-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary-color);
+}
+
+.format-btn:active {
+    transform: scale(0.98);
+}
+
+.format-name {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.format-desc {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
 /* Juxtapose Container */
 .juxtapose-wrapper {
     background: var(--bg-card);
