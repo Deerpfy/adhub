@@ -17,6 +17,9 @@ export class CollaborationManager {
         this.myName = 'Uživatel ' + Math.floor(Math.random() * 1000);
         this.remoteCursors = new Map(); // peerId -> cursor element
         this.isJoining = false; // Prevent multiple join attempts
+        this.hostInfo = null; // Host info for guests
+        this.lastCursorBroadcast = 0; // Throttle cursor broadcasts
+        this.cursorThrottleMs = 50; // 20 FPS for cursor updates
 
         // Check if joining a room from URL
         this.checkUrlForRoom();
@@ -130,12 +133,16 @@ export class CollaborationManager {
                     const canvasState = await this.getCanvasState();
                     console.log('[Collab] Sending auth-success with canvas state');
 
-                    // Send auth success with current canvas state
+                    // Send auth success with current canvas state and host info
                     conn.send({
                         type: 'auth-success',
                         canDraw: this.allowDraw,
                         canvasState: canvasState,
-                        participants: Array.from(this.participants.entries())
+                        participants: Array.from(this.participants.entries()),
+                        hostInfo: {
+                            name: this.myName,
+                            color: this.myColor
+                        }
                     });
 
                     // Notify all other participants
@@ -228,7 +235,7 @@ export class CollaborationManager {
                 });
 
                 conn.on('open', () => {
-                    console.log('[Collab] Connection opened, sending auth...');
+                    console.log('[Collab] Connection opened, sending auth with name:', this.myName);
 
                     // Send authentication
                     conn.send({
@@ -248,6 +255,12 @@ export class CollaborationManager {
                         } else if (data.type === 'auth-success') {
                             this.hostConnection = conn;
                             this.allowDraw = data.canDraw;
+
+                            // Store host info for cursor display
+                            if (data.hostInfo) {
+                                this.hostInfo = data.hostInfo;
+                                console.log('[Collab] Host info:', this.hostInfo);
+                            }
 
                             // Load canvas state
                             if (data.canvasState) {
@@ -395,15 +408,20 @@ export class CollaborationManager {
     handleRemoteCursor(data, fromPeerId) {
         let participant = this.participants.get(fromPeerId);
 
-        // For host cursor (when we're guest) - use data from message
+        // For host cursor (when we're guest) - use stored hostInfo or data from message
         if (!participant && fromPeerId === 'host') {
-            participant = { name: data.name || 'Host', color: data.color || '#8b5cf6' };
+            participant = {
+                name: this.hostInfo?.name || data.name || 'Host',
+                color: this.hostInfo?.color || data.color || '#8b5cf6'
+            };
         }
-        // Update participant info if provided in message
-        if (participant && data.name) {
+        // Update participant info if provided in message (for dynamic updates)
+        if (data.name) {
+            participant = participant || {};
             participant.name = data.name;
         }
-        if (participant && data.color) {
+        if (data.color) {
+            participant = participant || {};
             participant.color = data.color;
         }
         if (!participant) return;
@@ -494,6 +512,13 @@ export class CollaborationManager {
     broadcastCursor(x, y) {
         if (!this.isConnected()) return;
 
+        // Throttle cursor broadcasts for performance
+        const now = Date.now();
+        if (now - this.lastCursorBroadcast < this.cursorThrottleMs) {
+            return;
+        }
+        this.lastCursorBroadcast = now;
+
         this.send({
             type: 'cursor-move',
             x: x,
@@ -507,7 +532,10 @@ export class CollaborationManager {
      * Set user nickname
      */
     setNickname(name) {
-        this.myName = name || 'Uživatel ' + Math.floor(Math.random() * 1000);
+        if (name && name.trim()) {
+            this.myName = name.trim();
+            console.log('[Collab] Nickname set to:', this.myName);
+        }
     }
 
     /**
@@ -622,6 +650,7 @@ export class CollaborationManager {
         this.isHost = false;
         this.roomId = null;
         this.password = null;
+        this.hostInfo = null;
 
         // Remove room from URL
         const url = new URL(window.location.href);

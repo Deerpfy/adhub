@@ -871,11 +871,4 @@ export class CanvasManager {
         ctx.stroke();
         ctx.restore();
     }
-
-    /**
-     * Get pan object for collaboration cursor positioning
-     */
-    get pan() {
-        return { x: this.panX, y: this.panY };
-    }
 }
