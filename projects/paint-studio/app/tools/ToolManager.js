@@ -11,6 +11,11 @@ import { LineTool } from './tools/LineTool.js';
 import { RectangleTool } from './tools/RectangleTool.js';
 import { EllipseTool } from './tools/EllipseTool.js';
 import { MoveTool } from './tools/MoveTool.js';
+import { GradientTool } from './tools/GradientTool.js';
+import { SelectRectangleTool } from './tools/SelectRectangleTool.js';
+import { SelectLassoTool } from './tools/SelectLassoTool.js';
+import { MagicWandTool } from './tools/MagicWandTool.js';
+import { TransformTool } from './tools/TransformTool.js';
 
 export class ToolManager {
     constructor(app) {
@@ -34,7 +39,12 @@ export class ToolManager {
             line: new LineTool(this.app),
             rectangle: new RectangleTool(this.app),
             ellipse: new EllipseTool(this.app),
-            move: new MoveTool(this.app)
+            move: new MoveTool(this.app),
+            gradient: new GradientTool(this.app),
+            'select-rectangle': new SelectRectangleTool(this.app),
+            'select-lasso': new SelectLassoTool(this.app),
+            'magic-wand': new MagicWandTool(this.app),
+            transform: new TransformTool(this.app)
         };
 
         // Set default tool
@@ -120,7 +130,12 @@ export class ToolManager {
             line: 'crosshair',
             rectangle: 'crosshair',
             ellipse: 'crosshair',
-            move: 'move'
+            move: 'move',
+            gradient: 'crosshair',
+            'select-rectangle': 'crosshair',
+            'select-lasso': 'crosshair',
+            'magic-wand': 'crosshair',
+            transform: 'default'
         };
 
         container.style.cursor = cursors[this.currentTool] || 'default';
@@ -139,7 +154,12 @@ export class ToolManager {
             line: 'Čára',
             rectangle: 'Obdélník',
             ellipse: 'Elipsa',
-            move: 'Přesun'
+            move: 'Přesun',
+            gradient: 'Přechod',
+            'select-rectangle': 'Obdélníkový výběr',
+            'select-lasso': 'Lasso',
+            'magic-wand': 'Kouzelná hůlka',
+            transform: 'Transformace'
         };
         return names[toolName] || toolName;
     }

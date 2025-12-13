@@ -396,4 +396,158 @@ export class LayerManager {
         ctx.drawImage(layer.canvas, x, y, width, height);
         return canvas;
     }
+
+    /**
+     * Get content bounds for a layer
+     */
+    getContentBounds(layer) {
+        const ctx = layer.canvas.getContext('2d');
+        const imageData = ctx.getImageData(0, 0, layer.canvas.width, layer.canvas.height);
+        const data = imageData.data;
+        const w = imageData.width;
+        const h = imageData.height;
+
+        let minX = w, minY = h, maxX = 0, maxY = 0;
+        let hasContent = false;
+
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                const alpha = data[(y * w + x) * 4 + 3];
+                if (alpha > 0) {
+                    hasContent = true;
+                    minX = Math.min(minX, x);
+                    minY = Math.min(minY, y);
+                    maxX = Math.max(maxX, x);
+                    maxY = Math.max(maxY, y);
+                }
+            }
+        }
+
+        if (!hasContent) {
+            return null;
+        }
+
+        return {
+            x: minX,
+            y: minY,
+            width: maxX - minX + 1,
+            height: maxY - minY + 1
+        };
+    }
+
+    /**
+     * Move layer content
+     */
+    moveLayerContent(layer, offsetX, offsetY) {
+        if (!layer || layer.locked) return;
+
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = layer.canvas.width;
+        tempCanvas.height = layer.canvas.height;
+        const tempCtx = tempCanvas.getContext('2d');
+        tempCtx.drawImage(layer.canvas, 0, 0);
+
+        const ctx = layer.canvas.getContext('2d');
+        ctx.clearRect(0, 0, layer.canvas.width, layer.canvas.height);
+        ctx.drawImage(tempCanvas, offsetX, offsetY);
+
+        this.app.canvas.render();
+    }
+
+    /**
+     * Align active layer horizontally
+     */
+    alignLayerHorizontal(alignment) {
+        const layer = this.getActiveLayer();
+        if (!layer || layer.locked) return;
+
+        const bounds = this.getContentBounds(layer);
+        if (!bounds) return;
+
+        let offsetX = 0;
+        const canvasWidth = this.app.canvas.width;
+
+        switch (alignment) {
+            case 'left':
+                offsetX = -bounds.x;
+                break;
+            case 'center':
+                offsetX = (canvasWidth - bounds.width) / 2 - bounds.x;
+                break;
+            case 'right':
+                offsetX = canvasWidth - bounds.width - bounds.x;
+                break;
+        }
+
+        if (offsetX !== 0) {
+            this.moveLayerContent(layer, Math.round(offsetX), 0);
+        }
+    }
+
+    /**
+     * Align active layer vertically
+     */
+    alignLayerVertical(alignment) {
+        const layer = this.getActiveLayer();
+        if (!layer || layer.locked) return;
+
+        const bounds = this.getContentBounds(layer);
+        if (!bounds) return;
+
+        let offsetY = 0;
+        const canvasHeight = this.app.canvas.height;
+
+        switch (alignment) {
+            case 'top':
+                offsetY = -bounds.y;
+                break;
+            case 'middle':
+                offsetY = (canvasHeight - bounds.height) / 2 - bounds.y;
+                break;
+            case 'bottom':
+                offsetY = canvasHeight - bounds.height - bounds.y;
+                break;
+        }
+
+        if (offsetY !== 0) {
+            this.moveLayerContent(layer, 0, Math.round(offsetY));
+        }
+    }
+
+    /**
+     * Center layer content on canvas
+     */
+    centerLayer() {
+        const layer = this.getActiveLayer();
+        if (!layer || layer.locked) return;
+
+        const bounds = this.getContentBounds(layer);
+        if (!bounds) return;
+
+        const canvasWidth = this.app.canvas.width;
+        const canvasHeight = this.app.canvas.height;
+
+        const offsetX = (canvasWidth - bounds.width) / 2 - bounds.x;
+        const offsetY = (canvasHeight - bounds.height) / 2 - bounds.y;
+
+        if (offsetX !== 0 || offsetY !== 0) {
+            this.moveLayerContent(layer, Math.round(offsetX), Math.round(offsetY));
+        }
+    }
+
+    /**
+     * Select all layers
+     */
+    selectAllLayers() {
+        this.selectedLayers = this.layers.map((_, index) => index);
+        this.app.ui?.updateLayersList();
+    }
+
+    /**
+     * Deselect all layers
+     */
+    deselectAllLayers() {
+        this.selectedLayers = [];
+        this.app.ui?.updateLayersList();
+    }
 }

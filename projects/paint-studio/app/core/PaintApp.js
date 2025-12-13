@@ -13,6 +13,7 @@ import { StorageManager } from '../utils/StorageManager.js';
 import { QuickShape } from '../tools/QuickShape.js';
 import { StreamLine } from '../tools/StreamLine.js';
 import { UIController } from '../ui/UIController.js';
+import { SelectionManager } from '../tools/SelectionManager.js';
 
 export class PaintApp {
     constructor() {
@@ -45,6 +46,7 @@ export class PaintApp {
         this.quickShape = null;
         this.streamLine = null;
         this.ui = null;
+        this.selection = null;
     }
 
     /**
@@ -91,6 +93,9 @@ export class PaintApp {
 
             // Initialize StreamLine smoothing
             this.streamLine = new StreamLine(this);
+
+            // Initialize selection manager
+            this.selection = new SelectionManager(this);
 
             // Initialize UI controller
             this.ui = new UIController(this);
@@ -359,5 +364,110 @@ export class PaintApp {
      */
     setTool(toolName) {
         this.tools.setTool(toolName);
+    }
+
+    /**
+     * Paste image from clipboard to new layer
+     */
+    async pasteFromClipboard() {
+        try {
+            const clipboardItems = await navigator.clipboard.read();
+
+            for (const item of clipboardItems) {
+                // Look for image types
+                for (const type of item.types) {
+                    if (type.startsWith('image/')) {
+                        const blob = await item.getType(type);
+                        const img = new Image();
+
+                        return new Promise((resolve, reject) => {
+                            img.onload = () => {
+                                // Create new layer with pasted image
+                                const layer = this.layers.addLayer('Vložený obrázek');
+                                if (!layer) {
+                                    reject(new Error('Cannot create layer'));
+                                    return;
+                                }
+
+                                const ctx = layer.canvas.getContext('2d');
+
+                                // Center the image
+                                const x = (this.canvas.width - img.width) / 2;
+                                const y = (this.canvas.height - img.height) / 2;
+                                ctx.drawImage(img, x, y);
+
+                                this.canvas.render();
+                                this.ui.updateLayersList();
+                                this.markUnsaved();
+                                this.ui.showNotification('Obrázek vložen', 'success');
+
+                                URL.revokeObjectURL(img.src);
+                                resolve(layer);
+                            };
+
+                            img.onerror = () => {
+                                URL.revokeObjectURL(img.src);
+                                reject(new Error('Failed to load image'));
+                            };
+
+                            img.src = URL.createObjectURL(blob);
+                        });
+                    }
+                }
+            }
+
+            this.ui.showNotification('Ve schránce není obrázek', 'warning');
+        } catch (error) {
+            console.error('Paste error:', error);
+            if (error.name === 'NotAllowedError') {
+                this.ui.showNotification('Přístup ke schránce zamítnut', 'error');
+            } else {
+                this.ui.showNotification('Chyba při vkládání', 'error');
+            }
+        }
+    }
+
+    /**
+     * Copy active layer to clipboard
+     */
+    async copyToClipboard() {
+        try {
+            const layer = this.layers.getActiveLayer();
+            if (!layer) return;
+
+            const blob = await new Promise(resolve => {
+                layer.canvas.toBlob(resolve, 'image/png');
+            });
+
+            await navigator.clipboard.write([
+                new ClipboardItem({
+                    'image/png': blob
+                })
+            ]);
+
+            this.ui.showNotification('Zkopírováno do schránky', 'success');
+        } catch (error) {
+            console.error('Copy error:', error);
+            this.ui.showNotification('Chyba při kopírování', 'error');
+        }
+    }
+
+    /**
+     * Cut active layer content to clipboard
+     */
+    async cutToClipboard() {
+        try {
+            await this.copyToClipboard();
+
+            const layer = this.layers.getActiveLayer();
+            if (layer && !layer.locked) {
+                const ctx = layer.canvas.getContext('2d');
+                ctx.clearRect(0, 0, layer.canvas.width, layer.canvas.height);
+                this.canvas.render();
+                this.markUnsaved();
+            }
+        } catch (error) {
+            console.error('Cut error:', error);
+        }
     }
 }

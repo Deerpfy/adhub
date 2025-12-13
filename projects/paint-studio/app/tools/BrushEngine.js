@@ -35,11 +35,68 @@ export class BrushEngine {
 
         this.currentBrushType = 'round';
 
+        // Per-brush size and opacity memory
+        this.brushSettings = {};
+        this.initBrushSettings();
+
         // Cached brush stamp
         this.brushStamp = null;
         this.brushStampSize = 0;
         this.brushStampHardness = 0;
         this.brushStampType = '';
+    }
+
+    /**
+     * Initialize default settings for each brush type
+     */
+    initBrushSettings() {
+        const defaultSizes = {
+            round: { size: 10, opacity: 1, hardness: 1 },
+            soft: { size: 20, opacity: 0.8, hardness: 0.5 },
+            square: { size: 10, opacity: 1, hardness: 1 },
+            pixel: { size: 1, opacity: 1, hardness: 1 },
+            airbrush: { size: 40, opacity: 0.3, hardness: 0.2 },
+            marker: { size: 15, opacity: 0.7, hardness: 0.8 },
+            charcoal: { size: 25, opacity: 0.9, hardness: 0.6 },
+            watercolor: { size: 30, opacity: 0.5, hardness: 0.3 },
+            ink: { size: 8, opacity: 1, hardness: 0.9 },
+            calligraphy: { size: 12, opacity: 1, hardness: 1 },
+            splatter: { size: 50, opacity: 0.6, hardness: 0.5 },
+            chalk: { size: 20, opacity: 0.8, hardness: 0.4 }
+        };
+
+        // Load saved settings or use defaults
+        const saved = localStorage.getItem('paint-studio-brush-settings');
+        if (saved) {
+            try {
+                this.brushSettings = JSON.parse(saved);
+            } catch (e) {
+                this.brushSettings = { ...defaultSizes };
+            }
+        } else {
+            this.brushSettings = { ...defaultSizes };
+        }
+
+        // Ensure all brush types have settings
+        for (const type of Object.keys(this.brushTypes)) {
+            if (!this.brushSettings[type]) {
+                this.brushSettings[type] = defaultSizes[type] || { size: 10, opacity: 1, hardness: 1 };
+            }
+        }
+    }
+
+    /**
+     * Save brush settings to localStorage
+     */
+    saveBrushSettings() {
+        // Update current brush settings before saving
+        this.brushSettings[this.currentBrushType] = {
+            size: this.size,
+            opacity: this.opacity,
+            hardness: this.hardness
+        };
+
+        localStorage.setItem('paint-studio-brush-settings', JSON.stringify(this.brushSettings));
     }
 
     /**
@@ -515,8 +572,24 @@ export class BrushEngine {
      */
     setBrushType(type) {
         if (this.brushTypes[type]) {
+            // Save current brush settings before switching
+            this.saveBrushSettings();
+
+            // Switch to new brush type
             this.currentBrushType = type;
             this.brushStamp = null; // Invalidate cache
+
+            // Load settings for this brush type
+            const settings = this.brushSettings[type];
+            if (settings) {
+                this.size = settings.size;
+                this.opacity = settings.opacity;
+                this.hardness = settings.hardness;
+
+                // Update UI
+                this.app.ui?.updateBrushSize(this.size);
+                this.app.ui?.updateBrushOpacity(Math.round(this.opacity * 100));
+            }
         }
     }
 
