@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8b5cf6"/>
+      <stop offset="100%" style="stop-color:#ec4899"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="64" fill="#0a0a0f"/>
+
+  <!-- Left half (Before) -->
+  <rect x="48" y="96" width="200" height="320" rx="12" fill="#1a1a24"/>
+  <rect x="64" y="112" width="168" height="288" rx="8" fill="#2a2a3a"/>
+
+  <!-- Right half (After) -->
+  <rect x="264" y="96" width="200" height="320" rx="12" fill="#1a1a24"/>
+  <rect x="280" y="112" width="168" height="288" rx="8" fill="url(#grad)" opacity="0.3"/>
+
+  <!-- Center divider line -->
+  <rect x="252" y="80" width="8" height="352" rx="4" fill="url(#grad)"/>
+
+  <!-- Handle circle -->
+  <circle cx="256" cy="256" r="32" fill="#222"/>
+  <circle cx="256" cy="256" r="28" fill="url(#grad)"/>
+
+  <!-- Arrows -->
+  <path d="M242 248l-12 8 12 8" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M270 248l12 8-12 8" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Labels -->
+  <text x="148" y="440" text-anchor="middle" fill="#fff" font-family="sans-serif" font-size="24" font-weight="bold" opacity="0.7">BEFORE</text>
+  <text x="364" y="440" text-anchor="middle" fill="#fff" font-family="sans-serif" font-size="24" font-weight="bold" opacity="0.7">AFTER</text>
+</svg>
