@@ -317,6 +317,8 @@ const BASE_TRANSLATIONS = {
         tool_paint_studio_desc: 'Offline digitální malba inspirovaná Procreate. Vrstvy s blend modes, štětce s citlivostí na tlak, QuickShape, StreamLine vyhlazování. 100% offline PWA.',
         tool_bg_remover_name: 'BG Remover',
         tool_bg_remover_desc: 'Offline AI nástroj pro odstranění pozadí z obrázků. Magic Brush pro ruční doladění, vlastní pozadí, AI stíny. 100% v prohlížeči, bez serveru.',
+        tool_juxtapose_name: 'Juxtapose',
+        tool_juxtapose_desc: 'Offline before/after porovnávač obrázků. Slider, GIF export, IndexedDB ukládání. 100% offline PWA inspirovaný Knight Lab JuxtaposeJS.',
         category_gaming: 'gaming',
         category_documentation: 'dokumentace',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
@@ -707,6 +709,8 @@ const BASE_TRANSLATIONS = {
         tool_paint_studio_desc: 'Offline digital painting inspired by Procreate. Layers with blend modes, pressure-sensitive brushes, QuickShape, StreamLine smoothing. 100% offline PWA.',
         tool_bg_remover_name: 'BG Remover',
         tool_bg_remover_desc: 'Offline AI tool for removing backgrounds from images. Magic Brush for manual refinement, custom backgrounds, AI shadows. 100% in browser, no server.',
+        tool_juxtapose_name: 'Juxtapose',
+        tool_juxtapose_desc: 'Offline before/after image comparison tool. Slider, GIF export, IndexedDB storage. 100% offline PWA inspired by Knight Lab JuxtaposeJS.',
         category_gaming: 'gaming',
         category_documentation: 'documentation',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
@@ -1646,6 +1650,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["design", "image", "background", "ai", "offline", "pwa", "privacy"]
+            },
+            {
+                "id": "juxtapose-offline",
+                "name": t('tool_juxtapose_name'),
+                "description": t('tool_juxtapose_desc'),
+                "category": "design",
+                "icon": "↔️",
+                "url": "projects/juxtapose-offline/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["design", "image", "comparison", "before-after", "slider", "gif", "offline", "pwa"]
             }
         ],
         "links": [
