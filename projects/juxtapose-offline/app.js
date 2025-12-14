@@ -53,6 +53,11 @@ const TRANSLATIONS = {
         quality_low: 'Nízká (menší soubor)',
         quality_medium: 'Střední',
         quality_high: 'Vysoká (větší soubor)',
+        gif_effect: 'Efekt:',
+        effect_crossfade: 'Crossfade',
+        effect_wipe: 'Wipe',
+        effect_simple: 'Přepínání',
+        gif_frames: 'Plynulost:',
         regenerate: 'Přegenerovat',
         download_gif: 'Stáhnout GIF',
         copied: 'Zkopírováno!',
@@ -101,6 +106,11 @@ const TRANSLATIONS = {
         quality_low: 'Low (smaller file)',
         quality_medium: 'Medium',
         quality_high: 'High (larger file)',
+        gif_effect: 'Effect:',
+        effect_crossfade: 'Crossfade',
+        effect_wipe: 'Wipe',
+        effect_simple: 'Switch',
+        gif_frames: 'Smoothness:',
         regenerate: 'Regenerate',
         download_gif: 'Download GIF',
         copied: 'Copied!',
@@ -794,6 +804,27 @@ function initModal() {
         speedValue.textContent = `${(speedSlider.value / 1000).toFixed(1)}s`;
     });
 
+    // Frames slider (smoothness)
+    const framesSlider = document.getElementById('gifFrames');
+    const framesValue = document.getElementById('gifFramesValue');
+    if (framesSlider && framesValue) {
+        framesSlider.addEventListener('input', () => {
+            framesValue.textContent = framesSlider.value;
+        });
+    }
+
+    // Effect selector - hide/show frames slider based on effect type
+    const effectSelect = document.getElementById('gifEffect');
+    if (effectSelect && framesSlider) {
+        effectSelect.addEventListener('change', () => {
+            const framesRow = framesSlider.closest('.option-row');
+            if (framesRow) {
+                // Hide frames slider for simple effect
+                framesRow.style.display = effectSelect.value === 'simple' ? 'none' : 'flex';
+            }
+        });
+    }
+
     // Close on background click
     document.getElementById('gifModal').addEventListener('click', (e) => {
         if (e.target.id === 'gifModal') {
@@ -826,8 +857,11 @@ function generateGif() {
     downloadBtn.disabled = true;
     gifBlob = null;
 
+    // Get user settings
     const speed = parseInt(document.getElementById('gifSpeed').value);
     const quality = parseInt(document.getElementById('gifQuality').value);
+    const effect = document.getElementById('gifEffect')?.value || 'crossfade';
+    const transitionFrames = parseInt(document.getElementById('gifFrames')?.value || 10);
 
     // Check if gif.js is loaded
     if (typeof GIF === 'undefined') {
@@ -854,48 +888,28 @@ function generateGif() {
         if (loaded < 2) return;
 
         try {
-            const width = Math.min(img1.naturalWidth || 800, 800);
+            // Calculate dimensions (max 800px for reasonable file size)
+            const maxWidth = 800;
+            const width = Math.min(img1.naturalWidth || 800, maxWidth);
             const height = Math.round(width * ((img1.naturalHeight || 600) / (img1.naturalWidth || 800)));
-
-            console.log('[GIF Debug] createGif - img1 size:', img1.naturalWidth, 'x', img1.naturalHeight);
-            console.log('[GIF Debug] createGif - img2 size:', img2.naturalWidth, 'x', img2.naturalHeight);
-            console.log('[GIF Debug] createGif - canvas size:', width, 'x', height);
-            console.log('[GIF Debug] createGif - img1.src length:', img1.src?.length);
-            console.log('[GIF Debug] createGif - img2.src length:', img2.src?.length);
-            console.log('[GIF Debug] createGif - img1.src === img2.src:', img1.src === img2.src);
 
             if (width <= 0 || height <= 0) {
                 showError('Invalid image dimensions');
                 return;
             }
 
-            // Create separate canvas for each frame to avoid issues
-            const canvas1 = document.createElement('canvas');
-            canvas1.width = width;
-            canvas1.height = height;
-            const ctx1 = canvas1.getContext('2d');
+            // Create main canvas for frame generation
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
 
-            const canvas2 = document.createElement('canvas');
-            canvas2.width = width;
-            canvas2.height = height;
-            const ctx2 = canvas2.getContext('2d');
-
-            if (!ctx1 || !ctx2) {
+            if (!ctx) {
                 showError('Failed to create canvas context');
                 return;
             }
 
-            // Draw images to separate canvases
-            ctx1.drawImage(img1, 0, 0, width, height);
-            ctx2.drawImage(img2, 0, 0, width, height);
-
-            // Get ImageData from each canvas
-            const imageData1 = ctx1.getImageData(0, 0, width, height);
-            const imageData2 = ctx2.getImageData(0, 0, width, height);
-
-            console.log('[GIF Debug] imageData1 first 8 bytes:', Array.from(imageData1.data.slice(0, 8)));
-            console.log('[GIF Debug] imageData2 first 8 bytes:', Array.from(imageData2.data.slice(0, 8)));
-
+            // Initialize GIF encoder
             const gif = new GIF({
                 workers: 2,
                 quality: quality,
@@ -904,11 +918,143 @@ function generateGif() {
                 workerScript: 'gif.worker.js'
             });
 
-            // Frame 1: Before - pass ImageData directly
-            gif.addFrame(imageData1, { delay: speed });
+            // Calculate frame timings
+            // Optimal: before (hold) -> transition -> after (hold)
+            const holdTime = Math.round(speed * 0.4); // 40% of speed for hold frames
+            const transitionTime = Math.round(speed * 0.6); // 60% for transition
+            const frameDelay = Math.max(50, Math.round(transitionTime / transitionFrames));
 
-            // Frame 2: After - pass ImageData directly
-            gif.addFrame(imageData2, { delay: speed });
+            // Generate frames based on effect type
+            if (effect === 'simple') {
+                // Simple: just 2 frames alternating
+                ctx.drawImage(img1, 0, 0, width, height);
+                gif.addFrame(ctx.getImageData(0, 0, width, height), { delay: speed });
+
+                ctx.drawImage(img2, 0, 0, width, height);
+                gif.addFrame(ctx.getImageData(0, 0, width, height), { delay: speed });
+            } else if (effect === 'crossfade') {
+                // Crossfade effect with smooth transition
+
+                // Frame 1: Hold on "before" image
+                ctx.drawImage(img1, 0, 0, width, height);
+                gif.addFrame(ctx.getImageData(0, 0, width, height), { delay: holdTime });
+
+                // Transition frames: crossfade from before to after
+                for (let i = 1; i <= transitionFrames; i++) {
+                    const progress = i / transitionFrames;
+
+                    // Clear canvas
+                    ctx.clearRect(0, 0, width, height);
+
+                    // Draw before image with decreasing opacity
+                    ctx.globalAlpha = 1 - progress;
+                    ctx.drawImage(img1, 0, 0, width, height);
+
+                    // Draw after image with increasing opacity
+                    ctx.globalAlpha = progress;
+                    ctx.drawImage(img2, 0, 0, width, height);
+
+                    // Reset alpha
+                    ctx.globalAlpha = 1;
+
+                    gif.addFrame(ctx.getImageData(0, 0, width, height), { delay: frameDelay });
+                }
+
+                // Frame N+2: Hold on "after" image
+                ctx.clearRect(0, 0, width, height);
+                ctx.drawImage(img2, 0, 0, width, height);
+                gif.addFrame(ctx.getImageData(0, 0, width, height), { delay: holdTime });
+
+                // Transition back: crossfade from after to before
+                for (let i = 1; i <= transitionFrames; i++) {
+                    const progress = i / transitionFrames;
+
+                    ctx.clearRect(0, 0, width, height);
+                    ctx.globalAlpha = 1 - progress;
+                    ctx.drawImage(img2, 0, 0, width, height);
+                    ctx.globalAlpha = progress;
+                    ctx.drawImage(img1, 0, 0, width, height);
+                    ctx.globalAlpha = 1;
+
+                    gif.addFrame(ctx.getImageData(0, 0, width, height), { delay: frameDelay });
+                }
+            } else if (effect === 'wipe') {
+                // Wipe effect (horizontal slide)
+                const isVertical = currentSlider.options.orientation === 'vertical';
+
+                // Frame 1: Hold on "before" image
+                ctx.drawImage(img1, 0, 0, width, height);
+                gif.addFrame(ctx.getImageData(0, 0, width, height), { delay: holdTime });
+
+                // Transition frames: wipe from before to after
+                for (let i = 1; i <= transitionFrames; i++) {
+                    const progress = i / transitionFrames;
+
+                    ctx.clearRect(0, 0, width, height);
+
+                    // Draw after image (full)
+                    ctx.drawImage(img2, 0, 0, width, height);
+
+                    // Clip and draw before image
+                    ctx.save();
+                    ctx.beginPath();
+                    if (isVertical) {
+                        ctx.rect(0, 0, width, height * (1 - progress));
+                    } else {
+                        ctx.rect(0, 0, width * (1 - progress), height);
+                    }
+                    ctx.clip();
+                    ctx.drawImage(img1, 0, 0, width, height);
+                    ctx.restore();
+
+                    // Draw handle line at transition point
+                    ctx.fillStyle = '#222';
+                    if (isVertical) {
+                        ctx.fillRect(0, height * (1 - progress) - 2, width, 4);
+                    } else {
+                        ctx.fillRect(width * (1 - progress) - 2, 0, 4, height);
+                    }
+
+                    gif.addFrame(ctx.getImageData(0, 0, width, height), { delay: frameDelay });
+                }
+
+                // Frame N+2: Hold on "after" image
+                ctx.clearRect(0, 0, width, height);
+                ctx.drawImage(img2, 0, 0, width, height);
+                gif.addFrame(ctx.getImageData(0, 0, width, height), { delay: holdTime });
+
+                // Transition back: wipe from after to before
+                for (let i = 1; i <= transitionFrames; i++) {
+                    const progress = i / transitionFrames;
+
+                    ctx.clearRect(0, 0, width, height);
+
+                    // Draw before image (full)
+                    ctx.drawImage(img1, 0, 0, width, height);
+
+                    // Clip and draw after image
+                    ctx.save();
+                    ctx.beginPath();
+                    if (isVertical) {
+                        ctx.rect(0, 0, width, height * (1 - progress));
+                    } else {
+                        ctx.rect(0, 0, width * (1 - progress), height);
+                    }
+                    ctx.clip();
+                    ctx.drawImage(img2, 0, 0, width, height);
+                    ctx.restore();
+
+                    // Draw handle line
+                    ctx.fillStyle = '#222';
+                    if (isVertical) {
+                        ctx.fillRect(0, height * (1 - progress) - 2, width, 4);
+                    } else {
+                        ctx.fillRect(width * (1 - progress) - 2, 0, 4, height);
+                    }
+
+                    gif.addFrame(ctx.getImageData(0, 0, width, height), { delay: frameDelay });
+                }
+            }
 
             gif.on('progress', (p) => {
                 const percent = Math.round(p * 100);

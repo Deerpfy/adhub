@@ -268,6 +268,19 @@
                     </div>
                     <div class="gif-options">
                         <div class="option-row">
+                            <label data-i18n="gif_effect">Efekt:</label>
+                            <select id="gifEffect">
+                                <option value="crossfade" selected data-i18n="effect_crossfade">Crossfade</option>
+                                <option value="wipe" data-i18n="effect_wipe">Wipe</option>
+                                <option value="simple" data-i18n="effect_simple">Prepinani</option>
+                            </select>
+                        </div>
+                        <div class="option-row">
+                            <label data-i18n="gif_frames">Plynulost:</label>
+                            <input type="range" id="gifFrames" min="5" max="20" value="10" step="1">
+                            <span id="gifFramesValue">10</span>
+                        </div>
+                        <div class="option-row">
                             <label data-i18n="gif_speed">Rychlost:</label>
                             <input type="range" id="gifSpeed" min="500" max="3000" value="1500" step="100">
                             <span id="gifSpeedValue">1.5s</span>
