@@ -857,20 +857,44 @@ function generateGif() {
             const width = Math.min(img1.naturalWidth || 800, 800);
             const height = Math.round(width * ((img1.naturalHeight || 600) / (img1.naturalWidth || 800)));
 
+            console.log('[GIF Debug] createGif - img1 size:', img1.naturalWidth, 'x', img1.naturalHeight);
+            console.log('[GIF Debug] createGif - img2 size:', img2.naturalWidth, 'x', img2.naturalHeight);
+            console.log('[GIF Debug] createGif - canvas size:', width, 'x', height);
+            console.log('[GIF Debug] createGif - img1.src length:', img1.src?.length);
+            console.log('[GIF Debug] createGif - img2.src length:', img2.src?.length);
+            console.log('[GIF Debug] createGif - img1.src === img2.src:', img1.src === img2.src);
+
             if (width <= 0 || height <= 0) {
                 showError('Invalid image dimensions');
                 return;
             }
 
-            const canvas = document.createElement('canvas');
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
+            // Create separate canvas for each frame to avoid issues
+            const canvas1 = document.createElement('canvas');
+            canvas1.width = width;
+            canvas1.height = height;
+            const ctx1 = canvas1.getContext('2d');
 
-            if (!ctx) {
+            const canvas2 = document.createElement('canvas');
+            canvas2.width = width;
+            canvas2.height = height;
+            const ctx2 = canvas2.getContext('2d');
+
+            if (!ctx1 || !ctx2) {
                 showError('Failed to create canvas context');
                 return;
             }
+
+            // Draw images to separate canvases
+            ctx1.drawImage(img1, 0, 0, width, height);
+            ctx2.drawImage(img2, 0, 0, width, height);
+
+            // Get ImageData from each canvas
+            const imageData1 = ctx1.getImageData(0, 0, width, height);
+            const imageData2 = ctx2.getImageData(0, 0, width, height);
+
+            console.log('[GIF Debug] imageData1 first 8 bytes:', Array.from(imageData1.data.slice(0, 8)));
+            console.log('[GIF Debug] imageData2 first 8 bytes:', Array.from(imageData2.data.slice(0, 8)));
 
             const gif = new GIF({
                 workers: 2,
@@ -880,13 +904,11 @@ function generateGif() {
                 workerScript: 'gif.worker.js'
             });
 
-            // Frame 1: Before
-            ctx.drawImage(img1, 0, 0, width, height);
-            gif.addFrame(ctx, { copy: true, delay: speed });
+            // Frame 1: Before - pass ImageData directly
+            gif.addFrame(imageData1, { delay: speed });
 
-            // Frame 2: After
-            ctx.drawImage(img2, 0, 0, width, height);
-            gif.addFrame(ctx, { copy: true, delay: speed });
+            // Frame 2: After - pass ImageData directly
+            gif.addFrame(imageData2, { delay: speed });
 
             gif.on('progress', (p) => {
                 const percent = Math.round(p * 100);
