@@ -404,7 +404,8 @@ body {
 }
 
 .main-canvas,
-.preview-canvas {
+.preview-canvas,
+.overlay-canvas {
     position: absolute;
     top: 0;
     left: 0;
@@ -412,6 +413,12 @@ body {
 }
 
 .preview-canvas {
+    pointer-events: none;
+    z-index: 5;
+}
+
+/* Overlay canvas inside wrapper - transforms with canvas */
+.canvas-wrapper .overlay-canvas {
     pointer-events: none;
     z-index: 10;
 }
@@ -3129,14 +3136,7 @@ body {
    Pixel Art Mode Styles
    ============================================= */
 
-/* Overlay Canvas */
-.overlay-canvas {
-    position: absolute;
-    top: 0;
-    left: 0;
-    pointer-events: none;
-    z-index: 10;
-}
+/* Note: .overlay-canvas styles are now in the Canvas Container section above */
 
 /* Pixel Art Indicator */
 .pixel-art-indicator {
@@ -3833,4 +3833,140 @@ body.pixel-art-mode .color-picker-section:hover {
 
 .pixel-art-mode-option svg {
     color: var(--primary-color);
+}
+
+/* =============================================
+   Text Tool Styles
+   ============================================= */
+
+/* Text Editor Overlay */
+.text-editor-overlay {
+    background: transparent;
+}
+
+.text-editor-input {
+    font-family: 'Inter', sans-serif;
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px dashed var(--primary-color);
+    border-radius: 4px;
+    padding: 8px;
+    outline: none;
+    resize: both;
+    min-width: 100px;
+    min-height: 50px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.text-editor-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.text-editor-input:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+
+/* Text Editor Toolbar */
+.text-editor-toolbar {
+    display: flex;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(30, 30, 40, 0.95);
+    border-radius: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(8px);
+}
+
+.text-toolbar-select {
+    padding: 6px 10px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    min-width: 120px;
+    cursor: pointer;
+}
+
+.text-toolbar-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.text-toolbar-input {
+    padding: 6px 10px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    width: 60px;
+}
+
+.text-toolbar-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+}
+
+.text-toolbar-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    min-width: 32px;
+    height: 32px;
+}
+
+.text-toolbar-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary-color);
+}
+
+.text-toolbar-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.text-toolbar-btn.rasterize-btn {
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+    border: none;
+    color: white;
+    padding: 6px 14px;
+    min-width: auto;
+}
+
+.text-toolbar-btn.rasterize-btn:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+/* Text Layer Indicator in Layer List */
+.layer-item.text-layer::before {
+    content: 'T';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 16px;
+    height: 16px;
+    background: var(--primary-color);
+    border-radius: 3px;
+    color: white;
+    font-size: 10px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }

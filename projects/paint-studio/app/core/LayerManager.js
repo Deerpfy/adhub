@@ -62,6 +62,53 @@ export class LayerManager {
     }
 
     /**
+     * Add a new text layer
+     */
+    addTextLayer(name = 'Text', x = 100, y = 100, textOptions = {}) {
+        if (this.layers.length >= this.maxLayers) {
+            console.warn('Maximum number of layers reached');
+            return null;
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = this.app.canvas.width;
+        canvas.height = this.app.canvas.height;
+
+        const layer = {
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+            name,
+            type: 'text',
+            parentId: null,
+            canvas,
+            visible: true,
+            locked: false,
+            opacity: 1,
+            blendMode: 'source-over',
+            // Text-specific properties
+            textContent: textOptions.text || '',
+            textStyle: {
+                fontSize: textOptions.fontSize || 48,
+                fontFamily: textOptions.fontFamily || 'Inter',
+                fontWeight: textOptions.fontWeight || 'normal',
+                fontStyle: textOptions.fontStyle || 'normal',
+                textAlign: textOptions.textAlign || 'left',
+                lineHeight: textOptions.lineHeight || 1.2,
+                color: textOptions.color || '#ffffff'
+            },
+            textBounds: {
+                x: x,
+                y: y,
+                width: 200,
+                height: 60
+            }
+        };
+
+        this.layers.push(layer);
+        this.app.ui?.updateLayersList();
+        return layer;
+    }
+
+    /**
      * Add a new folder
      */
     addFolder(name = 'Nová složka', index = null, parentId = null) {
@@ -149,6 +196,24 @@ export class LayerManager {
         const item = this.layers.find(l => l.id === itemId);
         if (item) {
             item.parentId = null;
+            this.app.ui?.updateLayersList();
+        }
+    }
+
+    /**
+     * Get all layers
+     */
+    getLayers() {
+        return this.layers;
+    }
+
+    /**
+     * Set active layer by ID
+     */
+    setActiveLayer(layerId) {
+        const index = this.layers.findIndex(l => l.id === layerId);
+        if (index !== -1) {
+            this.activeLayerIndex = index;
             this.app.ui?.updateLayersList();
         }
     }

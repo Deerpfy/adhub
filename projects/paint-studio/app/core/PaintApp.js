@@ -19,6 +19,7 @@ import { BackgroundRemover } from '../utils/BackgroundRemover.js';
 import { PixelArtManager } from '../pixelart/PixelArtManager.js';
 import { AnimationManager } from '../pixelart/AnimationManager.js';
 import { ColorAdjustments } from '../pixelart/ColorAdjustments.js';
+import { GoogleFontsManager } from '../utils/GoogleFontsManager.js';
 
 export class PaintApp {
     constructor() {
@@ -60,6 +61,9 @@ export class PaintApp {
         this.pixelArt = null;
         this.animation = null;
         this.colorAdjust = null;
+
+        // Google Fonts manager
+        this.googleFonts = null;
     }
 
     /**
@@ -128,6 +132,12 @@ export class PaintApp {
 
             // Initialize background remover (lazy loading)
             this.bgRemover = new BackgroundRemover(this);
+
+            // Initialize Google Fonts manager (async loading in background)
+            this.googleFonts = new GoogleFontsManager(this);
+            this.googleFonts.init().catch(err => {
+                console.warn('Google Fonts initialization failed:', err);
+            });
 
             // Create default project
             await this.newProject({
