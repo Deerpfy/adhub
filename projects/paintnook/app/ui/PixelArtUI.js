@@ -276,6 +276,18 @@ export class PixelArtUI {
             this.elements.animationTimeline.style.display = enabled ? 'flex' : 'none';
         }
 
+        // Hide/show digital painting options (brush settings, color picker)
+        // When Pixel Art mode is enabled, hide brush types, blend mode, etc.
+        const brushSettings = document.getElementById('brushSettings');
+        const colorPickerSection = document.getElementById('colorPickerSection');
+
+        if (brushSettings) {
+            brushSettings.style.display = enabled ? 'none' : 'block';
+        }
+        if (colorPickerSection) {
+            colorPickerSection.style.display = enabled ? 'none' : 'block';
+        }
+
         // Initialize or clear grid
         if (enabled) {
             this.renderPalette();
@@ -364,21 +376,44 @@ export class PixelArtUI {
 
     /**
      * Render grid on overlay canvas
+     * Adaptive rendering: adjusts line width and skipping based on zoom level
      */
     renderGrid(ctx, width, height, zoom) {
         const gridSize = this.app.pixelArt.grid.size;
         const effectiveGridSize = gridSize * zoom;
 
-        // Don't render if grid is too small to see
-        if (effectiveGridSize < 4) return;
-
         ctx.save();
         ctx.strokeStyle = this.app.pixelArt.grid.color;
         ctx.globalAlpha = this.app.pixelArt.grid.opacity;
-        ctx.lineWidth = 1;
+
+        // Adaptive grid rendering based on zoom level
+        let lineWidth = 1;
+        let skipFactor = 1;
+
+        if (effectiveGridSize < 2) {
+            // Very zoomed out - show every 16th line with thicker stroke
+            skipFactor = 16;
+            lineWidth = 2;
+        } else if (effectiveGridSize < 4) {
+            // Zoomed out - show every 8th line with thicker stroke
+            skipFactor = 8;
+            lineWidth = 1.5;
+        } else if (effectiveGridSize < 8) {
+            // Moderately zoomed out - show every 4th line
+            skipFactor = 4;
+            lineWidth = 1;
+        } else if (effectiveGridSize < 12) {
+            // Slightly zoomed out - show every 2nd line
+            skipFactor = 2;
+            lineWidth = 1;
+        }
+
+        ctx.lineWidth = lineWidth;
+
+        const actualGridStep = gridSize * skipFactor;
 
         // Vertical lines
-        for (let x = 0; x <= width; x += gridSize) {
+        for (let x = 0; x <= width; x += actualGridStep) {
             ctx.beginPath();
             ctx.moveTo(x + 0.5, 0);
             ctx.lineTo(x + 0.5, height);
@@ -386,7 +421,7 @@ export class PixelArtUI {
         }
 
         // Horizontal lines
-        for (let y = 0; y <= height; y += gridSize) {
+        for (let y = 0; y <= height; y += actualGridStep) {
             ctx.beginPath();
             ctx.moveTo(0, y + 0.5);
             ctx.lineTo(width, y + 0.5);

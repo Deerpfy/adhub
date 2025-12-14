@@ -36,7 +36,7 @@ export class PaintApp {
             backgroundColor: '#ffffff',
             pressureSensitivity: true,
             streamlineEnabled: true,
-            streamlineAmount: 50,
+            streamlineAmount: 0,
             quickshapeEnabled: true,
             quickshapePreview: true,
             pixelArtMode: false

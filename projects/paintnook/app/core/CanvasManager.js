@@ -488,6 +488,37 @@ export class CanvasManager {
      * Handle keyboard shortcuts
      */
     handleKeyDown(e) {
+        // Check if user is typing in text editor or input field
+        const activeElement = document.activeElement;
+        const isTypingInInput = activeElement && (
+            activeElement.tagName === 'INPUT' ||
+            activeElement.tagName === 'TEXTAREA' ||
+            activeElement.classList.contains('text-editor-input') ||
+            activeElement.isContentEditable
+        );
+
+        // Check if text tool is actively editing
+        const textTool = this.app.tools?.getTool('text');
+        const isEditingText = textTool && textTool.editingLayer !== null;
+
+        // If typing in input or editing text, only allow Escape (to exit) and Ctrl shortcuts
+        if (isTypingInInput || isEditingText) {
+            // Allow Escape to exit text editing
+            if (e.key === 'Escape') {
+                if (textTool && textTool.editingLayer) {
+                    textTool.finishEditing();
+                    e.preventDefault();
+                }
+                return;
+            }
+
+            // Allow Ctrl/Meta shortcuts (copy, paste, undo, etc.)
+            if (!e.ctrlKey && !e.metaKey) {
+                // Block single-key tool shortcuts while typing
+                return;
+            }
+        }
+
         // Space for pan mode
         if (e.code === 'Space' && !this.spacePressed) {
             this.spacePressed = true;
