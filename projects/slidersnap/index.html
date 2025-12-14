@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- SEO Meta Tags -->
+    <title>SliderSnap - Offline Before/After Image Comparison</title>
+    <meta name="description" content="100% offline before/after image comparison tool. Create interactive image sliders directly in your browser. No server, no upload, complete privacy.">
+    <meta name="keywords" content="before after, image comparison, slider, slidersnap, offline, privacy">
+    <meta name="author" content="Deerpfy">
+
+    <!-- PWA -->
+    <meta name="theme-color" content="#8b5cf6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SliderSnap">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app" class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <a href="../../index.html" class="back-btn" title="Zpet na Hub">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    </svg>
+                    <span>Hub</span>
+                </a>
+            </div>
+
+            <div class="header-center">
+                <h1 class="logo">
+                    <svg class="logo-icon" viewBox="0 0 24 24" width="28" height="28">
+                        <rect x="2" y="4" width="20" height="16" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <line x1="12" y1="4" x2="12" y2="20" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                        <path d="M9 12l-2-2M9 12l-2 2M15 12l2-2M15 12l2 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                    </svg>
+                    <span>SliderSnap</span>
+                </h1>
+                <span class="offline-badge" id="offlineBadge">
+                    <svg viewBox="0 0 24 24" width="14" height="14">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+                    </svg>
+                    <span data-i18n="offline">100% Offline</span>
+                </span>
+            </div>
+
+            <div class="header-right">
+                <!-- Language Selector -->
+                <div class="lang-selector">
+                    <button class="lang-btn active" data-lang="cs">CZ</button>
+                    <button class="lang-btn" data-lang="en">EN</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Upload Section (Initial State) -->
+            <section class="upload-section" id="uploadSection">
+                <div class="upload-container">
+                    <div class="upload-zone" id="uploadZoneBefore" data-type="before">
+                        <div class="upload-icon">
+                            <svg viewBox="0 0 24 24" width="48" height="48">
+                                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M12 7v4M10 9h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div class="upload-text">
+                            <h3 data-i18n="before_image">BEFORE</h3>
+                            <p data-i18n="upload_hint">Pretahnete nebo kliknete</p>
+                        </div>
+                        <div class="upload-preview" id="previewBefore"></div>
+                        <input type="file" id="fileInputBefore" accept="image/*" hidden>
+                    </div>
+
+                    <div class="upload-divider">
+                        <svg viewBox="0 0 24 24" width="32" height="32">
+                            <path d="M8 5l-5 7 5 7M16 5l5 7-5 7" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+
+                    <div class="upload-zone" id="uploadZoneAfter" data-type="after">
+                        <div class="upload-icon">
+                            <svg viewBox="0 0 24 24" width="48" height="48">
+                                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                                <path d="M12 7v4M10 9h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                        </div>
+                        <div class="upload-text">
+                            <h3 data-i18n="after_image">AFTER</h3>
+                            <p data-i18n="upload_hint">Pretahnete nebo kliknete</p>
+                        </div>
+                        <div class="upload-preview" id="previewAfter"></div>
+                        <input type="file" id="fileInputAfter" accept="image/*" hidden>
+                    </div>
+                </div>
+
+                <!-- Options Panel -->
+                <div class="options-panel" id="optionsPanel">
+                    <div class="option-group">
+                        <label data-i18n="before_label">Popisek Before:</label>
+                        <input type="text" id="labelBefore" placeholder="Before" maxlength="50">
+                    </div>
+                    <div class="option-group">
+                        <label data-i18n="after_label">Popisek After:</label>
+                        <input type="text" id="labelAfter" placeholder="After" maxlength="50">
+                    </div>
+                    <div class="option-group">
+                        <label data-i18n="orientation">Orientace:</label>
+                        <div class="toggle-buttons">
+                            <button class="toggle-btn active" data-value="horizontal" data-i18n="horizontal">Horizontalni</button>
+                            <button class="toggle-btn" data-value="vertical" data-i18n="vertical">Vertikalni</button>
+                        </div>
+                    </div>
+                    <div class="option-group">
+                        <label data-i18n="start_position">Vychozi pozice:</label>
+                        <input type="range" id="startPosition" min="0" max="100" value="50">
+                        <span id="startPositionValue">50%</span>
+                    </div>
+                </div>
+
+                <!-- Create Button -->
+                <button class="btn-primary create-btn" id="createBtn" disabled>
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span data-i18n="create_comparison">Vytvorit porovnani</span>
+                </button>
+
+                <!-- Privacy Notice -->
+                <div class="privacy-notice">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" fill="currentColor"/>
+                    </svg>
+                    <span data-i18n="privacy_notice">Vase obrazky zustavaji pouze ve vasem prohlizeci. Zadna data se neodesilaji na server.</span>
+                </div>
+            </section>
+
+            <!-- Slider Section -->
+            <section class="slider-section hidden" id="sliderSection">
+                <!-- Toolbar -->
+                <div class="editor-toolbar">
+                    <div class="toolbar-group">
+                        <button class="tool-btn" id="newBtn" title="Novy">
+                            <svg viewBox="0 0 24 24" width="20" height="20">
+                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" fill="currentColor"/>
+                            </svg>
+                            <span data-i18n="new">Novy</span>
+                        </button>
+                        <button class="tool-btn" id="editBtn" title="Upravit">
+                            <svg viewBox="0 0 24 24" width="20" height="20">
+                                <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
+                            </svg>
+                            <span data-i18n="edit">Upravit</span>
+                        </button>
+                    </div>
+                    <div class="toolbar-group">
+                        <button class="tool-btn" id="saveProjectBtn" title="Ulozit projekt">
+                            <svg viewBox="0 0 24 24" width="20" height="20">
+                                <path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z" fill="currentColor"/>
+                            </svg>
+                            <span data-i18n="save_project">Ulozit</span>
+                        </button>
+                        <button class="tool-btn" id="loadProjectBtn" title="Nacist projekt">
+                            <svg viewBox="0 0 24 24" width="20" height="20">
+                                <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" fill="currentColor"/>
+                            </svg>
+                            <span data-i18n="load_project">Nacist</span>
+                        </button>
+                    </div>
+                    <div class="toolbar-group export-group">
+                        <button class="tool-btn" id="exportGifBtn" title="Exportovat GIF">
+                            <svg viewBox="0 0 24 24" width="20" height="20">
+                                <path d="M18 4V2H6v2H2v16h20V4h-4zM4 18V6h16v12H4zm5-1h2v-4h2v-2H9v6zm4-6h4v6h-2v-4h-2v-2zm-6 0h2v2H5v2h2v2H5v-6h2z" fill="currentColor"/>
+                            </svg>
+                            <span>GIF</span>
+                        </button>
+                        <button class="btn-primary" id="downloadImageBtn">
+                            <svg viewBox="0 0 24 24" width="18" height="18">
+                                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
+                            </svg>
+                            <span data-i18n="download_image">Stahnout PNG</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SliderSnap Container -->
+                <div class="slidersnap-wrapper" id="slidersnapWrapper">
+                    <div class="slidersnap-container" id="slidersnapContainer">
+                        <!-- Slider will be rendered here -->
+                    </div>
+                </div>
+
+                <!-- Embed Code -->
+                <div class="embed-section no-frame">
+                    <h3 data-i18n="embed_code">Embed kód</h3>
+                    <div class="embed-variant-toggle">
+                        <button class="toggle-btn active" data-variant="inline" data-i18n="embed_variant_inline">Varianta A: Vše inline</button>
+                        <button class="toggle-btn" data-variant="hosted" data-i18n="embed_variant_hosted">Varianta B: Hostované soubory</button>
+                    </div>
+                    <div class="embed-url-inputs">
+                        <div class="embed-url-group">
+                            <label data-i18n="embed_before_url">URL obrázku Před:</label>
+                            <input type="url" id="embedBeforeUrl" placeholder="https://example.com/before.jpg">
+                        </div>
+                        <div class="embed-url-group">
+                            <label data-i18n="embed_after_url">URL obrázku Po:</label>
+                            <input type="url" id="embedAfterUrl" placeholder="https://example.com/after.jpg">
+                        </div>
+                    </div>
+                    <div class="embed-code-wrapper">
+                        <textarea id="embedCode" readonly></textarea>
+                        <div class="embed-actions">
+                            <button class="action-btn" id="previewEmbedBtn" title="Náhled">
+                                <svg viewBox="0 0 24 24" width="20" height="20">
+                                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="currentColor"/>
+                                </svg>
+                                <span data-i18n="embed_preview">Náhled</span>
+                            </button>
+                            <button class="action-btn" id="copyEmbedBtn" title="Kopírovat">
+                                <svg viewBox="0 0 24 24" width="20" height="20">
+                                    <path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Saved Projects Section -->
+            <section class="projects-section" id="projectsSection">
+                <h3 data-i18n="saved_projects">Ulozene projekty</h3>
+                <div class="projects-grid" id="projectsGrid">
+                    <!-- Projects will be rendered here -->
+                </div>
+                <p class="no-projects hidden" id="noProjects" data-i18n="no_projects">Zatim zadne ulozene projekty</p>
+            </section>
+        </main>
+
+        <!-- GIF Export Modal -->
+        <div class="modal hidden" id="gifModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 data-i18n="gif_export">Export GIF</h3>
+                    <button class="close-btn" id="closeGifModal">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="gif-preview" id="gifPreview">
+                        <div class="gif-loading">
+                            <div class="spinner"></div>
+                            <p data-i18n="generating_gif">Generuji GIF...</p>
+                            <p class="gif-progress" id="gifProgress">0%</p>
+                        </div>
+                    </div>
+                    <p class="gif-algorithm-info" id="gifAlgorithmInfo">Quantization: Octree (256 colors)</p>
+                    <div class="gif-options">
+                        <div class="option-row">
+                            <label data-i18n="gif_effect">Efekt:</label>
+                            <select id="gifEffect">
+                                <option value="crossfade" selected data-i18n="effect_crossfade">Crossfade</option>
+                                <option value="wipe" data-i18n="effect_wipe">Wipe</option>
+                                <option value="simple" data-i18n="effect_simple">Prepinani</option>
+                            </select>
+                        </div>
+                        <div class="option-row">
+                            <label data-i18n="gif_frames">Plynulost:</label>
+                            <input type="range" id="gifFrames" min="5" max="20" value="10" step="1">
+                            <span id="gifFramesValue">10</span>
+                        </div>
+                        <div class="option-row">
+                            <label data-i18n="gif_speed">Rychlost:</label>
+                            <input type="range" id="gifSpeed" min="500" max="3000" value="1500" step="100">
+                            <span id="gifSpeedValue">1.5s</span>
+                        </div>
+                        <div class="option-row">
+                            <label data-i18n="gif_quality">Kvalita:</label>
+                            <select id="gifQuality">
+                                <option value="10" data-i18n="quality_low">Nizka (mensi soubor)</option>
+                                <option value="5" selected data-i18n="quality_medium">Stredni</option>
+                                <option value="1" data-i18n="quality_high">Vysoka (vetsi soubor)</option>
+                            </select>
+                        </div>
+                        <div class="option-row">
+                            <label data-i18n="gif_dither">Dithering:</label>
+                            <input type="checkbox" id="gifDither" checked>
+                            <span class="dither-hint" data-i18n="dither_hint">(lepší pro gradienty)</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" id="regenerateGifBtn" data-i18n="regenerate">Pregenerovat</button>
+                    <button class="btn-primary" id="downloadGifBtn" disabled data-i18n="download_gif">Stahnout GIF</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Download Modal -->
+        <div class="modal hidden" id="downloadModal">
+            <div class="modal-content modal-small">
+                <div class="modal-header">
+                    <h3 data-i18n="download_title">Stáhnout obrázek</h3>
+                    <button class="close-btn" id="closeDownloadModal">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p class="modal-description" data-i18n="select_format">Vyberte formát:</p>
+                    <div class="format-buttons">
+                        <button class="format-btn" data-format="png">
+                            <span class="format-name">PNG</span>
+                            <span class="format-desc">Bezeztrátový</span>
+                        </button>
+                        <button class="format-btn" data-format="jpg">
+                            <span class="format-name">JPG</span>
+                            <span class="format-desc">Menší soubor</span>
+                        </button>
+                        <button class="format-btn" data-format="webp">
+                            <span class="format-name">WebP</span>
+                            <span class="format-desc">Moderní formát</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Save Project Modal -->
+        <div class="modal hidden" id="saveProjectModal">
+            <div class="modal-content modal-small">
+                <div class="modal-header">
+                    <h3 data-i18n="project_name">Název projektu</h3>
+                    <button class="close-btn" id="closeSaveProjectModal">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" fill="currentColor"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="text" id="projectNameInput" class="project-name-input" data-i18n-placeholder="project_name_placeholder" placeholder="Zadejte název projektu...">
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" id="cancelSaveProject" data-i18n="cancel">Zrušit</button>
+                    <button class="btn-primary" id="confirmSaveProject" data-i18n="save">Uložit</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div class="toast-container" id="toastContainer"></div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="gif.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+</html>

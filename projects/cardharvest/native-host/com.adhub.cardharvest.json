@@ -1,0 +1,9 @@
+{
+    "name": "com.adhub.cardharvest",
+    "description": "CardHarvest Native Messaging Host pro AdHUB",
+    "path": "__PATH__",
+    "type": "stdio",
+    "allowed_origins": [
+        "chrome-extension://__EXTENSION_ID__/"
+    ]
+}

@@ -23,18 +23,18 @@ A central hub for various tools, utilities and projects. Everything accessible f
 | Project | Type | Status | Offline | Language | Version |
 |---------|------|--------|---------|----------|---------|
 | [YouTube Downloader](#youtube-downloader) | Chrome Extension | Active | No | CZ | v5.5 |
-| [Steam Farm](#steam-farm) | Chrome Extension | Active | No | CZ | v1.2 |
+| [CardHarvest](#cardharvest) | Chrome Extension | Active | No | CZ | v2.0 |
 | [PDF Editor](#pdf-editor) | Web App | Complete | Yes | CZ/EN | v1.0 |
 | [PDF Merge](#pdf-merge) | Web App | Complete | Yes | CZ/EN | v1.0 |
 | [PDF Search](#pdf-search) | Web App | Complete | Yes | CZ/EN | v1.0 |
 | [AI Prompting](#ai-prompting) | React App | Complete | No | CZ/EN | v2.0 |
 | [Rust Calculator](#rust-calculator) | PWA | Complete | Yes | CZ/EN | v1.0 |
-| [DocBook](#docbook) | PWA | Complete | Yes | CZ | v1.0 |
+| [Scribblix](#scribblix) | PWA | Complete | Yes | CZ | v1.0 |
 | [API Catalog](#api-catalog) | PWA | Complete | Yes | CZ/EN | v1.0 |
 | [Server Hub](#server-hub) | PWA | Complete | Yes | CZ | v1.0 |
 | [NIMT Tracker](#nimt-tracker) | PWA | Complete | Yes | CZ | v1.0 |
-| [Paint Studio](#paint-studio) | PWA | Complete | Yes | CZ | v1.0 |
-| [MindHub](#mindhub) | React App | Complete | No | EN | v1.0 |
+| [PaintNook](#paintnook) | PWA | Complete | Yes | CZ | v1.0 |
+| [Goalix](#goalix) | React App | Complete | No | EN | v1.0 |
 | [Resignation Bets](#resignation-bets) | Web App | Complete | Yes | CZ/EN | v1.0 |
 | [Multistream Chat](#multistream-chat-panel) | Web App | Active | No | CZ | v2.0 |
 | [Spinning Wheel](#spinning-wheel-giveaway) | Web App | Complete | Yes | EN | v1.0 |
@@ -68,7 +68,7 @@ Browser extension for Chrome/Edge/Brave enabling download of YouTube videos and 
 
 ---
 
-### Steam Farm
+### CardHarvest
 Automated Steam game farming tool with native host support.
 
 **Features:**
@@ -114,7 +114,7 @@ Offline calculator for the game Rust - raid costs, crafting recipes, and raw mat
 
 ---
 
-### DocBook
+### Scribblix
 Offline documentation platform inspired by GitBook with WYSIWYG Markdown editor.
 
 **Features:**
@@ -192,7 +192,7 @@ Offline-first app for tracking brand visibility in AI search engines.
 
 ---
 
-### Paint Studio
+### PaintNook
 Offline-first digital painting application inspired by Procreate.
 
 **Features:**
@@ -294,7 +294,7 @@ Professional prompt formatter for AI assistants with research-backed techniques.
 
 ---
 
-### MindHub
+### Goalix
 Personal task and project coordination platform.
 
 **Features:**
@@ -427,7 +427,7 @@ adhub/
     ├── youtube-downloader/ # Chrome Extension + Native Host (Python)
     │   ├── plugin/         # Extension source (Manifest V3)
     │   └── native-host/    # Python yt-dlp host
-    ├── steam-farm/         # Chrome Extension + Native Host (Node.js)
+    ├── cardharvest/         # Chrome Extension + Native Host (Node.js)
     │   ├── plugin/         # Extension source
     │   └── native-host/    # Node.js steam-user host
     ├── pdf-editor/         # PDF editing, signing, compression
@@ -440,7 +440,7 @@ adhub/
     ├── rust-calculator/    # PWA game calculator
     │   ├── sw.js           # Service Worker
     │   └── manifest.json   # PWA manifest
-    ├── docbook/            # PWA documentation platform
+    ├── scribblix/            # PWA documentation platform
     │   ├── sw.js           # Service Worker
     │   ├── db.js           # Dexie.js database
     │   └── editor.js       # Editor logic
@@ -453,11 +453,11 @@ adhub/
     ├── nimt-tracker/       # PWA AI visibility tracker
     │   ├── sw.js           # Service Worker
     │   └── db.js           # IndexedDB layer
-    ├── paint-studio/       # PWA digital painting app
+    ├── paintnook/       # PWA digital painting app
     │   ├── sw.js           # Service Worker
     │   ├── app/            # ES modules (PaintApp, Canvas, Layers, Tools)
     │   └── manifest.json   # PWA manifest
-    ├── mindhub/            # React task manager
+    ├── goalix/            # React task manager
     │   └── js/             # Storage module
     ├── resignation-bets/   # Casino-style betting game
     │   ├── db.js           # IndexedDB operations
@@ -481,9 +481,9 @@ adhub/
 - **Icons:** Lucide Icons, SVG, Canvas-generated
 
 ### Storage Solutions
-- **IndexedDB:** API Catalog, DocBook, Server Hub, NIMT Tracker, Resignation Bets
-- **localStorage:** MindHub, Rust Calculator, Steam Farm, settings/preferences
-- **Dexie.js:** DocBook (IndexedDB wrapper)
+- **IndexedDB:** API Catalog, Scribblix, Server Hub, NIMT Tracker, Resignation Bets
+- **localStorage:** Goalix, Rust Calculator, CardHarvest, settings/preferences
+- **Dexie.js:** Scribblix (IndexedDB wrapper)
 
 ### PDF Processing
 - **pdf-lib@1.17.1:** PDF creation and editing
@@ -491,10 +491,10 @@ adhub/
 - **@pdf-lib/fontkit@1.1.1:** Custom font support
 
 ### Search Engines
-- **FlexSearch@0.7.31:** DocBook full-text search
+- **FlexSearch@0.7.31:** Scribblix full-text search
 - **MiniSearch@7.1.1:** PDF Search
 
-### Security (Steam Farm)
+### Security (CardHarvest)
 - **AES-256-GCM:** Credential encryption
 - **Argon2id:** Key derivation
 - **steam-user:** Steam protocol library
@@ -503,7 +503,7 @@ adhub/
 ### Other Libraries
 - **Fabric.js@5.3.0:** Canvas manipulation (PDF Editor)
 - **signature_pad@4.1.7:** Signature drawing
-- **Marked.js@11.1.1:** Markdown parser (DocBook)
+- **Marked.js@11.1.1:** Markdown parser (Scribblix)
 - **DOMPurify@3.0.6:** XSS sanitization
 - **LZ-String@1.5.0:** URL compression (AI Prompting)
 - **JSZip:** Extension packaging
@@ -571,10 +571,10 @@ cd projects/youtube-downloader/native-host
 # chrome://extensions -> Load unpacked -> select plugin/ folder
 ```
 
-#### Steam Farm
+#### CardHarvest
 ```bash
 # 1. Install Node.js dependencies
-cd projects/steam-farm/native-host
+cd projects/cardharvest/native-host
 npm install
 
 # 2. Install Native Host (with your extension ID)
