@@ -109,6 +109,10 @@
                 throw new Error('No frames to encode');
             }
 
+            console.log('[GIF Debug] Starting GIF generation');
+            console.log('[GIF Debug] Options:', this.options);
+            console.log('[GIF Debug] Frame count:', this.frames.length);
+
             var encoder = new GIFEncoder(this.options.width, this.options.height);
 
             encoder.setRepeat(this.options.repeat);
@@ -121,6 +125,11 @@
                 if (!frame.data || !frame.data.data) {
                     throw new Error('Invalid frame data at index ' + index);
                 }
+
+                console.log('[GIF Debug] Frame', index, '- dimensions:', frame.data.width, 'x', frame.data.height);
+                console.log('[GIF Debug] Frame', index, '- data length:', frame.data.data.length);
+                console.log('[GIF Debug] Frame', index, '- first 16 bytes:', Array.from(frame.data.data.slice(0, 16)));
+
                 encoder.setDelay(frame.delay);
                 encoder.addFrame(frame.data.data);
 
@@ -130,10 +139,14 @@
             encoder.finish();
 
             var binary = encoder.stream().getData();
+            console.log('[GIF Debug] Output size:', binary.length, 'bytes');
+            console.log('[GIF Debug] GIF header:', binary.slice(0, 6).map(b => String.fromCharCode(b)).join(''));
+
             var blob = new Blob([new Uint8Array(binary)], { type: 'image/gif' });
 
             self.emit('finished', blob);
         } catch (err) {
+            console.error('[GIF Debug] Error:', err);
             self.emit('error', err);
         } finally {
             self.running = false;
@@ -663,6 +676,9 @@
             var pixels = new Uint8Array(nPix * 3);
             var count = 0;
 
+            console.log('[GIF Debug] analyze() - image length:', len, 'pixels:', nPix);
+            console.log('[GIF Debug] analyze() - first 16 RGBA bytes:', Array.from(image.slice(0, 16)));
+
             // Extract RGB from RGBA (ignore alpha)
             for (var i = 0; i < len; i += 4) {
                 pixels[count++] = image[i];      // R
@@ -670,8 +686,13 @@
                 pixels[count++] = image[i + 2];  // B
             }
 
+            console.log('[GIF Debug] analyze() - first 12 RGB bytes:', Array.from(pixels.slice(0, 12)));
+
             var nq = NeuQuant(pixels, sample);
             colorTab = nq.colorMap();
+
+            console.log('[GIF Debug] analyze() - colorTab length:', colorTab.length);
+            console.log('[GIF Debug] analyze() - first 12 palette bytes (4 colors):', colorTab.slice(0, 12));
 
             var indexedPixels = new Uint8Array(nPix);
             for (var i = 0, j = 0; i < nPix; i++, j += 3) {
@@ -682,6 +703,12 @@
                 );
                 indexedPixels[i] = index;
             }
+
+            console.log('[GIF Debug] analyze() - first 16 indexed pixels:', Array.from(indexedPixels.slice(0, 16)));
+
+            // Check if all indexed pixels are the same (indicates a problem)
+            var uniqueIndices = new Set(indexedPixels);
+            console.log('[GIF Debug] analyze() - unique color indices used:', uniqueIndices.size);
 
             return indexedPixels;
         }
