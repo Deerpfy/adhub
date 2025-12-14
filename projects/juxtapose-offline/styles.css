@@ -1111,6 +1111,23 @@ body::before {
     margin-top: 8px;
 }
 
+.gif-algorithm-info {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-align: center;
+    margin: 8px 0 12px 0;
+    padding: 4px 8px;
+    background: rgba(139, 92, 246, 0.1);
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+.dither-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
 .gif-options {
     display: flex;
     flex-direction: column;

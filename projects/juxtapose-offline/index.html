@@ -266,6 +266,7 @@
                             <p class="gif-progress" id="gifProgress">0%</p>
                         </div>
                     </div>
+                    <p class="gif-algorithm-info" id="gifAlgorithmInfo">Quantization: Octree (256 colors)</p>
                     <div class="gif-options">
                         <div class="option-row">
                             <label data-i18n="gif_effect">Efekt:</label>
@@ -292,6 +293,11 @@
                                 <option value="5" selected data-i18n="quality_medium">Stredni</option>
                                 <option value="1" data-i18n="quality_high">Vysoka (vetsi soubor)</option>
                             </select>
+                        </div>
+                        <div class="option-row">
+                            <label data-i18n="gif_dither">Dithering:</label>
+                            <input type="checkbox" id="gifDither" checked>
+                            <span class="dither-hint" data-i18n="dither_hint">(lepší pro gradienty)</span>
                         </div>
                     </div>
                 </div>

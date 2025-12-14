@@ -58,6 +58,8 @@ const TRANSLATIONS = {
         effect_wipe: 'Wipe',
         effect_simple: 'Přepínání',
         gif_frames: 'Plynulost:',
+        gif_dither: 'Dithering:',
+        dither_hint: '(lepší pro gradienty)',
         regenerate: 'Přegenerovat',
         download_gif: 'Stáhnout GIF',
         copied: 'Zkopírováno!',
@@ -111,6 +113,8 @@ const TRANSLATIONS = {
         effect_wipe: 'Wipe',
         effect_simple: 'Switch',
         gif_frames: 'Smoothness:',
+        gif_dither: 'Dithering:',
+        dither_hint: '(better for gradients)',
         regenerate: 'Regenerate',
         download_gif: 'Download GIF',
         copied: 'Copied!',
@@ -862,6 +866,7 @@ function generateGif() {
     const quality = parseInt(document.getElementById('gifQuality').value);
     const effect = document.getElementById('gifEffect')?.value || 'crossfade';
     const transitionFrames = parseInt(document.getElementById('gifFrames')?.value || 10);
+    const useDither = document.getElementById('gifDither')?.checked ?? true;
 
     // Check if gif.js is loaded
     if (typeof GIF === 'undefined') {
@@ -915,7 +920,8 @@ function generateGif() {
                 quality: quality,
                 width: width,
                 height: height,
-                workerScript: 'gif.worker.js'
+                workerScript: 'gif.worker.js',
+                dither: useDither
             });
 
             // Calculate frame timings
@@ -1073,6 +1079,14 @@ function generateGif() {
                 const url = URL.createObjectURL(blob);
                 preview.innerHTML = `<img src="${url}" alt="GIF Preview">`;
                 downloadBtn.disabled = false;
+
+                // Update algorithm info with file size
+                const infoEl = document.getElementById('gifAlgorithmInfo');
+                if (infoEl) {
+                    const sizeKB = Math.round(blob.size / 1024);
+                    const ditherStatus = useDither ? 'Dither ON' : 'Dither OFF';
+                    infoEl.textContent = `Octree | 256 colors | ${ditherStatus} | ${sizeKB} KB`;
+                }
             });
 
             gif.on('error', (err) => {
