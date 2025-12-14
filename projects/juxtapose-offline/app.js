@@ -697,7 +697,7 @@ function downloadImage(format = 'png') {
     if (!currentSlider) return;
 
     const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const slider = currentSlider.element;
     const rect = slider.getBoundingClientRect();
     const position = parseFloat(slider.style.getPropertyValue('--position')) || 50;
@@ -902,7 +902,7 @@ function generateGif() {
             const canvas = document.createElement('canvas');
             canvas.width = width;
             canvas.height = height;
-            const ctx = canvas.getContext('2d');
+            const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
             if (!ctx) {
                 showError('Failed to create canvas context');
@@ -1221,7 +1221,7 @@ async function saveProject(name) {
 
 async function createThumbnail() {
     const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
     canvas.width = 200;
     canvas.height = 150;
 

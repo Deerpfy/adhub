@@ -3,7 +3,8 @@
  * Based on gif.js library (MIT License)
  * https://github.com/jnordberg/gif.js
  *
- * Enhanced version with global palette support for Juxtapose Offline
+ * Enhanced version with Octree quantization for Juxtapose Offline
+ * Octree provides much more stable color mapping than NeuQuant
  */
 
 (function(root) {
@@ -20,7 +21,7 @@
             repeat: 0,
             background: '#fff',
             transparent: null,
-            globalPalette: true  // Use global palette for consistent colors
+            dither: false
         }, options);
 
         this.frames = [];
@@ -67,7 +68,7 @@
                 var canvas = document.createElement('canvas');
                 canvas.width = image.canvas.width;
                 canvas.height = image.canvas.height;
-                var ctx = canvas.getContext('2d');
+                var ctx = canvas.getContext('2d', { willReadFrequently: true });
                 ctx.drawImage(image.canvas, 0, 0);
                 frame.data = ctx.getImageData(0, 0, canvas.width, canvas.height);
             } else {
@@ -76,7 +77,7 @@
         } else if (image instanceof ImageData) {
             frame.data = image;
         } else if (image instanceof HTMLCanvasElement) {
-            frame.data = image.getContext('2d').getImageData(0, 0, image.width, image.height);
+            frame.data = image.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, image.width, image.height);
         }
 
         if (!this.options.width) {
@@ -111,18 +112,18 @@
             }
 
             console.log('[GIF] Starting GIF generation with', this.frames.length, 'frames');
+            console.log('[GIF] Using Octree quantization for stable color mapping');
 
             var encoder = new GIFEncoder(this.options.width, this.options.height);
 
             encoder.setRepeat(this.options.repeat);
             encoder.setQuality(this.options.quality);
+            encoder.setDither(this.options.dither);
 
-            // Build global palette from sampled frames
-            if (this.options.globalPalette) {
-                console.log('[GIF] Building global palette...');
-                var globalPalette = this._buildGlobalPalette();
-                encoder.setGlobalPalette(globalPalette);
-            }
+            // Build global palette from ALL frames using Octree
+            console.log('[GIF] Building global palette from all frames...');
+            var globalPalette = this._buildGlobalPalette();
+            encoder.setGlobalPalette(globalPalette);
 
             encoder.start();
 
@@ -155,402 +156,249 @@
         }
     };
 
-    // Build global palette from all frames
+    // Build global palette using Octree quantization from ALL frames
     GIF.prototype._buildGlobalPalette = function() {
-        var sampleSize = Math.min(3, this.frames.length); // Sample up to 3 frames
-        var sampleIndices = [];
+        var octree = new OctreeQuantizer();
 
-        // Select frames to sample (first, middle, last)
-        if (this.frames.length <= 3) {
-            for (var i = 0; i < this.frames.length; i++) {
-                sampleIndices.push(i);
-            }
-        } else {
-            sampleIndices.push(0);
-            sampleIndices.push(Math.floor(this.frames.length / 2));
-            sampleIndices.push(this.frames.length - 1);
-        }
+        // Add colors from ALL frames to build comprehensive palette
+        for (var f = 0; f < this.frames.length; f++) {
+            var frameData = this.frames[f].data.data;
+            // Sample every Nth pixel for large frames
+            var step = Math.max(1, Math.floor(frameData.length / (4 * 50000))); // Max ~50k samples per frame
 
-        // Combine pixel data from sampled frames
-        var totalPixels = 0;
-        for (var i = 0; i < sampleIndices.length; i++) {
-            totalPixels += this.frames[sampleIndices[i]].data.data.length / 4;
-        }
-
-        var combinedPixels = new Uint8Array(totalPixels * 3);
-        var offset = 0;
-
-        for (var i = 0; i < sampleIndices.length; i++) {
-            var frameData = this.frames[sampleIndices[i]].data.data;
-            for (var j = 0; j < frameData.length; j += 4) {
-                combinedPixels[offset++] = frameData[j];     // R
-                combinedPixels[offset++] = frameData[j + 1]; // G
-                combinedPixels[offset++] = frameData[j + 2]; // B
+            for (var i = 0; i < frameData.length; i += 4 * step) {
+                octree.addColor(frameData[i], frameData[i + 1], frameData[i + 2]);
             }
         }
 
-        // Run NeuQuant on combined data
-        var nq = new NeuQuant(combinedPixels, this.options.quality);
+        // Build 256-color palette
+        var palette = octree.buildPalette(256);
+        console.log('[GIF] Built palette with', palette.colors.length, 'colors');
 
-        return {
-            colorTab: nq.colorMap(),
-            neuquant: nq
-        };
+        return palette;
     };
 
-    // Median Cut Color Quantization (alternative to NeuQuant)
-    function MedianCut(pixels, numColors) {
-        numColors = numColors || 256;
+    /**
+     * Octree Color Quantization
+     * More stable and deterministic than NeuQuant neural network
+     */
+    function OctreeNode() {
+        this.red = 0;
+        this.green = 0;
+        this.blue = 0;
+        this.pixelCount = 0;
+        this.children = new Array(8);
+        this.isLeaf = false;
+        this.paletteIndex = -1;
+    }
 
-        // Build initial color cube
-        var colors = [];
-        for (var i = 0; i < pixels.length; i += 3) {
-            colors.push([pixels[i], pixels[i + 1], pixels[i + 2]]);
+    function OctreeQuantizer() {
+        this.root = new OctreeNode();
+        this.leafCount = 0;
+        this.reducibleNodes = [];
+        for (var i = 0; i <= 8; i++) {
+            this.reducibleNodes[i] = [];
+        }
+        this.maxColors = 256;
+        this.palette = [];
+    }
+
+    OctreeQuantizer.prototype.addColor = function(r, g, b) {
+        this._addColorToNode(this.root, r, g, b, 0);
+
+        // Reduce tree if we have too many colors
+        while (this.leafCount > this.maxColors * 2) {
+            this._reduceTree();
+        }
+    };
+
+    OctreeQuantizer.prototype._addColorToNode = function(node, r, g, b, level) {
+        if (node.isLeaf) {
+            node.red += r;
+            node.green += g;
+            node.blue += b;
+            node.pixelCount++;
+            return;
         }
 
-        // Simple quantization using color frequency
-        var colorMap = {};
-        for (var i = 0; i < colors.length; i++) {
-            var key = (colors[i][0] >> 4) + ',' + (colors[i][1] >> 4) + ',' + (colors[i][2] >> 4);
-            if (!colorMap[key]) {
-                colorMap[key] = { r: 0, g: 0, b: 0, count: 0 };
+        if (level >= 8) {
+            node.isLeaf = true;
+            node.red = r;
+            node.green = g;
+            node.blue = b;
+            node.pixelCount = 1;
+            this.leafCount++;
+            return;
+        }
+
+        var index = this._getColorIndex(r, g, b, level);
+
+        if (!node.children[index]) {
+            node.children[index] = new OctreeNode();
+            // Track reducible nodes (non-leaf nodes at each level)
+            if (level < 7) {
+                this.reducibleNodes[level].push(node.children[index]);
             }
-            colorMap[key].r += colors[i][0];
-            colorMap[key].g += colors[i][1];
-            colorMap[key].b += colors[i][2];
-            colorMap[key].count++;
         }
 
-        // Sort by frequency and take top colors
-        var sorted = Object.values(colorMap).sort((a, b) => b.count - a.count);
-        var palette = [];
+        this._addColorToNode(node.children[index], r, g, b, level + 1);
+    };
 
-        for (var i = 0; i < Math.min(numColors, sorted.length); i++) {
-            var c = sorted[i];
-            palette.push(Math.round(c.r / c.count));
-            palette.push(Math.round(c.g / c.count));
-            palette.push(Math.round(c.b / c.count));
+    OctreeQuantizer.prototype._getColorIndex = function(r, g, b, level) {
+        var index = 0;
+        var mask = 0x80 >> level;
+
+        if (r & mask) index |= 4;
+        if (g & mask) index |= 2;
+        if (b & mask) index |= 1;
+
+        return index;
+    };
+
+    OctreeQuantizer.prototype._reduceTree = function() {
+        // Find deepest level with reducible nodes
+        var level = 7;
+        while (level > 0 && this.reducibleNodes[level].length === 0) {
+            level--;
+        }
+
+        if (this.reducibleNodes[level].length === 0) {
+            return;
+        }
+
+        // Get node to reduce
+        var node = this.reducibleNodes[level].pop();
+
+        // Merge children into this node
+        var r = 0, g = 0, b = 0, count = 0;
+
+        for (var i = 0; i < 8; i++) {
+            var child = node.children[i];
+            if (child) {
+                if (child.isLeaf) {
+                    r += child.red;
+                    g += child.green;
+                    b += child.blue;
+                    count += child.pixelCount;
+                    this.leafCount--;
+                }
+                node.children[i] = null;
+            }
+        }
+
+        node.isLeaf = true;
+        node.red = r;
+        node.green = g;
+        node.blue = b;
+        node.pixelCount = count;
+        this.leafCount++;
+    };
+
+    OctreeQuantizer.prototype.buildPalette = function(maxColors) {
+        this.maxColors = maxColors;
+
+        // Reduce until we have the right number of colors
+        while (this.leafCount > maxColors) {
+            this._reduceTree();
+        }
+
+        // Build palette from leaves
+        this.palette = [];
+        this._buildPaletteFromNode(this.root);
+
+        // Create flat color table (RGB triplets)
+        var colorTab = [];
+        for (var i = 0; i < this.palette.length; i++) {
+            colorTab.push(this.palette[i].r);
+            colorTab.push(this.palette[i].g);
+            colorTab.push(this.palette[i].b);
         }
 
         // Pad to 256 colors
-        while (palette.length < 768) {
-            palette.push(0);
+        while (colorTab.length < 768) {
+            colorTab.push(0);
         }
-
-        return palette;
-    }
-
-    // NeuQuant Neural-Net Quantization Algorithm
-    function NeuQuant(pixels, samplefac) {
-        var netsize = 256;
-        var prime1 = 499;
-        var prime2 = 491;
-        var prime3 = 487;
-        var prime4 = 503;
-        var minpicturebytes = (3 * prime4);
-
-        var maxnetpos = netsize - 1;
-        var netbiasshift = 4;
-        var ncycles = 100;
-        var intbiasshift = 16;
-        var intbias = (1 << intbiasshift);
-        var gammashift = 10;
-        var gamma = (1 << gammashift);
-        var betashift = 10;
-        var beta = (intbias >> betashift);
-        var betagamma = (intbias << (gammashift - betashift));
-
-        var initrad = (netsize >> 3);
-        var radiusbiasshift = 6;
-        var radiusbias = (1 << radiusbiasshift);
-        var initradius = (initrad * radiusbias);
-        var radiusdec = 30;
-
-        var alphabiasshift = 10;
-        var initalpha = (1 << alphabiasshift);
-        var alphadec;
-
-        var radbiasshift = 8;
-        var radbias = (1 << radbiasshift);
-        var alpharadbshift = (alphabiasshift + radbiasshift);
-        var alpharadbias = (1 << alpharadbshift);
-
-        var thepicture;
-        var lengthcount;
-        var sampleFactor;
-
-        var network;
-        var netindex;
-        var bias;
-        var freq;
-        var radpower;
-
-        function init() {
-            network = [];
-            netindex = new Int32Array(256);
-            bias = new Int32Array(netsize);
-            freq = new Int32Array(netsize);
-            radpower = new Int32Array(netsize >> 3);
-
-            for (var i = 0; i < netsize; i++) {
-                var v = (i << (netbiasshift + 8)) / netsize;
-                network[i] = new Float64Array([v, v, v, 0]);
-                freq[i] = intbias / netsize;
-                bias[i] = 0;
-            }
-        }
-
-        function unbiasnet() {
-            for (var i = 0; i < netsize; i++) {
-                network[i][0] >>= netbiasshift;
-                network[i][1] >>= netbiasshift;
-                network[i][2] >>= netbiasshift;
-                network[i][3] = i;
-            }
-        }
-
-        function altersingle(alpha, i, b, g, r) {
-            network[i][0] -= (alpha * (network[i][0] - b)) / initalpha;
-            network[i][1] -= (alpha * (network[i][1] - g)) / initalpha;
-            network[i][2] -= (alpha * (network[i][2] - r)) / initalpha;
-        }
-
-        function alterneigh(radius, i, b, g, r) {
-            var lo = Math.abs(i - radius);
-            var hi = Math.min(i + radius, netsize);
-            var j = i + 1;
-            var k = i - 1;
-            var m = 1;
-
-            while ((j < hi) || (k > lo)) {
-                var a = radpower[m++];
-                if (j < hi) {
-                    var p = network[j++];
-                    p[0] -= (a * (p[0] - b)) / alpharadbias;
-                    p[1] -= (a * (p[1] - g)) / alpharadbias;
-                    p[2] -= (a * (p[2] - r)) / alpharadbias;
-                }
-                if (k > lo) {
-                    var p = network[k--];
-                    p[0] -= (a * (p[0] - b)) / alpharadbias;
-                    p[1] -= (a * (p[1] - g)) / alpharadbias;
-                    p[2] -= (a * (p[2] - r)) / alpharadbias;
-                }
-            }
-        }
-
-        function contest(b, g, r) {
-            var bestd = ~(1 << 31);
-            var bestbiasd = bestd;
-            var bestpos = -1;
-            var bestbiaspos = bestpos;
-
-            for (var i = 0; i < netsize; i++) {
-                var n = network[i];
-                var dist = Math.abs(n[0] - b) + Math.abs(n[1] - g) + Math.abs(n[2] - r);
-                if (dist < bestd) {
-                    bestd = dist;
-                    bestpos = i;
-                }
-                var biasdist = dist - ((bias[i]) >> (intbiasshift - netbiasshift));
-                if (biasdist < bestbiasd) {
-                    bestbiasd = biasdist;
-                    bestbiaspos = i;
-                }
-                var betafreq = (freq[i] >> betashift);
-                freq[i] -= betafreq;
-                bias[i] += (betafreq << gammashift);
-            }
-            freq[bestpos] += beta;
-            bias[bestpos] -= betagamma;
-            return bestbiaspos;
-        }
-
-        function inxbuild() {
-            var previouscol = 0;
-            var startpos = 0;
-            for (var i = 0; i < netsize; i++) {
-                var p = network[i];
-                var smallpos = i;
-                var smallval = p[1];
-                for (var j = i + 1; j < netsize; j++) {
-                    var q = network[j];
-                    if (q[1] < smallval) {
-                        smallpos = j;
-                        smallval = q[1];
-                    }
-                }
-                var q = network[smallpos];
-                if (i !== smallpos) {
-                    var temp = q[0]; q[0] = p[0]; p[0] = temp;
-                    temp = q[1]; q[1] = p[1]; p[1] = temp;
-                    temp = q[2]; q[2] = p[2]; p[2] = temp;
-                    temp = q[3]; q[3] = p[3]; p[3] = temp;
-                }
-                if (smallval !== previouscol) {
-                    netindex[previouscol] = (startpos + i) >> 1;
-                    for (var j = previouscol + 1; j < smallval; j++) {
-                        netindex[j] = i;
-                    }
-                    previouscol = smallval;
-                    startpos = i;
-                }
-            }
-            netindex[previouscol] = (startpos + maxnetpos) >> 1;
-            for (var j = previouscol + 1; j < 256; j++) {
-                netindex[j] = maxnetpos;
-            }
-        }
-
-        function learn() {
-            if (lengthcount < minpicturebytes) {
-                sampleFactor = 1;
-            }
-            alphadec = 30 + ((sampleFactor - 1) / 3);
-            var samplepixels = lengthcount / (3 * sampleFactor);
-            var delta = ~~(samplepixels / ncycles);
-            var alpha = initalpha;
-            var radius = initradius;
-
-            var rad = radius >> radiusbiasshift;
-            if (rad <= 1) rad = 0;
-            for (var i = 0; i < rad; i++) {
-                radpower[i] = alpha * (((rad * rad - i * i) * radbias) / (rad * rad));
-            }
-
-            var step;
-            if (lengthcount < minpicturebytes) {
-                step = 3;
-            } else if ((lengthcount % prime1) !== 0) {
-                step = 3 * prime1;
-            } else if ((lengthcount % prime2) !== 0) {
-                step = 3 * prime2;
-            } else if ((lengthcount % prime3) !== 0) {
-                step = 3 * prime3;
-            } else {
-                step = 3 * prime4;
-            }
-
-            var pix = 0;
-            for (var i = 0; i < samplepixels;) {
-                var b = (thepicture[pix] & 0xff) << netbiasshift;
-                var g = (thepicture[pix + 1] & 0xff) << netbiasshift;
-                var r = (thepicture[pix + 2] & 0xff) << netbiasshift;
-                var j = contest(b, g, r);
-
-                altersingle(alpha, j, b, g, r);
-                if (rad !== 0) {
-                    alterneigh(rad, j, b, g, r);
-                }
-
-                pix += step;
-                if (pix >= lengthcount) {
-                    pix -= lengthcount;
-                }
-                i++;
-
-                if (delta === 0) delta = 1;
-                if (i % delta === 0) {
-                    alpha -= alpha / alphadec;
-                    radius -= radius / radiusdec;
-                    rad = radius >> radiusbiasshift;
-                    if (rad <= 1) rad = 0;
-                    for (var k = 0; k < rad; k++) {
-                        radpower[k] = alpha * (((rad * rad - k * k) * radbias) / (rad * rad));
-                    }
-                }
-            }
-        }
-
-        function map(b, g, r) {
-            var bestd = 1000;
-            var best = -1;
-            var i = netindex[g];
-            var j = i - 1;
-
-            while ((i < netsize) || (j >= 0)) {
-                if (i < netsize) {
-                    var p = network[i];
-                    var dist = p[1] - g;
-                    if (dist >= bestd) {
-                        i = netsize;
-                    } else {
-                        i++;
-                        if (dist < 0) dist = -dist;
-                        var a = p[0] - b;
-                        if (a < 0) a = -a;
-                        dist += a;
-                        if (dist < bestd) {
-                            a = p[2] - r;
-                            if (a < 0) a = -a;
-                            dist += a;
-                            if (dist < bestd) {
-                                bestd = dist;
-                                best = p[3];
-                            }
-                        }
-                    }
-                }
-                if (j >= 0) {
-                    var p = network[j];
-                    var dist = g - p[1];
-                    if (dist >= bestd) {
-                        j = -1;
-                    } else {
-                        j--;
-                        if (dist < 0) dist = -dist;
-                        var a = p[0] - b;
-                        if (a < 0) a = -a;
-                        dist += a;
-                        if (dist < bestd) {
-                            a = p[2] - r;
-                            if (a < 0) a = -a;
-                            dist += a;
-                            if (dist < bestd) {
-                                bestd = dist;
-                                best = p[3];
-                            }
-                        }
-                    }
-                }
-            }
-            return best;
-        }
-
-        function process() {
-            learn();
-            unbiasnet();
-            inxbuild();
-        }
-
-        function colorMap() {
-            var map = [];
-            var index = [];
-            for (var i = 0; i < netsize; i++) {
-                index[network[i][3]] = i;
-            }
-            var k = 0;
-            for (var i = 0; i < netsize; i++) {
-                var j = index[i];
-                map[k++] = network[j][0];
-                map[k++] = network[j][1];
-                map[k++] = network[j][2];
-            }
-            return map;
-        }
-
-        thepicture = pixels;
-        lengthcount = pixels.length;
-        sampleFactor = samplefac;
-
-        init();
-        process();
 
         return {
-            colorMap: colorMap,
-            map: map
+            colors: this.palette,
+            colorTab: colorTab,
+            quantizer: this
         };
-    }
+    };
+
+    OctreeQuantizer.prototype._buildPaletteFromNode = function(node) {
+        if (node.isLeaf && node.pixelCount > 0) {
+            var r = Math.round(node.red / node.pixelCount);
+            var g = Math.round(node.green / node.pixelCount);
+            var b = Math.round(node.blue / node.pixelCount);
+
+            node.paletteIndex = this.palette.length;
+            this.palette.push({ r: r, g: g, b: b });
+            return;
+        }
+
+        for (var i = 0; i < 8; i++) {
+            if (node.children[i]) {
+                this._buildPaletteFromNode(node.children[i]);
+            }
+        }
+    };
+
+    // Fast color lookup using the tree structure
+    OctreeQuantizer.prototype.getColorIndex = function(r, g, b) {
+        return this._getColorIndexFromNode(this.root, r, g, b, 0);
+    };
+
+    OctreeQuantizer.prototype._getColorIndexFromNode = function(node, r, g, b, level) {
+        if (node.isLeaf) {
+            return node.paletteIndex;
+        }
+
+        var index = this._getColorIndex(r, g, b, level);
+        var child = node.children[index];
+
+        if (child) {
+            return this._getColorIndexFromNode(child, r, g, b, level + 1);
+        }
+
+        // Find closest available child
+        return this._findClosestChild(node, r, g, b);
+    };
+
+    OctreeQuantizer.prototype._findClosestChild = function(node, r, g, b) {
+        // Find any available child and get its palette index
+        for (var i = 0; i < 8; i++) {
+            if (node.children[i]) {
+                if (node.children[i].isLeaf) {
+                    return node.children[i].paletteIndex;
+                }
+                return this._findClosestChild(node.children[i], r, g, b);
+            }
+        }
+        return 0;
+    };
+
+    // Alternative: Find closest color by brute force (more accurate but slower)
+    OctreeQuantizer.prototype.findClosestPaletteIndex = function(r, g, b) {
+        var minDist = Infinity;
+        var minIndex = 0;
+
+        for (var i = 0; i < this.palette.length; i++) {
+            var c = this.palette[i];
+            var dr = r - c.r;
+            var dg = g - c.g;
+            var db = b - c.b;
+            var dist = dr * dr + dg * dg + db * db;
+
+            if (dist < minDist) {
+                minDist = dist;
+                minIndex = i;
+                if (dist === 0) break; // Exact match
+            }
+        }
+
+        return minIndex;
+    };
 
     // LZW Encoder
     function LZWEncoder(width, height, pixels, colorDepth) {
@@ -746,8 +594,7 @@
     function GIFEncoder(width, height) {
         var out = [];
         var image = null;
-        var globalColorTab = null;
-        var globalNeuquant = null;
+        var globalPalette = null;
         var colorDepth = 8;
         var palSize = 7;
         var dispose = -1;
@@ -755,53 +602,70 @@
         var firstFrame = true;
         var sample = 10;
         var delay = 0;
-        var useGlobalPalette = false;
+        var useDither = false;
 
         function setGlobalPalette(paletteData) {
             if (paletteData) {
-                globalColorTab = paletteData.colorTab;
-                globalNeuquant = paletteData.neuquant;
-                useGlobalPalette = true;
+                globalPalette = paletteData;
             }
+        }
+
+        function setDither(dither) {
+            useDither = dither;
         }
 
         function analyze() {
             var len = image.length;
             var nPix = len / 4;
-            var pixels = new Uint8Array(nPix * 3);
-            var count = 0;
-
-            // Extract RGB from RGBA
-            for (var i = 0; i < len; i += 4) {
-                pixels[count++] = image[i];
-                pixels[count++] = image[i + 1];
-                pixels[count++] = image[i + 2];
-            }
-
-            var colorTab, nq;
-
-            if (useGlobalPalette && globalNeuquant) {
-                // Use global palette
-                colorTab = globalColorTab;
-                nq = globalNeuquant;
-            } else {
-                // Create local palette
-                nq = new NeuQuant(pixels, sample);
-                colorTab = nq.colorMap();
-            }
-
-            // Map pixels to palette indices
             var indexedPixels = new Uint8Array(nPix);
-            for (var i = 0, j = 0; i < nPix; i++, j += 3) {
-                var index = nq.map(
-                    pixels[j] & 0xff,
-                    pixels[j + 1] & 0xff,
-                    pixels[j + 2] & 0xff
-                );
-                indexedPixels[i] = index;
+
+            var quantizer = globalPalette.quantizer;
+            var palette = globalPalette.colors;
+
+            if (useDither) {
+                // Floyd-Steinberg dithering
+                var width = Math.sqrt(nPix); // Assuming square for simplicity
+                var errors = new Float32Array(nPix * 3);
+
+                for (var i = 0; i < nPix; i++) {
+                    var idx = i * 4;
+                    var r = Math.max(0, Math.min(255, image[idx] + errors[i * 3]));
+                    var g = Math.max(0, Math.min(255, image[idx + 1] + errors[i * 3 + 1]));
+                    var b = Math.max(0, Math.min(255, image[idx + 2] + errors[i * 3 + 2]));
+
+                    var paletteIndex = quantizer.findClosestPaletteIndex(
+                        Math.round(r),
+                        Math.round(g),
+                        Math.round(b)
+                    );
+                    indexedPixels[i] = paletteIndex;
+
+                    // Calculate error
+                    var c = palette[paletteIndex];
+                    var er = r - c.r;
+                    var eg = g - c.g;
+                    var eb = b - c.b;
+
+                    // Distribute error to neighbors (simplified)
+                    if (i + 1 < nPix) {
+                        errors[(i + 1) * 3] += er * 7 / 16;
+                        errors[(i + 1) * 3 + 1] += eg * 7 / 16;
+                        errors[(i + 1) * 3 + 2] += eb * 7 / 16;
+                    }
+                }
+            } else {
+                // Direct mapping (faster, good enough for most cases)
+                for (var i = 0, j = 0; i < nPix; i++, j += 4) {
+                    var r = image[j] & 0xff;
+                    var g = image[j + 1] & 0xff;
+                    var b = image[j + 2] & 0xff;
+
+                    // Use brute force search for most accurate color matching
+                    indexedPixels[i] = quantizer.findClosestPaletteIndex(r, g, b);
+                }
             }
 
-            return { indexedPixels: indexedPixels, colorTab: colorTab };
+            return { indexedPixels: indexedPixels, colorTab: globalPalette.colorTab };
         }
 
         function start() {
@@ -829,35 +693,17 @@
             image = imageData;
             var result = analyze();
             var indexedPixels = result.indexedPixels;
-            var colorTab = result.colorTab;
 
             if (firstFrame) {
-                if (useGlobalPalette) {
-                    writeLSDWithGCT();
-                    writeGlobalPalette();
-                } else {
-                    writeLSD();
-                }
+                writeLSDWithGCT();
+                writeGlobalPalette();
                 writeNetscapeExt();
                 firstFrame = false;
             }
 
             writeGraphicCtrlExt();
-
-            if (useGlobalPalette) {
-                writeImageDescNoLCT();
-            } else {
-                writeImageDesc();
-                writePalette(colorTab);
-            }
-
+            writeImageDescNoLCT();
             writePixels(indexedPixels);
-        }
-
-        function writeLSD() {
-            writeShort(width);
-            writeShort(height);
-            out.push(0x70, 0, 0); // No GCT
         }
 
         function writeLSDWithGCT() {
@@ -868,12 +714,9 @@
         }
 
         function writeGlobalPalette() {
-            for (var i = 0; i < globalColorTab.length; i++) {
-                out.push(globalColorTab[i]);
-            }
-            var n = (3 * 256) - globalColorTab.length;
-            for (var i = 0; i < n; i++) {
-                out.push(0);
+            var colorTab = globalPalette.colorTab;
+            for (var i = 0; i < 768; i++) {
+                out.push(colorTab[i] || 0);
             }
         }
 
@@ -892,15 +735,6 @@
             out.push(0, 0);
         }
 
-        function writeImageDesc() {
-            out.push(0x2C);
-            writeShort(0);
-            writeShort(0);
-            writeShort(width);
-            writeShort(height);
-            out.push(0x80 | palSize); // LCT flag
-        }
-
         function writeImageDescNoLCT() {
             out.push(0x2C);
             writeShort(0);
@@ -908,16 +742,6 @@
             writeShort(width);
             writeShort(height);
             out.push(0x00); // No LCT, use GCT
-        }
-
-        function writePalette(colorTab) {
-            for (var i = 0; i < colorTab.length; i++) {
-                out.push(colorTab[i]);
-            }
-            var n = (3 * 256) - colorTab.length;
-            for (var i = 0; i < n; i++) {
-                out.push(0);
-            }
         }
 
         function writePixels(indexedPixels) {
@@ -952,6 +776,7 @@
             setRepeat: setRepeat,
             setDelay: setDelay,
             setQuality: setQuality,
+            setDither: setDither,
             setGlobalPalette: setGlobalPalette,
             addFrame: addFrame,
             stream: stream
