@@ -808,11 +808,13 @@ function closeGifModal() {
 }
 
 function generateGif() {
-    if (!currentSlider) return;
+    if (!currentSlider) {
+        console.warn('generateGif: No currentSlider available');
+        return;
+    }
 
     const preview = document.getElementById('gifPreview');
     const downloadBtn = document.getElementById('downloadGifBtn');
-    const progressEl = document.getElementById('gifProgress');
 
     preview.innerHTML = `
         <div class="gif-loading">
@@ -829,59 +831,111 @@ function generateGif() {
 
     // Check if gif.js is loaded
     if (typeof GIF === 'undefined') {
-        preview.innerHTML = `<p style="color: var(--danger-color);">GIF library not loaded</p>`;
+        preview.innerHTML = `<p style="color: var(--danger-color);">${t('error_gif_failed')}: GIF library not loaded</p>`;
+        console.error('GIF library not loaded');
         return;
     }
 
     const img1 = new Image();
     const img2 = new Image();
     let loaded = 0;
+    let hasError = false;
+
+    const showError = (message) => {
+        if (hasError) return;
+        hasError = true;
+        preview.innerHTML = `<p style="color: var(--danger-color);">${t('error_gif_failed')}: ${message}</p>`;
+        console.error('GIF generation error:', message);
+    };
 
     const createGif = () => {
+        if (hasError) return;
         loaded++;
         if (loaded < 2) return;
 
-        const width = Math.min(img1.naturalWidth, 800);
-        const height = Math.round(width * (img1.naturalHeight / img1.naturalWidth));
+        try {
+            const width = Math.min(img1.naturalWidth || 800, 800);
+            const height = Math.round(width * ((img1.naturalHeight || 600) / (img1.naturalWidth || 800)));
 
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
+            if (width <= 0 || height <= 0) {
+                showError('Invalid image dimensions');
+                return;
+            }
 
-        const gif = new GIF({
-            workers: 2,
-            quality: quality,
-            width: width,
-            height: height,
-            workerScript: 'gif.worker.js'
-        });
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
 
-        // Frame 1: Before
-        ctx.drawImage(img1, 0, 0, width, height);
-        gif.addFrame(ctx, { copy: true, delay: speed });
+            if (!ctx) {
+                showError('Failed to create canvas context');
+                return;
+            }
 
-        // Frame 2: After
-        ctx.drawImage(img2, 0, 0, width, height);
-        gif.addFrame(ctx, { copy: true, delay: speed });
+            const gif = new GIF({
+                workers: 2,
+                quality: quality,
+                width: width,
+                height: height,
+                workerScript: 'gif.worker.js'
+            });
 
-        gif.on('progress', (p) => {
-            const percent = Math.round(p * 100);
-            document.getElementById('gifProgress').textContent = `${percent}%`;
-        });
+            // Frame 1: Before
+            ctx.drawImage(img1, 0, 0, width, height);
+            gif.addFrame(ctx, { copy: true, delay: speed });
 
-        gif.on('finished', (blob) => {
-            gifBlob = blob;
-            const url = URL.createObjectURL(blob);
-            preview.innerHTML = `<img src="${url}" alt="GIF Preview">`;
-            downloadBtn.disabled = false;
-        });
+            // Frame 2: After
+            ctx.drawImage(img2, 0, 0, width, height);
+            gif.addFrame(ctx, { copy: true, delay: speed });
 
-        gif.render();
+            gif.on('progress', (p) => {
+                const percent = Math.round(p * 100);
+                const progressEl = document.getElementById('gifProgress');
+                if (progressEl) {
+                    progressEl.textContent = `${percent}%`;
+                }
+            });
+
+            gif.on('finished', (blob) => {
+                if (!blob) {
+                    showError('GIF generation returned empty result');
+                    return;
+                }
+                gifBlob = blob;
+                const url = URL.createObjectURL(blob);
+                preview.innerHTML = `<img src="${url}" alt="GIF Preview">`;
+                downloadBtn.disabled = false;
+            });
+
+            gif.on('error', (err) => {
+                showError(err?.message || 'Unknown error during GIF rendering');
+            });
+
+            gif.render();
+        } catch (err) {
+            showError(err?.message || 'Unexpected error during GIF generation');
+        }
+    };
+
+    // Handle image loading errors
+    const handleImageError = (imgName) => () => {
+        showError(`Failed to load ${imgName} image`);
     };
 
     img1.onload = createGif;
     img2.onload = createGif;
+    img1.onerror = handleImageError('before');
+    img2.onerror = handleImageError('after');
+
+    // Only set crossOrigin for external URLs (not data URLs or blob URLs)
+    const isExternalUrl = (url) => url && !url.startsWith('data:') && !url.startsWith('blob:');
+    if (isExternalUrl(currentSlider.before)) {
+        img1.crossOrigin = 'anonymous';
+    }
+    if (isExternalUrl(currentSlider.after)) {
+        img2.crossOrigin = 'anonymous';
+    }
+
     img1.src = currentSlider.before;
     img2.src = currentSlider.after;
 }

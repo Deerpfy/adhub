@@ -103,28 +103,41 @@
 
     GIF.prototype._renderInline = function() {
         var self = this;
-        var encoder = new GIFEncoder(this.options.width, this.options.height);
 
-        encoder.setRepeat(this.options.repeat);
-        encoder.setQuality(this.options.quality);
-        encoder.start();
+        try {
+            if (!this.frames || this.frames.length === 0) {
+                throw new Error('No frames to encode');
+            }
 
-        var totalFrames = this.frames.length;
+            var encoder = new GIFEncoder(this.options.width, this.options.height);
 
-        this.frames.forEach(function(frame, index) {
-            encoder.setDelay(frame.delay);
-            encoder.addFrame(frame.data.data);
+            encoder.setRepeat(this.options.repeat);
+            encoder.setQuality(this.options.quality);
+            encoder.start();
 
-            self.emit('progress', (index + 1) / totalFrames);
-        });
+            var totalFrames = this.frames.length;
 
-        encoder.finish();
+            this.frames.forEach(function(frame, index) {
+                if (!frame.data || !frame.data.data) {
+                    throw new Error('Invalid frame data at index ' + index);
+                }
+                encoder.setDelay(frame.delay);
+                encoder.addFrame(frame.data.data);
 
-        var binary = encoder.stream().getData();
-        var blob = new Blob([new Uint8Array(binary)], { type: 'image/gif' });
+                self.emit('progress', (index + 1) / totalFrames);
+            });
 
-        self.emit('finished', blob);
-        self.running = false;
+            encoder.finish();
+
+            var binary = encoder.stream().getData();
+            var blob = new Blob([new Uint8Array(binary)], { type: 'image/gif' });
+
+            self.emit('finished', blob);
+        } catch (err) {
+            self.emit('error', err);
+        } finally {
+            self.running = false;
+        }
     };
 
     // NeuQuant Neural-Net Quantization Algorithm
