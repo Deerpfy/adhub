@@ -1073,6 +1073,13 @@ function generateGif() {
                 const url = URL.createObjectURL(blob);
                 preview.innerHTML = `<img src="${url}" alt="GIF Preview">`;
                 downloadBtn.disabled = false;
+
+                // Update algorithm info with file size
+                const infoEl = document.getElementById('gifAlgorithmInfo');
+                if (infoEl) {
+                    const sizeKB = Math.round(blob.size / 1024);
+                    infoEl.textContent = `Octree Quantization | 256 colors | ${sizeKB} KB`;
+                }
             });
 
             gif.on('error', (err) => {
