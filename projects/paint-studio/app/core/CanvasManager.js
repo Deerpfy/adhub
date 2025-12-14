@@ -180,6 +180,11 @@ export class CanvasManager {
      * Handle pointer down event
      */
     handlePointerDown(e) {
+        // Ignore events from UI elements (floating controls, indicators, etc.)
+        if (e.target.closest('.floating-controls, .quickshape-indicator, .pixel-art-indicator, .color-popup-picker')) {
+            return;
+        }
+
         // Middle mouse button or space+click for panning
         if (e.button === 1 || (e.button === 0 && this.spacePressed)) {
             this.startPan(e);
@@ -357,6 +362,11 @@ export class CanvasManager {
         // Reset StreamLine
         if (this.app.streamLine) {
             this.app.streamLine.reset();
+        }
+
+        // Clear pixel art cell tracking
+        if (this.app.brush) {
+            this.app.brush.clearPixelArtCells();
         }
 
         // Clear preview

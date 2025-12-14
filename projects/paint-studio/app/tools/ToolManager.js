@@ -16,6 +16,7 @@ import { SelectRectangleTool } from './tools/SelectRectangleTool.js';
 import { SelectLassoTool } from './tools/SelectLassoTool.js';
 import { MagicWandTool } from './tools/MagicWandTool.js';
 import { TransformTool } from './tools/TransformTool.js';
+import { TextTool } from './tools/TextTool.js';
 
 export class ToolManager {
     constructor(app) {
@@ -44,7 +45,8 @@ export class ToolManager {
             'select-rectangle': new SelectRectangleTool(this.app),
             'select-lasso': new SelectLassoTool(this.app),
             'magic-wand': new MagicWandTool(this.app),
-            transform: new TransformTool(this.app)
+            transform: new TransformTool(this.app),
+            text: new TextTool(this.app)
         };
 
         // Set default tool
@@ -135,7 +137,8 @@ export class ToolManager {
             'select-rectangle': 'crosshair',
             'select-lasso': 'crosshair',
             'magic-wand': 'crosshair',
-            transform: 'default'
+            transform: 'default',
+            text: 'text'
         };
 
         container.style.cursor = cursors[this.currentTool] || 'default';
@@ -159,7 +162,8 @@ export class ToolManager {
             'select-rectangle': 'Obdélníkový výběr',
             'select-lasso': 'Lasso',
             'magic-wand': 'Kouzelná hůlka',
-            transform: 'Transformace'
+            transform: 'Transformace',
+            text: 'Text'
         };
         return names[toolName] || toolName;
     }

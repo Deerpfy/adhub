@@ -192,6 +192,12 @@
                         </svg>
                         <span class="tool-shortcut" data-shortcut="gradient">D</span>
                     </button>
+                    <button class="tool-btn" data-tool="text" title="Text (T)">
+                        <svg viewBox="0 0 24 24" width="24" height="24">
+                            <path d="M5 4v3h5.5v12h3V7H19V4H5z" fill="currentColor"/>
+                        </svg>
+                        <span class="tool-shortcut" data-shortcut="text">T</span>
+                    </button>
                     <button class="tool-btn" data-tool="eyedropper" title="Kapátko (I)">
                         <svg viewBox="0 0 24 24" width="24" height="24">
                             <path d="M20.71 5.63l-2.34-2.34a.996.996 0 00-1.41 0l-3.12 3.12-1.93-1.91-1.41 1.41 1.42 1.42L3 16.25V21h4.75l8.92-8.92 1.42 1.42 1.41-1.41-1.92-1.92 3.12-3.12c.4-.39.4-1.03.01-1.42zM6.92 19L5 17.08l8.06-8.06 1.92 1.92L6.92 19z" fill="currentColor"/>
@@ -270,10 +276,9 @@
                     <!-- Canvas layers will be inserted here -->
                     <canvas id="mainCanvas" class="main-canvas"></canvas>
                     <canvas id="previewCanvas" class="preview-canvas"></canvas>
+                    <!-- Overlay canvas for grid, guides, symmetry lines - inside wrapper so it transforms with canvas -->
+                    <canvas id="overlayCanvas" class="overlay-canvas"></canvas>
                 </div>
-
-                <!-- Overlay canvas for grid, guides, symmetry lines -->
-                <canvas id="overlayCanvas" class="overlay-canvas"></canvas>
 
                 <!-- QuickShape indicator -->
                 <div class="quickshape-indicator" id="quickshapeIndicator" style="display: none;">

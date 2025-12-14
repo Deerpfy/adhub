@@ -22,7 +22,7 @@ export class UIController {
                 shortcuts: {
                     brush: 'B', pencil: 'P', eraser: 'E', line: 'L',
                     rectangle: 'U', ellipse: 'O', fill: 'G', eyedropper: 'I',
-                    move: 'V', undo: 'Ctrl+Z', redo: 'Ctrl+Y', save: 'Ctrl+S',
+                    move: 'V', text: 'T', undo: 'Ctrl+Z', redo: 'Ctrl+Y', save: 'Ctrl+S',
                     zoomIn: 'Ctrl++', zoomOut: 'Ctrl+-', fitView: 'Ctrl+0',
                     fullscreen: 'F', swapColors: 'X'
                 }
@@ -32,7 +32,7 @@ export class UIController {
                 shortcuts: {
                     brush: 'B', pencil: 'B', eraser: 'E', line: 'U',
                     rectangle: 'U', ellipse: 'U', fill: 'G', eyedropper: 'I',
-                    move: 'V', undo: 'Ctrl+Z', redo: 'Ctrl+Shift+Z', save: 'Ctrl+S',
+                    move: 'V', text: 'T', undo: 'Ctrl+Z', redo: 'Ctrl+Shift+Z', save: 'Ctrl+S',
                     zoomIn: 'Ctrl++', zoomOut: 'Ctrl+-', fitView: 'Ctrl+0',
                     fullscreen: 'F', swapColors: 'X'
                 }
@@ -42,7 +42,7 @@ export class UIController {
                 shortcuts: {
                     brush: 'B', pencil: 'N', eraser: 'E', line: 'L',
                     rectangle: 'U', ellipse: 'U', fill: 'G', eyedropper: 'I',
-                    move: 'V', undo: 'Ctrl+Z', redo: 'Ctrl+Y', save: 'Ctrl+S',
+                    move: 'V', text: 'T', undo: 'Ctrl+Z', redo: 'Ctrl+Y', save: 'Ctrl+S',
                     zoomIn: 'Ctrl++', zoomOut: 'Ctrl+-', fitView: 'Ctrl+0',
                     fullscreen: 'F', swapColors: 'X'
                 }
@@ -52,7 +52,7 @@ export class UIController {
                 shortcuts: {
                     brush: 'B', pencil: 'P', eraser: 'E', line: 'L',
                     rectangle: 'R', ellipse: 'O', fill: 'G', eyedropper: 'I',
-                    move: 'M', undo: 'Ctrl+Z', redo: 'Ctrl+Shift+Z', save: 'Ctrl+S',
+                    move: 'M', text: 'T', undo: 'Ctrl+Z', redo: 'Ctrl+Shift+Z', save: 'Ctrl+S',
                     zoomIn: 'Ctrl++', zoomOut: 'Ctrl+-', fitView: 'Ctrl+0',
                     fullscreen: 'F', swapColors: 'X'
                 }

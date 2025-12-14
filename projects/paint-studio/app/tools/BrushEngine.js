@@ -465,6 +465,12 @@ export class BrushEngine {
      * Draw a stroke point
      */
     drawPoint(ctx, x, y, pressure = 1, color = '#ffffff') {
+        // Check if pixel art mode is enabled
+        if (this.app.pixelArt && this.app.pixelArt.enabled) {
+            this.drawPixelArtPoint(ctx, x, y, color);
+            return;
+        }
+
         // Calculate actual size based on pressure
         const actualSize = this.app.settings.pressureSensitivity
             ? Math.max(1, this.size * pressure)
@@ -492,9 +498,44 @@ export class BrushEngine {
     }
 
     /**
+     * Draw a pixel art point - fills entire grid cell
+     */
+    drawPixelArtPoint(ctx, x, y, color = '#ffffff') {
+        const pixelArt = this.app.pixelArt;
+        const gridSize = pixelArt.grid.size || 1;
+
+        // Snap to grid - calculate the top-left corner of the grid cell
+        const gridX = Math.floor(x / gridSize) * gridSize;
+        const gridY = Math.floor(y / gridSize) * gridSize;
+
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = this.opacity;
+        ctx.fillStyle = color;
+
+        // Fill the entire grid cell
+        ctx.fillRect(gridX, gridY, gridSize, gridSize);
+
+        ctx.restore();
+
+        // Track this cell to avoid redrawing (for continuous strokes)
+        if (!this._pixelArtCells) {
+            this._pixelArtCells = new Set();
+        }
+        this._pixelArtCells.add(`${gridX},${gridY}`);
+    }
+
+    /**
      * Draw a line stroke between two points
      */
     drawStroke(ctx, x1, y1, x2, y2, pressure = 1, color = '#ffffff') {
+        // Check if pixel art mode is enabled
+        if (this.app.pixelArt && this.app.pixelArt.enabled) {
+            this.drawPixelArtStroke(ctx, x1, y1, x2, y2, color);
+            return;
+        }
+
         const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
         const actualSize = this.app.settings.pressureSensitivity
             ? Math.max(1, this.size * pressure)
@@ -514,6 +555,69 @@ export class BrushEngine {
             const y = y1 + (y2 - y1) * t;
             this.drawPoint(ctx, x, y, pressure, color);
         }
+    }
+
+    /**
+     * Draw a pixel art stroke using Bresenham's line algorithm
+     */
+    drawPixelArtStroke(ctx, x1, y1, x2, y2, color = '#ffffff') {
+        const pixelArt = this.app.pixelArt;
+        const gridSize = pixelArt.grid.size || 1;
+
+        // Convert to grid coordinates
+        let gx1 = Math.floor(x1 / gridSize);
+        let gy1 = Math.floor(y1 / gridSize);
+        let gx2 = Math.floor(x2 / gridSize);
+        let gy2 = Math.floor(y2 / gridSize);
+
+        // Bresenham's line algorithm
+        const dx = Math.abs(gx2 - gx1);
+        const dy = Math.abs(gy2 - gy1);
+        const sx = gx1 < gx2 ? 1 : -1;
+        const sy = gy1 < gy2 ? 1 : -1;
+        let err = dx - dy;
+
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = this.opacity;
+        ctx.fillStyle = color;
+
+        // Initialize cell tracking if needed
+        if (!this._pixelArtCells) {
+            this._pixelArtCells = new Set();
+        }
+
+        while (true) {
+            const cellKey = `${gx1 * gridSize},${gy1 * gridSize}`;
+
+            // Only draw if we haven't drawn this cell yet in this stroke
+            if (!this._pixelArtCells.has(cellKey)) {
+                ctx.fillRect(gx1 * gridSize, gy1 * gridSize, gridSize, gridSize);
+                this._pixelArtCells.add(cellKey);
+            }
+
+            if (gx1 === gx2 && gy1 === gy2) break;
+
+            const e2 = 2 * err;
+            if (e2 > -dy) {
+                err -= dy;
+                gx1 += sx;
+            }
+            if (e2 < dx) {
+                err += dx;
+                gy1 += sy;
+            }
+        }
+
+        ctx.restore();
+    }
+
+    /**
+     * Clear pixel art cell tracking (call at stroke end)
+     */
+    clearPixelArtCells() {
+        this._pixelArtCells = null;
     }
 
     /**
