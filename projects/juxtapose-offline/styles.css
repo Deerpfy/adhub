@@ -1122,6 +1122,12 @@ body::before {
     font-family: monospace;
 }
 
+.dither-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
 .gif-options {
     display: flex;
     flex-direction: column;

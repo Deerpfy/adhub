@@ -623,34 +623,70 @@
             var palette = globalPalette.colors;
 
             if (useDither) {
-                // Floyd-Steinberg dithering
-                var width = Math.sqrt(nPix); // Assuming square for simplicity
-                var errors = new Float32Array(nPix * 3);
+                // Full Floyd-Steinberg dithering
+                var imgWidth = width;
+                var imgHeight = height;
 
-                for (var i = 0; i < nPix; i++) {
-                    var idx = i * 4;
-                    var r = Math.max(0, Math.min(255, image[idx] + errors[i * 3]));
-                    var g = Math.max(0, Math.min(255, image[idx + 1] + errors[i * 3 + 1]));
-                    var b = Math.max(0, Math.min(255, image[idx + 2] + errors[i * 3 + 2]));
+                // Create error diffusion buffers (current and next row)
+                var currRowErr = new Float32Array(imgWidth * 3);
+                var nextRowErr = new Float32Array(imgWidth * 3);
 
-                    var paletteIndex = quantizer.findClosestPaletteIndex(
-                        Math.round(r),
-                        Math.round(g),
-                        Math.round(b)
-                    );
-                    indexedPixels[i] = paletteIndex;
+                for (var y = 0; y < imgHeight; y++) {
+                    // Swap error buffers
+                    var temp = currRowErr;
+                    currRowErr = nextRowErr;
+                    nextRowErr = temp;
+                    // Clear next row
+                    for (var k = 0; k < nextRowErr.length; k++) nextRowErr[k] = 0;
 
-                    // Calculate error
-                    var c = palette[paletteIndex];
-                    var er = r - c.r;
-                    var eg = g - c.g;
-                    var eb = b - c.b;
+                    for (var x = 0; x < imgWidth; x++) {
+                        var i = y * imgWidth + x;
+                        var idx = i * 4;
 
-                    // Distribute error to neighbors (simplified)
-                    if (i + 1 < nPix) {
-                        errors[(i + 1) * 3] += er * 7 / 16;
-                        errors[(i + 1) * 3 + 1] += eg * 7 / 16;
-                        errors[(i + 1) * 3 + 2] += eb * 7 / 16;
+                        // Get pixel color + accumulated error
+                        var r = Math.max(0, Math.min(255, image[idx] + currRowErr[x * 3]));
+                        var g = Math.max(0, Math.min(255, image[idx + 1] + currRowErr[x * 3 + 1]));
+                        var b = Math.max(0, Math.min(255, image[idx + 2] + currRowErr[x * 3 + 2]));
+
+                        // Find closest palette color
+                        var paletteIndex = quantizer.findClosestPaletteIndex(
+                            Math.round(r),
+                            Math.round(g),
+                            Math.round(b)
+                        );
+                        indexedPixels[i] = paletteIndex;
+
+                        // Calculate quantization error
+                        var c = palette[paletteIndex];
+                        var er = r - c.r;
+                        var eg = g - c.g;
+                        var eb = b - c.b;
+
+                        // Distribute error using Floyd-Steinberg coefficients
+                        // Right: 7/16
+                        if (x + 1 < imgWidth) {
+                            currRowErr[(x + 1) * 3] += er * 7 / 16;
+                            currRowErr[(x + 1) * 3 + 1] += eg * 7 / 16;
+                            currRowErr[(x + 1) * 3 + 2] += eb * 7 / 16;
+                        }
+                        // Bottom-left: 3/16
+                        if (y + 1 < imgHeight && x > 0) {
+                            nextRowErr[(x - 1) * 3] += er * 3 / 16;
+                            nextRowErr[(x - 1) * 3 + 1] += eg * 3 / 16;
+                            nextRowErr[(x - 1) * 3 + 2] += eb * 3 / 16;
+                        }
+                        // Bottom: 5/16
+                        if (y + 1 < imgHeight) {
+                            nextRowErr[x * 3] += er * 5 / 16;
+                            nextRowErr[x * 3 + 1] += eg * 5 / 16;
+                            nextRowErr[x * 3 + 2] += eb * 5 / 16;
+                        }
+                        // Bottom-right: 1/16
+                        if (y + 1 < imgHeight && x + 1 < imgWidth) {
+                            nextRowErr[(x + 1) * 3] += er * 1 / 16;
+                            nextRowErr[(x + 1) * 3 + 1] += eg * 1 / 16;
+                            nextRowErr[(x + 1) * 3 + 2] += eb * 1 / 16;
+                        }
                     }
                 }
             } else {
