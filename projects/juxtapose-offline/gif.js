@@ -432,9 +432,10 @@
             var k = 0;
             for (var i = 0; i < netsize; i++) {
                 var j = index[i];
-                map[k++] = network[j][0];
-                map[k++] = network[j][1];
-                map[k++] = network[j][2];
+                // Network stores BGR, but GIF needs RGB palette
+                map[k++] = network[j][2];  // R
+                map[k++] = network[j][1];  // G
+                map[k++] = network[j][0];  // B
             }
             return map;
         }
@@ -661,10 +662,11 @@
             var pixels = new Uint8Array(nPix * 3);
             var count = 0;
 
+            // Convert RGBA to BGR (NeuQuant expects BGR order)
             for (var i = 0; i < len; i += 4) {
-                pixels[count++] = image[i];
-                pixels[count++] = image[i + 1];
-                pixels[count++] = image[i + 2];
+                pixels[count++] = image[i + 2];  // B
+                pixels[count++] = image[i + 1];  // G
+                pixels[count++] = image[i];      // R
             }
 
             var nq = NeuQuant(pixels, sample);
@@ -673,9 +675,9 @@
             var indexedPixels = new Uint8Array(nPix);
             for (var i = 0, j = 0; i < nPix; i++) {
                 var index = nq.map(
-                    pixels[j++] & 0xff,
-                    pixels[j++] & 0xff,
-                    pixels[j++] & 0xff
+                    pixels[j++] & 0xff,  // B
+                    pixels[j++] & 0xff,  // G
+                    pixels[j++] & 0xff   // R
                 );
                 indexedPixels[i] = index;
             }
