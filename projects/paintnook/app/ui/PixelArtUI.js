@@ -276,16 +276,20 @@ export class PixelArtUI {
             this.elements.animationTimeline.style.display = enabled ? 'flex' : 'none';
         }
 
-        // Hide/show digital painting options (brush settings, color picker)
+        // Hide/show digital painting options (brush settings, color picker, blend mode)
         // When Pixel Art mode is enabled, hide brush types, blend mode, etc.
         const brushSettings = document.getElementById('brushSettings');
         const colorPickerSection = document.getElementById('colorPickerSection');
+        const blendModeSelector = document.querySelector('.blend-mode-selector');
 
         if (brushSettings) {
             brushSettings.style.display = enabled ? 'none' : 'block';
         }
         if (colorPickerSection) {
             colorPickerSection.style.display = enabled ? 'none' : 'block';
+        }
+        if (blendModeSelector) {
+            blendModeSelector.style.display = enabled ? 'none' : 'flex';
         }
 
         // Initialize or clear grid
