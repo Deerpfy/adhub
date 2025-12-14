@@ -795,9 +795,9 @@ export class PixelArtUI {
 
     async exportSpriteSheet() {
         try {
-            const canvas = this.app.animation.exportSpriteSheet();
+            const result = await this.app.animation.exportSpriteSheet();
 
-            canvas.toBlob((blob) => {
+            result.canvas.toBlob((blob) => {
                 const url = URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
