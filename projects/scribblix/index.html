@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#14b8a6">
+    <meta name="description" content="Scribblix - 100% offline dokumentační platforma. Vytvářejte, organizujte a exportujte dokumentaci bez internetu.">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Scribblix">
+
+    <title>Scribblix - Offline dokumentace</title>
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
+    <link rel="apple-touch-icon" href="icons/icon-192.svg">
+
+    <link rel="stylesheet" href="styles.css?v=1.0.2">
+
+    <!-- Dexie.js - IndexedDB wrapper (MIT license) -->
+    <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.min.js"></script>
+    <!-- Marked.js - Markdown parser (MIT license) -->
+    <script src="https://unpkg.com/marked@11.1.1/marked.min.js"></script>
+    <!-- DOMPurify - XSS sanitizer (Apache 2.0 / MIT dual license) -->
+    <script src="https://unpkg.com/dompurify@3.0.6/dist/purify.min.js"></script>
+    <!-- FlexSearch - Fast fulltext search (Apache 2.0 license) -->
+    <script src="https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.7.31/dist/flexsearch.bundle.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Offline Indicator -->
+        <div class="offline-banner" id="offlineBanner">
+            <span class="offline-icon">📡</span>
+            <span class="offline-text">Offline režim - všechna data jsou uložena lokálně</span>
+        </div>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="../../index.html" class="back-link" title="Zpět na AdHUB">
+                    <span class="back-icon">←</span>
+                </a>
+                <h1 class="logo">
+                    <span class="logo-icon">📖</span>
+                    <span class="logo-text">Scribblix</span>
+                </h1>
+                <button class="sidebar-toggle" id="sidebarToggle" title="Skrýt sidebar">
+                    <span>☰</span>
+                </button>
+            </div>
+
+            <div class="sidebar-search">
+                <input type="text" id="searchInput" class="search-input" placeholder="Hledat v dokumentaci... (Ctrl+K)" autocomplete="off">
+                <span class="search-icon">🔍</span>
+            </div>
+
+            <div class="sidebar-actions">
+                <button class="btn btn-primary" id="newSpaceBtn" title="Nový prostor">
+                    <span>📁</span> Nový prostor
+                </button>
+            </div>
+
+            <nav class="sidebar-nav" id="sidebarNav">
+                <div class="nav-loading" id="navLoading">
+                    <span class="spinner">⏳</span>
+                    <span>Načítám...</span>
+                </div>
+                <div class="nav-tree" id="navTree">
+                    <!-- Navigation tree will be rendered here -->
+                </div>
+                <div class="nav-empty" id="navEmpty" style="display: none;">
+                    <span class="empty-icon">📝</span>
+                    <p>Žádné prostory</p>
+                    <p class="empty-hint">Vytvořte svůj první prostor dokumentace</p>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <button class="footer-btn" id="importBtn" title="Import">
+                    <span>📥</span> Import
+                </button>
+                <button class="footer-btn" id="exportBtn" title="Export">
+                    <span>📤</span> Export
+                </button>
+                <button class="footer-btn" id="settingsBtn" title="Nastavení">
+                    <span>⚙️</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent">
+            <!-- Welcome Screen -->
+            <div class="welcome-screen" id="welcomeScreen">
+                <div class="welcome-content">
+                    <div class="welcome-icon">📖</div>
+                    <h2>Vítejte v Scribblix</h2>
+                    <p class="welcome-description">
+                        100% offline dokumentační platforma. Vytvářejte, organizujte a exportujte
+                        dokumentaci bez připojení k internetu.
+                    </p>
+                    <div class="welcome-features">
+                        <div class="feature">
+                            <span class="feature-icon">✏️</span>
+                            <div class="feature-text">
+                                <strong>WYSIWYG Editor</strong>
+                                <span>Markdown podpora s náhledem v reálném čase</span>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">📁</span>
+                            <div class="feature-text">
+                                <strong>Prostory & Stránky</strong>
+                                <span>Organizujte dokumentaci do logických celků</span>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">🔍</span>
+                            <div class="feature-text">
+                                <strong>Rychlé vyhledávání</strong>
+                                <span>Fulltext search přes všechny dokumenty</span>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">📤</span>
+                            <div class="feature-text">
+                                <strong>Export & Import</strong>
+                                <span>JSON, Markdown, HTML formáty</span>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">🔒</span>
+                            <div class="feature-text">
+                                <strong>100% Offline</strong>
+                                <span>Data zůstávají ve vašem prohlížeči</span>
+                            </div>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">📱</span>
+                            <div class="feature-text">
+                                <strong>PWA Ready</strong>
+                                <span>Nainstalujte si jako desktopovou aplikaci</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="welcome-actions">
+                        <button class="btn btn-primary btn-large" id="welcomeNewSpace">
+                            <span>📁</span> Vytvořit první prostor
+                        </button>
+                        <button class="btn btn-secondary btn-large" id="welcomeImport">
+                            <span>📥</span> Importovat data
+                        </button>
+                    </div>
+                    <div class="welcome-stats" id="welcomeStats">
+                        <!-- Stats will be shown here if data exists -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Editor Screen -->
+            <div class="editor-screen" id="editorScreen" style="display: none;">
+                <div class="editor-header">
+                    <div class="breadcrumb" id="breadcrumb">
+                        <!-- Breadcrumb navigation -->
+                    </div>
+                    <div class="editor-actions">
+                        <div class="editor-mode-toggle">
+                            <button class="mode-btn active" data-mode="edit" title="Editovat">✏️</button>
+                            <button class="mode-btn" data-mode="preview" title="Náhled">👁️</button>
+                            <button class="mode-btn" data-mode="split" title="Rozdělený pohled">◫</button>
+                        </div>
+                        <button class="btn btn-icon" id="undoBtn" title="Zpět (Ctrl+Z)" disabled>
+                            <span>↩️</span>
+                        </button>
+                        <button class="btn btn-icon" id="redoBtn" title="Vpřed (Ctrl+Y)" disabled>
+                            <span>↪️</span>
+                        </button>
+                        <button class="btn btn-icon" id="saveBtn" title="Uložit (Ctrl+S)">
+                            <span>💾</span>
+                        </button>
+                        <button class="btn btn-icon" id="pageSettingsBtn" title="Nastavení stránky">
+                            <span>⚙️</span>
+                        </button>
+                        <button class="btn btn-icon btn-danger" id="deletePageBtn" title="Smazat stránku">
+                            <span>🗑️</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="editor-container" id="editorContainer">
+                    <div class="editor-toolbar" id="editorToolbar">
+                        <div class="toolbar-group">
+                            <button class="toolbar-btn" data-action="bold" title="Tučně (Ctrl+B)"><b>B</b></button>
+                            <button class="toolbar-btn" data-action="italic" title="Kurzíva (Ctrl+I)"><i>I</i></button>
+                            <button class="toolbar-btn" data-action="strikethrough" title="Přeškrtnuté"><s>S</s></button>
+                            <button class="toolbar-btn" data-action="code" title="Inline kód">&lt;/&gt;</button>
+                        </div>
+                        <div class="toolbar-separator"></div>
+                        <div class="toolbar-group">
+                            <button class="toolbar-btn" data-action="h1" title="Nadpis 1">H1</button>
+                            <button class="toolbar-btn" data-action="h2" title="Nadpis 2">H2</button>
+                            <button class="toolbar-btn" data-action="h3" title="Nadpis 3">H3</button>
+                        </div>
+                        <div class="toolbar-separator"></div>
+                        <div class="toolbar-group">
+                            <button class="toolbar-btn" data-action="ul" title="Nečíslovaný seznam">•</button>
+                            <button class="toolbar-btn" data-action="ol" title="Číslovaný seznam">1.</button>
+                            <button class="toolbar-btn" data-action="checklist" title="Checklist">☑</button>
+                            <button class="toolbar-btn" data-action="quote" title="Citace">"</button>
+                        </div>
+                        <div class="toolbar-separator"></div>
+                        <div class="toolbar-group">
+                            <button class="toolbar-btn" data-action="link" title="Odkaz">🔗</button>
+                            <button class="toolbar-btn" data-action="image" title="Obrázek">🖼️</button>
+                            <button class="toolbar-btn" data-action="table" title="Tabulka">📊</button>
+                            <button class="toolbar-btn" data-action="codeblock" title="Blok kódu">📝</button>
+                            <button class="toolbar-btn" data-action="hr" title="Horizontální linka">―</button>
+                        </div>
+                    </div>
+
+                    <div class="editor-body">
+                        <div class="editor-pane edit-pane" id="editPane">
+                            <textarea class="editor-textarea" id="editorTextarea" placeholder="Začněte psát... Použijte Markdown pro formátování."></textarea>
+                        </div>
+                        <div class="editor-pane preview-pane" id="previewPane" style="display: none;">
+                            <div class="preview-content" id="previewContent">
+                                <!-- Rendered markdown preview -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="editor-toc" id="editorToc">
+                    <div class="toc-header">
+                        <span>📑 Obsah</span>
+                        <button class="toc-toggle" id="tocToggle" title="Skrýt obsah">×</button>
+                    </div>
+                    <div class="toc-content" id="tocContent">
+                        <!-- Table of contents generated from headings -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Search Modal -->
+    <div class="modal-overlay" id="searchModal">
+        <div class="modal-content search-modal">
+            <div class="modal-header">
+                <h2>🔍 Hledat v dokumentaci</h2>
+                <button class="modal-close" id="closeSearchModal">×</button>
+            </div>
+            <div class="modal-body">
+                <input type="text" id="modalSearchInput" class="modal-search-input" placeholder="Hledaný výraz..." autofocus>
+                <div class="search-results" id="searchResults">
+                    <div class="search-empty">
+                        <span>Začněte psát pro vyhledávání...</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Space Modal -->
+    <div class="modal-overlay" id="newSpaceModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📁 Nový prostor</h2>
+                <button class="modal-close" data-close="newSpaceModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="spaceNameInput">Název prostoru</label>
+                    <input type="text" id="spaceNameInput" class="form-input" placeholder="Např. Dokumentace projektu" autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="spaceDescInput">Popis (volitelné)</label>
+                    <textarea id="spaceDescInput" class="form-textarea" placeholder="Krátký popis prostoru..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="spaceIconInput">Ikona</label>
+                    <div class="icon-picker" id="spaceIconPicker">
+                        <button class="icon-option selected" data-icon="📁">📁</button>
+                        <button class="icon-option" data-icon="📚">📚</button>
+                        <button class="icon-option" data-icon="📖">📖</button>
+                        <button class="icon-option" data-icon="📝">📝</button>
+                        <button class="icon-option" data-icon="🎯">🎯</button>
+                        <button class="icon-option" data-icon="💡">💡</button>
+                        <button class="icon-option" data-icon="⚡">⚡</button>
+                        <button class="icon-option" data-icon="🔧">🔧</button>
+                        <button class="icon-option" data-icon="🚀">🚀</button>
+                        <button class="icon-option" data-icon="🎨">🎨</button>
+                        <button class="icon-option" data-icon="📊">📊</button>
+                        <button class="icon-option" data-icon="🔒">🔒</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close="newSpaceModal">Zrušit</button>
+                <button class="btn btn-primary" id="createSpaceBtn">Vytvořit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Page Modal -->
+    <div class="modal-overlay" id="newPageModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📄 Nová stránka</h2>
+                <button class="modal-close" data-close="newPageModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="pageNameInput">Název stránky</label>
+                    <input type="text" id="pageNameInput" class="form-input" placeholder="Např. Úvod" autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="pageParentSelect">Nadřazená stránka (volitelné)</label>
+                    <select id="pageParentSelect" class="form-select">
+                        <option value="">-- Žádná (root stránka) --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close="newPageModal">Zrušit</button>
+                <button class="btn btn-primary" id="createPageBtn">Vytvořit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page Settings Modal -->
+    <div class="modal-overlay" id="pageSettingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Nastavení stránky</h2>
+                <button class="modal-close" data-close="pageSettingsModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="pageSettingsName">Název stránky</label>
+                    <input type="text" id="pageSettingsName" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label for="pageSettingsSlug">Slug (URL)</label>
+                    <input type="text" id="pageSettingsSlug" class="form-input" placeholder="automaticky-vygenerováno">
+                </div>
+                <div class="form-group">
+                    <label for="pageSettingsParent">Nadřazená stránka</label>
+                    <select id="pageSettingsParent" class="form-select">
+                        <option value="">-- Žádná (root stránka) --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Metadata</label>
+                    <div class="metadata-info">
+                        <span>Vytvořeno: <strong id="pageCreatedAt">-</strong></span>
+                        <span>Upraveno: <strong id="pageUpdatedAt">-</strong></span>
+                        <span>Počet slov: <strong id="pageWordCount">0</strong></span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close="pageSettingsModal">Zrušit</button>
+                <button class="btn btn-primary" id="savePageSettingsBtn">Uložit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>⚙️ Nastavení</h2>
+                <button class="modal-close" data-close="settingsModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h3>Editor</h3>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="settingAutoSave" checked>
+                            <span>Automatické ukládání (každých 30s)</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="settingSpellcheck">
+                            <span>Kontrola pravopisu</span>
+                        </label>
+                    </div>
+                    <div class="form-group">
+                        <label for="settingFontSize">Velikost písma editoru</label>
+                        <select id="settingFontSize" class="form-select">
+                            <option value="14">Malá (14px)</option>
+                            <option value="16" selected>Střední (16px)</option>
+                            <option value="18">Velká (18px)</option>
+                            <option value="20">Extra velká (20px)</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>Data</h3>
+                    <div class="form-group">
+                        <label>Úložiště</label>
+                        <div class="storage-info" id="storageInfo">
+                            <span>Prostory: <strong id="storageSpaces">0</strong></span>
+                            <span>Stránky: <strong id="storagePages">0</strong></span>
+                            <span>Velikost: <strong id="storageSize">0 KB</strong></span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-danger" id="clearAllDataBtn">
+                            🗑️ Smazat všechna data
+                        </button>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h3>O aplikaci</h3>
+                    <div class="about-info">
+                        <p><strong>Scribblix</strong> v1.0.0</p>
+                        <p>100% offline dokumentační platforma</p>
+                        <p>Inspirováno: GitBook</p>
+                        <p class="about-license">
+                            Knihovny: Dexie.js (Apache 2.0), Marked.js (MIT),
+                            DOMPurify (Apache 2.0/MIT), FlexSearch (Apache 2.0)
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close="settingsModal">Zavřít</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal-overlay" id="exportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📤 Export</h2>
+                <button class="modal-close" data-close="exportModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="export-options">
+                    <h3>Co exportovat?</h3>
+                    <div class="form-group">
+                        <label class="radio-label">
+                            <input type="radio" name="exportScope" value="all" checked>
+                            <span>Všechna data</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="exportScope" value="space">
+                            <span>Aktuální prostor</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="exportScope" value="page">
+                            <span>Aktuální stránka</span>
+                        </label>
+                    </div>
+                    <h3>Formát</h3>
+                    <div class="form-group">
+                        <label class="radio-label">
+                            <input type="radio" name="exportFormat" value="json" checked>
+                            <span>JSON (kompletní záloha)</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="exportFormat" value="markdown">
+                            <span>Markdown soubory</span>
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="exportFormat" value="html">
+                            <span>HTML (statické stránky)</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close="exportModal">Zrušit</button>
+                <button class="btn btn-primary" id="doExportBtn">📤 Exportovat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📥 Import</h2>
+                <button class="modal-close" data-close="importModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="import-drop-zone" id="importDropZone">
+                    <div class="drop-zone-content">
+                        <span class="drop-icon">📁</span>
+                        <p>Přetáhněte sem soubor</p>
+                        <p class="drop-hint">nebo klikněte pro výběr</p>
+                        <input type="file" id="importFileInput" accept=".json,.md,.zip" hidden>
+                    </div>
+                </div>
+                <div class="import-info">
+                    <p>Podporované formáty:</p>
+                    <ul>
+                        <li><strong>.json</strong> - Scribblix záloha</li>
+                        <li><strong>.md</strong> - Markdown soubor</li>
+                        <li><strong>.zip</strong> - Složka s Markdown soubory</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close="importModal">Zrušit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay" id="deleteModal">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h2>🗑️ Potvrzení smazání</h2>
+                <button class="modal-close" data-close="deleteModal">×</button>
+            </div>
+            <div class="modal-body">
+                <p class="delete-warning" id="deleteWarning">
+                    Opravdu chcete smazat tuto položku?
+                </p>
+                <p class="delete-hint">Tato akce je nevratná!</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close="deleteModal">Zrušit</button>
+                <button class="btn btn-danger" id="confirmDeleteBtn">Smazat</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="db.js?v=1.0.2"></script>
+    <script src="search.js?v=1.0.2"></script>
+    <script src="editor.js?v=1.0.2"></script>
+    <script src="export.js?v=1.0.2"></script>
+    <script src="app.js?v=1.0.2"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('Service Worker registrován:', reg.scope))
+                    .catch(err => console.error('Registrace Service Worker selhala:', err));
+            });
+        }
+    </script>
+</body>
+</html>

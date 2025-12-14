@@ -10,7 +10,7 @@ projects/
 ├── chat-panel/              # 💬 Multistream chat pro Twitch, Kick, YouTube
 ├── pdf-editor/              # ✏️ PDF editor, podpisy, komprese
 ├── pdf-merge/               # 📄 Sloučení PDF souborů
-├── mindhub/                 # 🧠 Správa úkolů a projektů
+├── goalix/                  # 🧠 Správa úkolů a projektů
 ├── spinning-wheel-giveaway/ # 🎡 Losovací kolo pro streamy
 ├── resignation-bets/        # 🎰 Casino sázková hra
 ├── ai-prompting/            # 🤖 AI prompt formátovač
@@ -25,7 +25,7 @@ projects/
 | chat-panel | ✅ Hotovo | Frontend + WebSocket backend server |
 | pdf-editor | ✅ Hotovo | Editor, podpisy, komprese, správa stránek |
 | pdf-merge | ✅ Hotovo | Sloučení více PDF do jednoho |
-| mindhub | ✅ Hotovo | Task management s localStorage |
+| goalix | ✅ Hotovo | Task management s localStorage |
 | spinning-wheel-giveaway | ✅ Hotovo | Losovací kolo pro giveaway |
 | resignation-bets | ✅ Hotovo | Casino hra s IndexedDB |
 | ai-prompting | ✅ Hotovo | Prompt formatter pro AI |
@@ -108,7 +108,7 @@ Každý projekt má vlastní README s podrobnou dokumentací:
 - [Chat Panel](chat-panel/README.md)
 - [PDF Editor](pdf-editor/README.md)
 - [PDF Merge](pdf-merge/README.md)
-- [MindHub](mindhub/README.md)
+- [Goalix](goalix/README.md)
 - [Resignation Bets](resignation-bets/README.md)
 
 

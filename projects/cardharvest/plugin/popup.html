@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CardHarvest - AdHUB</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #121218 100%);
+            color: #ffffff;
+            min-width: 320px;
+            padding: 16px;
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #2a2a3a;
+        }
+
+        .logo-icon {
+            font-size: 1.5rem;
+        }
+
+        .logo-text {
+            font-size: 1.1rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #8b5cf6, #2a475e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .version {
+            margin-left: auto;
+            font-size: 0.7rem;
+            color: #6b6b7d;
+            padding: 2px 8px;
+            background: #1a1a24;
+            border-radius: 10px;
+        }
+
+        .status {
+            padding: 12px;
+            background: #161620;
+            border: 1px solid #2a2a3a;
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .status-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.connected {
+            background: #10b981;
+            box-shadow: 0 0 6px #10b981;
+        }
+
+        .status-dot.disconnected {
+            background: #ef4444;
+            box-shadow: 0 0 6px #ef4444;
+        }
+
+        .status-dot.loading {
+            background: #f59e0b;
+            box-shadow: 0 0 6px #f59e0b;
+            animation: pulse 1s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-label {
+            color: #a0a0b0;
+            font-size: 0.85rem;
+        }
+
+        .status-value {
+            margin-left: auto;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .farming-info {
+            padding: 12px;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), #161620);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+
+        .farming-count {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #10b981;
+        }
+
+        .farming-label {
+            font-size: 0.8rem;
+            color: #a0a0b0;
+        }
+
+        .btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            color: white;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+        }
+
+        .footer {
+            margin-top: 12px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: #6b6b7d;
+        }
+
+        .footer a {
+            color: #8b5cf6;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .install-section {
+            display: none;
+            padding: 12px;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), #161620);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 10px;
+            margin-bottom: 12px;
+        }
+
+        .install-section.show {
+            display: block;
+        }
+
+        .install-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #f59e0b;
+            margin-bottom: 8px;
+        }
+
+        .install-desc {
+            font-size: 0.8rem;
+            color: #a0a0b0;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+
+        .btn-install {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-install:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span class="logo-icon">🎮</span>
+        <span class="logo-text">CardHarvest</span>
+        <span class="version">v2.0</span>
+    </div>
+
+    <div class="install-section" id="installSection">
+        <div class="install-title">CardHarvest Service není spuštěn</div>
+        <div class="install-desc">
+            Pro fungování je potřeba stáhnout a spustit CardHarvest Service.
+            Klikni pro otevření stránky s návodem a stažením.
+        </div>
+        <button class="btn btn-install" id="installBtn">
+            <span>📥</span>
+            <span>Stáhnout Service</span>
+        </button>
+    </div>
+
+    <div class="status">
+        <div class="status-row">
+            <span class="status-dot loading" id="serviceDot"></span>
+            <span class="status-label">Service:</span>
+            <span class="status-value" id="serviceStatus">Kontroluji...</span>
+        </div>
+        <div class="status-row">
+            <span class="status-dot" id="steamDot"></span>
+            <span class="status-label">Steam:</span>
+            <span class="status-value" id="steamStatus">-</span>
+        </div>
+    </div>
+
+    <div class="farming-info" id="farmingInfo" style="display: none;">
+        <span class="farming-count" id="farmingCount">0</span>
+        <span class="farming-label"> her aktivně farmí</span>
+    </div>
+
+    <a href="#" id="openBtn" class="btn btn-primary">
+        <span>🚀</span>
+        <span>Otevřít CardHarvest</span>
+    </a>
+
+    <div class="footer">
+        Součást <a href="https://deerpfy.github.io/adhub/" target="_blank">AdHUB</a> projektu
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{
+    "manifest_version": 3,
+    "name": "CardHarvest - AdHUB",
+    "version": "2.0.0",
+    "description": "Farming Steam hodin a trading cards. Součást AdHUB projektu. (WebSocket verze - bez nutnosti Native Host registrace)",
+    "author": "Deerpfy",
+
+    "permissions": [
+        "storage"
+    ],
+
+    "host_permissions": [
+        "*://deerpfy.github.io/*",
+        "http://localhost/*",
+        "http://127.0.0.1/*",
+        "file:///*"
+    ],
+
+    "background": {
+        "service_worker": "background.js"
+    },
+
+    "content_scripts": [
+        {
+            "matches": [
+                "*://deerpfy.github.io/adhub/projects/cardharvest/*",
+                "http://localhost/*/projects/cardharvest/*",
+                "http://127.0.0.1/*/projects/cardharvest/*",
+                "file:///*cardharvest*"
+            ],
+            "js": ["content.js"],
+            "run_at": "document_end"
+        }
+    ],
+
+    "action": {
+        "default_popup": "popup.html",
+        "default_icon": "icons/icon.svg",
+        "default_title": "CardHarvest"
+    },
+
+    "icons": {
+        "128": "icons/icon.svg"
+    }
+}

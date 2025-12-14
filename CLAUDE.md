@@ -17,8 +17,11 @@ adhub/
     ├── chat-panel/         # Multistream chat
     ├── pdf-editor/         # PDF editor
     ├── pdf-merge/          # PDF spojovac
-    ├── mindhub/            # Task manager
-    ├── steam-farm/         # Steam hours & cards farming
+    ├── goalix/             # Task manager (dříve MindHub)
+    ├── cardharvest/        # Steam hours & cards farming (dříve Steam Farm)
+    ├── scribblix/          # Offline dokumentace (dříve DocBook)
+    ├── paintnook/          # Digitální malba (dříve Paint Studio)
+    ├── slidersnap/         # Before/after porovnání (dříve Juxtapose)
     ├── spinning-wheel-giveaway/
     ├── resignation-bets/
     ├── ai-prompting/
@@ -68,13 +71,13 @@ adhub/
 
 **Knihovny:** pdf-lib, pdf.js
 
-### MindHub (`projects/mindhub/`)
+### Goalix (`projects/goalix/`)
 
-**Typ:** SPA task manager
+**Typ:** SPA task manager (dříve MindHub)
 
 **Uloziste:** 100% localStorage
 
-### Steam Farm (`projects/steam-farm/`)
+### CardHarvest (`projects/cardharvest/`)
 
 **Typ:** Chrome Extension + Native Host (Node.js) + Web UI
 
@@ -82,11 +85,11 @@ adhub/
 - `index.html` - Web UI pro ovladani farmingu
 - `script.js` - Frontend logika
 - `styles.css` - Styly v AdHUB designu
-- `plugin/manifest.json` - Extension manifest v1.0.0
+- `plugin/manifest.json` - Extension manifest v2.0.0
 - `plugin/background.js` - Service worker, Native Messaging
 - `plugin/content.js` - Bridge mezi webem a extension
 - `plugin/popup.html` + `popup.js` - Popup rozsirenni
-- `native-host/steam-farm-host.js` - Node.js host pro steam-user
+- `native-host/cardharvest-host.js` - Node.js host pro steam-user
 - `native-host/package.json` - NPM dependencies (steam-user, steam-totp)
 - `native-host/install.bat` + `install.sh` - Instalacni skripty
 
@@ -111,7 +114,7 @@ background.js (chrome.runtime.sendMessage)
 Native Messaging (chrome.runtime.connectNative)
      |
      v
-steam-farm-host.js (Node.js)
+cardharvest-host.js (Node.js)
      |
      v
 steam-user knihovna

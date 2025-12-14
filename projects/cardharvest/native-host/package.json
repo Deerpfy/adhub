@@ -1,0 +1,36 @@
+{
+    "name": "adhub-cardharvest-service",
+    "version": "2.0.0",
+    "description": "WebSocket Service pro CardHarvest - AdHUB (no Extension ID required)",
+    "main": "cardharvest-service.js",
+    "bin": {
+        "cardharvest-service": "cardharvest-service.js",
+        "cardharvest-host": "cardharvest-host.js"
+    },
+    "scripts": {
+        "start": "node cardharvest-service.js",
+        "start:legacy": "node cardharvest-host.js",
+        "build": "npm run build:win && npm run build:linux && npm run build:mac",
+        "build:win": "pkg cardharvest-service.js --targets node18-win-x64 --output dist/cardharvest-service-win.exe",
+        "build:linux": "pkg cardharvest-service.js --targets node18-linux-x64 --output dist/cardharvest-service-linux",
+        "build:mac": "pkg cardharvest-service.js --targets node18-macos-x64 --output dist/cardharvest-service-macos"
+    },
+    "pkg": {
+        "assets": [],
+        "outputPath": "dist"
+    },
+    "dependencies": {
+        "steam-user": "^5.0.10",
+        "steam-totp": "^2.1.2",
+        "argon2": "^0.31.2",
+        "ws": "^8.14.2"
+    },
+    "devDependencies": {
+        "pkg": "^5.8.1"
+    },
+    "author": "Deerpfy",
+    "license": "MIT",
+    "engines": {
+        "node": ">=18.0.0"
+    }
+}
