@@ -1018,6 +1018,55 @@ body::before {
     border-top: 1px solid var(--border-color);
 }
 
+/* Download Modal */
+.modal-description {
+    color: var(--text-muted);
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+}
+
+.format-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.format-btn {
+    flex: 1;
+    min-width: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 16px 12px;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.format-btn:hover {
+    border-color: var(--primary-color);
+    background: var(--bg-hover);
+    transform: translateY(-2px);
+}
+
+.format-btn:active {
+    transform: translateY(0);
+}
+
+.format-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.format-desc {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
 /* GIF Preview */
 .gif-preview {
     background: var(--bg-tertiary);
