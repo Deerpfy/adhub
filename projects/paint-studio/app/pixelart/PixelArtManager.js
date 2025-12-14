@@ -1200,7 +1200,9 @@ export class PixelArtManager {
                     this.colorHistory = settings.colorHistory;
                 }
 
-                this.enabled = settings.enabled || false;
+                // Note: Don't restore 'enabled' state from storage
+                // Always start with pixel art mode disabled to avoid UI desync
+                // User can manually enable it if needed
             }
         } catch (e) {
             console.warn('Failed to load pixel art settings:', e);

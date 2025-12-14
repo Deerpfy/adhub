@@ -6,14 +6,14 @@ export class ColorPicker {
     constructor(app) {
         this.app = app;
 
-        // Colors
-        this.primaryColor = '#ffffff';
-        this.secondaryColor = '#000000';
+        // Colors - default to black primary (more common for drawing)
+        this.primaryColor = '#000000';
+        this.secondaryColor = '#ffffff';
 
-        // HSV values for picker
+        // HSV values for picker (matches black default)
         this.hue = 0;
         this.saturation = 0;
-        this.value = 100;
+        this.value = 0;
 
         // DOM elements
         this.gradient = null;
