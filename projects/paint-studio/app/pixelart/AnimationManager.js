@@ -593,8 +593,8 @@ export class AnimationManager {
         // Save current state
         this.saveCurrentFrameState();
 
-        // Dynamically import gif.js
-        const GIF = await this.loadGifJs();
+        // Dynamically import gif.js and get worker blob URL
+        const { GIF, workerUrl } = await this.loadGifJs();
 
         const width = Math.floor(this.app.canvas.width * scale);
         const height = Math.floor(this.app.canvas.height * scale);
@@ -604,7 +604,7 @@ export class AnimationManager {
             quality: quality,
             width: width,
             height: height,
-            workerScript: 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js',
+            workerScript: workerUrl,
             transparent: transparent ? 0x00FF00 : null,
             repeat: loop ? 0 : -1
         });
@@ -857,21 +857,36 @@ export class AnimationManager {
      * Load GIF.js library dynamically from CDN
      */
     async loadGifJs() {
-        if (window.GIF) return window.GIF;
+        if (window.GIF && this._gifWorkerBlobUrl) {
+            return { GIF: window.GIF, workerUrl: this._gifWorkerBlobUrl };
+        }
 
-        return new Promise((resolve, reject) => {
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js';
-            script.onload = () => {
-                if (window.GIF) {
-                    resolve(window.GIF);
-                } else {
-                    reject(new Error('GIF.js loaded but GIF constructor not found'));
-                }
-            };
-            script.onerror = () => reject(new Error('Failed to load GIF.js from CDN'));
-            document.head.appendChild(script);
-        });
+        // Load main GIF.js script
+        if (!window.GIF) {
+            await new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js';
+                script.onload = () => {
+                    if (window.GIF) {
+                        resolve();
+                    } else {
+                        reject(new Error('GIF.js loaded but GIF constructor not found'));
+                    }
+                };
+                script.onerror = () => reject(new Error('Failed to load GIF.js from CDN'));
+                document.head.appendChild(script);
+            });
+        }
+
+        // Fetch worker script and create blob URL (required for cross-origin)
+        if (!this._gifWorkerBlobUrl) {
+            const response = await fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js');
+            const workerCode = await response.text();
+            const blob = new Blob([workerCode], { type: 'application/javascript' });
+            this._gifWorkerBlobUrl = URL.createObjectURL(blob);
+        }
+
+        return { GIF: window.GIF, workerUrl: this._gifWorkerBlobUrl };
     }
 
     // ==========================================
