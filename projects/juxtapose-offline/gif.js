@@ -3,7 +3,7 @@
  * Based on gif.js library (MIT License)
  * https://github.com/jnordberg/gif.js
  *
- * Simplified version for Juxtapose Offline
+ * Enhanced version with global palette support for Juxtapose Offline
  */
 
 (function(root) {
@@ -19,7 +19,8 @@
             workerScript: 'gif.worker.js',
             repeat: 0,
             background: '#fff',
-            transparent: null
+            transparent: null,
+            globalPalette: true  // Use global palette for consistent colors
         }, options);
 
         this.frames = [];
@@ -109,14 +110,20 @@
                 throw new Error('No frames to encode');
             }
 
-            console.log('[GIF Debug] Starting GIF generation');
-            console.log('[GIF Debug] Options:', this.options);
-            console.log('[GIF Debug] Frame count:', this.frames.length);
+            console.log('[GIF] Starting GIF generation with', this.frames.length, 'frames');
 
             var encoder = new GIFEncoder(this.options.width, this.options.height);
 
             encoder.setRepeat(this.options.repeat);
             encoder.setQuality(this.options.quality);
+
+            // Build global palette from sampled frames
+            if (this.options.globalPalette) {
+                console.log('[GIF] Building global palette...');
+                var globalPalette = this._buildGlobalPalette();
+                encoder.setGlobalPalette(globalPalette);
+            }
+
             encoder.start();
 
             var totalFrames = this.frames.length;
@@ -125,10 +132,6 @@
                 if (!frame.data || !frame.data.data) {
                     throw new Error('Invalid frame data at index ' + index);
                 }
-
-                console.log('[GIF Debug] Frame', index, '- dimensions:', frame.data.width, 'x', frame.data.height);
-                console.log('[GIF Debug] Frame', index, '- data length:', frame.data.data.length);
-                console.log('[GIF Debug] Frame', index, '- first 16 bytes:', Array.from(frame.data.data.slice(0, 16)));
 
                 encoder.setDelay(frame.delay);
                 encoder.addFrame(frame.data.data);
@@ -139,19 +142,103 @@
             encoder.finish();
 
             var binary = encoder.stream().getData();
-            console.log('[GIF Debug] Output size:', binary.length, 'bytes');
-            console.log('[GIF Debug] GIF header:', binary.slice(0, 6).map(b => String.fromCharCode(b)).join(''));
+            console.log('[GIF] Output size:', Math.round(binary.length / 1024), 'KB');
 
             var blob = new Blob([new Uint8Array(binary)], { type: 'image/gif' });
 
             self.emit('finished', blob);
         } catch (err) {
-            console.error('[GIF Debug] Error:', err);
+            console.error('[GIF] Error:', err);
             self.emit('error', err);
         } finally {
             self.running = false;
         }
     };
+
+    // Build global palette from all frames
+    GIF.prototype._buildGlobalPalette = function() {
+        var sampleSize = Math.min(3, this.frames.length); // Sample up to 3 frames
+        var sampleIndices = [];
+
+        // Select frames to sample (first, middle, last)
+        if (this.frames.length <= 3) {
+            for (var i = 0; i < this.frames.length; i++) {
+                sampleIndices.push(i);
+            }
+        } else {
+            sampleIndices.push(0);
+            sampleIndices.push(Math.floor(this.frames.length / 2));
+            sampleIndices.push(this.frames.length - 1);
+        }
+
+        // Combine pixel data from sampled frames
+        var totalPixels = 0;
+        for (var i = 0; i < sampleIndices.length; i++) {
+            totalPixels += this.frames[sampleIndices[i]].data.data.length / 4;
+        }
+
+        var combinedPixels = new Uint8Array(totalPixels * 3);
+        var offset = 0;
+
+        for (var i = 0; i < sampleIndices.length; i++) {
+            var frameData = this.frames[sampleIndices[i]].data.data;
+            for (var j = 0; j < frameData.length; j += 4) {
+                combinedPixels[offset++] = frameData[j];     // R
+                combinedPixels[offset++] = frameData[j + 1]; // G
+                combinedPixels[offset++] = frameData[j + 2]; // B
+            }
+        }
+
+        // Run NeuQuant on combined data
+        var nq = new NeuQuant(combinedPixels, this.options.quality);
+
+        return {
+            colorTab: nq.colorMap(),
+            neuquant: nq
+        };
+    };
+
+    // Median Cut Color Quantization (alternative to NeuQuant)
+    function MedianCut(pixels, numColors) {
+        numColors = numColors || 256;
+
+        // Build initial color cube
+        var colors = [];
+        for (var i = 0; i < pixels.length; i += 3) {
+            colors.push([pixels[i], pixels[i + 1], pixels[i + 2]]);
+        }
+
+        // Simple quantization using color frequency
+        var colorMap = {};
+        for (var i = 0; i < colors.length; i++) {
+            var key = (colors[i][0] >> 4) + ',' + (colors[i][1] >> 4) + ',' + (colors[i][2] >> 4);
+            if (!colorMap[key]) {
+                colorMap[key] = { r: 0, g: 0, b: 0, count: 0 };
+            }
+            colorMap[key].r += colors[i][0];
+            colorMap[key].g += colors[i][1];
+            colorMap[key].b += colors[i][2];
+            colorMap[key].count++;
+        }
+
+        // Sort by frequency and take top colors
+        var sorted = Object.values(colorMap).sort((a, b) => b.count - a.count);
+        var palette = [];
+
+        for (var i = 0; i < Math.min(numColors, sorted.length); i++) {
+            var c = sorted[i];
+            palette.push(Math.round(c.r / c.count));
+            palette.push(Math.round(c.g / c.count));
+            palette.push(Math.round(c.b / c.count));
+        }
+
+        // Pad to 256 colors
+        while (palette.length < 768) {
+            palette.push(0);
+        }
+
+        return palette;
+    }
 
     // NeuQuant Neural-Net Quantization Algorithm
     function NeuQuant(pixels, samplefac) {
@@ -445,11 +532,9 @@
             var k = 0;
             for (var i = 0; i < netsize; i++) {
                 var j = index[i];
-                // NeuQuant internally uses BGR naming but we pass RGB,
-                // so network[j][0] is actually R, [1] is G, [2] is B
-                map[k++] = network[j][0];  // R
-                map[k++] = network[j][1];  // G
-                map[k++] = network[j][2];  // B
+                map[k++] = network[j][0];
+                map[k++] = network[j][1];
+                map[k++] = network[j][2];
             }
             return map;
         }
@@ -657,11 +742,12 @@
         };
     }
 
-    // GIF Encoder
+    // GIF Encoder with Global Palette Support
     function GIFEncoder(width, height) {
         var out = [];
         var image = null;
-        var colorTab = null;
+        var globalColorTab = null;
+        var globalNeuquant = null;
         var colorDepth = 8;
         var palSize = 7;
         var dispose = -1;
@@ -669,6 +755,15 @@
         var firstFrame = true;
         var sample = 10;
         var delay = 0;
+        var useGlobalPalette = false;
+
+        function setGlobalPalette(paletteData) {
+            if (paletteData) {
+                globalColorTab = paletteData.colorTab;
+                globalNeuquant = paletteData.neuquant;
+                useGlobalPalette = true;
+            }
+        }
 
         function analyze() {
             var len = image.length;
@@ -676,41 +771,37 @@
             var pixels = new Uint8Array(nPix * 3);
             var count = 0;
 
-            console.log('[GIF Debug] analyze() - image length:', len, 'pixels:', nPix);
-            console.log('[GIF Debug] analyze() - first 16 RGBA bytes:', Array.from(image.slice(0, 16)));
-
-            // Extract RGB from RGBA (ignore alpha)
+            // Extract RGB from RGBA
             for (var i = 0; i < len; i += 4) {
-                pixels[count++] = image[i];      // R
-                pixels[count++] = image[i + 1];  // G
-                pixels[count++] = image[i + 2];  // B
+                pixels[count++] = image[i];
+                pixels[count++] = image[i + 1];
+                pixels[count++] = image[i + 2];
             }
 
-            console.log('[GIF Debug] analyze() - first 12 RGB bytes:', Array.from(pixels.slice(0, 12)));
+            var colorTab, nq;
 
-            var nq = NeuQuant(pixels, sample);
-            colorTab = nq.colorMap();
+            if (useGlobalPalette && globalNeuquant) {
+                // Use global palette
+                colorTab = globalColorTab;
+                nq = globalNeuquant;
+            } else {
+                // Create local palette
+                nq = new NeuQuant(pixels, sample);
+                colorTab = nq.colorMap();
+            }
 
-            console.log('[GIF Debug] analyze() - colorTab length:', colorTab.length);
-            console.log('[GIF Debug] analyze() - first 12 palette bytes (4 colors):', colorTab.slice(0, 12));
-
+            // Map pixels to palette indices
             var indexedPixels = new Uint8Array(nPix);
             for (var i = 0, j = 0; i < nPix; i++, j += 3) {
                 var index = nq.map(
-                    pixels[j] & 0xff,      // R (NeuQuant sees as B)
-                    pixels[j + 1] & 0xff,  // G
-                    pixels[j + 2] & 0xff   // B (NeuQuant sees as R)
+                    pixels[j] & 0xff,
+                    pixels[j + 1] & 0xff,
+                    pixels[j + 2] & 0xff
                 );
                 indexedPixels[i] = index;
             }
 
-            console.log('[GIF Debug] analyze() - first 16 indexed pixels:', Array.from(indexedPixels.slice(0, 16)));
-
-            // Check if all indexed pixels are the same (indicates a problem)
-            var uniqueIndices = new Set(indexedPixels);
-            console.log('[GIF Debug] analyze() - unique color indices used:', uniqueIndices.size);
-
-            return indexedPixels;
+            return { indexedPixels: indexedPixels, colorTab: colorTab };
         }
 
         function start() {
@@ -736,29 +827,54 @@
 
         function addFrame(imageData) {
             image = imageData;
-            var indexedPixels = analyze();
+            var result = analyze();
+            var indexedPixels = result.indexedPixels;
+            var colorTab = result.colorTab;
 
             if (firstFrame) {
-                writeLSD();
+                if (useGlobalPalette) {
+                    writeLSDWithGCT();
+                    writeGlobalPalette();
+                } else {
+                    writeLSD();
+                }
                 writeNetscapeExt();
                 firstFrame = false;
             }
 
             writeGraphicCtrlExt();
-            writeImageDesc();
-            writePalette();
+
+            if (useGlobalPalette) {
+                writeImageDescNoLCT();
+            } else {
+                writeImageDesc();
+                writePalette(colorTab);
+            }
+
             writePixels(indexedPixels);
         }
 
         function writeLSD() {
             writeShort(width);
             writeShort(height);
-            // Packed field: No global color table (0x00), color resolution 8 bits (0x70)
-            out.push(
-                0x70,  // No global color table, 8-bit color resolution
-                0,     // Background color index
-                0      // Pixel aspect ratio
-            );
+            out.push(0x70, 0, 0); // No GCT
+        }
+
+        function writeLSDWithGCT() {
+            writeShort(width);
+            writeShort(height);
+            // Packed: GCT flag (1), color resolution (7), sort (0), GCT size (7 = 256 colors)
+            out.push(0xF7, 0, 0);
+        }
+
+        function writeGlobalPalette() {
+            for (var i = 0; i < globalColorTab.length; i++) {
+                out.push(globalColorTab[i]);
+            }
+            var n = (3 * 256) - globalColorTab.length;
+            for (var i = 0; i < n; i++) {
+                out.push(0);
+            }
         }
 
         function writeNetscapeExt() {
@@ -782,10 +898,19 @@
             writeShort(0);
             writeShort(width);
             writeShort(height);
-            out.push(0x80 | palSize);
+            out.push(0x80 | palSize); // LCT flag
         }
 
-        function writePalette() {
+        function writeImageDescNoLCT() {
+            out.push(0x2C);
+            writeShort(0);
+            writeShort(0);
+            writeShort(width);
+            writeShort(height);
+            out.push(0x00); // No LCT, use GCT
+        }
+
+        function writePalette(colorTab) {
             for (var i = 0; i < colorTab.length; i++) {
                 out.push(colorTab[i]);
             }
@@ -827,6 +952,7 @@
             setRepeat: setRepeat,
             setDelay: setDelay,
             setQuality: setQuality,
+            setGlobalPalette: setGlobalPalette,
             addFrame: addFrame,
             stream: stream
         };
