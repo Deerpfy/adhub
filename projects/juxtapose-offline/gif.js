@@ -177,7 +177,7 @@
 
         var thepicture;
         var lengthcount;
-        var samplefac;
+        var sampleFactor;
 
         var network;
         var netindex;
@@ -304,10 +304,10 @@
 
         function learn() {
             if (lengthcount < minpicturebytes) {
-                samplefac = 1;
+                sampleFactor = 1;
             }
-            alphadec = 30 + ((samplefac - 1) / 3);
-            var samplepixels = lengthcount / (3 * samplefac);
+            alphadec = 30 + ((sampleFactor - 1) / 3);
+            var samplepixels = lengthcount / (3 * sampleFactor);
             var delta = ~~(samplepixels / ncycles);
             var alpha = initalpha;
             var radius = initradius;
@@ -441,7 +441,7 @@
 
         thepicture = pixels;
         lengthcount = pixels.length;
-        samplefac = samplefac;
+        sampleFactor = samplefac;
 
         init();
         process();
@@ -723,10 +723,11 @@
         function writeLSD() {
             writeShort(width);
             writeShort(height);
+            // Packed field: No global color table (0x00), color resolution 8 bits (0x70)
             out.push(
-                0x80 | palSize,
-                0,
-                0
+                0x70,  // No global color table, 8-bit color resolution
+                0,     // Background color index
+                0      // Pixel aspect ratio
             );
         }
 
