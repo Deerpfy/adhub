@@ -604,7 +604,7 @@ export class AnimationManager {
             quality: quality,
             width: width,
             height: height,
-            workerScript: 'libs/gif.worker.js',
+            workerScript: 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js',
             transparent: transparent ? 0x00FF00 : null,
             repeat: loop ? 0 : -1
         });
@@ -854,16 +854,22 @@ export class AnimationManager {
     }
 
     /**
-     * Load GIF.js library dynamically
+     * Load GIF.js library dynamically from CDN
      */
     async loadGifJs() {
         if (window.GIF) return window.GIF;
 
         return new Promise((resolve, reject) => {
             const script = document.createElement('script');
-            script.src = 'libs/gif.js';
-            script.onload = () => resolve(window.GIF);
-            script.onerror = () => reject(new Error('Failed to load GIF.js'));
+            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js';
+            script.onload = () => {
+                if (window.GIF) {
+                    resolve(window.GIF);
+                } else {
+                    reject(new Error('GIF.js loaded but GIF constructor not found'));
+                }
+            };
+            script.onerror = () => reject(new Error('Failed to load GIF.js from CDN'));
             document.head.appendChild(script);
         });
     }
