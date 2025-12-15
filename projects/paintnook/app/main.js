@@ -73,9 +73,14 @@ async function handleProjectCreate(config) {
             // Use UI controller to properly enable pixel art mode (updates both manager and UI)
             window.paintApp.ui.pixelArtUI.togglePixelArtMode(true);
 
+            // First update grid options based on new canvas dimensions
+            window.paintApp.ui.pixelArtUI.updateGridSizeOptions();
+
+            // Then set grid size from config
             if (config.gridSize) {
                 window.paintApp.pixelArt.setGridSize(config.gridSize);
-                // Sync UI dropdown
+                window.paintApp.pixelArt.grid.size = config.gridSize;
+                // Sync UI dropdown after options are updated
                 const gridSizeSelect = document.getElementById('gridSize');
                 if (gridSizeSelect) {
                     gridSizeSelect.value = config.gridSize.toString();
@@ -93,7 +98,7 @@ async function handleProjectCreate(config) {
                 gridColorInput.value = gridColor;
             }
 
-            // Refresh grid overlay
+            // Refresh grid overlay with new settings
             window.paintApp.ui.pixelArtUI.updateGridOverlay();
 
             // Save settings to override any previously loaded values
