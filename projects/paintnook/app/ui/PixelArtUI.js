@@ -19,6 +19,36 @@ export class PixelArtUI {
         this.cacheElements();
         this.bindEvents();
         this.loadDefaultPalette();
+        // Sync UI with backend state after a short delay (to allow settings to load)
+        setTimeout(() => this.syncUIFromManager(), 100);
+    }
+
+    /**
+     * Sync UI elements from PixelArtManager state
+     */
+    syncUIFromManager() {
+        const pixelArt = this.app.pixelArt;
+        if (!pixelArt) return;
+
+        // Grid settings
+        if (this.elements.gridEnabled) {
+            this.elements.gridEnabled.checked = pixelArt.grid.enabled;
+        }
+        if (this.elements.gridSize) {
+            this.elements.gridSize.value = pixelArt.grid.size.toString();
+        }
+        if (this.elements.gridColor) {
+            this.elements.gridColor.value = pixelArt.grid.color;
+        }
+        if (this.elements.gridOpacity) {
+            this.elements.gridOpacity.value = Math.round(pixelArt.grid.opacity * 100);
+            if (this.elements.gridOpacityValue) {
+                this.elements.gridOpacityValue.textContent = Math.round(pixelArt.grid.opacity * 100) + '%';
+            }
+        }
+        if (this.elements.snapToGrid) {
+            this.elements.snapToGrid.checked = pixelArt.snap.toGrid;
+        }
     }
 
     /**
@@ -36,7 +66,6 @@ export class PixelArtUI {
         // Grid settings
         this.elements.gridEnabled = document.getElementById('gridEnabled');
         this.elements.gridSize = document.getElementById('gridSize');
-        this.elements.gridSizeInput = document.getElementById('gridSizeInput');
         this.elements.gridColor = document.getElementById('gridColor');
         this.elements.gridOpacity = document.getElementById('gridOpacity');
         this.elements.gridOpacityValue = document.getElementById('gridOpacityValue');
@@ -116,15 +145,10 @@ export class PixelArtUI {
             this.updateGridOverlay();
         });
 
-        const syncGridSize = (value) => {
-            this.app.pixelArt.grid.size = parseInt(value);
-            this.elements.gridSize.value = value;
-            this.elements.gridSizeInput.value = value;
+        this.elements.gridSize?.addEventListener('change', (e) => {
+            this.app.pixelArt.grid.size = parseInt(e.target.value);
             this.updateGridOverlay();
-        };
-
-        this.elements.gridSize?.addEventListener('input', (e) => syncGridSize(e.target.value));
-        this.elements.gridSizeInput?.addEventListener('change', (e) => syncGridSize(e.target.value));
+        });
 
         this.elements.gridColor?.addEventListener('input', (e) => {
             this.app.pixelArt.grid.color = e.target.value;

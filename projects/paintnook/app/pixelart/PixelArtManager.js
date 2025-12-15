@@ -13,7 +13,7 @@ export class PixelArtManager {
         // Grid settings
         this.grid = {
             enabled: true,
-            size: 1,           // Grid cell size in pixels
+            size: 16,          // Grid cell size in pixels (power of 2: 1,2,4,8,16,32,64)
             color: '#333333',
             opacity: 0.3,
             subdivisions: 8,   // Major grid lines every N cells
@@ -191,10 +191,16 @@ export class PixelArtManager {
     }
 
     /**
-     * Set grid size
+     * Set grid size (power of 2 values only: 1, 2, 4, 8, 16, 32, 64)
      */
     setGridSize(size) {
-        this.grid.size = Math.max(1, Math.min(64, size));
+        // Valid power of 2 values
+        const validSizes = [1, 2, 4, 8, 16, 32, 64];
+        // Find nearest valid size
+        const nearestSize = validSizes.reduce((prev, curr) =>
+            Math.abs(curr - size) < Math.abs(prev - size) ? curr : prev
+        );
+        this.grid.size = nearestSize;
         this.app.canvas.render();
         this.saveSettings();
     }
