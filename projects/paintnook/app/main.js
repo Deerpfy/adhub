@@ -79,14 +79,17 @@ async function handleProjectCreate(config) {
             // First update grid options based on new canvas dimensions
             window.paintApp.ui.pixelArtUI.updateGridSizeOptions();
 
-            // Then set grid size from config
+            // Then set grid size from config (validated against max allowed)
             if (config.gridSize) {
-                window.paintApp.pixelArt.setGridSize(config.gridSize);
-                window.paintApp.pixelArt.grid.size = config.gridSize;
+                const maxAllowed = window.paintApp.ui.pixelArtUI.getMaxGridSize();
+                const validGridSize = Math.min(config.gridSize, maxAllowed);
+
+                window.paintApp.pixelArt.setGridSize(validGridSize);
+                window.paintApp.pixelArt.grid.size = validGridSize;
                 // Sync UI dropdown after options are updated
                 const gridSizeSelect = document.getElementById('gridSize');
                 if (gridSizeSelect) {
-                    gridSizeSelect.value = config.gridSize.toString();
+                    gridSizeSelect.value = validGridSize.toString();
                 }
             }
 
