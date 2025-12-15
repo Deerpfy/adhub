@@ -10,6 +10,9 @@ export class PixelArtManager {
         // Pixel Art Mode state
         this.enabled = false;
 
+        // Flag to prevent loadSettings from overwriting project config
+        this.projectConfigApplied = false;
+
         // Grid settings
         this.grid = {
             enabled: true,
@@ -116,6 +119,12 @@ export class PixelArtManager {
      * Initialize pixel art manager
      */
     init() {
+        // Check if project config is pending from welcome screen
+        // If so, skip loading settings - they'll be set from config
+        if (this.app.pixelArtConfigPending) {
+            this.projectConfigApplied = true;
+        }
+
         this.loadSettings();
         this.setupEventListeners();
         this.initDefaultPalettes();
@@ -1188,6 +1197,13 @@ export class PixelArtManager {
      * Load settings from storage
      */
     async loadSettings() {
+        // Skip if project config was already applied (from welcome screen)
+        // This prevents async loadSettings from overwriting config values
+        if (this.projectConfigApplied) {
+            window.dispatchEvent(new CustomEvent('pixelart-settings-loaded'));
+            return;
+        }
+
         try {
             const settings = await this.app.storage.get('pixelArtSettings');
             if (settings) {

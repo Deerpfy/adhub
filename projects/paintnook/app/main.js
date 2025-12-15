@@ -50,6 +50,9 @@ async function handleProjectCreate(config) {
         // Apply profile-specific settings
         if (config.pixelArtMode) {
             window.paintApp.settings.pixelArtMode = true;
+            // Signal that we'll apply config from welcome screen
+            // This prevents loadSettings() from overwriting our values
+            window.paintApp.pixelArtConfigPending = config;
         }
 
         // Initialize the application
@@ -101,8 +104,11 @@ async function handleProjectCreate(config) {
             // Refresh grid overlay with new settings
             window.paintApp.ui.pixelArtUI.updateGridOverlay();
 
-            // Save settings to override any previously loaded values
+            // Save settings to persist config values
             window.paintApp.pixelArt.saveSettings();
+
+            // Clear the pending config flag
+            delete window.paintApp.pixelArtConfigPending;
         }
 
         // Initialize file importer
