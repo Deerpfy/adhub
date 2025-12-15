@@ -64,8 +64,15 @@ async function handleProjectCreate(config) {
         });
 
         // Enable pixel art mode if selected
-        if (config.pixelArtMode && window.paintApp.pixelArt) {
-            window.paintApp.pixelArt.setEnabled(true);
+        if (config.pixelArtMode && window.paintApp.ui?.pixelArtUI) {
+            // Update the checkbox state
+            const toggle = document.getElementById('pixelArtModeToggle');
+            if (toggle) {
+                toggle.checked = true;
+            }
+            // Use UI controller to properly enable pixel art mode (updates both manager and UI)
+            window.paintApp.ui.pixelArtUI.togglePixelArtMode(true);
+
             if (config.gridSize) {
                 window.paintApp.pixelArt.setGridSize(config.gridSize);
             }
