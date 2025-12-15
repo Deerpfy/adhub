@@ -32,6 +32,9 @@ export class PixelArtUI {
         const pixelArt = this.app.pixelArt;
         if (!pixelArt) return;
 
+        // Update grid size options based on canvas dimensions
+        this.updateGridSizeOptions();
+
         // Grid settings
         if (this.elements.gridEnabled) {
             this.elements.gridEnabled.checked = pixelArt.grid.enabled;
@@ -50,6 +53,59 @@ export class PixelArtUI {
         }
         if (this.elements.snapToGrid) {
             this.elements.snapToGrid.checked = pixelArt.snap.toGrid;
+        }
+    }
+
+    /**
+     * Calculate maximum allowed grid size based on canvas dimensions
+     * Ensures at least 4 cells per dimension for usability
+     */
+    getMaxGridSize() {
+        const canvas = this.app.canvas;
+        if (!canvas) return 64;
+
+        const minDimension = Math.min(canvas.width, canvas.height);
+        // Require at least 4 cells per dimension
+        const maxSize = Math.floor(minDimension / 4);
+
+        // Return nearest power of 2 that's <= maxSize
+        const validSizes = [1, 2, 4, 8, 16, 32, 64];
+        for (let i = validSizes.length - 1; i >= 0; i--) {
+            if (validSizes[i] <= maxSize) {
+                return validSizes[i];
+            }
+        }
+        return 1;
+    }
+
+    /**
+     * Update grid size dropdown options based on canvas dimensions
+     * Disables options that would result in too few grid cells
+     */
+    updateGridSizeOptions() {
+        const select = this.elements.gridSize;
+        if (!select) return;
+
+        const maxSize = this.getMaxGridSize();
+        const currentValue = parseInt(select.value);
+
+        // Update each option
+        Array.from(select.options).forEach(option => {
+            const size = parseInt(option.value);
+            const isDisabled = size > maxSize;
+
+            option.disabled = isDisabled;
+
+            // Update text with lock icon if disabled
+            const baseText = `${size}px`;
+            option.textContent = isDisabled ? `${baseText} 🔒` : baseText;
+        });
+
+        // If current value is now disabled, switch to max allowed
+        if (currentValue > maxSize) {
+            select.value = maxSize.toString();
+            this.app.pixelArt.grid.size = maxSize;
+            this.updateGridOverlay();
         }
     }
 

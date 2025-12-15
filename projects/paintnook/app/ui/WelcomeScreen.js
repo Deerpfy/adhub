@@ -422,13 +422,56 @@ export class WelcomeScreen {
 
         document.body.appendChild(modal);
 
+        // Function to update grid size options based on canvas dimensions
+        const updateGridSizeOptions = () => {
+            const gridSelect = modal.querySelector('#gridSize');
+            if (!gridSelect) return;
+
+            const width = parseInt(modal.querySelector('#projectWidth').value) || 64;
+            const height = parseInt(modal.querySelector('#projectHeight').value) || 64;
+            const minDimension = Math.min(width, height);
+            // Require at least 4 cells per dimension
+            const maxGridSize = Math.floor(minDimension / 4);
+
+            // Find nearest power of 2 that's <= maxSize
+            const validSizes = [1, 2, 4, 8, 16, 32, 64];
+            let maxAllowed = 1;
+            for (let i = validSizes.length - 1; i >= 0; i--) {
+                if (validSizes[i] <= maxGridSize) {
+                    maxAllowed = validSizes[i];
+                    break;
+                }
+            }
+
+            // Update options
+            Array.from(gridSelect.options).forEach(option => {
+                const size = parseInt(option.value);
+                const isDisabled = size > maxAllowed;
+                option.disabled = isDisabled;
+                option.textContent = isDisabled ? `${size}px 🔒` : `${size}px`;
+            });
+
+            // If current value is disabled, select max allowed
+            if (parseInt(gridSelect.value) > maxAllowed) {
+                gridSelect.value = maxAllowed.toString();
+            }
+        };
+
         // Preset buttons
         modal.querySelectorAll('.preset-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 modal.querySelector('#projectWidth').value = btn.dataset.width;
                 modal.querySelector('#projectHeight').value = btn.dataset.height;
+                updateGridSizeOptions();
             });
         });
+
+        // Update grid options on dimension change
+        modal.querySelector('#projectWidth')?.addEventListener('input', updateGridSizeOptions);
+        modal.querySelector('#projectHeight')?.addEventListener('input', updateGridSizeOptions);
+
+        // Initial update
+        updateGridSizeOptions();
 
         // Close handlers
         modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());

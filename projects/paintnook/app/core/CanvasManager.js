@@ -103,6 +103,11 @@ export class CanvasManager {
 
         // Recenter
         this.centerCanvas();
+
+        // Update grid size options based on new dimensions
+        if (this.app.ui?.pixelArtUI) {
+            this.app.ui.pixelArtUI.updateGridSizeOptions();
+        }
     }
 
     /**
