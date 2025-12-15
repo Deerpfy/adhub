@@ -4712,3 +4712,287 @@ body.pixel-art-mode .color-picker-section:hover {
         grid-template-columns: 1fr;
     }
 }
+
+/* =============================================
+   Vector Mode Styles
+   ============================================= */
+
+/* Vector Canvas */
+.vector-canvas {
+    background: #ffffff;
+    cursor: crosshair;
+}
+
+/* Selected elements */
+.vector-selected {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Selection box */
+.selection-box {
+    pointer-events: none;
+}
+
+/* Vector UI Container */
+.vector-ui {
+    position: fixed;
+    z-index: 1000;
+}
+
+/* Vector Mode Indicator */
+.vector-mode-indicator {
+    position: fixed;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.9), rgba(37, 99, 235, 0.9));
+    border-radius: 20px;
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+    z-index: 1000;
+}
+
+.vector-mode-indicator svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Vector Properties Panel */
+.vector-properties-panel {
+    position: fixed;
+    top: 80px;
+    right: 320px;
+    width: 240px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    z-index: 1000;
+}
+
+.vector-panel-header {
+    padding: 12px 16px;
+    background: var(--bg-tertiary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.vector-panel-header h3 {
+    margin: 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.vector-panel-content {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* Vector Property Groups */
+.vector-property-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.vector-property-group > label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+/* Vector Color Row */
+.vector-color-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.vector-color-row input[type="color"] {
+    width: 36px;
+    height: 36px;
+    padding: 2px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-tertiary);
+    cursor: pointer;
+}
+
+.vector-color-row input[type="text"] {
+    flex: 1;
+    min-width: 70px;
+    padding: 8px 10px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-family: monospace;
+    font-size: 0.85rem;
+}
+
+/* Vector Slider Row */
+.vector-slider-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.vector-slider-row input[type="range"] {
+    flex: 1;
+    height: 6px;
+    background: var(--bg-tertiary);
+    border-radius: 3px;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+.vector-slider-row input[type="range"]::-webkit-slider-thumb {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.vector-slider-row span {
+    min-width: 40px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-align: right;
+}
+
+/* Vector Button Group */
+.vector-button-group {
+    display: flex;
+    gap: 4px;
+}
+
+.vector-option-btn {
+    padding: 8px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+    color: var(--text-secondary);
+}
+
+.vector-option-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary-color);
+}
+
+.vector-option-btn.active {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: var(--primary-color);
+    color: var(--primary-light);
+}
+
+/* Vector Checkbox */
+.vector-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+}
+
+.vector-checkbox input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--primary-color);
+}
+
+/* Vector Export Panel */
+.vector-export-panel {
+    position: fixed;
+    top: 420px;
+    right: 320px;
+    width: 240px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    z-index: 1000;
+}
+
+.vector-export-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: 8px;
+}
+
+.vector-export-btn:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.vector-export-btn:last-of-type {
+    margin-bottom: 0;
+}
+
+.vector-export-scale {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+.vector-export-scale label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.vector-export-scale select {
+    padding: 8px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    cursor: pointer;
+}
+
+/* Responsive Vector UI */
+@media (max-width: 1200px) {
+    .vector-properties-panel,
+    .vector-export-panel {
+        right: 20px;
+        width: 200px;
+    }
+    
+    .vector-export-panel {
+        top: auto;
+        bottom: 100px;
+    }
+}

@@ -20,6 +20,8 @@ import { PixelArtManager } from '../pixelart/PixelArtManager.js';
 import { AnimationManager } from '../pixelart/AnimationManager.js';
 import { ColorAdjustments } from '../pixelart/ColorAdjustments.js';
 import { GoogleFontsManager } from '../utils/GoogleFontsManager.js';
+import { VectorManager } from '../vector/VectorManager.js';
+import { VectorUI } from '../vector/VectorUI.js';
 
 export class PaintApp {
     constructor() {
@@ -39,7 +41,8 @@ export class PaintApp {
             streamlineAmount: 0,
             quickshapeEnabled: true,
             quickshapePreview: true,
-            pixelArtMode: false
+            pixelArtMode: false,
+            vectorMode: false
         };
 
         // Managers will be initialized in init()
@@ -61,6 +64,10 @@ export class PaintApp {
         this.pixelArt = null;
         this.animation = null;
         this.colorAdjust = null;
+
+        // Vector modules
+        this.vector = null;
+        this.vectorUI = null;
 
         // Google Fonts manager
         this.googleFonts = null;
@@ -127,7 +134,14 @@ export class PaintApp {
 
             this.colorAdjust = new ColorAdjustments(this);
 
-            // Initialize UI controller (after pixel art modules)
+            // Initialize Vector modules
+            this.vector = new VectorManager(this);
+            this.vector.init();
+
+            this.vectorUI = new VectorUI(this);
+            this.vectorUI.init();
+
+            // Initialize UI controller (after pixel art and vector modules)
             this.ui = new UIController(this);
             this.ui.init();
 

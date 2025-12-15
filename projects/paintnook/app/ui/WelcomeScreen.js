@@ -33,7 +33,7 @@ const PROFILE_CONFIGS = {
     },
     [PROJECT_PROFILES.VECTOR]: {
         name: 'Vektorové prostředí',
-        description: 'Připraveno pro budoucí vektorovou podporu (SVG export)',
+        description: 'SVG grafika s plynulým zoomem, export do SVG a PNG',
         icon: 'vector',
         defaults: {
             width: 1920,
@@ -46,10 +46,10 @@ const PROFILE_CONFIGS = {
             { name: 'Logo (512×512)', width: 512, height: 512 },
             { name: 'Icon (256×256)', width: 256, height: 256 },
             { name: 'Banner (1200×630)', width: 1200, height: 630 },
+            { name: 'HD (1920×1080)', width: 1920, height: 1080 },
             { name: 'A4 Portrait', width: 2480, height: 3508 },
             { name: 'A4 Landscape', width: 3508, height: 2480 }
-        ],
-        notice: 'Plná vektorová podpora bude přidána v budoucí verzi'
+        ]
     },
     [PROJECT_PROFILES.PIXEL_ART]: {
         name: 'Pixel Art',
