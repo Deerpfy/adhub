@@ -336,6 +336,12 @@ export class ColorPicker {
         this.primaryColor = hex;
         this.updateFromColor(hex);
         this.updateSwatches();
+
+        // Sync with VectorManager if active
+        if (this.app.vector?.enabled) {
+            this.app.vector.setStrokeColor(hex);
+            this.app.vectorUI?.updateStrokeColor(hex);
+        }
     }
 
     /**

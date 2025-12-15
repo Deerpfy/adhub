@@ -55,6 +55,12 @@ async function handleProjectCreate(config) {
             window.paintApp.pixelArtConfigPending = config;
         }
 
+        // Apply vector mode settings
+        if (config.vectorMode) {
+            window.paintApp.settings.vectorMode = true;
+            window.paintApp.vectorConfigPending = config;
+        }
+
         // Initialize the application
         await window.paintApp.init();
 
@@ -112,6 +118,31 @@ async function handleProjectCreate(config) {
 
             // Clear the pending config flag
             delete window.paintApp.pixelArtConfigPending;
+        }
+
+        // Enable vector mode if selected
+        if (config.vectorMode && window.paintApp.vector) {
+            // Enable vector mode
+            window.paintApp.vector.enable(config.width, config.height);
+
+            // Set background color
+            if (config.backgroundColor) {
+                window.paintApp.vector.setBackgroundColor(config.backgroundColor);
+            }
+
+            // Show vector UI
+            if (window.paintApp.vectorUI) {
+                window.paintApp.vectorUI.show();
+                window.paintApp.vectorUI.syncWithVectorManager();
+            }
+
+            // Hide pixel art UI if visible
+            if (window.paintApp.ui?.pixelArtUI) {
+                window.paintApp.ui.pixelArtUI.hide?.();
+            }
+
+            // Clear the pending config flag
+            delete window.paintApp.vectorConfigPending;
         }
 
         // Initialize file importer
