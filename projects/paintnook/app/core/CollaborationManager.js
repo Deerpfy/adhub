@@ -1,7 +1,13 @@
 /**
  * CollaborationManager - P2P real-time collaboration using PeerJS
  * Handles live sessions with password protection
+ *
+ * Enhanced with UAF (Universal Action Format) sync system for
+ * cross-mode rendering (digital <-> pixel art)
  */
+
+import { PaintNookSync } from '../../sync/PaintNookSync.js';
+
 export class CollaborationManager {
     constructor(app) {
         this.app = app;
@@ -21,8 +27,22 @@ export class CollaborationManager {
         this.lastCursorBroadcast = 0; // Throttle cursor broadcasts
         this.cursorThrottleMs = 50; // 20 FPS for cursor updates
 
+        // NEW: UAF-based sync system for cross-mode rendering
+        this.paintNookSync = null;
+        this.useUAFSync = true; // Enable new sync system
+
         // Check if joining a room from URL
         this.checkUrlForRoom();
+    }
+
+    /**
+     * Initialize the UAF sync system
+     */
+    async initUAFSync(options = {}) {
+        if (!this.paintNookSync) {
+            this.paintNookSync = new PaintNookSync(this.app);
+            await this.paintNookSync.init(options);
+        }
     }
 
     /**
@@ -66,11 +86,24 @@ export class CollaborationManager {
     /**
      * Start a new session as host
      */
-    async startSession(password = '', allowDraw = true) {
+    async startSession(password = '', allowDraw = true, syncOptions = {}) {
         this.roomId = this.generateRoomId();
         this.password = password;
         this.allowDraw = allowDraw;
         this.isHost = true;
+
+        // Initialize UAF sync system for cross-mode rendering
+        if (this.useUAFSync) {
+            try {
+                await this.initUAFSync({
+                    hostPriority: syncOptions.hostPriority ?? true,
+                    conflictMode: syncOptions.conflictMode ?? 'host-override'
+                });
+                console.log('[Collab] UAF sync initialized for host');
+            } catch (e) {
+                console.warn('[Collab] UAF sync init failed, using legacy mode:', e);
+            }
+        }
 
         return new Promise((resolve, reject) => {
             // Create peer with room ID as the peer ID
@@ -282,6 +315,15 @@ export class CollaborationManager {
                                 this.handleHostDisconnected();
                             });
 
+                            // Initialize UAF sync for cross-mode rendering
+                            if (this.useUAFSync) {
+                                this.initUAFSync().then(() => {
+                                    console.log('[Collab] UAF sync initialized for guest');
+                                }).catch(e => {
+                                    console.warn('[Collab] UAF sync init failed:', e);
+                                });
+                            }
+
                             doResolve({ canDraw: this.allowDraw });
                         }
                     });
@@ -309,6 +351,12 @@ export class CollaborationManager {
      */
     handleMessage(data, fromPeerId) {
         switch (data.type) {
+            // NEW: UAF-based sync messages
+            case 'uaf-action':
+                this.handleUAFAction(data.action, fromPeerId);
+                break;
+
+            // Legacy stroke handling (kept for backwards compatibility)
             case 'stroke-start':
                 this.handleRemoteStrokeStart(data, fromPeerId);
                 break;
@@ -342,6 +390,20 @@ export class CollaborationManager {
         if (this.isHost && fromPeerId !== 'host') {
             this.broadcast(data, fromPeerId);
         }
+    }
+
+    /**
+     * Handle UAF (Universal Action Format) action
+     * This enables cross-mode rendering (digital <-> pixel art)
+     */
+    handleUAFAction(action, fromPeerId) {
+        if (!this.paintNookSync) {
+            console.warn('[Collab] UAF sync not initialized, falling back to legacy');
+            return;
+        }
+
+        // Forward to PaintNookSync for proper handling
+        this.paintNookSync.syncEngine?.handleRemoteAction(action);
     }
 
     /**
@@ -389,19 +451,97 @@ export class CollaborationManager {
         }
     }
 
-    // Remote stroke handling
+    // Remote stroke handling (legacy - for backwards compatibility)
+    // The new UAF-based system handles strokes through handleUAFAction()
     handleRemoteStrokeStart(data, fromPeerId) {
         const participant = this.participants.get(fromPeerId) || { color: '#888888' };
-        // Create a temporary layer for remote drawing
-        this.app.canvas.startRemoteStroke(data, fromPeerId, participant.color);
+
+        // If UAF sync is available, convert to UAF and use RenderAdapter
+        if (this.paintNookSync?.renderAdapter) {
+            this.remoteStrokeBuffer = this.remoteStrokeBuffer || new Map();
+            this.remoteStrokeBuffer.set(fromPeerId, {
+                points: [data.point],
+                tool: data.tool,
+                settings: data.settings,
+                color: participant.color
+            });
+        } else {
+            // Fallback to legacy rendering
+            this.app.canvas.startRemoteStroke(data, fromPeerId, participant.color);
+        }
     }
 
     handleRemoteStrokeMove(data, fromPeerId) {
-        this.app.canvas.continueRemoteStroke(data, fromPeerId);
+        if (this.paintNookSync?.renderAdapter && this.remoteStrokeBuffer?.has(fromPeerId)) {
+            // Buffer points for UAF conversion
+            const buffer = this.remoteStrokeBuffer.get(fromPeerId);
+            buffer.points.push(data.point);
+        } else {
+            this.app.canvas.continueRemoteStroke(data, fromPeerId);
+        }
     }
 
     handleRemoteStrokeEnd(data, fromPeerId) {
-        this.app.canvas.endRemoteStroke(data, fromPeerId);
+        if (this.paintNookSync?.renderAdapter && this.remoteStrokeBuffer?.has(fromPeerId)) {
+            // Convert buffered stroke to UAF and render
+            const buffer = this.remoteStrokeBuffer.get(fromPeerId);
+            this.renderLegacyStrokeWithAdapter(buffer, fromPeerId);
+            this.remoteStrokeBuffer.delete(fromPeerId);
+        } else {
+            this.app.canvas.endRemoteStroke(data, fromPeerId);
+        }
+    }
+
+    /**
+     * Render a legacy stroke using the UAF RenderAdapter
+     * This provides view-mode aware rendering for legacy clients
+     */
+    renderLegacyStrokeWithAdapter(buffer, fromPeerId) {
+        if (!this.paintNookSync?.renderAdapter) return;
+
+        const adapter = this.paintNookSync.renderAdapter;
+        const layer = this.app.layers.getActiveLayer();
+        if (!layer || layer.locked) return;
+
+        const ctx = layer.canvas.getContext('2d');
+        const w = this.app.canvas.width;
+        const h = this.app.canvas.height;
+
+        // Convert to UAF-like structure
+        const strokeData = {
+            points: buffer.points.map(p => ({
+                x: p.x / w,
+                y: p.y / h,
+                pressure: p.pressure || 0.5,
+                timestamp: Date.now()
+            })),
+            color: this.parseColorToObject(buffer.settings?.color || buffer.color || '#000000'),
+            brushSize: (buffer.settings?.size || 10) / w,
+            opacity: buffer.settings?.opacity || 1,
+            blendMode: 'source-over',
+            brushType: 'round'
+        };
+
+        // Render using adapter
+        adapter.renderStroke(ctx, strokeData);
+        this.app.canvas.render();
+    }
+
+    /**
+     * Parse color string to color object
+     */
+    parseColorToObject(color) {
+        if (typeof color === 'object') return color;
+        if (color.startsWith('#')) {
+            const hex = color.slice(1);
+            return {
+                r: parseInt(hex.slice(0, 2), 16),
+                g: parseInt(hex.slice(2, 4), 16),
+                b: parseInt(hex.slice(4, 6), 16),
+                a: 1
+            };
+        }
+        return { r: 0, g: 0, b: 0, a: 1 };
     }
 
     // Remote cursor handling
