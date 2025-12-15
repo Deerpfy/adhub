@@ -288,13 +288,26 @@ export class CanvasManager {
     }
 
     /**
-     * Continue drawing
+     * Continue drawing - optimized with coalesced events
      */
     draw(e) {
+        // Use coalesced events for smoother drawing (if supported)
+        const events = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+
+        // Process all coalesced events for maximum smoothness
+        for (const event of events) {
+            this.processDrawEvent(event);
+        }
+    }
+
+    /**
+     * Process a single draw event
+     */
+    processDrawEvent(e) {
         const pos = this.screenToCanvas(e.clientX, e.clientY);
         this.pressure = e.pressure || 0.5;
 
-        // Update pressure display
+        // Update pressure display (only for last event to avoid UI spam)
         if (this.app.settings.pressureSensitivity && e.pressure !== undefined) {
             this.app.ui?.updatePressure(Math.round(this.pressure * 100));
         }

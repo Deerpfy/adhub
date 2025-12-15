@@ -44,6 +44,12 @@ export class BrushEngine {
         this.brushStampSize = 0;
         this.brushStampHardness = 0;
         this.brushStampType = '';
+
+        // Colored brush cache for performance optimization
+        // Key: `${size}-${hardness}-${color}` -> colored canvas
+        this.coloredBrushCache = new Map();
+        this.maxColoredCacheSize = 50;
+        this.lastCacheCleanup = 0;
     }
 
     /**
@@ -527,7 +533,7 @@ export class BrushEngine {
     }
 
     /**
-     * Draw a line stroke between two points
+     * Draw a line stroke between two points (optimized batch rendering)
      */
     drawStroke(ctx, x1, y1, x2, y2, pressure = 1, color = '#ffffff') {
         // Check if pixel art mode is enabled
@@ -549,12 +555,26 @@ export class BrushEngine {
             return;
         }
 
+        // Get brush stamp and colored version once for all points
+        const stamp = this.getBrushStamp(Math.ceil(actualSize), this.hardness);
+        const coloredStamp = this.colorBrush(stamp, color);
+        const alpha = this.opacity * (this.app.settings.pressureSensitivity ? pressure : 1);
+
+        // Batch render all points in single save/restore block
+        ctx.save();
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.globalAlpha = alpha;
+
         for (let i = 0; i <= steps; i++) {
             const t = i / steps;
             const x = x1 + (x2 - x1) * t;
             const y = y1 + (y2 - y1) * t;
-            this.drawPoint(ctx, x, y, pressure, color);
+            const drawX = x - actualSize / 2;
+            const drawY = y - actualSize / 2;
+            ctx.drawImage(coloredStamp, drawX, drawY, actualSize, actualSize);
         }
+
+        ctx.restore();
     }
 
     /**
@@ -621,9 +641,19 @@ export class BrushEngine {
     }
 
     /**
-     * Color a brush stamp
+     * Color a brush stamp (with caching for performance)
      */
     colorBrush(stamp, color) {
+        // Generate cache key based on stamp properties and color
+        const cacheKey = `${this.currentBrushType}-${stamp.width}-${this.hardness.toFixed(2)}-${color}`;
+
+        // Check cache first
+        const cached = this.coloredBrushCache.get(cacheKey);
+        if (cached) {
+            return cached;
+        }
+
+        // Create new colored brush
         const canvas = document.createElement('canvas');
         canvas.width = stamp.width;
         canvas.height = stamp.height;
@@ -637,11 +667,30 @@ export class BrushEngine {
         ctx.globalCompositeOperation = 'destination-in';
         ctx.drawImage(stamp, 0, 0);
 
+        // Cache the result
+        this.coloredBrushCache.set(cacheKey, canvas);
+
+        // Cleanup cache if too large (every 100ms at most)
+        const now = performance.now();
+        if (this.coloredBrushCache.size > this.maxColoredCacheSize && now - this.lastCacheCleanup > 100) {
+            this.cleanupColoredCache();
+            this.lastCacheCleanup = now;
+        }
+
         return canvas;
     }
 
     /**
-     * Erase stroke
+     * Cleanup colored brush cache (remove oldest entries)
+     */
+    cleanupColoredCache() {
+        const entries = Array.from(this.coloredBrushCache.keys());
+        const toRemove = entries.slice(0, Math.floor(entries.length / 2));
+        toRemove.forEach(key => this.coloredBrushCache.delete(key));
+    }
+
+    /**
+     * Erase stroke (optimized batch rendering)
      */
     eraseStroke(ctx, x1, y1, x2, y2, pressure = 1) {
         const distance = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
@@ -652,19 +701,21 @@ export class BrushEngine {
         const step = Math.max(1, actualSize * this.spacing);
         const steps = Math.ceil(distance / step);
 
+        // Get stamp once for all points
+        const stamp = this.getBrushStamp(Math.ceil(actualSize), this.hardness);
+        const alpha = this.opacity * (this.app.settings.pressureSensitivity ? pressure : 1);
+
+        // Batch render all erase points
         ctx.save();
         ctx.globalCompositeOperation = 'destination-out';
-
-        const stamp = this.getBrushStamp(Math.ceil(actualSize), this.hardness);
+        ctx.globalAlpha = alpha;
 
         for (let i = 0; i <= steps; i++) {
             const t = steps > 0 ? i / steps : 0;
             const x = x1 + (x2 - x1) * t;
             const y = y1 + (y2 - y1) * t;
-
             const drawX = x - actualSize / 2;
             const drawY = y - actualSize / 2;
-            ctx.globalAlpha = this.opacity * (this.app.settings.pressureSensitivity ? pressure : 1);
             ctx.drawImage(stamp, drawX, drawY, actualSize, actualSize);
         }
 
@@ -702,5 +753,7 @@ export class BrushEngine {
      */
     invalidateCache() {
         this.brushStamp = null;
+        // Clear colored cache when brush type changes
+        this.coloredBrushCache.clear();
     }
 }
