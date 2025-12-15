@@ -2,7 +2,7 @@
  * PaintNook - Service Worker for offline functionality
  */
 
-const CACHE_NAME = 'paintnook-v1.2.0';
+const CACHE_NAME = 'paintnook-v1.3.0';
 const STATIC_ASSETS = [
     // Core files
     './',
@@ -42,7 +42,9 @@ const STATIC_ASSETS = [
     './app/tools/tools/MoveTool.js',
     './app/ui/ColorPicker.js',
     './app/ui/UIController.js',
-    './app/utils/StorageManager.js'
+    './app/ui/WelcomeScreen.js',
+    './app/utils/StorageManager.js',
+    './app/utils/FileImporter.js'
 ];
 
 // Install event - cache static assets
