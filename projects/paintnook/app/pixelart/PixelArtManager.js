@@ -247,8 +247,9 @@ export class PixelArtManager {
 
         ctx.beginPath();
 
-        // Vertical lines
-        for (let x = 0; x <= width; x += this.grid.size) {
+        // Vertical lines - draw BETWEEN cells, not on edges
+        // Start from first grid division (not 0), end before width
+        for (let x = this.grid.size; x < width; x += this.grid.size) {
             const screenX = x * zoom + offsetX;
             if (screenX >= 0 && screenX <= ctx.canvas.width) {
                 // Check if this is a subdivision line
@@ -270,8 +271,8 @@ export class PixelArtManager {
             }
         }
 
-        // Horizontal lines
-        for (let y = 0; y <= height; y += this.grid.size) {
+        // Horizontal lines - draw BETWEEN cells, not on edges
+        for (let y = this.grid.size; y < height; y += this.grid.size) {
             const screenY = y * zoom + offsetY;
             if (screenY >= 0 && screenY <= ctx.canvas.height) {
                 if (this.grid.subdivisions > 1 && y % (this.grid.size * this.grid.subdivisions) === 0) {
