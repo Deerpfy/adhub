@@ -27,6 +27,20 @@
     <!-- PeerJS for P2P Collaboration -->
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
 
+    <!-- File Import Libraries (cached by service worker for offline use) -->
+    <!-- PDF.js for PDF import -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>
+        // Configure PDF.js worker
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+    </script>
+    <!-- ag-psd for PSD import -->
+    <script src="https://unpkg.com/ag-psd@latest/dist/bundle.min.js"></script>
+    <!-- JSZip for OpenRaster and archive formats -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
     <!-- Preload critical resources -->
     <link rel="preload" href="app/core/PaintApp.js" as="script" type="module">
 </head>

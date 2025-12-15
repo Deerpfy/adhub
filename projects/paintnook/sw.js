@@ -2,7 +2,7 @@
  * PaintNook - Service Worker for offline functionality
  */
 
-const CACHE_NAME = 'paintnook-v1.3.0';
+const CACHE_NAME = 'paintnook-v1.4.0';
 const STATIC_ASSETS = [
     // Core files
     './',
@@ -47,15 +47,40 @@ const STATIC_ASSETS = [
     './app/utils/FileImporter.js'
 ];
 
+// External CDN libraries for offline support
+const CDN_ASSETS = [
+    // PDF.js for PDF import
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+    // ag-psd for PSD import
+    'https://unpkg.com/ag-psd@latest/dist/bundle.min.js',
+    // JSZip for OpenRaster and archive formats
+    'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'
+];
+
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
     console.log('[SW] Installing...');
 
     event.waitUntil(
         caches.open(CACHE_NAME)
-            .then((cache) => {
+            .then(async (cache) => {
                 console.log('[SW] Caching static assets');
-                return cache.addAll(STATIC_ASSETS);
+                await cache.addAll(STATIC_ASSETS);
+
+                // Cache CDN assets separately (don't fail install if CDN unavailable)
+                console.log('[SW] Caching CDN libraries for offline use');
+                for (const url of CDN_ASSETS) {
+                    try {
+                        const response = await fetch(url, { mode: 'cors' });
+                        if (response.ok) {
+                            await cache.put(url, response);
+                            console.log('[SW] Cached:', url);
+                        }
+                    } catch (err) {
+                        console.warn('[SW] Failed to cache CDN asset:', url, err);
+                    }
+                }
             })
             .then(() => {
                 console.log('[SW] Install complete');
@@ -90,6 +115,11 @@ self.addEventListener('activate', (event) => {
     );
 });
 
+// Check if URL is a CDN asset we want to cache
+function isCdnAsset(url) {
+    return CDN_ASSETS.some(cdnUrl => url.startsWith(cdnUrl.replace('@latest', '')));
+}
+
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
     // Skip non-GET requests
@@ -97,8 +127,12 @@ self.addEventListener('fetch', (event) => {
         return;
     }
 
-    // Skip cross-origin requests
-    if (!event.request.url.startsWith(self.location.origin)) {
+    const requestUrl = event.request.url;
+    const isLocalRequest = requestUrl.startsWith(self.location.origin);
+    const isCdn = isCdnAsset(requestUrl);
+
+    // Skip cross-origin requests that aren't CDN assets
+    if (!isLocalRequest && !isCdn) {
         return;
     }
 
@@ -111,14 +145,14 @@ self.addEventListener('fetch', (event) => {
                 }
 
                 // Fetch from network
-                return fetch(event.request)
+                return fetch(event.request, isCdn ? { mode: 'cors' } : undefined)
                     .then((networkResponse) => {
                         // Don't cache if not successful
                         if (!networkResponse || networkResponse.status !== 200) {
                             return networkResponse;
                         }
 
-                        // Clone response for caching
+                        // For opaque responses (CDN), we can't check status, but we cache anyway
                         const responseClone = networkResponse.clone();
 
                         caches.open(CACHE_NAME)
