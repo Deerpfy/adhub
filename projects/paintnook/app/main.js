@@ -76,6 +76,17 @@ async function handleProjectCreate(config) {
             if (config.gridSize) {
                 window.paintApp.pixelArt.setGridSize(config.gridSize);
             }
+
+            // Auto-set grid color based on background
+            // Transparent background → white grid, colored background → black grid
+            const isTransparent = !config.backgroundColor || config.backgroundColor === 'transparent';
+            const gridColor = isTransparent ? '#ffffff' : '#000000';
+            window.paintApp.pixelArt.grid.color = gridColor;
+            // Update UI color picker
+            const gridColorInput = document.getElementById('gridColor');
+            if (gridColorInput) {
+                gridColorInput.value = gridColor;
+            }
         }
 
         // Initialize file importer

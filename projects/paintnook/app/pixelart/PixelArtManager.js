@@ -14,7 +14,7 @@ export class PixelArtManager {
         this.grid = {
             enabled: true,
             size: 16,          // Grid cell size in pixels (power of 2: 1,2,4,8,16,32,64)
-            color: '#333333',
+            color: '#ffffff',  // Default white for transparent backgrounds
             opacity: 0.3,
             subdivisions: 8,   // Major grid lines every N cells
             subdivisionColor: '#666666'
@@ -1199,6 +1199,14 @@ export class PixelArtManager {
                 Object.assign(this.pixelPerfect, settings.pixelPerfect || {});
                 Object.assign(this.dithering, settings.dithering || {});
 
+                // Validate grid size to power of 2
+                const validSizes = [1, 2, 4, 8, 16, 32, 64];
+                if (!validSizes.includes(this.grid.size)) {
+                    this.grid.size = validSizes.reduce((prev, curr) =>
+                        Math.abs(curr - this.grid.size) < Math.abs(prev - this.grid.size) ? curr : prev
+                    );
+                }
+
                 if (settings.palette) {
                     this.palette = settings.palette;
                 }
@@ -1213,6 +1221,9 @@ export class PixelArtManager {
         } catch (e) {
             console.warn('Failed to load pixel art settings:', e);
         }
+
+        // Dispatch event so UI can sync after settings are loaded
+        window.dispatchEvent(new CustomEvent('pixelart-settings-loaded'));
     }
 
     /**

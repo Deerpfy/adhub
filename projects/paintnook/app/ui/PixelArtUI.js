@@ -19,8 +19,10 @@ export class PixelArtUI {
         this.cacheElements();
         this.bindEvents();
         this.loadDefaultPalette();
-        // Sync UI with backend state after a short delay (to allow settings to load)
-        setTimeout(() => this.syncUIFromManager(), 100);
+        // Listen for settings loaded event from PixelArtManager
+        window.addEventListener('pixelart-settings-loaded', () => this.syncUIFromManager());
+        // Also sync immediately in case settings already loaded
+        this.syncUIFromManager();
     }
 
     /**
