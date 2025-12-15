@@ -4992,3 +4992,43 @@ body.pixel-art-mode .color-picker-section:hover {
         width: 180px;
     }
 }
+
+/* Vector hint text */
+.vector-hint {
+    display: block;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-style: italic;
+}
+
+/* Improved button group for line cap/join */
+.vector-button-group.linecap-group,
+.vector-button-group.linejoin-group {
+    display: flex;
+    gap: 6px;
+}
+
+.vector-button-group .vector-option-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px;
+    min-height: 36px;
+}
+
+.vector-button-group .vector-option-btn svg {
+    display: block;
+}
+
+/* Better active state visibility */
+.vector-option-btn.active {
+    background: rgba(139, 92, 246, 0.3) !important;
+    border-color: var(--primary-color) !important;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
+.vector-option-btn.active svg {
+    color: var(--primary-light);
+}
