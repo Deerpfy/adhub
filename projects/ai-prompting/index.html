@@ -1868,6 +1868,12 @@ Prompt k analýze:
             const [newTagName, setNewTagName] = useState('');
             const [newTagColor, setNewTagColor] = useState('blue');
 
+            // Color picker visibility states
+            const [showNewFolderColorPicker, setShowNewFolderColorPicker] = useState(false);
+            const [showEditFolderColorPicker, setShowEditFolderColorPicker] = useState(false);
+            const [showNewTagColorPicker, setShowNewTagColorPicker] = useState(false);
+            const [showEditTagColorPicker, setShowEditTagColorPicker] = useState(false);
+
             // Get translations for current language (direct lookup, no API)
             const t = getTranslations(lang);
             const selectedLang = AVAILABLE_LANGUAGES.find(l => l.code === lang);
@@ -2047,6 +2053,35 @@ Prompt k analýze:
                     }
                 }
             }, [tutorialStep, tutorialActive]);
+
+            // Close color pickers when clicking outside
+            useEffect(() => {
+                const handleClickOutside = (e) => {
+                    if (!e.target.closest('.relative')) {
+                        setShowNewFolderColorPicker(false);
+                        setShowEditFolderColorPicker(false);
+                        setShowNewTagColorPicker(false);
+                        setShowEditTagColorPicker(false);
+                    }
+                };
+                document.addEventListener('click', handleClickOutside);
+                return () => document.removeEventListener('click', handleClickOutside);
+            }, []);
+
+            // Reset color pickers when closing modals
+            useEffect(() => {
+                if (!showFolderManager) {
+                    setShowNewFolderColorPicker(false);
+                    setShowEditFolderColorPicker(false);
+                }
+            }, [showFolderManager]);
+
+            useEffect(() => {
+                if (!showTagManager) {
+                    setShowNewTagColorPicker(false);
+                    setShowEditTagColorPicker(false);
+                }
+            }, [showTagManager]);
 
             const showNotification = (msg) => {
                 setNotification(msg);
@@ -3729,26 +3764,29 @@ Prompt k analýze:
                                             className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500"
                                         />
                                         {/* Color picker */}
-                                        <div className="relative group">
+                                        <div className="relative">
                                             <button
                                                 type="button"
-                                                className="w-10 h-10 rounded-lg border border-slate-600 flex items-center justify-center"
+                                                onClick={() => setShowNewFolderColorPicker(!showNewFolderColorPicker)}
+                                                className="w-10 h-10 rounded-lg border border-slate-600 flex items-center justify-center hover:border-slate-500 transition-colors"
                                                 style={{ backgroundColor: getTagColor(newFolderColor) }}
                                             >
                                                 <Icon name="Palette" size={16} className="text-white drop-shadow" />
                                             </button>
-                                            <div className="absolute top-full mt-1 right-0 bg-slate-800 border border-slate-600 rounded-lg p-2 hidden group-hover:grid grid-cols-6 gap-1 z-10 w-40">
-                                                {TAG_COLORS.map(color => (
-                                                    <button
-                                                        key={color.id}
-                                                        type="button"
-                                                        onClick={() => setNewFolderColor(color.id)}
-                                                        className={`w-5 h-5 rounded ${newFolderColor === color.id ? 'ring-2 ring-white' : ''}`}
-                                                        style={{ backgroundColor: color.hex }}
-                                                        title={color.name}
-                                                    />
-                                                ))}
-                                            </div>
+                                            {showNewFolderColorPicker && (
+                                                <div className="absolute top-full mt-1 right-0 bg-slate-800 border border-slate-600 rounded-lg p-2 grid grid-cols-6 gap-1 z-20 w-40 shadow-xl" onClick={e => e.stopPropagation()}>
+                                                    {TAG_COLORS.map(color => (
+                                                        <button
+                                                            key={color.id}
+                                                            type="button"
+                                                            onClick={() => { setNewFolderColor(color.id); setShowNewFolderColorPicker(false); }}
+                                                            className={`w-5 h-5 rounded hover:scale-110 transition-transform ${newFolderColor === color.id ? 'ring-2 ring-white' : ''}`}
+                                                            style={{ backgroundColor: color.hex }}
+                                                            title={color.name}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                         <button
                                             onClick={addFolder}
@@ -3776,23 +3814,28 @@ Prompt k analýze:
                                                             className="flex-1 px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-sm"
                                                             autoFocus
                                                         />
-                                                        <div className="relative group">
+                                                        <div className="relative">
                                                             <button
                                                                 type="button"
-                                                                className="w-8 h-8 rounded border border-slate-600"
+                                                                onClick={() => setShowEditFolderColorPicker(!showEditFolderColorPicker)}
+                                                                className="w-8 h-8 rounded border border-slate-600 hover:border-slate-500 transition-colors flex items-center justify-center"
                                                                 style={{ backgroundColor: getTagColor(editingFolder.color) }}
-                                                            />
-                                                            <div className="absolute top-full mt-1 right-0 bg-slate-800 border border-slate-600 rounded-lg p-2 hidden group-hover:grid grid-cols-6 gap-1 z-10 w-40">
-                                                                {TAG_COLORS.map(color => (
-                                                                    <button
-                                                                        key={color.id}
-                                                                        type="button"
-                                                                        onClick={() => setEditingFolder({ ...editingFolder, color: color.id })}
-                                                                        className={`w-5 h-5 rounded ${editingFolder.color === color.id ? 'ring-2 ring-white' : ''}`}
-                                                                        style={{ backgroundColor: color.hex }}
-                                                                    />
-                                                                ))}
-                                                            </div>
+                                                            >
+                                                                <Icon name="Palette" size={12} className="text-white drop-shadow" />
+                                                            </button>
+                                                            {showEditFolderColorPicker && (
+                                                                <div className="absolute top-full mt-1 right-0 bg-slate-800 border border-slate-600 rounded-lg p-2 grid grid-cols-6 gap-1 z-20 w-40 shadow-xl" onClick={e => e.stopPropagation()}>
+                                                                    {TAG_COLORS.map(color => (
+                                                                        <button
+                                                                            key={color.id}
+                                                                            type="button"
+                                                                            onClick={() => { setEditingFolder({ ...editingFolder, color: color.id }); setShowEditFolderColorPicker(false); }}
+                                                                            className={`w-5 h-5 rounded hover:scale-110 transition-transform ${editingFolder.color === color.id ? 'ring-2 ring-white' : ''}`}
+                                                                            style={{ backgroundColor: color.hex }}
+                                                                        />
+                                                                    ))}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                         <button onClick={() => updateFolder(folder.id, editingFolder.name, editingFolder.color)} className="p-1.5 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30">
                                                             <Icon name="Check" size={14} />
@@ -3851,26 +3894,29 @@ Prompt k analýze:
                                             className="flex-1 px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
                                         />
                                         {/* Color picker */}
-                                        <div className="relative group">
+                                        <div className="relative">
                                             <button
                                                 type="button"
-                                                className="w-10 h-10 rounded-lg border border-slate-600 flex items-center justify-center"
+                                                onClick={() => setShowNewTagColorPicker(!showNewTagColorPicker)}
+                                                className="w-10 h-10 rounded-lg border border-slate-600 flex items-center justify-center hover:border-slate-500 transition-colors"
                                                 style={{ backgroundColor: getTagColor(newTagColor) }}
                                             >
                                                 <Icon name="Palette" size={16} className="text-white drop-shadow" />
                                             </button>
-                                            <div className="absolute top-full mt-1 right-0 bg-slate-800 border border-slate-600 rounded-lg p-2 hidden group-hover:grid grid-cols-6 gap-1 z-10 w-40">
-                                                {TAG_COLORS.map(color => (
-                                                    <button
-                                                        key={color.id}
-                                                        type="button"
-                                                        onClick={() => setNewTagColor(color.id)}
-                                                        className={`w-5 h-5 rounded ${newTagColor === color.id ? 'ring-2 ring-white' : ''}`}
-                                                        style={{ backgroundColor: color.hex }}
-                                                        title={color.name}
-                                                    />
-                                                ))}
-                                            </div>
+                                            {showNewTagColorPicker && (
+                                                <div className="absolute top-full mt-1 right-0 bg-slate-800 border border-slate-600 rounded-lg p-2 grid grid-cols-6 gap-1 z-20 w-40 shadow-xl" onClick={e => e.stopPropagation()}>
+                                                    {TAG_COLORS.map(color => (
+                                                        <button
+                                                            key={color.id}
+                                                            type="button"
+                                                            onClick={() => { setNewTagColor(color.id); setShowNewTagColorPicker(false); }}
+                                                            className={`w-5 h-5 rounded hover:scale-110 transition-transform ${newTagColor === color.id ? 'ring-2 ring-white' : ''}`}
+                                                            style={{ backgroundColor: color.hex }}
+                                                            title={color.name}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                         <button
                                             onClick={addTag}
@@ -3898,23 +3944,28 @@ Prompt k analýze:
                                                             className="flex-1 px-2 py-1 bg-slate-700 border border-slate-600 rounded text-white text-sm"
                                                             autoFocus
                                                         />
-                                                        <div className="relative group">
+                                                        <div className="relative">
                                                             <button
                                                                 type="button"
-                                                                className="w-8 h-8 rounded border border-slate-600"
+                                                                onClick={() => setShowEditTagColorPicker(!showEditTagColorPicker)}
+                                                                className="w-8 h-8 rounded border border-slate-600 hover:border-slate-500 transition-colors flex items-center justify-center"
                                                                 style={{ backgroundColor: getTagColor(editingTag.color) }}
-                                                            />
-                                                            <div className="absolute top-full mt-1 right-0 bg-slate-800 border border-slate-600 rounded-lg p-2 hidden group-hover:grid grid-cols-6 gap-1 z-10 w-40">
-                                                                {TAG_COLORS.map(color => (
-                                                                    <button
-                                                                        key={color.id}
-                                                                        type="button"
-                                                                        onClick={() => setEditingTag({ ...editingTag, color: color.id })}
-                                                                        className={`w-5 h-5 rounded ${editingTag.color === color.id ? 'ring-2 ring-white' : ''}`}
-                                                                        style={{ backgroundColor: color.hex }}
-                                                                    />
-                                                                ))}
-                                                            </div>
+                                                            >
+                                                                <Icon name="Palette" size={12} className="text-white drop-shadow" />
+                                                            </button>
+                                                            {showEditTagColorPicker && (
+                                                                <div className="absolute top-full mt-1 right-0 bg-slate-800 border border-slate-600 rounded-lg p-2 grid grid-cols-6 gap-1 z-20 w-40 shadow-xl" onClick={e => e.stopPropagation()}>
+                                                                    {TAG_COLORS.map(color => (
+                                                                        <button
+                                                                            key={color.id}
+                                                                            type="button"
+                                                                            onClick={() => { setEditingTag({ ...editingTag, color: color.id }); setShowEditTagColorPicker(false); }}
+                                                                            className={`w-5 h-5 rounded hover:scale-110 transition-transform ${editingTag.color === color.id ? 'ring-2 ring-white' : ''}`}
+                                                                            style={{ backgroundColor: color.hex }}
+                                                                        />
+                                                                    ))}
+                                                                </div>
+                                                            )}
                                                         </div>
                                                         <button onClick={() => updateTag(tag.id, editingTag.name, editingTag.color)} className="p-1.5 bg-green-500/20 text-green-400 rounded hover:bg-green-500/30">
                                                             <Icon name="Check" size={14} />
@@ -4044,12 +4095,53 @@ Prompt k analýze:
                             </div>
                         </div>
 
-                        <div className="grid lg:grid-cols-5 gap-6">
+                        <div className="flex gap-6">
+                            {/* Left Sidebar - Prompt Checklist */}
+                            {t.checklist && (
+                                <div className="hidden xl:block w-72 flex-shrink-0">
+                                    <div className="sticky top-4 p-4 bg-slate-800/60 border border-slate-700/50 rounded-xl">
+                                        <div className="flex items-center gap-2 mb-3">
+                                            <Icon name="CheckSquare" size={18} className="text-amber-400" />
+                                            <h3 className="text-sm font-bold text-white">{t.checklist.title}</h3>
+                                        </div>
+                                        <p className="text-xs text-slate-400 mb-3">{t.checklist.subtitle}</p>
+
+                                        {/* Checklist Steps - Vertical */}
+                                        <div className="space-y-2 mb-3">
+                                            {t.checklist.steps.map((step, idx) => (
+                                                <div key={step.key} className={`p-2 rounded-lg border bg-check-${step.color}`}>
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <div className={`w-5 h-5 rounded-full dot-${step.color} flex items-center justify-center text-white text-[10px] font-bold`}>
+                                                            {idx + 1}
+                                                        </div>
+                                                        <span className={`font-medium text-xs text-check-${step.color}`}>{step.name}</span>
+                                                    </div>
+                                                    <p className="text-[10px] text-slate-300 mb-1 leading-relaxed">{step.desc}</p>
+                                                    <div className="text-[10px] text-slate-500 italic bg-slate-900/30 p-1.5 rounded">
+                                                        {step.example}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Tip */}
+                                        <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2">
+                                            <Icon name="Lightbulb" size={12} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                                            <p className="text-[10px] text-amber-200 leading-relaxed">{t.checklist.tip}</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Main Content Grid */}
+                            <div className="flex-1 grid lg:grid-cols-5 gap-6">
                             {/* Input Panel */}
                             <div className="lg:col-span-2 space-y-4">
-                                {/* Template & Target */}
-                                {/* Category Selector */}
+                                {/* Template Selector */}
                                 <div id="template-selector" className={`relative ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'template-selector' ? 'tutorial-highlight' : ''}`}>
+                                    <label className="block text-xs font-medium text-slate-300 mb-1">
+                                        {lang === 'cs' ? 'Šablona / Kategorie' : 'Template / Category'}
+                                    </label>
                                     <button onClick={() => setShowTemplates(!showTemplates)} className="w-full flex items-center justify-between gap-2 px-4 py-2.5 bg-slate-800 border border-slate-700 rounded-lg text-white">
                                         <div className="flex items-center gap-2">
                                             <Icon name={TemplateIcon} size={16} className="text-amber-400" />
@@ -4673,55 +4765,8 @@ Prompt k analýze:
                                     </div>
                                 )}
                             </div>
-                        </div>
-
-                        {/* X-Step Prompt Checklist */}
-                        {t.checklist && (
-                            <div className="mt-8 p-6 bg-slate-800/40 border border-slate-700/50 rounded-xl">
-                                <div className="flex items-center gap-3 mb-4">
-                                    <Icon name="CheckSquare" size={24} className="text-amber-400" />
-                                    <div>
-                                        <h3 className="text-lg font-bold text-white">{t.checklist.title}</h3>
-                                        <p className="text-sm text-slate-400">{t.checklist.subtitle}</p>
-                                    </div>
-                                </div>
-
-                                {/* Checklist Steps */}
-                                <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 mb-4">
-                                    {t.checklist.steps.map((step, idx) => (
-                                        <div key={step.key} className={`p-3 rounded-lg border bg-check-${step.color}`}>
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <div className={`w-6 h-6 rounded-full dot-${step.color} flex items-center justify-center text-white text-xs font-bold`}>
-                                                    {idx + 1}
-                                                </div>
-                                                <span className={`font-medium text-sm text-check-${step.color}`}>{step.name}</span>
-                                            </div>
-                                            <p className="text-xs text-slate-300 mb-2">{step.desc}</p>
-                                            <div className="text-xs text-slate-500 italic bg-slate-900/30 p-2 rounded">
-                                                {step.example}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Legend */}
-                                <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-slate-700/50">
-                                    <span className="text-xs text-slate-400 font-medium">{t.checklist.legend}:</span>
-                                    {t.checklist.steps.map(step => (
-                                        <div key={step.key} className="flex items-center gap-1.5">
-                                            <div className={`w-3 h-3 rounded-full dot-${step.color}`}></div>
-                                            <span className="text-xs text-slate-400">{step.name}</span>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Tip */}
-                                <div className="mt-4 p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2">
-                                    <Icon name="Lightbulb" size={16} className="text-amber-400 flex-shrink-0 mt-0.5" />
-                                    <p className="text-xs text-amber-200">{t.checklist.tip}</p>
-                                </div>
                             </div>
-                        )}
+                        </div>
 
                         {/* Footer */}
                         <div className="mt-6 p-4 bg-slate-800/30 border border-slate-700/50 rounded-lg">
