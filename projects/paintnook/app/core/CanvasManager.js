@@ -185,6 +185,11 @@ export class CanvasManager {
      * Handle pointer down event
      */
     handlePointerDown(e) {
+        // Skip if vector mode is active - VectorManager handles its own events
+        if (this.app.vector?.enabled) {
+            return;
+        }
+
         // Ignore events from UI elements (floating controls, indicators, etc.)
         if (e.target.closest('.floating-controls, .quickshape-indicator, .pixel-art-indicator, .color-popup-picker')) {
             return;
@@ -206,6 +211,11 @@ export class CanvasManager {
      * Handle pointer move event
      */
     handlePointerMove(e) {
+        // Skip if vector mode is active - VectorManager handles its own events
+        if (this.app.vector?.enabled) {
+            return;
+        }
+
         // Update cursor position display
         const pos = this.screenToCanvas(e.clientX, e.clientY);
         this.app.ui?.updateCursorPosition(Math.round(pos.x), Math.round(pos.y));
@@ -229,6 +239,11 @@ export class CanvasManager {
      * Handle pointer up event
      */
     handlePointerUp(e) {
+        // Skip if vector mode is active - VectorManager handles its own events
+        if (this.app.vector?.enabled) {
+            return;
+        }
+
         if (this.isPanning) {
             this.endPan();
             return;

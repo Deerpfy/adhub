@@ -91,6 +91,21 @@ export class ToolManager {
             this.currentToolInstance.activate();
         }
 
+        // Sync with VectorManager if active
+        if (this.app.vector?.enabled) {
+            const vectorToolMap = {
+                brush: 'brush',
+                pencil: 'pen',
+                line: 'line',
+                rectangle: 'rectangle',
+                ellipse: 'ellipse',
+                text: 'text',
+                move: 'select'
+            };
+            const vectorTool = vectorToolMap[toolName] || 'brush';
+            this.app.vector.setTool(vectorTool);
+        }
+
         // Update UI
         this.updateToolUI();
         this.app.ui?.updateToolInfo(this.getToolDisplayName(toolName));
