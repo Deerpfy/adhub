@@ -598,8 +598,15 @@
                             <div class="setting-row">
                                 <label>Velikost</label>
                                 <div class="slider-group">
-                                    <input type="range" id="gridSize" min="1" max="64" value="16" class="slider">
-                                    <input type="number" id="gridSizeInput" min="1" max="64" value="16" class="slider-input">
+                                    <select id="gridSize" class="select-input">
+                                        <option value="1">1px</option>
+                                        <option value="2">2px</option>
+                                        <option value="4">4px</option>
+                                        <option value="8">8px</option>
+                                        <option value="16" selected>16px</option>
+                                        <option value="32">32px</option>
+                                        <option value="64">64px</option>
+                                    </select>
                                 </div>
                             </div>
                             <div class="setting-row">
