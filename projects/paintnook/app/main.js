@@ -75,6 +75,11 @@ async function handleProjectCreate(config) {
 
             if (config.gridSize) {
                 window.paintApp.pixelArt.setGridSize(config.gridSize);
+                // Sync UI dropdown
+                const gridSizeSelect = document.getElementById('gridSize');
+                if (gridSizeSelect) {
+                    gridSizeSelect.value = config.gridSize.toString();
+                }
             }
 
             // Auto-set grid color based on background
@@ -87,6 +92,12 @@ async function handleProjectCreate(config) {
             if (gridColorInput) {
                 gridColorInput.value = gridColor;
             }
+
+            // Refresh grid overlay
+            window.paintApp.ui.pixelArtUI.updateGridOverlay();
+
+            // Save settings to override any previously loaded values
+            window.paintApp.pixelArt.saveSettings();
         }
 
         // Initialize file importer

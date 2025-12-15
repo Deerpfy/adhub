@@ -60,7 +60,7 @@ const PROFILE_CONFIGS = {
             height: 64,
             backgroundColor: 'transparent',
             pixelArtMode: true,
-            gridSize: 1
+            gridSize: 16
         },
         presets: [
             { name: 'Sprite 16×16', width: 16, height: 16 },
@@ -391,7 +391,15 @@ export class WelcomeScreen {
                     ${profileKey === PROJECT_PROFILES.PIXEL_ART ? `
                         <div class="form-group">
                             <label for="gridSize">Velikost mřížky (px)</label>
-                            <input type="number" id="gridSize" value="${profile.defaults.gridSize}" min="1" max="64">
+                            <select id="gridSize">
+                                <option value="1" ${profile.defaults.gridSize === 1 ? 'selected' : ''}>1px</option>
+                                <option value="2" ${profile.defaults.gridSize === 2 ? 'selected' : ''}>2px</option>
+                                <option value="4" ${profile.defaults.gridSize === 4 ? 'selected' : ''}>4px</option>
+                                <option value="8" ${profile.defaults.gridSize === 8 ? 'selected' : ''}>8px</option>
+                                <option value="16" ${profile.defaults.gridSize === 16 ? 'selected' : ''}>16px</option>
+                                <option value="32" ${profile.defaults.gridSize === 32 ? 'selected' : ''}>32px</option>
+                                <option value="64" ${profile.defaults.gridSize === 64 ? 'selected' : ''}>64px</option>
+                            </select>
                         </div>
                     ` : ''}
 
@@ -446,7 +454,7 @@ export class WelcomeScreen {
             };
 
             if (profileKey === PROJECT_PROFILES.PIXEL_ART) {
-                config.gridSize = parseInt(modal.querySelector('#gridSize')?.value || 1);
+                config.gridSize = parseInt(modal.querySelector('#gridSize')?.value || 16);
             }
 
             modal.remove();
