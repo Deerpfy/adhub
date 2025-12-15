@@ -4764,18 +4764,19 @@ body.pixel-art-mode .color-picker-section:hover {
     height: 16px;
 }
 
-/* Vector Properties Panel */
+/* Vector Properties Panel - positioned in right sidebar area */
 .vector-properties-panel {
     position: fixed;
-    top: 80px;
-    right: 320px;
-    width: 240px;
+    top: 60px;
+    left: 60px;
+    width: 220px;
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     box-shadow: var(--shadow-lg);
-    overflow: hidden;
-    z-index: 1000;
+    z-index: 100;
 }
 
 .vector-panel-header {
@@ -4918,18 +4919,18 @@ body.pixel-art-mode .color-picker-section:hover {
     accent-color: var(--primary-color);
 }
 
-/* Vector Export Panel */
+/* Vector Export Panel - below properties panel */
 .vector-export-panel {
     position: fixed;
-    top: 420px;
-    right: 320px;
-    width: 240px;
+    bottom: 60px;
+    left: 60px;
+    width: 220px;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     box-shadow: var(--shadow-lg);
     overflow: hidden;
-    z-index: 1000;
+    z-index: 100;
 }
 
 .vector-export-btn {
@@ -4987,12 +4988,7 @@ body.pixel-art-mode .color-picker-section:hover {
 @media (max-width: 1200px) {
     .vector-properties-panel,
     .vector-export-panel {
-        right: 20px;
-        width: 200px;
-    }
-    
-    .vector-export-panel {
-        top: auto;
-        bottom: 100px;
+        left: 50px;
+        width: 180px;
     }
 }
