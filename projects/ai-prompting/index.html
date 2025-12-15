@@ -118,6 +118,26 @@
             z-index: 1001;
             border-radius: 8px;
         }
+        /* Checklist field highlighting */
+        @keyframes checklist-pulse {
+            0%, 100% { box-shadow: 0 0 0 3px var(--highlight-color), 0 0 20px var(--highlight-color); }
+            50% { box-shadow: 0 0 0 5px var(--highlight-color), 0 0 30px var(--highlight-color); }
+        }
+        .checklist-highlight {
+            --highlight-color: rgba(251, 191, 36, 0.6);
+            animation: checklist-pulse 1s ease-in-out infinite;
+            border-radius: 8px;
+            position: relative;
+        }
+        .checklist-highlight::before {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border: 2px dashed var(--highlight-color);
+            border-radius: 12px;
+            animation: checklist-pulse 1s ease-in-out infinite;
+            pointer-events: none;
+        }
         .tutorial-overlay {
             position: fixed;
             inset: 0;
@@ -1876,6 +1896,32 @@ Prompt k analýze:
 
             // Checklist sidebar state - collapsed by default
             const [checklistExpanded, setChecklistExpanded] = useState(false);
+            const [highlightedField, setHighlightedField] = useState(null);
+
+            // Map checklist steps to form field IDs
+            const stepToFieldMap = {
+                role: 'field-role',
+                context: 'field-context',
+                task: 'field-task',
+                constraints: 'field-constraints',
+                format: 'field-outputFormat',
+                examples: 'field-examples',
+                methods: 'methods-section'
+            };
+
+            // Highlight field when clicking on checklist step
+            const highlightField = (stepKey) => {
+                const fieldId = stepToFieldMap[stepKey];
+                if (fieldId) {
+                    setHighlightedField(fieldId);
+                    const element = document.getElementById(fieldId);
+                    if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                    // Remove highlight after 3 seconds
+                    setTimeout(() => setHighlightedField(null), 3000);
+                }
+            };
 
             // Get translations for current language (direct lookup, no API)
             const t = getTranslations(lang);
@@ -4098,72 +4144,83 @@ Prompt k analýze:
                             </div>
                         </div>
 
-                        <div className="flex gap-4">
-                            {/* Left Sidebar - Collapsible Prompt Checklist */}
-                            {t.checklist && (
-                                <div className={`hidden lg:block flex-shrink-0 transition-all duration-300 ${checklistExpanded ? 'w-64' : 'w-12'}`}>
-                                    <div className="sticky top-4 bg-slate-800/60 border border-slate-700/50 rounded-xl overflow-hidden">
-                                        {/* Toggle Button */}
-                                        <button
-                                            onClick={() => setChecklistExpanded(!checklistExpanded)}
-                                            className="w-full p-3 flex items-center gap-2 hover:bg-slate-700/50 transition-colors"
-                                            title={checklistExpanded ? (lang === 'cs' ? 'Sbalit' : 'Collapse') : (lang === 'cs' ? 'Rozbalit průvodce' : 'Expand guide')}
-                                        >
-                                            <Icon name="CheckSquare" size={18} className="text-amber-400 flex-shrink-0" />
-                                            {checklistExpanded && (
-                                                <span className="text-xs font-bold text-white truncate flex-1 text-left">{t.checklist.title}</span>
-                                            )}
-                                            <Icon name={checklistExpanded ? 'ChevronLeft' : 'ChevronRight'} size={14} className="text-slate-400 flex-shrink-0" />
-                                        </button>
+                        {/* Fixed Checklist Sidebar - Expands Left as Overlay */}
+                        {t.checklist && (
+                            <div className={`hidden lg:block fixed left-0 top-1/2 -translate-y-1/2 z-40 transition-all duration-300 ${checklistExpanded ? 'translate-x-0' : '-translate-x-[calc(100%-48px)]'}`}>
+                                <div className="flex items-stretch">
+                                    {/* Expanded Panel */}
+                                    <div className={`w-72 bg-slate-800/95 backdrop-blur-sm border border-slate-700 rounded-r-xl shadow-2xl transition-opacity duration-300 ${checklistExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                                        <div className="p-4">
+                                            {/* Header with help text */}
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Icon name="CheckSquare" size={20} className="text-amber-400" />
+                                                <h3 className="text-sm font-bold text-white">{t.checklist.title}</h3>
+                                            </div>
+                                            <p className="text-xs text-slate-400 mb-1">{t.checklist.subtitle}</p>
+                                            <p className="text-[10px] text-amber-300/80 mb-3 italic flex items-center gap-1">
+                                                <Icon name="HelpCircle" size={12} />
+                                                {lang === 'cs' ? 'Nevíte jak na to? Klikněte na krok pro zvýraznění pole →' : "Not sure how? Click a step to highlight the field →"}
+                                            </p>
 
-                                        {/* Collapsed View - Just step numbers */}
+                                            {/* Checklist Steps - Clickable */}
+                                            <div className="space-y-2 mb-3 max-h-[50vh] overflow-y-auto pr-1">
+                                                {t.checklist.steps.map((step, idx) => (
+                                                    <button
+                                                        key={step.key}
+                                                        onClick={() => highlightField(step.key)}
+                                                        className={`w-full text-left p-2 rounded-lg border bg-check-${step.color} hover:ring-2 hover:ring-white/30 transition-all cursor-pointer`}
+                                                    >
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <div className={`w-5 h-5 rounded-full dot-${step.color} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0`}>
+                                                                {idx + 1}
+                                                            </div>
+                                                            <span className={`font-medium text-xs text-check-${step.color}`}>{step.name}</span>
+                                                            <Icon name="ArrowRight" size={12} className="text-slate-500 ml-auto" />
+                                                        </div>
+                                                        <p className="text-[10px] text-slate-300 leading-relaxed">{step.desc}</p>
+                                                        <p className="text-[9px] text-slate-500 italic mt-1">{step.example}</p>
+                                                    </button>
+                                                ))}
+                                            </div>
+
+                                            {/* Tip */}
+                                            <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2">
+                                                <Icon name="Lightbulb" size={14} className="text-amber-400 flex-shrink-0 mt-0.5" />
+                                                <p className="text-[10px] text-amber-200 leading-relaxed">{t.checklist.tip}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Toggle Tab */}
+                                    <button
+                                        onClick={() => setChecklistExpanded(!checklistExpanded)}
+                                        className="w-12 bg-slate-800/95 backdrop-blur-sm border border-l-0 border-slate-700 rounded-r-xl flex flex-col items-center py-4 gap-2 hover:bg-slate-700/80 transition-colors shadow-xl"
+                                        title={checklistExpanded ? (lang === 'cs' ? 'Sbalit' : 'Collapse') : (lang === 'cs' ? 'Průvodce promptem' : 'Prompt guide')}
+                                    >
+                                        <Icon name="CheckSquare" size={18} className="text-amber-400" />
+                                        <Icon name={checklistExpanded ? 'ChevronLeft' : 'ChevronRight'} size={16} className="text-slate-400" />
+
+                                        {/* Collapsed step indicators */}
                                         {!checklistExpanded && (
-                                            <div className="px-2 pb-3 space-y-1.5">
+                                            <div className="flex flex-col gap-1 mt-2">
                                                 {t.checklist.steps.map((step, idx) => (
                                                     <div
                                                         key={step.key}
-                                                        className={`w-8 h-8 rounded-lg dot-${step.color} flex items-center justify-center text-white text-xs font-bold cursor-help`}
-                                                        title={`${idx + 1}. ${step.name}: ${step.desc}`}
+                                                        className={`w-6 h-6 rounded dot-${step.color} flex items-center justify-center text-white text-[9px] font-bold`}
+                                                        title={`${idx + 1}. ${step.name}`}
                                                     >
                                                         {idx + 1}
                                                     </div>
                                                 ))}
                                             </div>
                                         )}
-
-                                        {/* Expanded View - Full content */}
-                                        {checklistExpanded && (
-                                            <div className="px-3 pb-3">
-                                                <p className="text-[10px] text-slate-400 mb-2">{t.checklist.subtitle}</p>
-
-                                                {/* Checklist Steps - Vertical */}
-                                                <div className="space-y-1.5 mb-2">
-                                                    {t.checklist.steps.map((step, idx) => (
-                                                        <div key={step.key} className={`p-1.5 rounded-lg border bg-check-${step.color}`}>
-                                                            <div className="flex items-center gap-1.5 mb-0.5">
-                                                                <div className={`w-4 h-4 rounded-full dot-${step.color} flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0`}>
-                                                                    {idx + 1}
-                                                                </div>
-                                                                <span className={`font-medium text-[10px] text-check-${step.color}`}>{step.name}</span>
-                                                            </div>
-                                                            <p className="text-[9px] text-slate-300 leading-tight">{step.desc}</p>
-                                                        </div>
-                                                    ))}
-                                                </div>
-
-                                                {/* Tip */}
-                                                <div className="p-1.5 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-1.5">
-                                                    <Icon name="Lightbulb" size={10} className="text-amber-400 flex-shrink-0 mt-0.5" />
-                                                    <p className="text-[9px] text-amber-200 leading-tight">{t.checklist.tip}</p>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
+                                    </button>
                                 </div>
-                            )}
+                            </div>
+                        )}
 
-                            {/* Main Content Grid */}
-                            <div className="flex-1 grid lg:grid-cols-5 gap-6">
+                        {/* Main Content Grid */}
+                        <div className="grid lg:grid-cols-5 gap-6">
                             {/* Input Panel */}
                             <div className="lg:col-span-2 space-y-4">
                                 {/* Template Selector */}
@@ -4293,7 +4350,7 @@ Prompt k analýze:
                                 {/* Input Fields - Optimized Layout */}
                                 <div className="space-y-2">
                                     {/* Row 1: Role (full width, single line) */}
-                                    <div id="field-role" className={tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-role' ? 'tutorial-highlight' : ''}>
+                                    <div id="field-role" className={`${tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-role' ? 'tutorial-highlight' : ''} ${highlightedField === 'field-role' ? 'checklist-highlight' : ''}`}>
                                         <label className="block text-xs font-medium text-slate-300 mb-1">
                                             {t.fields.role.label}
                                         </label>
@@ -4302,7 +4359,7 @@ Prompt k analýze:
                                     </div>
 
                                     {/* Row 2: Task (full width, main field) */}
-                                    <div id="field-task" className={tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-task' ? 'tutorial-highlight' : ''}>
+                                    <div id="field-task" className={`${tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-task' ? 'tutorial-highlight' : ''} ${highlightedField === 'field-task' ? 'checklist-highlight' : ''}`}>
                                         <label className="block text-xs font-medium text-slate-300 mb-1">
                                             {t.fields.task.label} <span className="text-amber-400">{t.required}</span>
                                         </label>
@@ -4318,7 +4375,7 @@ Prompt k analýze:
 
                                     {/* Row 3: Context + Constraints side by side */}
                                     <div className="grid grid-cols-2 gap-2">
-                                        <div id="field-context" className={tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-context' ? 'tutorial-highlight' : ''}>
+                                        <div id="field-context" className={`${tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-context' ? 'tutorial-highlight' : ''} ${highlightedField === 'field-context' ? 'checklist-highlight' : ''}`}>
                                             <label className="block text-xs font-medium text-slate-300 mb-1">
                                                 {t.fields.context.label}
                                             </label>
@@ -4331,7 +4388,7 @@ Prompt k analýze:
                                                 className="w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm"
                                             />
                                         </div>
-                                        <div id="field-constraints" className={tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-constraints' ? 'tutorial-highlight' : ''}>
+                                        <div id="field-constraints" className={`${tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-constraints' ? 'tutorial-highlight' : ''} ${highlightedField === 'field-constraints' ? 'checklist-highlight' : ''}`}>
                                             <label className="block text-xs font-medium text-slate-300 mb-1">
                                                 {(selectedMethods.includes('risen') ? t.fields.steps : t.fields.constraints).label}
                                             </label>
@@ -4347,7 +4404,7 @@ Prompt k analýze:
                                     </div>
 
                                     {/* Row 4: Output Format (full width, compact) */}
-                                    <div id="field-outputFormat" className={tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-outputFormat' ? 'tutorial-highlight' : ''}>
+                                    <div id="field-outputFormat" className={`${tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-outputFormat' ? 'tutorial-highlight' : ''} ${highlightedField === 'field-outputFormat' ? 'checklist-highlight' : ''}`}>
                                         <label className="block text-xs font-medium text-slate-300 mb-1">
                                             {(selectedMethods.includes('risen') ? t.fields.expectations : t.fields.outputFormat).label}
                                         </label>
@@ -4357,7 +4414,7 @@ Prompt k analýze:
                                     </div>
 
                                     {/* Enhanced Examples Section with File Format Support */}
-                                    <div className="bg-slate-800/50 border border-slate-700 rounded-lg p-2">
+                                    <div id="field-examples" className={`bg-slate-800/50 border border-slate-700 rounded-lg p-2 ${highlightedField === 'field-examples' ? 'checklist-highlight' : ''}`}>
                                         <div className="flex items-center justify-between mb-2">
                                             <label className="text-xs font-medium text-slate-300 flex items-center gap-1.5">
                                                 <Icon name="Lightbulb" size={14} className="text-yellow-400" />
@@ -4631,7 +4688,7 @@ Prompt k analýze:
                                 </div>
 
                             {/* Methods Panel - with category-based recommendations */}
-                            <div id="methods-section" className={`lg:col-span-1 ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'methods-section' ? 'tutorial-highlight' : ''}`}>
+                            <div id="methods-section" className={`lg:col-span-1 ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'methods-section' ? 'tutorial-highlight' : ''} ${highlightedField === 'methods-section' ? 'checklist-highlight' : ''}`}>
                                 <div className="flex items-center justify-between mb-3">
                                     <h3 className="text-sm font-medium text-slate-300">{t.methods.title}</h3>
                                 </div>
@@ -4793,7 +4850,6 @@ Prompt k analýze:
                                         <span>{formattedPrompt.length} {t.chars}</span>
                                     </div>
                                 )}
-                            </div>
                             </div>
                         </div>
 
