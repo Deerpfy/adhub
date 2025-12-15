@@ -65,7 +65,7 @@ async function handleProjectCreate(config) {
 
         // Enable pixel art mode if selected
         if (config.pixelArtMode && window.paintApp.pixelArt) {
-            window.paintApp.pixelArt.enable();
+            window.paintApp.pixelArt.setEnabled(true);
             if (config.gridSize) {
                 window.paintApp.pixelArt.setGridSize(config.gridSize);
             }
