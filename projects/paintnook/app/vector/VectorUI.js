@@ -89,6 +89,7 @@ export class VectorUI {
                 <!-- Fill Color -->
                 <div class="vector-property-group">
                     <label>Barva výplně</label>
+                    <small class="vector-hint">Pouze pro tvary (obdélník, elipsa)</small>
                     <div class="vector-color-row">
                         <input type="color" id="vectorFillColor" value="#ffffff">
                         <input type="text" id="vectorFillColorHex" value="none" maxlength="7">
@@ -111,20 +112,26 @@ export class VectorUI {
                 <!-- Line Cap -->
                 <div class="vector-property-group">
                     <label>Zakončení čáry</label>
-                    <div class="vector-button-group">
-                        <button class="vector-option-btn active" data-linecap="round" title="Zaoblené">
-                            <svg viewBox="0 0 24 8" width="24" height="8">
-                                <line x1="4" y1="4" x2="20" y2="4" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+                    <div class="vector-button-group linecap-group">
+                        <button class="vector-option-btn active" data-linecap="round" title="Zaoblené zakončení">
+                            <svg viewBox="0 0 40 20" width="40" height="20">
+                                <line x1="8" y1="10" x2="32" y2="10" stroke="currentColor" stroke-width="8" stroke-linecap="round"/>
+                                <circle cx="8" cy="10" r="2" fill="#8b5cf6"/>
+                                <circle cx="32" cy="10" r="2" fill="#8b5cf6"/>
                             </svg>
                         </button>
-                        <button class="vector-option-btn" data-linecap="square" title="Čtvercové">
-                            <svg viewBox="0 0 24 8" width="24" height="8">
-                                <line x1="4" y1="4" x2="20" y2="4" stroke="currentColor" stroke-width="4" stroke-linecap="square"/>
+                        <button class="vector-option-btn" data-linecap="square" title="Čtvercové zakončení">
+                            <svg viewBox="0 0 40 20" width="40" height="20">
+                                <line x1="8" y1="10" x2="32" y2="10" stroke="currentColor" stroke-width="8" stroke-linecap="square"/>
+                                <rect x="2" y="6" width="4" height="8" fill="none" stroke="#8b5cf6" stroke-width="1"/>
+                                <rect x="34" y="6" width="4" height="8" fill="none" stroke="#8b5cf6" stroke-width="1"/>
                             </svg>
                         </button>
-                        <button class="vector-option-btn" data-linecap="butt" title="Rovné">
-                            <svg viewBox="0 0 24 8" width="24" height="8">
-                                <line x1="4" y1="4" x2="20" y2="4" stroke="currentColor" stroke-width="4" stroke-linecap="butt"/>
+                        <button class="vector-option-btn" data-linecap="butt" title="Rovné zakončení">
+                            <svg viewBox="0 0 40 20" width="40" height="20">
+                                <line x1="8" y1="10" x2="32" y2="10" stroke="currentColor" stroke-width="8" stroke-linecap="butt"/>
+                                <line x1="8" y1="4" x2="8" y2="16" stroke="#8b5cf6" stroke-width="1"/>
+                                <line x1="32" y1="4" x2="32" y2="16" stroke="#8b5cf6" stroke-width="1"/>
                             </svg>
                         </button>
                     </div>
@@ -133,20 +140,20 @@ export class VectorUI {
                 <!-- Line Join -->
                 <div class="vector-property-group">
                     <label>Spojení čar</label>
-                    <div class="vector-button-group">
-                        <button class="vector-option-btn active" data-linejoin="round" title="Zaoblené">
-                            <svg viewBox="0 0 24 16" width="24" height="16">
-                                <polyline points="4,12 12,4 20,12" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+                    <div class="vector-button-group linejoin-group">
+                        <button class="vector-option-btn active" data-linejoin="round" title="Zaoblené spojení">
+                            <svg viewBox="0 0 40 24" width="40" height="24">
+                                <polyline points="6,20 20,6 34,20" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="round"/>
                             </svg>
                         </button>
-                        <button class="vector-option-btn" data-linejoin="miter" title="Ostré">
-                            <svg viewBox="0 0 24 16" width="24" height="16">
-                                <polyline points="4,12 12,4 20,12" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="miter"/>
+                        <button class="vector-option-btn" data-linejoin="miter" title="Ostré spojení">
+                            <svg viewBox="0 0 40 24" width="40" height="24">
+                                <polyline points="6,20 20,6 34,20" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="miter"/>
                             </svg>
                         </button>
-                        <button class="vector-option-btn" data-linejoin="bevel" title="Zkosené">
-                            <svg viewBox="0 0 24 16" width="24" height="16">
-                                <polyline points="4,12 12,4 20,12" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="bevel"/>
+                        <button class="vector-option-btn" data-linejoin="bevel" title="Zkosené spojení">
+                            <svg viewBox="0 0 40 24" width="40" height="24">
+                                <polyline points="6,20 20,6 34,20" fill="none" stroke="currentColor" stroke-width="6" stroke-linejoin="bevel"/>
                             </svg>
                         </button>
                     </div>
