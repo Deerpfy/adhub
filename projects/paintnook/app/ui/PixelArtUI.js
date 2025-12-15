@@ -498,19 +498,20 @@ export class PixelArtUI {
 
         const actualGridStep = gridSize * skipFactor;
 
-        // Vertical lines
-        for (let x = 0; x <= width; x += actualGridStep) {
+        // Vertical lines - draw BETWEEN cells, not on edges
+        // Start from first grid division, end before last edge
+        for (let x = actualGridStep; x < width; x += actualGridStep) {
             ctx.beginPath();
-            ctx.moveTo(x + 0.5, 0);
-            ctx.lineTo(x + 0.5, height);
+            ctx.moveTo(Math.floor(x) + 0.5, 0);
+            ctx.lineTo(Math.floor(x) + 0.5, height);
             ctx.stroke();
         }
 
-        // Horizontal lines
-        for (let y = 0; y <= height; y += actualGridStep) {
+        // Horizontal lines - draw BETWEEN cells, not on edges
+        for (let y = actualGridStep; y < height; y += actualGridStep) {
             ctx.beginPath();
-            ctx.moveTo(0, y + 0.5);
-            ctx.lineTo(width, y + 0.5);
+            ctx.moveTo(0, Math.floor(y) + 0.5);
+            ctx.lineTo(width, Math.floor(y) + 0.5);
             ctx.stroke();
         }
 
