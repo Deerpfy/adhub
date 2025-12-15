@@ -4144,90 +4144,73 @@ Prompt k analýze:
                             </div>
                         </div>
 
-                        {/* Fixed Checklist Sidebar - Expands Left as Overlay */}
+                        {/* Bottom Checklist Bar - Slides up on click */}
                         {t.checklist && (
-                            <div className={`hidden lg:block fixed left-0 top-1/2 -translate-y-1/2 z-40 transition-all duration-300 ${checklistExpanded ? 'translate-x-0' : '-translate-x-[calc(100%-56px)]'}`}>
-                                <div className="flex items-stretch">
-                                    {/* Expanded Panel - Larger */}
-                                    <div className={`w-96 bg-slate-800/95 backdrop-blur-sm border border-slate-700 rounded-r-xl shadow-2xl transition-opacity duration-300 ${checklistExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                                        <div className="p-5">
-                                            {/* Header with help text */}
-                                            <div className="flex items-center gap-2 mb-3">
-                                                <Icon name="CheckSquare" size={24} className="text-amber-400" />
-                                                <h3 className="text-base font-bold text-white">{t.checklist.title}</h3>
-                                            </div>
-                                            <p className="text-sm text-slate-400 mb-2">{t.checklist.subtitle}</p>
-                                            <p className="text-xs text-amber-300/80 mb-4 flex items-center gap-1.5 bg-amber-500/10 p-2 rounded-lg">
-                                                <Icon name="MousePointer" size={14} />
-                                                {lang === 'cs' ? 'Klikni na krok → zvýrazní se odpovídající pole ve formuláři' : "Click a step → highlights the corresponding field"}
-                                            </p>
+                            <div className={`hidden lg:block fixed bottom-0 left-1/2 -translate-x-1/2 z-40 transition-all duration-300 ${checklistExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-52px)]'}`}>
+                                {/* Expanded Panel - Slides up */}
+                                <div className="bg-slate-800/98 backdrop-blur-sm border border-slate-700 border-b-0 rounded-t-xl shadow-2xl w-[800px] max-w-[95vw]">
+                                    {/* Toggle Bar - Always visible */}
+                                    <button
+                                        onClick={() => setChecklistExpanded(!checklistExpanded)}
+                                        className="w-full px-4 py-3 flex items-center justify-between hover:bg-slate-700/50 transition-colors rounded-t-xl"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <Icon name="CheckSquare" size={20} className="text-amber-400" />
+                                            <span className="text-sm font-bold text-white">{t.checklist.title}</span>
+                                            <span className="text-xs text-slate-400 hidden sm:inline">
+                                                {lang === 'cs' ? '— Klikni na krok pro zvýraznění pole' : '— Click a step to highlight field'}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {/* Mini step indicators in collapsed state */}
+                                            {!checklistExpanded && (
+                                                <div className="flex gap-1 mr-2">
+                                                    {t.checklist.steps.map((step, idx) => (
+                                                        <div
+                                                            key={step.key}
+                                                            className={`w-5 h-5 rounded dot-${step.color} flex items-center justify-center text-white text-[9px] font-bold`}
+                                                            title={step.name}
+                                                        >
+                                                            {idx + 1}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <Icon name={checklistExpanded ? 'ChevronDown' : 'ChevronUp'} size={18} className="text-slate-400" />
+                                        </div>
+                                    </button>
 
-                                            {/* Checklist Steps - Clickable */}
-                                            <div className="space-y-2.5 mb-4 max-h-[55vh] overflow-y-auto pr-1">
+                                    {/* Expanded Content */}
+                                    {checklistExpanded && (
+                                        <div className="px-4 pb-4">
+                                            <p className="text-xs text-slate-400 mb-3">{t.checklist.subtitle}</p>
+
+                                            {/* Steps Grid - Horizontal layout */}
+                                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-3">
                                                 {t.checklist.steps.map((step, idx) => (
                                                     <button
                                                         key={step.key}
-                                                        onClick={() => highlightField(step.key)}
-                                                        className={`w-full text-left p-3 rounded-lg border bg-check-${step.color} hover:ring-2 hover:ring-white/30 hover:scale-[1.01] transition-all cursor-pointer`}
+                                                        onClick={() => { highlightField(step.key); setChecklistExpanded(false); }}
+                                                        className={`text-left p-3 rounded-lg border bg-check-${step.color} hover:ring-2 hover:ring-white/30 hover:scale-[1.02] transition-all cursor-pointer`}
                                                     >
-                                                        <div className="flex items-center gap-2 mb-1.5">
-                                                            <div className={`w-6 h-6 rounded-full dot-${step.color} flex items-center justify-center text-white text-xs font-bold flex-shrink-0`}>
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <div className={`w-5 h-5 rounded-full dot-${step.color} flex items-center justify-center text-white text-[10px] font-bold flex-shrink-0`}>
                                                                 {idx + 1}
                                                             </div>
-                                                            <span className={`font-semibold text-sm text-check-${step.color}`}>{step.name}</span>
-                                                            <Icon name="ArrowRight" size={14} className="text-slate-500 ml-auto" />
+                                                            <span className={`font-semibold text-xs text-check-${step.color}`}>{step.name}</span>
                                                         </div>
-                                                        <p className="text-xs text-slate-300 leading-relaxed mb-1">{step.desc}</p>
-                                                        <p className="text-[10px] text-slate-500 italic">{step.example}</p>
+                                                        <p className="text-[10px] text-slate-300 leading-relaxed">{step.desc}</p>
                                                     </button>
                                                 ))}
                                             </div>
 
                                             {/* Tip */}
-                                            <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-start gap-2">
-                                                <Icon name="Lightbulb" size={16} className="text-amber-400 flex-shrink-0 mt-0.5" />
-                                                <p className="text-xs text-amber-200 leading-relaxed">{t.checklist.tip}</p>
+                                            <div className="p-2 bg-amber-500/10 border border-amber-500/20 rounded-lg flex items-center gap-2">
+                                                <Icon name="Lightbulb" size={14} className="text-amber-400 flex-shrink-0" />
+                                                <p className="text-[10px] text-amber-200">{t.checklist.tip}</p>
                                             </div>
                                         </div>
-                                    </div>
-
-                                    {/* Toggle Tab - Shows field names instead of numbers */}
-                                    <button
-                                        onClick={() => setChecklistExpanded(!checklistExpanded)}
-                                        className="w-14 bg-slate-800/95 backdrop-blur-sm border border-l-0 border-slate-700 rounded-r-xl flex flex-col items-center py-3 gap-1.5 hover:bg-slate-700/80 transition-colors shadow-xl"
-                                        title={checklistExpanded ? (lang === 'cs' ? 'Sbalit' : 'Collapse') : (lang === 'cs' ? 'Průvodce promptem' : 'Prompt guide')}
-                                    >
-                                        <Icon name="CheckSquare" size={18} className="text-amber-400 mb-1" />
-                                        <Icon name={checklistExpanded ? 'ChevronLeft' : 'ChevronRight'} size={14} className="text-slate-400" />
-
-                                        {/* Collapsed - Show short field names */}
-                                        {!checklistExpanded && (
-                                            <div className="flex flex-col gap-1 mt-1">
-                                                {t.checklist.steps.map((step) => {
-                                                    // Short labels for collapsed state
-                                                    const shortLabels = {
-                                                        role: lang === 'cs' ? 'Role' : 'Role',
-                                                        context: lang === 'cs' ? 'Kont.' : 'Ctx',
-                                                        task: lang === 'cs' ? 'Úkol' : 'Task',
-                                                        constraints: lang === 'cs' ? 'Omez.' : 'Rules',
-                                                        format: lang === 'cs' ? 'Form.' : 'Fmt',
-                                                        examples: lang === 'cs' ? 'Přík.' : 'Ex.',
-                                                        methods: lang === 'cs' ? 'Met.' : 'Meth'
-                                                    };
-                                                    return (
-                                                        <div
-                                                            key={step.key}
-                                                            onClick={(e) => { e.stopPropagation(); highlightField(step.key); }}
-                                                            className={`px-1.5 py-1 rounded dot-${step.color} text-white text-[9px] font-medium cursor-pointer hover:ring-1 hover:ring-white/50 transition-all text-center leading-tight`}
-                                                            title={step.name}
-                                                        >
-                                                            {shortLabels[step.key] || step.key}
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                    </button>
+                                    )}
                                 </div>
                             </div>
                         )}
