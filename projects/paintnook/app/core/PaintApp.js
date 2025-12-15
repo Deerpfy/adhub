@@ -110,6 +110,10 @@ export class PaintApp {
 
             // Initialize StreamLine smoothing
             this.streamLine = new StreamLine(this);
+            // Sync streamline amount from settings
+            if (typeof this.settings.streamlineAmount === 'number') {
+                this.streamLine.setAmount(this.settings.streamlineAmount);
+            }
 
             // Initialize selection manager
             this.selection = new SelectionManager(this);

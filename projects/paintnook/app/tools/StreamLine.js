@@ -8,7 +8,7 @@ export class StreamLine {
         this.app = app;
 
         // Smoothing settings
-        this.amount = 50; // 0-100
+        this.amount = 0; // 0-100, default to 0 (no smoothing)
         this.bufferSize = 8; // Number of points to average
 
         // Point buffer for smoothing
