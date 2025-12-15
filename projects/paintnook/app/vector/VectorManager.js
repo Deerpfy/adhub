@@ -164,6 +164,7 @@ export class VectorManager {
         this.selectionGroup = document.createElementNS(this.svgNS, 'g');
         this.selectionGroup.setAttribute('id', 'selection-overlay');
         this.selectionGroup.setAttribute('pointer-events', 'none');
+        this.svgElement.appendChild(this.selectionGroup);
 
         wrapper.appendChild(this.svgElement);
     }
