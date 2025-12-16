@@ -158,6 +158,45 @@ export class UIController {
             this.hideMenu();
             this.importImage();
         });
+
+        // Back to welcome screen
+        document.getElementById('menuBackToWelcome')?.addEventListener('click', () => {
+            this.hideMenu();
+            this.backToWelcomeScreen();
+        });
+    }
+
+    /**
+     * Navigate back to welcome screen
+     */
+    backToWelcomeScreen() {
+        // Check for unsaved changes
+        if (this.app.hasUnsavedChanges && this.app.hasUnsavedChanges()) {
+            if (!confirm('Máte neuložené změny. Opravdu chcete odejít?')) {
+                return;
+            }
+        }
+
+        // Hide main app
+        const appElement = document.getElementById('app');
+        if (appElement) {
+            appElement.style.display = 'none';
+        }
+
+        // Show welcome screen
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        if (welcomeScreen) {
+            welcomeScreen.style.display = '';
+            welcomeScreen.classList.add('visible');
+        }
+
+        // Reload welcome screen to refresh project list
+        if (window.welcomeScreenInstance) {
+            window.welcomeScreenInstance.refreshProjects();
+        } else {
+            // Fallback: reload page
+            window.location.reload();
+        }
     }
 
     /**
