@@ -148,7 +148,7 @@ export class CanvasManager {
         this.container.addEventListener('pointermove', this.handlePointerMove.bind(this));
         this.container.addEventListener('pointerup', this.handlePointerUp.bind(this));
         this.container.addEventListener('pointercancel', this.handlePointerUp.bind(this));
-        this.container.addEventListener('pointerleave', this.handlePointerUp.bind(this));
+        this.container.addEventListener('pointerleave', this.handlePointerLeave.bind(this));
 
         // Prevent context menu
         this.container.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -232,6 +232,11 @@ export class CanvasManager {
 
         if (this.isDrawing) {
             this.draw(e);
+        } else {
+            // Render ghost paint preview when not drawing (Pixel Art mode)
+            if (this.app.ui?.pixelArtUI) {
+                this.app.ui.pixelArtUI.renderGhostPaint(pos.x, pos.y);
+            }
         }
     }
 
@@ -251,6 +256,21 @@ export class CanvasManager {
 
         if (this.isDrawing) {
             this.endDraw(e);
+        }
+    }
+
+    /**
+     * Handle pointer leave event - clears ghost paint preview
+     */
+    handlePointerLeave(e) {
+        // Handle drawing end if was drawing
+        if (this.isDrawing) {
+            this.handlePointerUp(e);
+        }
+
+        // Clear ghost paint preview when cursor leaves canvas
+        if (this.app.ui?.pixelArtUI) {
+            this.app.ui.pixelArtUI.clearGhostPaint();
         }
     }
 
