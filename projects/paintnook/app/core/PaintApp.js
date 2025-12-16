@@ -45,8 +45,8 @@ export class PaintApp {
             pressureSensitivity: true,
             streamlineEnabled: true,
             streamlineAmount: 0,
-            quickshapeEnabled: true,
-            quickshapePreview: true,
+            quickshapeEnabled: false,
+            quickshapePreview: false,
             pixelArtMode: false,
             vectorMode: false
         };
