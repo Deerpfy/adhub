@@ -140,6 +140,12 @@ async function handleProjectCreate(config) {
                 window.paintApp.vectorUI.syncWithVectorManager();
             }
 
+            // Hide raster mode UI panels (they conflict with vector panels)
+            const toolbarLeft = document.getElementById('toolbarLeft');
+            const panelRight = document.getElementById('panelRight');
+            if (toolbarLeft) toolbarLeft.style.display = 'none';
+            if (panelRight) panelRight.style.display = 'none';
+
             // Hide pixel art UI if visible
             if (window.paintApp.ui?.pixelArtUI) {
                 window.paintApp.ui.pixelArtUI.hide?.();

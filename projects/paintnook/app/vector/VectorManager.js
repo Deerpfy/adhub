@@ -135,6 +135,12 @@ export class VectorManager {
         if (previewCanvas) previewCanvas.style.display = '';
         if (overlayCanvas) overlayCanvas.style.display = '';
 
+        // Show raster mode UI panels
+        const toolbarLeft = document.getElementById('toolbarLeft');
+        const panelRight = document.getElementById('panelRight');
+        if (toolbarLeft) toolbarLeft.style.display = '';
+        if (panelRight) panelRight.style.display = '';
+
         this.enabled = false;
         this.elements = [];
         this.layers = [];
