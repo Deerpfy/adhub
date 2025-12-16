@@ -252,14 +252,15 @@ export class QuickShape {
     /**
      * Draw detected shape on canvas
      * @param {Object} shape - The detected shape
-     * @param {Array} originalPoints - Original stroke points (optional, for clearing)
+     * @param {Array} originalPoints - Original stroke points (required for clearing freehand)
      */
     drawShape(shape, originalPoints = null) {
         const ctx = this.app.layers.getActiveContext();
         if (!ctx) return;
 
-        // If preview toggle is off, clear the freehand stroke area first
-        if (!this.app.settings.quickshapePreview && originalPoints && originalPoints.length > 0) {
+        // Always clear the freehand stroke area before drawing QuickShape
+        // This ensures the original rough stroke is replaced by the clean shape
+        if (originalPoints && originalPoints.length > 0) {
             // Get bounding box of original stroke
             const bounds = this.getBoundingBox(originalPoints);
             const padding = this.app.brush.size + 5;

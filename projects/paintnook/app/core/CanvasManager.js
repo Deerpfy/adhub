@@ -190,8 +190,8 @@ export class CanvasManager {
             return;
         }
 
-        // Ignore events from UI elements (floating controls, indicators, etc.)
-        if (e.target.closest('.floating-controls, .quickshape-indicator, .pixel-art-indicator, .color-popup-picker')) {
+        // Ignore events from UI elements (floating controls, indicators, panels, etc.)
+        if (e.target.closest('.floating-controls, .floating-layers, .quickshape-indicator, .pixel-art-indicator, .color-popup-picker')) {
             return;
         }
 
@@ -283,6 +283,12 @@ export class CanvasManager {
 
         const pos = this.screenToCanvas(e.clientX, e.clientY);
         this.pressure = e.pressure || 0.5;
+
+        // Clear pixel art cell tracking at the START of each new stroke
+        // This ensures fresh tracking for each drawing operation
+        if (this.app.brush) {
+            this.app.brush.clearPixelArtCells();
+        }
 
         // Initialize stroke
         this.currentStroke = [{

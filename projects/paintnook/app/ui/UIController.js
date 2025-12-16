@@ -1429,8 +1429,8 @@ export class UIController {
             // Save general settings
             this.app.settings.pressureSensitivity = document.getElementById('settingPressure')?.checked ?? true;
             this.app.settings.streamlineEnabled = document.getElementById('settingStreamline')?.checked ?? true;
-            this.app.settings.quickshapeEnabled = document.getElementById('settingQuickshape')?.checked ?? true;
-            this.app.settings.quickshapePreview = document.getElementById('settingQuickshapePreview')?.checked ?? true;
+            this.app.settings.quickshapeEnabled = document.getElementById('settingQuickshape')?.checked ?? false;
+            this.app.settings.quickshapePreview = document.getElementById('settingQuickshapePreview')?.checked ?? false;
 
             // Save keyboard preset
             const selectedPreset = document.getElementById('keyboardPresetSelect')?.value || 'paintnook';
