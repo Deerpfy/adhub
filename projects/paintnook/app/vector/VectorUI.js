@@ -378,6 +378,32 @@ export class VectorUI {
                     </select>
                 </div>
             </div>
+
+            <!-- Keyboard Shortcuts Section -->
+            <div class="panel-header" style="margin-top: 8px; border-top: 1px solid var(--color-border);">
+                <h3>Klávesové zkratky</h3>
+            </div>
+            <div class="panel-content">
+                <div class="shortcuts-grid" style="display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 0.8rem;">
+                    <kbd>V</kbd><span>Výběr</span>
+                    <kbd>P</kbd><span>Pero</span>
+                    <kbd>L</kbd><span>Čára</span>
+                    <kbd>A</kbd><span>Šipka</span>
+                    <kbd>R</kbd><span>Obdélník</span>
+                    <kbd>E</kbd><span>Elipsa</span>
+                    <kbd>G</kbd><span>Mnohoúhelník</span>
+                    <kbd>S</kbd><span>Hvězda</span>
+                    <kbd>D</kbd><span>Přechod</span>
+                    <kbd>T</kbd><span>Text</span>
+                    <div style="grid-column: span 2; height: 8px;"></div>
+                    <kbd>Mezerník</kbd><span>Posun (Pan)</span>
+                    <kbd>Del</kbd><span>Smazat vybrané</span>
+                    <kbd>Ctrl+A</kbd><span>Vybrat vše</span>
+                    <kbd>Ctrl+Z</kbd><span>Zpět</span>
+                    <kbd>Ctrl+Y</kbd><span>Znovu</span>
+                    <kbd>Esc</kbd><span>Zrušit výběr</span>
+                </div>
+            </div>
         `;
 
         // Insert after pixel art toggle section
