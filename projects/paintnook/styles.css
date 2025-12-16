@@ -5724,25 +5724,36 @@ body.pixel-art-mode .color-picker-section:hover {
     height: 20px;
 }
 
-/* Shortcut key labels in toolbox */
-.vector-toolbox .shortcut-key {
+/* Shortcut key labels in vector toolbox - matching main toolbar style */
+.vector-toolbox .vector-tool-btn {
+    position: relative;
+}
+
+.vector-toolbox .tool-shortcut {
     position: absolute;
     bottom: 2px;
-    right: 3px;
+    right: 2px;
+    min-width: 14px;
+    height: 14px;
     font-size: 9px;
     font-weight: 600;
-    color: var(--text-secondary);
-    opacity: 0.7;
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--text-muted);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
     pointer-events: none;
 }
 
-.vector-toolbox .vector-tool-btn.active .shortcut-key {
-    color: var(--primary-light);
-    opacity: 1;
+.vector-toolbox .vector-tool-btn.active .tool-shortcut {
+    background: rgba(0, 0, 0, 0.4);
+    color: rgba(255, 255, 255, 0.8);
 }
 
-.vector-toolbox .vector-tool-btn {
-    position: relative;
+.vector-toolbox .vector-tool-btn:hover .tool-shortcut {
+    color: var(--text-secondary);
 }
 
 /* Tool-specific settings sections */
