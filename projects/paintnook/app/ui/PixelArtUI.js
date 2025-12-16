@@ -363,11 +363,12 @@ export class PixelArtUI {
             this.elements.animationTimeline.style.display = enabled ? 'flex' : 'none';
         }
 
-        // Hide/show digital painting options (brush settings, color picker, blend mode)
-        // When Pixel Art mode is enabled, hide brush types, blend mode, etc.
+        // Hide/show digital painting options (brush settings, color picker, blend mode, QuickShape)
+        // When Pixel Art mode is enabled, hide brush types, blend mode, QuickShape, etc.
         const brushSettings = document.getElementById('brushSettings');
         const colorPickerSection = document.getElementById('colorPickerSection');
         const blendModeSelector = document.querySelector('.blend-mode-selector');
+        const quickShapeBtn = document.getElementById('quickshapeToggleBtn');
 
         if (brushSettings) {
             brushSettings.style.display = enabled ? 'none' : 'block';
@@ -377,6 +378,24 @@ export class PixelArtUI {
         }
         if (blendModeSelector) {
             blendModeSelector.style.display = enabled ? 'none' : 'flex';
+        }
+        if (quickShapeBtn) {
+            quickShapeBtn.style.display = enabled ? 'none' : 'flex';
+        }
+
+        // Disable QuickShape in Pixel Art mode (it interferes with pixel-perfect drawing)
+        if (this.app.settings) {
+            if (enabled) {
+                // Save previous state and disable
+                this._previousQuickShapeState = this.app.settings.quickshapeEnabled;
+                this.app.settings.quickshapeEnabled = false;
+            } else {
+                // Restore previous state
+                if (this._previousQuickShapeState !== undefined) {
+                    this.app.settings.quickshapeEnabled = this._previousQuickShapeState;
+                }
+            }
+            this.app.ui?.updateQuickShapeToggleButton?.();
         }
 
         // Initialize or clear grid
