@@ -252,26 +252,17 @@ export class QuickShape {
     /**
      * Draw detected shape on canvas
      * @param {Object} shape - The detected shape
-     * @param {Array} originalPoints - Original stroke points (required for clearing freehand)
+     * @param {Array} originalPoints - Original stroke points (unused, kept for API compatibility)
      */
     drawShape(shape, originalPoints = null) {
         const ctx = this.app.layers.getActiveContext();
         if (!ctx) return;
 
-        // Always clear the freehand stroke area before drawing QuickShape
-        // This ensures the original rough stroke is replaced by the clean shape
-        if (originalPoints && originalPoints.length > 0) {
-            // Get bounding box of original stroke
-            const bounds = this.getBoundingBox(originalPoints);
-            const padding = this.app.brush.size + 5;
-
-            // Clear the freehand stroke area
-            ctx.clearRect(
-                bounds.x - padding,
-                bounds.y - padding,
-                bounds.width + padding * 2,
-                bounds.height + padding * 2
-            );
+        // Restore layer state from history snapshot (before freehand stroke was drawn)
+        // This cleanly removes the freehand stroke without affecting other content
+        const historySnapshot = this.app.history.currentAction;
+        if (historySnapshot && historySnapshot.imageData) {
+            ctx.putImageData(historySnapshot.imageData, 0, 0);
         }
 
         const color = this.app.color.getPrimaryColor();
