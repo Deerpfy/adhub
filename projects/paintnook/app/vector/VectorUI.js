@@ -9,6 +9,7 @@ export class VectorUI {
         this.container = null;
         this.vectorSection = null;
         this.modeIndicator = null;
+        this.toolbox = null;
     }
 
     /**
@@ -32,6 +33,9 @@ export class VectorUI {
         // Create indicator (shown in canvas area)
         this.createModeIndicator();
 
+        // Create toolbox (left side)
+        this.createToolbox();
+
         document.body.appendChild(this.container);
 
         // Create vector section for the right panel
@@ -51,6 +55,83 @@ export class VectorUI {
             <span>Vektorový režim</span>
         `;
         this.container.appendChild(this.modeIndicator);
+    }
+
+    /**
+     * Create vector toolbox (left side)
+     */
+    createToolbox() {
+        this.toolbox = document.createElement('div');
+        this.toolbox.id = 'vectorToolbox';
+        this.toolbox.className = 'vector-toolbox';
+        this.toolbox.innerHTML = `
+            <div class="vector-toolbox-section">
+                <button class="vector-tool-btn active" data-tool="select" title="Výběr (V)">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" fill="none" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                </button>
+                <button class="vector-tool-btn" data-tool="pen" title="Pero (P)">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="vector-toolbox-divider"></div>
+            <div class="vector-toolbox-section">
+                <button class="vector-tool-btn" data-tool="line" title="Čára (L)">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <line x1="4" y1="20" x2="20" y2="4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </button>
+                <button class="vector-tool-btn" data-tool="arrow" title="Šipka (A)">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <line x1="5" y1="19" x2="16" y2="8" stroke="currentColor" stroke-width="2"/>
+                        <polygon points="19,5 12,7 17,12" fill="currentColor"/>
+                    </svg>
+                </button>
+                <button class="vector-tool-btn" data-tool="rectangle" title="Obdélník (R)">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <rect x="4" y="6" width="16" height="12" fill="none" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                </button>
+                <button class="vector-tool-btn" data-tool="ellipse" title="Elipsa (E)">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <ellipse cx="12" cy="12" rx="8" ry="6" fill="none" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                </button>
+                <button class="vector-tool-btn" data-tool="polygon" title="Mnohoúhelník (G)">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <polygon points="12,3 21,10 18,21 6,21 3,10" fill="none" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                </button>
+                <button class="vector-tool-btn" data-tool="star" title="Hvězda (S)">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" fill="none" stroke="currentColor" stroke-width="2"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="vector-toolbox-divider"></div>
+            <div class="vector-toolbox-section">
+                <button class="vector-tool-btn" data-tool="gradient" title="Přechod (D)">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <defs>
+                            <linearGradient id="gradIcon" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" style="stop-color:currentColor;stop-opacity:1"/>
+                                <stop offset="100%" style="stop-color:currentColor;stop-opacity:0.2"/>
+                            </linearGradient>
+                        </defs>
+                        <rect x="3" y="6" width="18" height="12" rx="2" fill="url(#gradIcon)" stroke="currentColor" stroke-width="1"/>
+                    </svg>
+                </button>
+                <button class="vector-tool-btn" data-tool="text" title="Text (T)">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <text x="6" y="18" font-size="16" font-weight="bold" fill="currentColor">T</text>
+                    </svg>
+                </button>
+            </div>
+        `;
+        this.container.appendChild(this.toolbox);
     }
 
     /**
@@ -167,6 +248,104 @@ export class VectorUI {
                         </svg>
                         QuickShape (auto-detekce tvarů)
                     </label>
+                </div>
+            </div>
+
+            <!-- Tool-specific Settings -->
+            <div class="panel-header" style="margin-top: 8px; border-top: 1px solid var(--color-border);">
+                <h3>Nastavení nástroje</h3>
+            </div>
+            <div class="panel-content" id="toolSpecificSettings">
+                <!-- Polygon Settings -->
+                <div class="tool-settings" id="polygonSettings" style="display: none;">
+                    <div class="setting-row">
+                        <label>Počet stran</label>
+                        <div class="slider-group">
+                            <input type="range" id="polygonSides" min="3" max="12" value="6" class="slider">
+                            <span id="polygonSidesValue" class="slider-input" style="width: 40px; text-align: center;">6</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Star Settings -->
+                <div class="tool-settings" id="starSettings" style="display: none;">
+                    <div class="setting-row">
+                        <label>Počet cípů</label>
+                        <div class="slider-group">
+                            <input type="range" id="starPoints" min="3" max="20" value="5" class="slider">
+                            <span id="starPointsValue" class="slider-input" style="width: 40px; text-align: center;">5</span>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <label>Vnitřní poloměr</label>
+                        <div class="slider-group">
+                            <input type="range" id="starInnerRadius" min="10" max="90" value="40" class="slider">
+                            <span id="starInnerRadiusValue" class="slider-input" style="width: 45px; text-align: center;">40%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Arrow Settings -->
+                <div class="tool-settings" id="arrowSettings" style="display: none;">
+                    <div class="setting-row">
+                        <label>Velikost hlavičky</label>
+                        <div class="slider-group">
+                            <input type="range" id="arrowHeadSize" min="5" max="100" value="20" class="slider">
+                            <span id="arrowHeadSizeValue" class="slider-input" style="width: 45px; text-align: center;">20px</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gradient Settings -->
+                <div class="tool-settings" id="gradientSettings" style="display: none;">
+                    <div class="setting-row">
+                        <label>Typ přechodu</label>
+                        <div class="vector-button-group gradient-type-group">
+                            <button class="vector-option-btn active" data-gradient-type="linear" title="Lineární">
+                                <svg viewBox="0 0 32 20" width="28" height="16">
+                                    <defs>
+                                        <linearGradient id="linGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" style="stop-color:#666"/>
+                                            <stop offset="100%" style="stop-color:#ddd"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <rect x="2" y="2" width="28" height="16" rx="2" fill="url(#linGrad)"/>
+                                </svg>
+                            </button>
+                            <button class="vector-option-btn" data-gradient-type="radial" title="Radiální">
+                                <svg viewBox="0 0 32 20" width="28" height="16">
+                                    <defs>
+                                        <radialGradient id="radGrad" cx="50%" cy="50%" r="50%">
+                                            <stop offset="0%" style="stop-color:#ddd"/>
+                                            <stop offset="100%" style="stop-color:#666"/>
+                                        </radialGradient>
+                                    </defs>
+                                    <rect x="2" y="2" width="28" height="16" rx="2" fill="url(#radGrad)"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <label>Barva 1</label>
+                        <div class="color-input-row" style="gap: 8px;">
+                            <input type="color" id="gradientColor1" value="#000000" style="width: 40px; height: 30px;">
+                            <input type="text" id="gradientColor1Hex" value="#000000" maxlength="7" class="slider-input" style="width: 80px;">
+                        </div>
+                    </div>
+                    <div class="setting-row">
+                        <label>Barva 2</label>
+                        <div class="color-input-row" style="gap: 8px;">
+                            <input type="color" id="gradientColor2" value="#ffffff" style="width: 40px; height: 30px;">
+                            <input type="text" id="gradientColor2Hex" value="#ffffff" maxlength="7" class="slider-input" style="width: 80px;">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Default message when no tool-specific settings -->
+                <div class="tool-settings" id="defaultToolMessage">
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin: 0;">
+                        Vyberte nástroj pro zobrazení jeho nastavení.
+                    </p>
                 </div>
             </div>
 
@@ -348,6 +527,149 @@ export class VectorUI {
                 if (brushCheckbox) brushCheckbox.checked = e.target.checked;
             });
         }
+
+        // Toolbox tool buttons
+        if (this.toolbox) {
+            this.toolbox.querySelectorAll('.vector-tool-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const tool = e.currentTarget.dataset.tool;
+                    this.setActiveTool(tool);
+                    this.app.vector?.setTool(tool);
+                    this.showToolSettings(tool);
+                });
+            });
+        }
+
+        // Polygon settings
+        const polygonSidesInput = this.vectorSection.querySelector('#polygonSides');
+        const polygonSidesValue = this.vectorSection.querySelector('#polygonSidesValue');
+        if (polygonSidesInput) {
+            polygonSidesInput.addEventListener('input', (e) => {
+                const sides = parseInt(e.target.value);
+                polygonSidesValue.textContent = sides.toString();
+                this.app.vector?.setPolygonSides(sides);
+            });
+        }
+
+        // Star settings
+        const starPointsInput = this.vectorSection.querySelector('#starPoints');
+        const starPointsValue = this.vectorSection.querySelector('#starPointsValue');
+        if (starPointsInput) {
+            starPointsInput.addEventListener('input', (e) => {
+                const points = parseInt(e.target.value);
+                starPointsValue.textContent = points.toString();
+                this.app.vector?.setStarPoints(points);
+            });
+        }
+
+        const starInnerRadiusInput = this.vectorSection.querySelector('#starInnerRadius');
+        const starInnerRadiusValue = this.vectorSection.querySelector('#starInnerRadiusValue');
+        if (starInnerRadiusInput) {
+            starInnerRadiusInput.addEventListener('input', (e) => {
+                const ratio = parseInt(e.target.value);
+                starInnerRadiusValue.textContent = `${ratio}%`;
+                this.app.vector?.setStarInnerRadius(ratio / 100);
+            });
+        }
+
+        // Arrow settings
+        const arrowHeadSizeInput = this.vectorSection.querySelector('#arrowHeadSize');
+        const arrowHeadSizeValue = this.vectorSection.querySelector('#arrowHeadSizeValue');
+        if (arrowHeadSizeInput) {
+            arrowHeadSizeInput.addEventListener('input', (e) => {
+                const size = parseInt(e.target.value);
+                arrowHeadSizeValue.textContent = `${size}px`;
+                this.app.vector?.setArrowHeadSize(size);
+            });
+        }
+
+        // Gradient settings - type buttons
+        this.vectorSection.querySelectorAll('[data-gradient-type]').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const type = e.currentTarget.dataset.gradientType;
+                this.vectorSection.querySelectorAll('[data-gradient-type]').forEach(b => b.classList.remove('active'));
+                e.currentTarget.classList.add('active');
+                this.app.vector?.setGradientType(type);
+            });
+        });
+
+        // Gradient color 1
+        const gradientColor1Input = this.vectorSection.querySelector('#gradientColor1');
+        const gradientColor1Hex = this.vectorSection.querySelector('#gradientColor1Hex');
+        if (gradientColor1Input) {
+            gradientColor1Input.addEventListener('input', (e) => {
+                const color = e.target.value;
+                gradientColor1Hex.value = color;
+                this.updateGradientColors();
+            });
+        }
+        if (gradientColor1Hex) {
+            gradientColor1Hex.addEventListener('change', (e) => {
+                const color = e.target.value;
+                if (/^#[0-9A-Fa-f]{6}$/.test(color)) {
+                    gradientColor1Input.value = color;
+                    this.updateGradientColors();
+                }
+            });
+        }
+
+        // Gradient color 2
+        const gradientColor2Input = this.vectorSection.querySelector('#gradientColor2');
+        const gradientColor2Hex = this.vectorSection.querySelector('#gradientColor2Hex');
+        if (gradientColor2Input) {
+            gradientColor2Input.addEventListener('input', (e) => {
+                const color = e.target.value;
+                gradientColor2Hex.value = color;
+                this.updateGradientColors();
+            });
+        }
+        if (gradientColor2Hex) {
+            gradientColor2Hex.addEventListener('change', (e) => {
+                const color = e.target.value;
+                if (/^#[0-9A-Fa-f]{6}$/.test(color)) {
+                    gradientColor2Input.value = color;
+                    this.updateGradientColors();
+                }
+            });
+        }
+    }
+
+    /**
+     * Update gradient colors in VectorManager
+     */
+    updateGradientColors() {
+        const color1 = this.vectorSection.querySelector('#gradientColor1')?.value || '#000000';
+        const color2 = this.vectorSection.querySelector('#gradientColor2')?.value || '#ffffff';
+        this.app.vector?.setGradientColors(color1, color2);
+    }
+
+    /**
+     * Show tool-specific settings based on selected tool
+     */
+    showToolSettings(toolName) {
+        // Hide all tool settings
+        this.vectorSection.querySelectorAll('.tool-settings').forEach(el => {
+            el.style.display = 'none';
+        });
+
+        // Show specific settings based on tool
+        switch (toolName) {
+            case 'polygon':
+                this.vectorSection.querySelector('#polygonSettings').style.display = '';
+                break;
+            case 'star':
+                this.vectorSection.querySelector('#starSettings').style.display = '';
+                break;
+            case 'arrow':
+                this.vectorSection.querySelector('#arrowSettings').style.display = '';
+                break;
+            case 'gradient':
+                this.vectorSection.querySelector('#gradientSettings').style.display = '';
+                break;
+            default:
+                this.vectorSection.querySelector('#defaultToolMessage').style.display = '';
+                break;
+        }
     }
 
     /**
@@ -400,7 +722,13 @@ export class VectorUI {
      * Update tool state in UI
      */
     setActiveTool(toolName) {
-        // Update tool buttons if they exist
+        // Update tool buttons in toolbox
+        if (this.toolbox) {
+            this.toolbox.querySelectorAll('.vector-tool-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.tool === toolName);
+            });
+        }
+        // Also update any other tool buttons in container
         this.container?.querySelectorAll('.vector-tool-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tool === toolName);
         });
