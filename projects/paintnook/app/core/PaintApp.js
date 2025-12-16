@@ -658,6 +658,12 @@ export class PaintApp {
                 this.vectorUI.syncWithVectorManager();
             }
 
+            // Hide raster mode UI panels (they conflict with vector panels)
+            const toolbarLeft = document.getElementById('toolbarLeft');
+            const panelRight = document.getElementById('panelRight');
+            if (toolbarLeft) toolbarLeft.style.display = 'none';
+            if (panelRight) panelRight.style.display = 'none';
+
             // Hide pixel art sections if visible
             const pixelArtSection = document.getElementById('pixelArtSection');
             const paletteSection = document.getElementById('paletteSection');
