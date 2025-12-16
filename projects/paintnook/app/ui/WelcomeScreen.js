@@ -1,7 +1,9 @@
 /**
- * WelcomeScreen - Landing page with project creation and import options
- * Shows before the main editor loads
+ * WelcomeScreen - Landing page with project browsing, tags, and filtering
+ * Loads projects from IndexedDB via StorageManager
  */
+
+import { StorageManager } from '../utils/StorageManager.js';
 
 // Project profile types
 const PROJECT_PROFILES = {
@@ -16,6 +18,7 @@ const PROFILE_CONFIGS = {
         name: 'Digitální malba',
         description: 'Klasické pixelové kreslení s vrstvami, štětci a efekty',
         icon: 'brush',
+        badge: { bg: '#3b82f6', text: 'Digitální' },
         defaults: {
             width: 1920,
             height: 1080,
@@ -35,6 +38,7 @@ const PROFILE_CONFIGS = {
         name: 'Vektorové prostředí',
         description: 'SVG grafika s plynulým zoomem, export do SVG a PNG',
         icon: 'vector',
+        badge: { bg: '#8b5cf6', text: 'Vektor' },
         defaults: {
             width: 1920,
             height: 1080,
@@ -55,6 +59,7 @@ const PROFILE_CONFIGS = {
         name: 'Pixel Art',
         description: 'Optimalizováno pro pixel art s mřížkou a speciálními nástroji',
         icon: 'pixelart',
+        badge: { bg: '#22c55e', text: 'Pixel Art' },
         defaults: {
             width: 64,
             height: 64,
@@ -80,7 +85,19 @@ export class WelcomeScreen {
         this.onProjectCreate = null;
         this.onProjectLoad = null;
         this.onFileImport = null;
-        this.recentProjects = [];
+
+        // Data
+        this.projects = [];
+        this.tags = [];
+        this.storage = null;
+
+        // Filter state
+        this.filterProfile = null; // null = all profiles
+        this.filterTagId = null;   // null = all tags
+        this.searchQuery = '';
+
+        // Make instance accessible globally for UIController
+        window.welcomeScreenInstance = this;
     }
 
     /**
@@ -91,8 +108,12 @@ export class WelcomeScreen {
         this.onProjectLoad = callbacks.onProjectLoad || (() => {});
         this.onFileImport = callbacks.onFileImport || (() => {});
 
-        // Load recent projects from storage
-        await this.loadRecentProjects();
+        // Initialize storage
+        this.storage = new StorageManager();
+        await this.storage.init();
+
+        // Load data from IndexedDB
+        await this.loadData();
 
         // Create and show the welcome screen
         this.render();
@@ -100,18 +121,53 @@ export class WelcomeScreen {
     }
 
     /**
-     * Load recent projects from localStorage
+     * Load projects and tags from IndexedDB
      */
-    async loadRecentProjects() {
+    async loadData() {
         try {
-            const stored = localStorage.getItem('paintnook-recent-projects');
-            if (stored) {
-                this.recentProjects = JSON.parse(stored);
-            }
+            this.projects = await this.storage.listProjects();
+            this.tags = await this.storage.getAllTags();
         } catch (e) {
-            console.warn('Failed to load recent projects:', e);
-            this.recentProjects = [];
+            console.warn('Failed to load data from IndexedDB:', e);
+            this.projects = [];
+            this.tags = [];
         }
+    }
+
+    /**
+     * Refresh projects (called when returning from editor)
+     */
+    async refreshProjects() {
+        await this.loadData();
+        this.updateProjectsList();
+    }
+
+    /**
+     * Get filtered projects based on current filters
+     */
+    getFilteredProjects() {
+        let filtered = [...this.projects];
+
+        // Filter by profile
+        if (this.filterProfile) {
+            filtered = filtered.filter(p => p.profile === this.filterProfile);
+        }
+
+        // Filter by tag
+        if (this.filterTagId) {
+            filtered = filtered.filter(p => p.tags && p.tags.includes(this.filterTagId));
+        }
+
+        // Filter by search query
+        if (this.searchQuery.trim()) {
+            const query = this.searchQuery.toLowerCase().trim();
+            filtered = filtered.filter(p =>
+                p.name.toLowerCase().includes(query) ||
+                (p.profile && PROFILE_CONFIGS[p.profile]?.name.toLowerCase().includes(query))
+            );
+        }
+
+        return filtered;
     }
 
     /**
@@ -152,16 +208,65 @@ export class WelcomeScreen {
                         </div>
                     </section>
 
-                    <!-- Recent Projects Section -->
-                    <section class="welcome-section">
-                        <h2 class="section-title">
-                            <svg viewBox="0 0 24 24" width="20" height="20">
-                                <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z" fill="currentColor"/>
-                            </svg>
-                            Poslední projekty
-                        </h2>
-                        <div class="recent-projects">
-                            ${this.renderRecentProjects()}
+                    <!-- Projects Section with Filters -->
+                    <section class="welcome-section projects-section">
+                        <div class="section-header-with-filters">
+                            <h2 class="section-title">
+                                <svg viewBox="0 0 24 24" width="20" height="20">
+                                    <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z" fill="currentColor"/>
+                                </svg>
+                                Moje projekty
+                                <span class="projects-count">(${this.projects.length})</span>
+                            </h2>
+
+                            <div class="projects-toolbar">
+                                <!-- Search -->
+                                <div class="search-box">
+                                    <svg viewBox="0 0 24 24" width="18" height="18">
+                                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="currentColor"/>
+                                    </svg>
+                                    <input type="text" id="projectSearch" placeholder="Hledat projekty..." value="${this.escapeHtml(this.searchQuery)}">
+                                </div>
+
+                                <!-- Profile filter -->
+                                <div class="filter-group">
+                                    <label>Prostředí:</label>
+                                    <select id="filterProfile">
+                                        <option value="">Všechna</option>
+                                        <option value="digital" ${this.filterProfile === 'digital' ? 'selected' : ''}>Digitální malba</option>
+                                        <option value="vector" ${this.filterProfile === 'vector' ? 'selected' : ''}>Vektorové</option>
+                                        <option value="pixelart" ${this.filterProfile === 'pixelart' ? 'selected' : ''}>Pixel Art</option>
+                                    </select>
+                                </div>
+
+                                <!-- Tag filter -->
+                                <div class="filter-group">
+                                    <label>Tag:</label>
+                                    <select id="filterTag">
+                                        <option value="">Všechny tagy</option>
+                                        ${this.tags.map(tag => {
+                                            const color = StorageManager.getTagColor(tag.color);
+                                            return `<option value="${tag.id}" ${this.filterTagId === tag.id ? 'selected' : ''}>${this.escapeHtml(tag.name)}</option>`;
+                                        }).join('')}
+                                    </select>
+                                </div>
+
+                                <!-- Tags manager button -->
+                                <button class="btn-manage-tags" id="manageTagsBtn" title="Spravovat tagy">
+                                    <svg viewBox="0 0 24 24" width="18" height="18">
+                                        <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z" fill="currentColor"/>
+                                    </svg>
+                                    Tagy
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Active filters display -->
+                        ${this.renderActiveFilters()}
+
+                        <!-- Projects grid -->
+                        <div class="projects-grid" id="projectsGrid">
+                            ${this.renderProjects()}
                         </div>
                     </section>
 
@@ -251,46 +356,172 @@ export class WelcomeScreen {
                 <div class="profile-icon">${icons[profile.icon]}</div>
                 <h3>${profile.name}</h3>
                 <p>${profile.description}</p>
-                ${profile.notice ? `<span class="profile-notice">${profile.notice}</span>` : ''}
             </button>
         `).join('');
     }
 
     /**
-     * Render recent projects list
+     * Render active filters display
      */
-    renderRecentProjects() {
-        if (this.recentProjects.length === 0) {
+    renderActiveFilters() {
+        const hasFilters = this.filterProfile || this.filterTagId || this.searchQuery.trim();
+        if (!hasFilters) return '';
+
+        const filters = [];
+
+        if (this.filterProfile) {
+            const profile = PROFILE_CONFIGS[this.filterProfile];
+            filters.push(`
+                <span class="active-filter" data-clear="profile" style="background: ${profile.badge.bg}">
+                    ${profile.badge.text}
+                    <button class="clear-filter">&times;</button>
+                </span>
+            `);
+        }
+
+        if (this.filterTagId) {
+            const tag = this.tags.find(t => t.id === this.filterTagId);
+            if (tag) {
+                const color = StorageManager.getTagColor(tag.color);
+                filters.push(`
+                    <span class="active-filter" data-clear="tag" style="background: ${color.bg}; color: ${color.text}">
+                        ${this.escapeHtml(tag.name)}
+                        <button class="clear-filter">&times;</button>
+                    </span>
+                `);
+            }
+        }
+
+        if (this.searchQuery.trim()) {
+            filters.push(`
+                <span class="active-filter" data-clear="search" style="background: #374151">
+                    Hledání: "${this.escapeHtml(this.searchQuery)}"
+                    <button class="clear-filter">&times;</button>
+                </span>
+            `);
+        }
+
+        return `
+            <div class="active-filters">
+                ${filters.join('')}
+                <button class="clear-all-filters" id="clearAllFilters">Zrušit vše</button>
+            </div>
+        `;
+    }
+
+    /**
+     * Render projects grid
+     */
+    renderProjects() {
+        const filtered = this.getFilteredProjects();
+
+        if (filtered.length === 0) {
+            if (this.projects.length === 0) {
+                return `
+                    <div class="no-projects">
+                        <svg viewBox="0 0 24 24" width="48" height="48">
+                            <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z" fill="currentColor"/>
+                        </svg>
+                        <p>Zatím žádné projekty</p>
+                        <small>Vytvořte nový projekt nebo importujte soubor</small>
+                    </div>
+                `;
+            }
             return `
-                <div class="no-recent">
+                <div class="no-projects">
                     <svg viewBox="0 0 24 24" width="48" height="48">
-                        <path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z" fill="currentColor"/>
+                        <path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" fill="currentColor"/>
                     </svg>
-                    <p>Zatím žádné projekty</p>
-                    <small>Vytvořte nový projekt nebo importujte soubor</small>
+                    <p>Žádné projekty neodpovídají filtrům</p>
+                    <small>Zkuste změnit nebo zrušit filtry</small>
                 </div>
             `;
         }
 
-        return `
-            <div class="recent-list">
-                ${this.recentProjects.slice(0, 6).map(project => `
-                    <button class="recent-item" data-project-id="${this.escapeHtml(project.id)}">
-                        <div class="recent-thumb" style="background-image: url('${this.escapeHtml(project.thumbnail || '')}')">
-                            ${!project.thumbnail ? `<svg viewBox="0 0 24 24" width="24" height="24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" fill="currentColor"/></svg>` : ''}
+        return filtered.map(project => {
+            const profile = PROFILE_CONFIGS[project.profile] || PROFILE_CONFIGS.digital;
+            const projectTags = (project.tags || [])
+                .map(tagId => this.tags.find(t => t.id === tagId))
+                .filter(Boolean);
+
+            return `
+                <div class="project-card" data-project-id="${this.escapeHtml(project.id)}">
+                    <div class="project-thumb" style="background-image: url('${this.escapeHtml(project.thumbnail || '')}')">
+                        ${!project.thumbnail ? `
+                            <svg viewBox="0 0 24 24" width="32" height="32">
+                                <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" fill="currentColor"/>
+                            </svg>
+                        ` : ''}
+                        <span class="project-profile-badge" style="background: ${profile.badge.bg}">${profile.badge.text}</span>
+                    </div>
+                    <div class="project-info">
+                        <h4 class="project-name">${this.escapeHtml(project.name)}</h4>
+                        <div class="project-meta">
+                            <span class="project-size">${project.width}×${project.height}</span>
+                            <span class="project-date">${this.formatDate(project.modified)}</span>
                         </div>
-                        <div class="recent-info">
-                            <span class="recent-name">${this.escapeHtml(project.name)}</span>
-                            <span class="recent-date">${this.formatDate(project.modified)}</span>
-                            <span class="recent-size">${project.width}×${project.height}</span>
-                        </div>
-                    </button>
-                `).join('')}
-            </div>
-            <button class="btn-see-all" id="seeAllProjectsBtn">
-                Zobrazit všechny projekty
-            </button>
-        `;
+                        ${projectTags.length > 0 ? `
+                            <div class="project-tags">
+                                ${projectTags.slice(0, 3).map(tag => {
+                                    const color = StorageManager.getTagColor(tag.color);
+                                    return `<span class="project-tag" style="background: ${color.bg}; color: ${color.text}">${this.escapeHtml(tag.name)}</span>`;
+                                }).join('')}
+                                ${projectTags.length > 3 ? `<span class="project-tag-more">+${projectTags.length - 3}</span>` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <div class="project-actions">
+                        <button class="project-action-btn edit-tags-btn" data-project-id="${this.escapeHtml(project.id)}" title="Upravit tagy">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M21.41 11.58l-9-9C12.05 2.22 11.55 2 11 2H4c-1.1 0-2 .9-2 2v7c0 .55.22 1.05.59 1.42l9 9c.36.36.86.58 1.41.58.55 0 1.05-.22 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.55-.23-1.06-.59-1.42zM5.5 7C4.67 7 4 6.33 4 5.5S4.67 4 5.5 4 7 4.67 7 5.5 6.33 7 5.5 7z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                        <button class="project-action-btn delete-btn" data-project-id="${this.escapeHtml(project.id)}" title="Smazat projekt">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    /**
+     * Update only the projects list (for filtering)
+     */
+    updateProjectsList() {
+        const grid = this.container.querySelector('#projectsGrid');
+        if (grid) {
+            grid.innerHTML = this.renderProjects();
+            this.attachProjectEventListeners();
+        }
+
+        // Update count
+        const count = this.container.querySelector('.projects-count');
+        if (count) {
+            const filtered = this.getFilteredProjects();
+            count.textContent = `(${filtered.length}/${this.projects.length})`;
+        }
+
+        // Update active filters
+        const filtersArea = this.container.querySelector('.active-filters');
+        const newFilters = this.renderActiveFilters();
+        if (filtersArea) {
+            const temp = document.createElement('div');
+            temp.innerHTML = newFilters;
+            filtersArea.replaceWith(temp.firstElementChild || document.createTextNode(''));
+        } else if (newFilters) {
+            const sectionHeader = this.container.querySelector('.section-header-with-filters');
+            if (sectionHeader) {
+                const temp = document.createElement('div');
+                temp.innerHTML = newFilters;
+                sectionHeader.insertAdjacentElement('afterend', temp.firstElementChild);
+            }
+        }
+
+        // Re-attach filter clear listeners
+        this.attachFilterClearListeners();
     }
 
     /**
@@ -305,14 +536,6 @@ export class WelcomeScreen {
             });
         });
 
-        // Recent projects
-        this.container.querySelectorAll('.recent-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const projectId = item.dataset.projectId;
-                this.loadProject(projectId);
-            });
-        });
-
         // Import buttons
         this.container.querySelectorAll('.import-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -321,17 +544,120 @@ export class WelcomeScreen {
             });
         });
 
-        // See all projects
-        const seeAllBtn = this.container.querySelector('#seeAllProjectsBtn');
-        if (seeAllBtn) {
-            seeAllBtn.addEventListener('click', () => this.showAllProjects());
-        }
-
         // File input change
         const fileInput = this.container.querySelector('#welcomeFileInput');
         if (fileInput) {
             fileInput.addEventListener('change', (e) => this.handleFileSelect(e));
         }
+
+        // Search
+        const searchInput = this.container.querySelector('#projectSearch');
+        if (searchInput) {
+            let searchTimeout;
+            searchInput.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(() => {
+                    this.searchQuery = e.target.value;
+                    this.updateProjectsList();
+                }, 300);
+            });
+        }
+
+        // Profile filter
+        const profileFilter = this.container.querySelector('#filterProfile');
+        if (profileFilter) {
+            profileFilter.addEventListener('change', (e) => {
+                this.filterProfile = e.target.value || null;
+                this.updateProjectsList();
+            });
+        }
+
+        // Tag filter
+        const tagFilter = this.container.querySelector('#filterTag');
+        if (tagFilter) {
+            tagFilter.addEventListener('change', (e) => {
+                this.filterTagId = e.target.value || null;
+                this.updateProjectsList();
+            });
+        }
+
+        // Manage tags button
+        const manageTagsBtn = this.container.querySelector('#manageTagsBtn');
+        if (manageTagsBtn) {
+            manageTagsBtn.addEventListener('click', () => this.showTagsManager());
+        }
+
+        this.attachProjectEventListeners();
+        this.attachFilterClearListeners();
+    }
+
+    /**
+     * Attach project-specific event listeners
+     */
+    attachProjectEventListeners() {
+        // Project cards click
+        this.container.querySelectorAll('.project-card').forEach(card => {
+            card.addEventListener('click', (e) => {
+                // Ignore if clicking action buttons
+                if (e.target.closest('.project-action-btn')) return;
+
+                const projectId = card.dataset.projectId;
+                this.loadProject(projectId);
+            });
+        });
+
+        // Edit tags buttons
+        this.container.querySelectorAll('.edit-tags-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const projectId = btn.dataset.projectId;
+                this.showEditProjectTags(projectId);
+            });
+        });
+
+        // Delete buttons
+        this.container.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const projectId = btn.dataset.projectId;
+                this.confirmDeleteProject(projectId);
+            });
+        });
+    }
+
+    /**
+     * Attach filter clear listeners
+     */
+    attachFilterClearListeners() {
+        // Individual filter clear
+        this.container.querySelectorAll('.active-filter').forEach(filter => {
+            filter.querySelector('.clear-filter')?.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const clearType = filter.dataset.clear;
+                if (clearType === 'profile') {
+                    this.filterProfile = null;
+                    this.container.querySelector('#filterProfile').value = '';
+                } else if (clearType === 'tag') {
+                    this.filterTagId = null;
+                    this.container.querySelector('#filterTag').value = '';
+                } else if (clearType === 'search') {
+                    this.searchQuery = '';
+                    this.container.querySelector('#projectSearch').value = '';
+                }
+                this.updateProjectsList();
+            });
+        });
+
+        // Clear all filters
+        this.container.querySelector('#clearAllFilters')?.addEventListener('click', () => {
+            this.filterProfile = null;
+            this.filterTagId = null;
+            this.searchQuery = '';
+            this.container.querySelector('#filterProfile').value = '';
+            this.container.querySelector('#filterTag').value = '';
+            this.container.querySelector('#projectSearch').value = '';
+            this.updateProjectsList();
+        });
     }
 
     /**
@@ -341,7 +667,6 @@ export class WelcomeScreen {
         const profile = PROFILE_CONFIGS[profileKey];
         if (!profile) return;
 
-        // Create modal
         const modal = document.createElement('div');
         modal.className = 'welcome-modal';
         modal.innerHTML = `
@@ -403,15 +728,6 @@ export class WelcomeScreen {
                         </div>
                     ` : ''}
 
-                    ${profile.notice ? `
-                        <div class="form-notice">
-                            <svg viewBox="0 0 24 24" width="16" height="16">
-                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" fill="currentColor"/>
-                            </svg>
-                            ${profile.notice}
-                        </div>
-                    ` : ''}
-
                     <div class="form-actions">
                         <button type="button" class="btn-cancel">Zrušit</button>
                         <button type="submit" class="btn-create">Vytvořit projekt</button>
@@ -422,7 +738,7 @@ export class WelcomeScreen {
 
         document.body.appendChild(modal);
 
-        // Function to update grid size options based on canvas dimensions
+        // Update grid size options
         const updateGridSizeOptions = () => {
             const gridSelect = modal.querySelector('#gridSize');
             if (!gridSelect) return;
@@ -430,10 +746,8 @@ export class WelcomeScreen {
             const width = parseInt(modal.querySelector('#projectWidth').value) || 64;
             const height = parseInt(modal.querySelector('#projectHeight').value) || 64;
             const minDimension = Math.min(width, height);
-            // Require at least 4 cells per dimension
             const maxGridSize = Math.floor(minDimension / 4);
 
-            // Find nearest power of 2 that's <= maxSize
             const validSizes = [1, 2, 4, 8, 16, 32, 64];
             let maxAllowed = 1;
             for (let i = validSizes.length - 1; i >= 0; i--) {
@@ -443,15 +757,13 @@ export class WelcomeScreen {
                 }
             }
 
-            // Update options
             Array.from(gridSelect.options).forEach(option => {
                 const size = parseInt(option.value);
                 const isDisabled = size > maxAllowed;
                 option.disabled = isDisabled;
-                option.textContent = isDisabled ? `${size}px 🔒` : `${size}px`;
+                option.textContent = isDisabled ? `${size}px` : `${size}px`;
             });
 
-            // If current value is disabled, select max allowed
             if (parseInt(gridSelect.value) > maxAllowed) {
                 gridSelect.value = maxAllowed.toString();
             }
@@ -466,11 +778,8 @@ export class WelcomeScreen {
             });
         });
 
-        // Update grid options on dimension change
         modal.querySelector('#projectWidth')?.addEventListener('input', updateGridSizeOptions);
         modal.querySelector('#projectHeight')?.addEventListener('input', updateGridSizeOptions);
-
-        // Initial update
         updateGridSizeOptions();
 
         // Close handlers
@@ -503,6 +812,257 @@ export class WelcomeScreen {
             modal.remove();
             this.createProject(config);
         });
+    }
+
+    /**
+     * Show tags manager modal
+     */
+    async showTagsManager() {
+        const modal = document.createElement('div');
+        modal.className = 'welcome-modal';
+
+        const renderTagsList = () => {
+            return this.tags.map(tag => {
+                const color = StorageManager.getTagColor(tag.color);
+                return `
+                    <div class="tag-item" data-tag-id="${tag.id}">
+                        <span class="tag-preview" style="background: ${color.bg}; color: ${color.text}">${this.escapeHtml(tag.name)}</span>
+                        <div class="tag-actions">
+                            <button class="tag-edit-btn" data-tag-id="${tag.id}" title="Upravit">
+                                <svg viewBox="0 0 24 24" width="16" height="16">
+                                    <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34a.996.996 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                            <button class="tag-delete-btn" data-tag-id="${tag.id}" title="Smazat">
+                                <svg viewBox="0 0 24 24" width="16" height="16">
+                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('') || '<p class="no-tags-msg">Zatím žádné tagy</p>';
+        };
+
+        const renderColorPicker = (selectedColor = 'blue') => {
+            return StorageManager.getTagColors().map(c => `
+                <button type="button" class="color-option ${c.id === selectedColor ? 'selected' : ''}"
+                        data-color="${c.id}"
+                        style="background: ${c.bg}; color: ${c.text}"
+                        title="${c.id}">
+                </button>
+            `).join('');
+        };
+
+        modal.innerHTML = `
+            <div class="welcome-modal-content tags-modal">
+                <button class="modal-close" aria-label="Zavřít">&times;</button>
+                <h2>Správa tagů</h2>
+
+                <div class="tags-manager">
+                    <div class="new-tag-form">
+                        <input type="text" id="newTagName" placeholder="Název nového tagu" maxlength="30">
+                        <div class="color-picker">
+                            ${renderColorPicker()}
+                        </div>
+                        <button type="button" id="addTagBtn" class="btn-add-tag">Přidat tag</button>
+                    </div>
+
+                    <div class="tags-list" id="tagsList">
+                        ${renderTagsList()}
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-done">Hotovo</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        let selectedColor = 'blue';
+
+        // Color picker
+        modal.querySelectorAll('.color-option').forEach(btn => {
+            btn.addEventListener('click', () => {
+                modal.querySelectorAll('.color-option').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+                selectedColor = btn.dataset.color;
+            });
+        });
+
+        // Add tag
+        modal.querySelector('#addTagBtn').addEventListener('click', async () => {
+            const nameInput = modal.querySelector('#newTagName');
+            const name = nameInput.value.trim();
+            if (!name) return;
+
+            const tag = await this.storage.createTag(name, selectedColor);
+            this.tags.push(tag);
+            nameInput.value = '';
+
+            modal.querySelector('#tagsList').innerHTML = renderTagsList();
+            this.attachTagsListeners(modal, renderTagsList);
+            this.updateTagsFilter();
+        });
+
+        // Enter to add
+        modal.querySelector('#newTagName').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                modal.querySelector('#addTagBtn').click();
+            }
+        });
+
+        this.attachTagsListeners(modal, renderTagsList);
+
+        // Close handlers
+        modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
+        modal.querySelector('.btn-done').addEventListener('click', () => modal.remove());
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.remove();
+        });
+    }
+
+    /**
+     * Attach tags list event listeners
+     */
+    attachTagsListeners(modal, renderTagsList) {
+        // Edit tag
+        modal.querySelectorAll('.tag-edit-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const tagId = btn.dataset.tagId;
+                const tag = this.tags.find(t => t.id === tagId);
+                if (!tag) return;
+
+                const newName = prompt('Nový název tagu:', tag.name);
+                if (newName && newName.trim()) {
+                    await this.storage.updateTag(tagId, newName.trim(), tag.color);
+                    tag.name = newName.trim();
+                    modal.querySelector('#tagsList').innerHTML = renderTagsList();
+                    this.attachTagsListeners(modal, renderTagsList);
+                    this.updateTagsFilter();
+                    this.updateProjectsList();
+                }
+            });
+        });
+
+        // Delete tag
+        modal.querySelectorAll('.tag-delete-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const tagId = btn.dataset.tagId;
+                if (!confirm('Opravdu chcete smazat tento tag? Bude odstraněn ze všech projektů.')) return;
+
+                await this.storage.deleteTag(tagId);
+                this.tags = this.tags.filter(t => t.id !== tagId);
+
+                if (this.filterTagId === tagId) {
+                    this.filterTagId = null;
+                }
+
+                modal.querySelector('#tagsList').innerHTML = renderTagsList();
+                this.attachTagsListeners(modal, renderTagsList);
+                this.updateTagsFilter();
+                this.updateProjectsList();
+            });
+        });
+    }
+
+    /**
+     * Update tags filter dropdown
+     */
+    updateTagsFilter() {
+        const tagFilter = this.container.querySelector('#filterTag');
+        if (tagFilter) {
+            tagFilter.innerHTML = `
+                <option value="">Všechny tagy</option>
+                ${this.tags.map(tag => `<option value="${tag.id}" ${this.filterTagId === tag.id ? 'selected' : ''}>${this.escapeHtml(tag.name)}</option>`).join('')}
+            `;
+        }
+    }
+
+    /**
+     * Show edit project tags modal
+     */
+    async showEditProjectTags(projectId) {
+        const project = this.projects.find(p => p.id === projectId);
+        if (!project) return;
+
+        const modal = document.createElement('div');
+        modal.className = 'welcome-modal';
+
+        const projectTags = new Set(project.tags || []);
+
+        modal.innerHTML = `
+            <div class="welcome-modal-content tags-select-modal">
+                <button class="modal-close" aria-label="Zavřít">&times;</button>
+                <h2>Tagy pro "${this.escapeHtml(project.name)}"</h2>
+
+                <div class="tags-select-list">
+                    ${this.tags.length === 0 ? '<p class="no-tags-msg">Zatím nemáte žádné tagy. Vytvořte je ve správě tagů.</p>' : ''}
+                    ${this.tags.map(tag => {
+                        const color = StorageManager.getTagColor(tag.color);
+                        const isSelected = projectTags.has(tag.id);
+                        return `
+                            <label class="tag-checkbox ${isSelected ? 'selected' : ''}">
+                                <input type="checkbox" value="${tag.id}" ${isSelected ? 'checked' : ''}>
+                                <span class="tag-label" style="background: ${color.bg}; color: ${color.text}">${this.escapeHtml(tag.name)}</span>
+                            </label>
+                        `;
+                    }).join('')}
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel">Zrušit</button>
+                    <button type="button" class="btn-save" id="saveProjectTags">Uložit</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Toggle visual selection
+        modal.querySelectorAll('.tag-checkbox input').forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                checkbox.closest('.tag-checkbox').classList.toggle('selected', checkbox.checked);
+            });
+        });
+
+        // Save
+        modal.querySelector('#saveProjectTags').addEventListener('click', async () => {
+            const selectedTags = Array.from(modal.querySelectorAll('.tag-checkbox input:checked'))
+                .map(cb => cb.value);
+
+            await this.storage.updateProjectTags(projectId, selectedTags);
+            project.tags = selectedTags;
+
+            modal.remove();
+            this.updateProjectsList();
+        });
+
+        // Close handlers
+        modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
+        modal.querySelector('.btn-cancel').addEventListener('click', () => modal.remove());
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) modal.remove();
+        });
+    }
+
+    /**
+     * Confirm delete project
+     */
+    async confirmDeleteProject(projectId) {
+        const project = this.projects.find(p => p.id === projectId);
+        if (!project) return;
+
+        if (!confirm(`Opravdu chcete smazat projekt "${project.name}"? Tuto akci nelze vrátit.`)) {
+            return;
+        }
+
+        await this.storage.deleteProject(projectId);
+        this.projects = this.projects.filter(p => p.id !== projectId);
+        this.updateProjectsList();
     }
 
     /**
@@ -553,17 +1113,7 @@ export class WelcomeScreen {
         this.hide();
         this.onFileImport(files, importType);
 
-        // Reset input
         e.target.value = '';
-    }
-
-    /**
-     * Show all projects modal
-     */
-    showAllProjects() {
-        // This will be handled by the main app's project browser
-        this.hide();
-        this.onProjectLoad(null); // null signals to open project browser
     }
 
     /**
@@ -571,6 +1121,7 @@ export class WelcomeScreen {
      */
     show() {
         if (this.container) {
+            this.container.style.display = '';
             this.container.classList.add('visible');
         }
     }
@@ -581,7 +1132,6 @@ export class WelcomeScreen {
     hide() {
         if (this.container) {
             this.container.classList.remove('visible');
-            // Delayed removal for animation
             setTimeout(() => {
                 if (this.container && !this.container.classList.contains('visible')) {
                     this.container.style.display = 'none';
@@ -598,6 +1148,7 @@ export class WelcomeScreen {
             this.container.remove();
             this.container = null;
         }
+        window.welcomeScreenInstance = null;
     }
 
     /**
@@ -619,22 +1170,18 @@ export class WelcomeScreen {
         const now = new Date();
         const diff = now - date;
 
-        // Within last hour
         if (diff < 3600000) {
             const mins = Math.floor(diff / 60000);
             return `před ${mins} min`;
         }
-        // Within last day
         if (diff < 86400000) {
             const hours = Math.floor(diff / 3600000);
             return `před ${hours} h`;
         }
-        // Within last week
         if (diff < 604800000) {
             const days = Math.floor(diff / 86400000);
             return `před ${days} dny`;
         }
-        // Older
         return date.toLocaleDateString('cs-CZ');
     }
 }
