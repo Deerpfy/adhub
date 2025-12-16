@@ -33,6 +33,7 @@ export class VectorManager {
         this.isDrawing = false;
         this.currentPath = null;
         this.pathData = [];
+        this.rawPoints = []; // For QuickShape detection
 
         // Tool state
         this.currentTool = 'pen';
@@ -499,6 +500,7 @@ export class VectorManager {
 
     startPath(pos) {
         this.pathData = [`M ${pos.x} ${pos.y}`];
+        this.rawPoints = [{ x: pos.x, y: pos.y }]; // Start collecting points for QuickShape
         this.lastPoint = pos;
 
         this.currentPath = this.createPathElement();
@@ -509,6 +511,9 @@ export class VectorManager {
 
     continuePath(pos) {
         if (!this.currentPath) return;
+
+        // Collect points for QuickShape detection
+        this.rawPoints.push({ x: pos.x, y: pos.y });
 
         // Use quadratic bezier for smooth curves
         const midX = (this.lastPoint.x + pos.x) / 2;
@@ -523,10 +528,24 @@ export class VectorManager {
     endPath(pos) {
         if (!this.currentPath) return;
 
+        // Add final point
+        this.rawPoints.push({ x: pos.x, y: pos.y });
         this.pathData.push(`L ${pos.x} ${pos.y}`);
         this.currentPath.setAttribute('d', this.pathData.join(' '));
 
-        // Add to elements list
+        // Check if QuickShape is enabled and try to detect shape
+        if (this.app.settings?.quickshapeEnabled && this.app.quickShape) {
+            const detectedShape = this.app.quickShape.detect(this.rawPoints);
+            if (detectedShape) {
+                // Replace freehand path with detected shape
+                this.replacePathWithShape(detectedShape);
+                this.rawPoints = [];
+                this.pathData = [];
+                return;
+            }
+        }
+
+        // No shape detected, keep the freehand path
         this.elements.push({
             id: this.currentPath.getAttribute('id'),
             type: 'path',
@@ -536,6 +555,96 @@ export class VectorManager {
 
         this.currentPath = null;
         this.pathData = [];
+        this.rawPoints = [];
+    }
+
+    /**
+     * Replace current path with detected QuickShape
+     */
+    replacePathWithShape(shape) {
+        if (!this.currentPath) return;
+
+        const layerGroup = this.getActiveLayerGroup();
+        if (!layerGroup) return;
+
+        // Remove the freehand path
+        if (this.currentPath.parentNode) {
+            this.currentPath.parentNode.removeChild(this.currentPath);
+        }
+
+        let newElement = null;
+
+        switch (shape.type) {
+            case 'line':
+                newElement = document.createElementNS(this.svgNS, 'line');
+                newElement.setAttribute('id', this.generateId('line'));
+                newElement.setAttribute('x1', shape.startX);
+                newElement.setAttribute('y1', shape.startY);
+                newElement.setAttribute('x2', shape.endX);
+                newElement.setAttribute('y2', shape.endY);
+                newElement.setAttribute('stroke', this.toolSettings.stroke);
+                newElement.setAttribute('stroke-width', this.toolSettings.strokeWidth);
+                newElement.setAttribute('stroke-linecap', this.toolSettings.lineCap);
+                newElement.setAttribute('opacity', this.toolSettings.opacity);
+                newElement.setAttribute('vector-effect', 'non-scaling-stroke');
+                break;
+
+            case 'circle':
+            case 'ellipse':
+                newElement = document.createElementNS(this.svgNS, 'ellipse');
+                newElement.setAttribute('id', this.generateId('ellipse'));
+                newElement.setAttribute('cx', shape.centerX);
+                newElement.setAttribute('cy', shape.centerY);
+                newElement.setAttribute('rx', shape.radiusX);
+                newElement.setAttribute('ry', shape.radiusY);
+                newElement.setAttribute('stroke', this.toolSettings.stroke);
+                newElement.setAttribute('stroke-width', this.toolSettings.strokeWidth);
+                newElement.setAttribute('fill', this.toolSettings.fill);
+                newElement.setAttribute('opacity', this.toolSettings.opacity);
+                newElement.setAttribute('vector-effect', 'non-scaling-stroke');
+                break;
+
+            case 'rectangle':
+                newElement = document.createElementNS(this.svgNS, 'rect');
+                newElement.setAttribute('id', this.generateId('rect'));
+                newElement.setAttribute('x', shape.x);
+                newElement.setAttribute('y', shape.y);
+                newElement.setAttribute('width', shape.width);
+                newElement.setAttribute('height', shape.height);
+                newElement.setAttribute('stroke', this.toolSettings.stroke);
+                newElement.setAttribute('stroke-width', this.toolSettings.strokeWidth);
+                newElement.setAttribute('stroke-linejoin', this.toolSettings.lineJoin);
+                newElement.setAttribute('fill', this.toolSettings.fill);
+                newElement.setAttribute('opacity', this.toolSettings.opacity);
+                newElement.setAttribute('vector-effect', 'non-scaling-stroke');
+                break;
+
+            case 'triangle':
+                const points = shape.points.map(p => `${p.x},${p.y}`).join(' ');
+                newElement = document.createElementNS(this.svgNS, 'polygon');
+                newElement.setAttribute('id', this.generateId('polygon'));
+                newElement.setAttribute('points', points);
+                newElement.setAttribute('stroke', this.toolSettings.stroke);
+                newElement.setAttribute('stroke-width', this.toolSettings.strokeWidth);
+                newElement.setAttribute('stroke-linejoin', this.toolSettings.lineJoin);
+                newElement.setAttribute('fill', this.toolSettings.fill);
+                newElement.setAttribute('opacity', this.toolSettings.opacity);
+                newElement.setAttribute('vector-effect', 'non-scaling-stroke');
+                break;
+        }
+
+        if (newElement) {
+            layerGroup.appendChild(newElement);
+
+            this.elements.push({
+                id: newElement.getAttribute('id'),
+                type: shape.type,
+                element: newElement,
+                layerId: this.activeLayerId
+            });
+        }
+
+        this.currentPath = null;
     }
 
     createPathElement() {

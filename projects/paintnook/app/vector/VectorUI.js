@@ -157,6 +157,17 @@ export class VectorUI {
                         </button>
                     </div>
                 </div>
+
+                <!-- QuickShape Toggle -->
+                <div class="setting-row checkbox-row" style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--color-border);">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                        <input type="checkbox" id="vectorQuickshapeEnabled">
+                        <svg viewBox="0 0 24 24" width="16" height="16" style="opacity: 0.7;">
+                            <path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z" fill="currentColor"/>
+                        </svg>
+                        QuickShape (auto-detekce tvarů)
+                    </label>
+                </div>
             </div>
 
             <!-- Export Section -->
@@ -319,6 +330,19 @@ export class VectorUI {
                 this.app.vector?.downloadPNG(filename, scale);
             });
         }
+
+        // QuickShape toggle
+        const quickshapeCheckbox = this.vectorSection.querySelector('#vectorQuickshapeEnabled');
+        if (quickshapeCheckbox) {
+            // Sync with app settings on init
+            quickshapeCheckbox.checked = this.app.settings?.quickshapeEnabled ?? false;
+
+            quickshapeCheckbox.addEventListener('change', (e) => {
+                if (this.app.settings) {
+                    this.app.settings.quickshapeEnabled = e.target.checked;
+                }
+            });
+        }
     }
 
     /**
@@ -408,6 +432,12 @@ export class VectorUI {
         const opacityInput = this.vectorSection.querySelector('#vectorOpacity');
         const opacityValue = this.vectorSection.querySelector('#vectorOpacityValue');
         const opacityPercent = Math.round(settings.opacity * 100);
+
+        // Sync QuickShape checkbox
+        const quickshapeCheckbox = this.vectorSection.querySelector('#vectorQuickshapeEnabled');
+        if (quickshapeCheckbox) {
+            quickshapeCheckbox.checked = this.app.settings?.quickshapeEnabled ?? false;
+        }
         if (opacityInput) opacityInput.value = opacityPercent;
         if (opacityValue) opacityValue.textContent = `${opacityPercent}%`;
     }
