@@ -111,6 +111,9 @@ export class UIController {
         document.getElementById('exportBtn')?.addEventListener('click', () => {
             this.showExportModal();
         });
+        document.getElementById('saveBtn')?.addEventListener('click', () => {
+            this.app.saveProject();
+        });
 
         // Menu button
         document.getElementById('menuBtn')?.addEventListener('click', () => {
