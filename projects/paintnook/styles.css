@@ -5688,7 +5688,7 @@ body.pixel-art-mode .color-picker-section:hover {
 .vector-toolbox-divider {
     height: 1px;
     background: var(--color-border);
-    margin: 4px 0;
+    margin: 2px 0;
 }
 
 .vector-toolbox .vector-tool-btn {
