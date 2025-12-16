@@ -5633,7 +5633,7 @@ body.pixel-art-mode .color-picker-section:hover {
 /* Version badge on project card */
 .project-version-badge {
     position: absolute;
-    top: 8px;
+    bottom: 8px;
     right: 8px;
     display: flex;
     align-items: center;
@@ -5648,7 +5648,7 @@ body.pixel-art-mode .color-picker-section:hover {
     cursor: pointer;
     transition: var(--transition);
     backdrop-filter: blur(4px);
-    z-index: 10;
+    z-index: 5;
 }
 
 .project-version-badge:hover {
