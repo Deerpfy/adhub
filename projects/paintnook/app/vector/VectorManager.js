@@ -50,6 +50,12 @@ export class VectorManager {
         this.panX = 0;
         this.panY = 0;
 
+        // Pan state
+        this.isPanning = false;
+        this.spacePressed = false;
+        this.lastPanX = 0;
+        this.lastPanY = 0;
+
         // Selection handles
         this.selectionBox = null;
         this.handles = [];
@@ -175,13 +181,30 @@ export class VectorManager {
     setupEventListeners() {
         if (!this.svgElement) return;
 
-        this.svgElement.addEventListener('pointerdown', this.handlePointerDown.bind(this));
-        this.svgElement.addEventListener('pointermove', this.handlePointerMove.bind(this));
-        this.svgElement.addEventListener('pointerup', this.handlePointerUp.bind(this));
-        this.svgElement.addEventListener('pointerleave', this.handlePointerUp.bind(this));
+        // Store bound handlers for potential removal
+        this._boundHandlers = {
+            pointerDown: this.handlePointerDown.bind(this),
+            pointerMove: this.handlePointerMove.bind(this),
+            pointerUp: this.handlePointerUp.bind(this),
+            wheel: this.handleWheel.bind(this),
+            keyDown: this.handleKeyDown.bind(this),
+            keyUp: this.handleKeyUp.bind(this)
+        };
+
+        this.svgElement.addEventListener('pointerdown', this._boundHandlers.pointerDown);
+        this.svgElement.addEventListener('pointermove', this._boundHandlers.pointerMove);
+        this.svgElement.addEventListener('pointerup', this._boundHandlers.pointerUp);
+        this.svgElement.addEventListener('pointerleave', this._boundHandlers.pointerUp);
+
+        // Mouse wheel for zoom
+        this.container.addEventListener('wheel', this._boundHandlers.wheel, { passive: false });
 
         // Keyboard events
-        document.addEventListener('keydown', this.handleKeyDown.bind(this));
+        document.addEventListener('keydown', this._boundHandlers.keyDown);
+        document.addEventListener('keyup', this._boundHandlers.keyUp);
+
+        // Prevent context menu on SVG
+        this.svgElement.addEventListener('contextmenu', (e) => e.preventDefault());
     }
 
     /**
@@ -199,6 +222,12 @@ export class VectorManager {
      */
     handlePointerDown(e) {
         if (!this.enabled) return;
+
+        // Middle mouse button or space+click for panning
+        if (e.button === 1 || (e.button === 0 && this.spacePressed)) {
+            this.startPan(e);
+            return;
+        }
 
         const pos = this.getSVGCoordinates(e);
 
@@ -218,6 +247,12 @@ export class VectorManager {
      */
     handlePointerMove(e) {
         if (!this.enabled) return;
+
+        // Handle panning
+        if (this.isPanning) {
+            this.pan(e);
+            return;
+        }
 
         const pos = this.getSVGCoordinates(e);
 
@@ -240,6 +275,12 @@ export class VectorManager {
     handlePointerUp(e) {
         if (!this.enabled) return;
 
+        // End panning
+        if (this.isPanning) {
+            this.endPan();
+            return;
+        }
+
         if (this.isDrawing) {
             const pos = this.getSVGCoordinates(e);
             this.endDraw(pos);
@@ -250,10 +291,103 @@ export class VectorManager {
     }
 
     /**
+     * Handle mouse wheel for zoom
+     */
+    handleWheel(e) {
+        if (!this.enabled) return;
+
+        e.preventDefault();
+
+        const delta = e.deltaY > 0 ? 0.9 : 1.1;
+        const newZoom = Math.max(0.1, Math.min(10, this.zoom * delta));
+
+        // Zoom towards cursor position
+        const wrapper = document.getElementById('canvasWrapper');
+        if (wrapper) {
+            const containerRect = this.container.getBoundingClientRect();
+            const mouseX = e.clientX - containerRect.left;
+            const mouseY = e.clientY - containerRect.top;
+
+            const zoomRatio = newZoom / this.zoom;
+
+            this.panX = mouseX - (mouseX - this.panX) * zoomRatio;
+            this.panY = mouseY - (mouseY - this.panY) * zoomRatio;
+            this.zoom = newZoom;
+
+            this.updateTransform();
+        }
+    }
+
+    /**
+     * Handle key up (for space panning)
+     */
+    handleKeyUp(e) {
+        if (!this.enabled) return;
+
+        if (e.code === 'Space') {
+            this.spacePressed = false;
+            if (!this.isPanning) {
+                this.container.style.cursor = '';
+            }
+        }
+    }
+
+    /**
+     * Start panning
+     */
+    startPan(e) {
+        this.isPanning = true;
+        this.container.style.cursor = 'grabbing';
+        this.lastPanX = e.clientX;
+        this.lastPanY = e.clientY;
+    }
+
+    /**
+     * Pan the canvas
+     */
+    pan(e) {
+        const dx = e.clientX - this.lastPanX;
+        const dy = e.clientY - this.lastPanY;
+
+        this.panX += dx;
+        this.panY += dy;
+
+        this.lastPanX = e.clientX;
+        this.lastPanY = e.clientY;
+
+        this.updateTransform();
+    }
+
+    /**
+     * End panning
+     */
+    endPan() {
+        this.isPanning = false;
+        this.container.style.cursor = '';
+    }
+
+    /**
+     * Update canvas transform (zoom and pan)
+     */
+    updateTransform() {
+        const wrapper = document.getElementById('canvasWrapper');
+        if (wrapper) {
+            wrapper.style.transform = `translate(${this.panX}px, ${this.panY}px) scale(${this.zoom})`;
+            this.app.ui?.updateZoomLevel(Math.round(this.zoom * 100));
+        }
+    }
+
+    /**
      * Handle keyboard events
      */
     handleKeyDown(e) {
         if (!this.enabled) return;
+
+        // Space for pan mode
+        if (e.code === 'Space' && !this.spacePressed) {
+            this.spacePressed = true;
+            this.container.style.cursor = 'grab';
+        }
 
         // Delete selected elements
         if ((e.key === 'Delete' || e.key === 'Backspace') && this.selectedElements.length > 0) {
