@@ -36,7 +36,7 @@ export class VectorManager {
         this.rawPoints = []; // For QuickShape detection
 
         // Tool state
-        this.currentTool = 'pen';
+        this.currentTool = 'select';
         this.toolSettings = {
             stroke: '#000000',
             strokeWidth: 2,
