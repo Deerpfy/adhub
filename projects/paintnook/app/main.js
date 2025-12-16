@@ -64,12 +64,16 @@ async function handleProjectCreate(config) {
         // Initialize the application
         await window.paintApp.init();
 
-        // Create project with config
+        // Create project with config including profile info
         await window.paintApp.newProject({
             name: config.name,
             width: config.width,
             height: config.height,
-            backgroundColor: config.backgroundColor
+            backgroundColor: config.backgroundColor,
+            profile: config.profile || 'digital',
+            pixelArtMode: config.pixelArtMode || false,
+            vectorMode: config.vectorMode || false,
+            gridSize: config.gridSize || 16
         });
 
         // Enable pixel art mode if selected

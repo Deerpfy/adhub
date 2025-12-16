@@ -182,7 +182,11 @@ export class PaintApp {
             name = 'Nový projekt',
             width = 1920,
             height = 1080,
-            backgroundColor = '#ffffff'
+            backgroundColor = '#ffffff',
+            profile = 'digital',
+            pixelArtMode = false,
+            vectorMode = false,
+            gridSize = 16
         } = options;
 
         // Clear history
@@ -207,13 +211,17 @@ export class PaintApp {
         this.layers.addLayer('Vrstva 1');
         this.layers.setActiveLayer(1);
 
-        // Set project info
+        // Set project info including profile
         this.currentProject = {
             id: Date.now().toString(),
             name,
             width,
             height,
             backgroundColor,
+            profile,
+            pixelArtMode,
+            vectorMode,
+            gridSize,
             created: new Date().toISOString(),
             modified: new Date().toISOString()
         };
@@ -315,19 +323,27 @@ export class PaintApp {
             // Clear history
             this.history.clear();
 
+            // Reset modes before loading new project
+            this.resetModes();
+
             // Setup canvas
             this.canvas.resize(projectData.width, projectData.height);
 
             // Load layers
             await this.layers.deserialize(projectData.layers);
 
-            // Set project info
+            // Set project info including profile data
             this.currentProject = {
                 id: projectData.id,
                 name: projectData.name,
                 width: projectData.width,
                 height: projectData.height,
                 backgroundColor: projectData.backgroundColor,
+                profile: projectData.profile || 'digital',
+                pixelArtMode: projectData.pixelArtMode || false,
+                vectorMode: projectData.vectorMode || false,
+                gridSize: projectData.gridSize || 16,
+                tags: projectData.tags || [],
                 created: projectData.created,
                 modified: projectData.modified
             };
@@ -337,6 +353,9 @@ export class PaintApp {
             this.ui.updateLayersList();
             this.ui.updateCanvasInfo();
 
+            // Apply profile-specific settings after rendering
+            this.applyProfileSettings();
+
             this.unsavedChanges = false;
             this.ui.showNotification('Projekt načten', 'success');
 
@@ -344,6 +363,99 @@ export class PaintApp {
             console.error('Load error:', error);
             this.ui.showNotification('Chyba při načítání', 'error');
             throw error;
+        }
+    }
+
+    /**
+     * Reset all modes (pixel art, vector) to default state
+     */
+    resetModes() {
+        // Disable pixel art mode if active
+        if (this.settings.pixelArtMode && this.ui?.pixelArtUI) {
+            this.ui.pixelArtUI.togglePixelArtMode(false);
+            const toggle = document.getElementById('pixelArtModeToggle');
+            if (toggle) toggle.checked = false;
+        }
+        this.settings.pixelArtMode = false;
+
+        // Disable vector mode if active
+        if (this.settings.vectorMode && this.vector) {
+            this.vector.disable();
+            if (this.vectorUI) {
+                this.vectorUI.hide();
+            }
+        }
+        this.settings.vectorMode = false;
+    }
+
+    /**
+     * Apply profile-specific settings based on currentProject
+     */
+    applyProfileSettings() {
+        if (!this.currentProject) return;
+
+        const { profile, pixelArtMode, vectorMode, gridSize, backgroundColor, width, height } = this.currentProject;
+
+        // Apply Pixel Art mode
+        if (pixelArtMode && this.ui?.pixelArtUI) {
+            this.settings.pixelArtMode = true;
+
+            // Update toggle checkbox
+            const toggle = document.getElementById('pixelArtModeToggle');
+            if (toggle) toggle.checked = true;
+
+            // Enable pixel art mode
+            this.ui.pixelArtUI.togglePixelArtMode(true);
+
+            // Update grid options and set grid size
+            this.ui.pixelArtUI.updateGridSizeOptions();
+            if (gridSize && this.pixelArt) {
+                const maxAllowed = this.ui.pixelArtUI.getMaxGridSize();
+                const validGridSize = Math.min(gridSize, maxAllowed);
+                this.pixelArt.setGridSize(validGridSize);
+                this.pixelArt.grid.size = validGridSize;
+
+                const gridSizeSelect = document.getElementById('gridSize');
+                if (gridSizeSelect) gridSizeSelect.value = validGridSize.toString();
+            }
+
+            // Set grid color based on background
+            if (this.pixelArt) {
+                const isTransparent = !backgroundColor || backgroundColor === 'transparent';
+                const gridColor = isTransparent ? '#ffffff' : '#000000';
+                this.pixelArt.grid.color = gridColor;
+
+                const gridColorInput = document.getElementById('gridColor');
+                if (gridColorInput) gridColorInput.value = gridColor;
+
+                this.ui.pixelArtUI.updateGridOverlay();
+                this.pixelArt.saveSettings();
+            }
+        }
+
+        // Apply Vector mode
+        if (vectorMode && this.vector) {
+            this.settings.vectorMode = true;
+
+            // Enable vector mode
+            this.vector.enable(width, height);
+
+            // Set background color
+            if (backgroundColor) {
+                this.vector.setBackgroundColor(backgroundColor);
+            }
+
+            // Show vector UI
+            if (this.vectorUI) {
+                this.vectorUI.show();
+                this.vectorUI.syncWithVectorManager();
+            }
+
+            // Hide pixel art sections if visible
+            const pixelArtSection = document.getElementById('pixelArtSection');
+            const paletteSection = document.getElementById('paletteSection');
+            if (pixelArtSection) pixelArtSection.style.display = 'none';
+            if (paletteSection) paletteSection.style.display = 'none';
         }
     }
 
