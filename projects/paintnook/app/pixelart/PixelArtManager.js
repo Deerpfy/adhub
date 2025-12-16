@@ -30,6 +30,12 @@ export class PixelArtManager {
             toPixels: true
         };
 
+        // Ghost Paint settings - shows preview of paint before clicking
+        this.ghostPaint = {
+            enabled: false,
+            opacity: 0.4  // Opacity of the ghost preview
+        };
+
         // Symmetry settings
         this.symmetry = {
             enabled: false,
@@ -336,6 +342,19 @@ export class PixelArtManager {
         return {
             x: Math.floor(x),
             y: Math.floor(y)
+        };
+    }
+
+    /**
+     * Get grid cell coordinates for ghost paint
+     * Returns the top-left corner of the cell containing the point
+     */
+    getGridCell(x, y) {
+        const gridSize = this.grid.size;
+        return {
+            x: Math.floor(x / gridSize) * gridSize,
+            y: Math.floor(y / gridSize) * gridSize,
+            size: gridSize
         };
     }
 
@@ -1210,6 +1229,7 @@ export class PixelArtManager {
                 // Merge with defaults
                 Object.assign(this.grid, settings.grid || {});
                 Object.assign(this.snap, settings.snap || {});
+                Object.assign(this.ghostPaint, settings.ghostPaint || {});
                 Object.assign(this.symmetry, settings.symmetry || {});
                 Object.assign(this.tileMode, settings.tileMode || {});
                 Object.assign(this.onionSkin, settings.onionSkin || {});
@@ -1252,6 +1272,7 @@ export class PixelArtManager {
                 enabled: this.enabled,
                 grid: this.grid,
                 snap: this.snap,
+                ghostPaint: this.ghostPaint,
                 symmetry: this.symmetry,
                 tileMode: this.tileMode,
                 onionSkin: this.onionSkin,

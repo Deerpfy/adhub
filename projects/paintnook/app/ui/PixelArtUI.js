@@ -54,6 +54,9 @@ export class PixelArtUI {
         if (this.elements.snapToGrid) {
             this.elements.snapToGrid.checked = pixelArt.snap.toGrid;
         }
+        if (this.elements.ghostPaintEnabled) {
+            this.elements.ghostPaintEnabled.checked = pixelArt.ghostPaint.enabled;
+        }
     }
 
     /**
@@ -128,6 +131,7 @@ export class PixelArtUI {
         this.elements.gridOpacity = document.getElementById('gridOpacity');
         this.elements.gridOpacityValue = document.getElementById('gridOpacityValue');
         this.elements.snapToGrid = document.getElementById('snapToGrid');
+        this.elements.ghostPaintEnabled = document.getElementById('ghostPaintEnabled');
 
         // Symmetry
         this.elements.symmetryButtons = document.querySelectorAll('.symmetry-btn');
@@ -222,6 +226,15 @@ export class PixelArtUI {
 
         this.elements.snapToGrid?.addEventListener('change', (e) => {
             this.app.pixelArt.snap.toGrid = e.target.checked;
+        });
+
+        // Ghost Paint toggle
+        this.elements.ghostPaintEnabled?.addEventListener('change', (e) => {
+            this.app.pixelArt.ghostPaint.enabled = e.target.checked;
+            // Clear any existing ghost preview when disabled
+            if (!e.target.checked) {
+                this.clearGhostPaint();
+            }
         });
 
         // Symmetry buttons
@@ -516,6 +529,88 @@ export class PixelArtUI {
         }
 
         ctx.restore();
+    }
+
+    /**
+     * Clear ghost paint preview from preview canvas
+     */
+    clearGhostPaint() {
+        const canvas = this.app.canvas;
+        if (canvas && canvas.previewCtx) {
+            canvas.previewCtx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    }
+
+    /**
+     * Render ghost paint preview at the specified canvas position
+     * Shows a transparent preview of the color in the grid cell
+     */
+    renderGhostPaint(canvasX, canvasY) {
+        const canvas = this.app.canvas;
+        const pixelArt = this.app.pixelArt;
+
+        // Check if ghost paint is enabled and pixel art mode is active
+        if (!pixelArt?.ghostPaint?.enabled || !pixelArt.enabled) {
+            return;
+        }
+
+        // Check if we're not currently drawing
+        if (canvas.isDrawing) {
+            this.clearGhostPaint();
+            return;
+        }
+
+        // Check if position is within canvas bounds
+        if (canvasX < 0 || canvasX >= canvas.width || canvasY < 0 || canvasY >= canvas.height) {
+            this.clearGhostPaint();
+            return;
+        }
+
+        const previewCtx = canvas.previewCtx;
+        if (!previewCtx) return;
+
+        // Clear previous ghost preview
+        previewCtx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Get grid cell for the current position
+        const cell = pixelArt.getGridCell(canvasX, canvasY);
+
+        // Get current color
+        const color = this.app.color?.getPrimaryColor() || '#000000';
+
+        // Parse hex color to RGB
+        const hex = color.replace('#', '');
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+
+        // Draw ghost preview
+        previewCtx.save();
+        previewCtx.fillStyle = `rgba(${r}, ${g}, ${b}, ${pixelArt.ghostPaint.opacity})`;
+        previewCtx.fillRect(cell.x, cell.y, cell.size, cell.size);
+        previewCtx.restore();
+
+        // If symmetry is enabled, draw ghost at symmetry points too
+        if (pixelArt.symmetry.enabled) {
+            const centerX = cell.x + cell.size / 2;
+            const centerY = cell.y + cell.size / 2;
+            const symmetryPoints = pixelArt.getSymmetryPoints(centerX, centerY);
+
+            // Skip the first point (original), draw the rest
+            for (let i = 1; i < symmetryPoints.length; i++) {
+                const point = symmetryPoints[i];
+                const symCell = pixelArt.getGridCell(point.x, point.y);
+
+                // Check bounds
+                if (symCell.x >= 0 && symCell.x < canvas.width &&
+                    symCell.y >= 0 && symCell.y < canvas.height) {
+                    previewCtx.save();
+                    previewCtx.fillStyle = `rgba(${r}, ${g}, ${b}, ${pixelArt.ghostPaint.opacity})`;
+                    previewCtx.fillRect(symCell.x, symCell.y, symCell.size, symCell.size);
+                    previewCtx.restore();
+                }
+            }
+        }
     }
 
     /**
