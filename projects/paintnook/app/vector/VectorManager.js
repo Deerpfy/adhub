@@ -43,8 +43,23 @@ export class VectorManager {
             fill: 'none',
             opacity: 1,
             lineCap: 'round',
-            lineJoin: 'round'
+            lineJoin: 'round',
+            // Gradient settings
+            gradientType: 'linear', // linear, radial
+            gradientColor1: '#000000',
+            gradientColor2: '#ffffff',
+            // Polygon settings
+            polygonSides: 6,
+            // Star settings
+            starPoints: 5,
+            starInnerRadius: 0.4, // Inner radius as ratio of outer
+            // Arrow settings
+            arrowHeadSize: 20,
+            arrowHeadType: 'filled' // filled, outline, double
         };
+
+        // Gradient counter for unique IDs
+        this.gradientCounter = 0;
 
         // View state
         this.zoom = 1;
@@ -390,6 +405,11 @@ export class VectorManager {
     handleKeyDown(e) {
         if (!this.enabled) return;
 
+        // Ignore shortcuts when typing in input fields
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            return;
+        }
+
         // Space for pan mode
         if (e.code === 'Space' && !this.spacePressed) {
             this.spacePressed = true;
@@ -420,6 +440,30 @@ export class VectorManager {
         if (e.key === 'Escape') {
             this.clearSelection();
         }
+
+        // Tool shortcuts (only if no modifier keys pressed)
+        if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+            const key = e.key.toLowerCase();
+            const toolMap = {
+                'v': 'select',
+                'p': 'pen',
+                'l': 'line',
+                'a': 'arrow',
+                'r': 'rectangle',
+                'e': 'ellipse',
+                'g': 'polygon',
+                's': 'star',
+                'd': 'gradient',
+                't': 'text'
+            };
+
+            if (toolMap[key]) {
+                e.preventDefault();
+                this.setTool(toolMap[key]);
+                this.app.vectorUI?.setActiveTool(toolMap[key]);
+                this.app.vectorUI?.showToolSettings(toolMap[key]);
+            }
+        }
     }
 
     /**
@@ -442,6 +486,18 @@ export class VectorManager {
                 break;
             case 'ellipse':
                 this.startEllipse(pos);
+                break;
+            case 'polygon':
+                this.startPolygon(pos);
+                break;
+            case 'star':
+                this.startStar(pos);
+                break;
+            case 'arrow':
+                this.startArrow(pos);
+                break;
+            case 'gradient':
+                this.startGradient(pos);
                 break;
             case 'text':
                 this.addText(pos);
@@ -467,6 +523,18 @@ export class VectorManager {
             case 'ellipse':
                 this.updateEllipse(pos);
                 break;
+            case 'polygon':
+                this.updatePolygon(pos);
+                break;
+            case 'star':
+                this.updateStar(pos);
+                break;
+            case 'arrow':
+                this.updateArrow(pos);
+                break;
+            case 'gradient':
+                this.updateGradient(pos);
+                break;
         }
     }
 
@@ -487,6 +555,18 @@ export class VectorManager {
                 break;
             case 'ellipse':
                 this.finishEllipse(pos);
+                break;
+            case 'polygon':
+                this.finishPolygon(pos);
+                break;
+            case 'star':
+                this.finishStar(pos);
+                break;
+            case 'arrow':
+                this.finishArrow(pos);
+                break;
+            case 'gradient':
+                this.finishGradient(pos);
                 break;
         }
 
@@ -837,6 +917,375 @@ export class VectorManager {
 
         this.saveState();
         this.app.markUnsaved?.();
+    }
+
+    // ==========================================
+    // Polygon Tool
+    // ==========================================
+
+    startPolygon(pos) {
+        this.startPoint = pos;
+        this.currentPath = document.createElementNS(this.svgNS, 'polygon');
+        this.currentPath.setAttribute('id', this.generateId('polygon'));
+        this.currentPath.setAttribute('points', `${pos.x},${pos.y}`);
+        this.currentPath.setAttribute('stroke', this.toolSettings.stroke);
+        this.currentPath.setAttribute('stroke-width', this.toolSettings.strokeWidth);
+        this.currentPath.setAttribute('stroke-linejoin', this.toolSettings.lineJoin);
+        this.currentPath.setAttribute('fill', this.toolSettings.fill);
+        this.currentPath.setAttribute('opacity', this.toolSettings.opacity);
+        this.currentPath.setAttribute('vector-effect', 'non-scaling-stroke');
+
+        this.getActiveLayerGroup()?.appendChild(this.currentPath);
+    }
+
+    updatePolygon(pos) {
+        if (!this.currentPath || !this.startPoint) return;
+
+        const points = this.calculatePolygonPoints(
+            this.startPoint,
+            pos,
+            this.toolSettings.polygonSides
+        );
+        this.currentPath.setAttribute('points', points);
+    }
+
+    finishPolygon(pos) {
+        this.updatePolygon(pos);
+
+        if (this.currentPath) {
+            this.elements.push({
+                id: this.currentPath.getAttribute('id'),
+                type: 'polygon',
+                element: this.currentPath,
+                layerId: this.activeLayerId
+            });
+        }
+
+        this.currentPath = null;
+        this.startPoint = null;
+    }
+
+    /**
+     * Calculate regular polygon points
+     */
+    calculatePolygonPoints(center, edgePoint, sides) {
+        const radius = Math.sqrt(
+            Math.pow(edgePoint.x - center.x, 2) +
+            Math.pow(edgePoint.y - center.y, 2)
+        );
+        const startAngle = Math.atan2(edgePoint.y - center.y, edgePoint.x - center.x);
+
+        const points = [];
+        for (let i = 0; i < sides; i++) {
+            const angle = startAngle + (2 * Math.PI * i) / sides;
+            const x = center.x + radius * Math.cos(angle);
+            const y = center.y + radius * Math.sin(angle);
+            points.push(`${x},${y}`);
+        }
+
+        return points.join(' ');
+    }
+
+    // ==========================================
+    // Star Tool
+    // ==========================================
+
+    startStar(pos) {
+        this.startPoint = pos;
+        this.currentPath = document.createElementNS(this.svgNS, 'polygon');
+        this.currentPath.setAttribute('id', this.generateId('star'));
+        this.currentPath.setAttribute('points', `${pos.x},${pos.y}`);
+        this.currentPath.setAttribute('stroke', this.toolSettings.stroke);
+        this.currentPath.setAttribute('stroke-width', this.toolSettings.strokeWidth);
+        this.currentPath.setAttribute('stroke-linejoin', this.toolSettings.lineJoin);
+        this.currentPath.setAttribute('fill', this.toolSettings.fill);
+        this.currentPath.setAttribute('opacity', this.toolSettings.opacity);
+        this.currentPath.setAttribute('vector-effect', 'non-scaling-stroke');
+
+        this.getActiveLayerGroup()?.appendChild(this.currentPath);
+    }
+
+    updateStar(pos) {
+        if (!this.currentPath || !this.startPoint) return;
+
+        const points = this.calculateStarPoints(
+            this.startPoint,
+            pos,
+            this.toolSettings.starPoints,
+            this.toolSettings.starInnerRadius
+        );
+        this.currentPath.setAttribute('points', points);
+    }
+
+    finishStar(pos) {
+        this.updateStar(pos);
+
+        if (this.currentPath) {
+            this.elements.push({
+                id: this.currentPath.getAttribute('id'),
+                type: 'star',
+                element: this.currentPath,
+                layerId: this.activeLayerId
+            });
+        }
+
+        this.currentPath = null;
+        this.startPoint = null;
+    }
+
+    /**
+     * Calculate star points
+     */
+    calculateStarPoints(center, edgePoint, numPoints, innerRadiusRatio) {
+        const outerRadius = Math.sqrt(
+            Math.pow(edgePoint.x - center.x, 2) +
+            Math.pow(edgePoint.y - center.y, 2)
+        );
+        const innerRadius = outerRadius * innerRadiusRatio;
+        const startAngle = Math.atan2(edgePoint.y - center.y, edgePoint.x - center.x);
+
+        const points = [];
+        const totalPoints = numPoints * 2;
+
+        for (let i = 0; i < totalPoints; i++) {
+            const angle = startAngle + (Math.PI * i) / numPoints;
+            const radius = i % 2 === 0 ? outerRadius : innerRadius;
+            const x = center.x + radius * Math.cos(angle);
+            const y = center.y + radius * Math.sin(angle);
+            points.push(`${x},${y}`);
+        }
+
+        return points.join(' ');
+    }
+
+    // ==========================================
+    // Arrow Tool
+    // ==========================================
+
+    startArrow(pos) {
+        this.startPoint = pos;
+
+        // Create group for arrow (line + head)
+        this.currentPath = document.createElementNS(this.svgNS, 'g');
+        this.currentPath.setAttribute('id', this.generateId('arrow'));
+
+        // Create line
+        this.arrowLine = document.createElementNS(this.svgNS, 'line');
+        this.arrowLine.setAttribute('x1', pos.x);
+        this.arrowLine.setAttribute('y1', pos.y);
+        this.arrowLine.setAttribute('x2', pos.x);
+        this.arrowLine.setAttribute('y2', pos.y);
+        this.arrowLine.setAttribute('stroke', this.toolSettings.stroke);
+        this.arrowLine.setAttribute('stroke-width', this.toolSettings.strokeWidth);
+        this.arrowLine.setAttribute('stroke-linecap', this.toolSettings.lineCap);
+        this.arrowLine.setAttribute('vector-effect', 'non-scaling-stroke');
+
+        // Create arrowhead
+        this.arrowHead = document.createElementNS(this.svgNS, 'polygon');
+        this.arrowHead.setAttribute('fill', this.toolSettings.stroke);
+        this.arrowHead.setAttribute('stroke', 'none');
+
+        this.currentPath.appendChild(this.arrowLine);
+        this.currentPath.appendChild(this.arrowHead);
+        this.currentPath.setAttribute('opacity', this.toolSettings.opacity);
+
+        this.getActiveLayerGroup()?.appendChild(this.currentPath);
+    }
+
+    updateArrow(pos) {
+        if (!this.currentPath || !this.startPoint) return;
+
+        this.arrowLine.setAttribute('x2', pos.x);
+        this.arrowLine.setAttribute('y2', pos.y);
+
+        // Update arrowhead
+        const headPoints = this.calculateArrowHead(
+            this.startPoint,
+            pos,
+            this.toolSettings.arrowHeadSize
+        );
+        this.arrowHead.setAttribute('points', headPoints);
+    }
+
+    finishArrow(pos) {
+        this.updateArrow(pos);
+
+        if (this.currentPath) {
+            this.elements.push({
+                id: this.currentPath.getAttribute('id'),
+                type: 'arrow',
+                element: this.currentPath,
+                layerId: this.activeLayerId
+            });
+        }
+
+        this.currentPath = null;
+        this.startPoint = null;
+        this.arrowLine = null;
+        this.arrowHead = null;
+    }
+
+    /**
+     * Calculate arrow head points
+     */
+    calculateArrowHead(start, end, size) {
+        const angle = Math.atan2(end.y - start.y, end.x - start.x);
+        const headAngle = Math.PI / 6; // 30 degrees
+
+        // Arrow tip
+        const tipX = end.x;
+        const tipY = end.y;
+
+        // Arrow base points
+        const x1 = end.x - size * Math.cos(angle - headAngle);
+        const y1 = end.y - size * Math.sin(angle - headAngle);
+        const x2 = end.x - size * Math.cos(angle + headAngle);
+        const y2 = end.y - size * Math.sin(angle + headAngle);
+
+        return `${tipX},${tipY} ${x1},${y1} ${x2},${y2}`;
+    }
+
+    // ==========================================
+    // Gradient Tool
+    // ==========================================
+
+    startGradient(pos) {
+        this.startPoint = pos;
+
+        // Create gradient rectangle to fill
+        this.currentPath = document.createElementNS(this.svgNS, 'rect');
+        this.currentPath.setAttribute('id', this.generateId('gradient-rect'));
+        this.currentPath.setAttribute('x', 0);
+        this.currentPath.setAttribute('y', 0);
+        this.currentPath.setAttribute('width', this.width);
+        this.currentPath.setAttribute('height', this.height);
+        this.currentPath.setAttribute('opacity', this.toolSettings.opacity);
+
+        // Create gradient definition
+        this.gradientCounter++;
+        this.currentGradientId = `gradient-${Date.now()}-${this.gradientCounter}`;
+
+        if (this.toolSettings.gradientType === 'linear') {
+            this.currentGradient = document.createElementNS(this.svgNS, 'linearGradient');
+            this.currentGradient.setAttribute('id', this.currentGradientId);
+            this.currentGradient.setAttribute('gradientUnits', 'userSpaceOnUse');
+            this.currentGradient.setAttribute('x1', pos.x);
+            this.currentGradient.setAttribute('y1', pos.y);
+            this.currentGradient.setAttribute('x2', pos.x);
+            this.currentGradient.setAttribute('y2', pos.y);
+        } else {
+            this.currentGradient = document.createElementNS(this.svgNS, 'radialGradient');
+            this.currentGradient.setAttribute('id', this.currentGradientId);
+            this.currentGradient.setAttribute('gradientUnits', 'userSpaceOnUse');
+            this.currentGradient.setAttribute('cx', pos.x);
+            this.currentGradient.setAttribute('cy', pos.y);
+            this.currentGradient.setAttribute('r', 0);
+        }
+
+        // Add color stops
+        const stop1 = document.createElementNS(this.svgNS, 'stop');
+        stop1.setAttribute('offset', '0%');
+        stop1.setAttribute('stop-color', this.toolSettings.gradientColor1);
+
+        const stop2 = document.createElementNS(this.svgNS, 'stop');
+        stop2.setAttribute('offset', '100%');
+        stop2.setAttribute('stop-color', this.toolSettings.gradientColor2);
+
+        this.currentGradient.appendChild(stop1);
+        this.currentGradient.appendChild(stop2);
+
+        // Add gradient to defs
+        this.defsElement.appendChild(this.currentGradient);
+
+        // Apply gradient to rect
+        this.currentPath.setAttribute('fill', `url(#${this.currentGradientId})`);
+
+        // Create preview line
+        this.gradientPreviewLine = document.createElementNS(this.svgNS, 'line');
+        this.gradientPreviewLine.setAttribute('x1', pos.x);
+        this.gradientPreviewLine.setAttribute('y1', pos.y);
+        this.gradientPreviewLine.setAttribute('x2', pos.x);
+        this.gradientPreviewLine.setAttribute('y2', pos.y);
+        this.gradientPreviewLine.setAttribute('stroke', '#8b5cf6');
+        this.gradientPreviewLine.setAttribute('stroke-width', '2');
+        this.gradientPreviewLine.setAttribute('stroke-dasharray', '5,5');
+        this.gradientPreviewLine.setAttribute('pointer-events', 'none');
+
+        this.getActiveLayerGroup()?.appendChild(this.currentPath);
+        this.selectionGroup.appendChild(this.gradientPreviewLine);
+    }
+
+    updateGradient(pos) {
+        if (!this.currentPath || !this.startPoint || !this.currentGradient) return;
+
+        // Update preview line
+        this.gradientPreviewLine.setAttribute('x2', pos.x);
+        this.gradientPreviewLine.setAttribute('y2', pos.y);
+
+        if (this.toolSettings.gradientType === 'linear') {
+            this.currentGradient.setAttribute('x2', pos.x);
+            this.currentGradient.setAttribute('y2', pos.y);
+        } else {
+            const radius = Math.sqrt(
+                Math.pow(pos.x - this.startPoint.x, 2) +
+                Math.pow(pos.y - this.startPoint.y, 2)
+            );
+            this.currentGradient.setAttribute('r', radius);
+        }
+    }
+
+    finishGradient(pos) {
+        this.updateGradient(pos);
+
+        // Remove preview line
+        if (this.gradientPreviewLine && this.gradientPreviewLine.parentNode) {
+            this.gradientPreviewLine.parentNode.removeChild(this.gradientPreviewLine);
+        }
+
+        if (this.currentPath) {
+            this.elements.push({
+                id: this.currentPath.getAttribute('id'),
+                type: 'gradient',
+                element: this.currentPath,
+                layerId: this.activeLayerId,
+                gradientId: this.currentGradientId
+            });
+        }
+
+        this.currentPath = null;
+        this.startPoint = null;
+        this.currentGradient = null;
+        this.currentGradientId = null;
+        this.gradientPreviewLine = null;
+    }
+
+    // ==========================================
+    // Tool Settings Setters
+    // ==========================================
+
+    setGradientType(type) {
+        this.toolSettings.gradientType = type;
+    }
+
+    setGradientColors(color1, color2) {
+        this.toolSettings.gradientColor1 = color1;
+        this.toolSettings.gradientColor2 = color2;
+    }
+
+    setPolygonSides(sides) {
+        this.toolSettings.polygonSides = Math.max(3, Math.min(12, sides));
+    }
+
+    setStarPoints(points) {
+        this.toolSettings.starPoints = Math.max(3, Math.min(20, points));
+    }
+
+    setStarInnerRadius(ratio) {
+        this.toolSettings.starInnerRadius = Math.max(0.1, Math.min(0.9, ratio));
+    }
+
+    setArrowHeadSize(size) {
+        this.toolSettings.arrowHeadSize = Math.max(5, Math.min(100, size));
     }
 
     // ==========================================
