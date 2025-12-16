@@ -83,8 +83,8 @@ export class StorageManager {
             const transaction = this.db.transaction(['projects'], 'readwrite');
             const store = transaction.objectStore('projects');
 
-            // Generate thumbnail
-            const thumbnail = this.generateThumbnail(projectData);
+            // Use provided thumbnail or fallback to generation from layer data
+            const thumbnail = projectData.thumbnail || this.generateThumbnail(projectData);
 
             const data = {
                 ...projectData,
