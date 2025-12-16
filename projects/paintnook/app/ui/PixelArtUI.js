@@ -51,9 +51,6 @@ export class PixelArtUI {
                 this.elements.gridOpacityValue.textContent = Math.round(pixelArt.grid.opacity * 100) + '%';
             }
         }
-        if (this.elements.snapToGrid) {
-            this.elements.snapToGrid.checked = pixelArt.snap.toGrid;
-        }
         if (this.elements.ghostPaintEnabled) {
             this.elements.ghostPaintEnabled.checked = pixelArt.ghostPaint.enabled;
         }
@@ -130,7 +127,6 @@ export class PixelArtUI {
         this.elements.gridColor = document.getElementById('gridColor');
         this.elements.gridOpacity = document.getElementById('gridOpacity');
         this.elements.gridOpacityValue = document.getElementById('gridOpacityValue');
-        this.elements.snapToGrid = document.getElementById('snapToGrid');
         this.elements.ghostPaintEnabled = document.getElementById('ghostPaintEnabled');
 
         // Symmetry
@@ -222,10 +218,6 @@ export class PixelArtUI {
             this.app.pixelArt.grid.opacity = value / 100;
             this.elements.gridOpacityValue.textContent = value + '%';
             this.updateGridOverlay();
-        });
-
-        this.elements.snapToGrid?.addEventListener('change', (e) => {
-            this.app.pixelArt.snap.toGrid = e.target.checked;
         });
 
         // Ghost Paint toggle
