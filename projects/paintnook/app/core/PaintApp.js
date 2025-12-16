@@ -239,10 +239,14 @@ export class PaintApp {
             // Serialize layers
             const layersData = await this.layers.serialize();
 
+            // Create thumbnail from composite canvas
+            const thumbnail = this.createThumbnail();
+
             // Create project data
             const projectData = {
                 ...this.currentProject,
-                layers: layersData
+                layers: layersData,
+                thumbnail
             };
 
             // Save to storage
@@ -256,6 +260,45 @@ export class PaintApp {
             console.error('Save error:', error);
             this.ui.showNotification('Chyba při ukládání', 'error');
             throw error;
+        }
+    }
+
+    /**
+     * Create thumbnail from current canvas state
+     * @param {number} maxSize - Maximum dimension for thumbnail
+     * @returns {string|null} - Data URL of thumbnail or null
+     */
+    createThumbnail(maxSize = 400) {
+        try {
+            // Get composite canvas with all visible layers
+            const compositeCanvas = this.canvas.getCompositeCanvas();
+            if (!compositeCanvas) return null;
+
+            // Calculate scaled dimensions maintaining aspect ratio
+            const { width, height } = compositeCanvas;
+            let thumbWidth = width;
+            let thumbHeight = height;
+
+            if (width > maxSize || height > maxSize) {
+                const ratio = Math.min(maxSize / width, maxSize / height);
+                thumbWidth = Math.round(width * ratio);
+                thumbHeight = Math.round(height * ratio);
+            }
+
+            // Create thumbnail canvas
+            const thumbCanvas = document.createElement('canvas');
+            thumbCanvas.width = thumbWidth;
+            thumbCanvas.height = thumbHeight;
+            const ctx = thumbCanvas.getContext('2d');
+
+            // Draw scaled composite
+            ctx.drawImage(compositeCanvas, 0, 0, thumbWidth, thumbHeight);
+
+            // Return as data URL (JPEG for smaller size)
+            return thumbCanvas.toDataURL('image/jpeg', 0.85);
+        } catch (error) {
+            console.warn('Failed to create thumbnail:', error);
+            return null;
         }
     }
 
