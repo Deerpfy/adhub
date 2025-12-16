@@ -18,7 +18,7 @@ const TAG_COLORS = [
 export class StorageManager {
     constructor() {
         this.dbName = 'PaintStudioDB';
-        this.dbVersion = 2; // Bumped for tags support
+        this.dbVersion = 3; // Bumped for version history support
         this.db = null;
     }
 
@@ -71,29 +71,90 @@ export class StorageManager {
                         projectsStore.createIndex('profile', 'profile', { unique: false });
                     }
                 }
+
+                // Project versions store (v3)
+                if (!db.objectStoreNames.contains('projectVersions')) {
+                    const versionsStore = db.createObjectStore('projectVersions', { keyPath: 'id' });
+                    versionsStore.createIndex('projectId', 'projectId', { unique: false });
+                    versionsStore.createIndex('version', 'version', { unique: false });
+                    versionsStore.createIndex('timestamp', 'timestamp', { unique: false });
+                }
             };
         });
     }
 
     /**
-     * Save project to IndexedDB
+     * Save project to IndexedDB with version history
+     * @param {Object} projectData - Project data to save
+     * @param {Object} options - Save options
+     * @param {boolean} options.createNewVersion - Whether to create a new version (default: true)
+     * @param {boolean} options.overwriteVersion - Whether to overwrite current version (for old version saves)
      */
-    async saveProject(projectData) {
+    async saveProject(projectData, options = {}) {
+        const { createNewVersion = true, overwriteVersion = false } = options;
+
+        // Use provided thumbnail or fallback to generation from layer data
+        const thumbnail = projectData.thumbnail || this.generateThumbnail(projectData);
+        const timestamp = new Date().toISOString();
+
+        // Get existing project to determine version
+        const existingProject = await this.loadProject(projectData.id).catch(() => null);
+        let currentVersion = existingProject?.currentVersion || 0;
+        let newVersion = currentVersion;
+
+        if (createNewVersion && !overwriteVersion) {
+            newVersion = currentVersion + 1;
+        }
+
+        // Save version to version history
+        if (createNewVersion && projectData.layers) {
+            await this.saveProjectVersion(projectData.id, newVersion, {
+                layers: projectData.layers,
+                thumbnail,
+                timestamp
+            });
+        }
+
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction(['projects'], 'readwrite');
             const store = transaction.objectStore('projects');
 
-            // Use provided thumbnail or fallback to generation from layer data
-            const thumbnail = projectData.thumbnail || this.generateThumbnail(projectData);
-
             const data = {
                 ...projectData,
                 thumbnail,
-                modified: new Date().toISOString(),
+                modified: timestamp,
+                currentVersion: newVersion,
                 // Ensure tags is an array
                 tags: projectData.tags || [],
                 // Ensure profile is set
                 profile: projectData.profile || 'digital'
+            };
+
+            // Remove layers from main project to save space (stored in versions)
+            delete data.layers;
+
+            const request = store.put(data);
+
+            request.onsuccess = () => resolve({ ...data, version: newVersion });
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    /**
+     * Save a specific version of a project
+     */
+    async saveProjectVersion(projectId, version, versionData) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['projectVersions'], 'readwrite');
+            const store = transaction.objectStore('projectVersions');
+
+            const data = {
+                id: `${projectId}_v${version}`,
+                projectId,
+                version,
+                layers: versionData.layers,
+                thumbnail: versionData.thumbnail,
+                timestamp: versionData.timestamp || new Date().toISOString()
             };
 
             const request = store.put(data);
@@ -104,13 +165,33 @@ export class StorageManager {
     }
 
     /**
-     * Load project from IndexedDB
+     * Get all versions of a project
      */
-    async loadProject(projectId) {
+    async getProjectVersions(projectId) {
         return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction(['projects'], 'readonly');
-            const store = transaction.objectStore('projects');
-            const request = store.get(projectId);
+            const transaction = this.db.transaction(['projectVersions'], 'readonly');
+            const store = transaction.objectStore('projectVersions');
+            const index = store.index('projectId');
+            const request = index.getAll(projectId);
+
+            request.onsuccess = () => {
+                const versions = request.result || [];
+                // Sort by version number descending (newest first)
+                versions.sort((a, b) => b.version - a.version);
+                resolve(versions);
+            };
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    /**
+     * Load a specific version of a project
+     */
+    async loadProjectVersion(projectId, version) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['projectVersions'], 'readonly');
+            const store = transaction.objectStore('projectVersions');
+            const request = store.get(`${projectId}_v${version}`);
 
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
@@ -118,9 +199,81 @@ export class StorageManager {
     }
 
     /**
-     * Delete project from IndexedDB
+     * Delete a specific version of a project
+     */
+    async deleteProjectVersion(projectId, version) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['projectVersions'], 'readwrite');
+            const store = transaction.objectStore('projectVersions');
+            const request = store.delete(`${projectId}_v${version}`);
+
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+
+    /**
+     * Delete all versions of a project
+     */
+    async deleteAllProjectVersions(projectId) {
+        const versions = await this.getProjectVersions(projectId);
+        for (const version of versions) {
+            await this.deleteProjectVersion(projectId, version.version);
+        }
+    }
+
+    /**
+     * Load project from IndexedDB
+     * @param {string} projectId - Project ID
+     * @param {number} version - Optional specific version to load (defaults to current)
+     */
+    async loadProject(projectId, version = null) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                const transaction = this.db.transaction(['projects'], 'readonly');
+                const store = transaction.objectStore('projects');
+                const request = store.get(projectId);
+
+                request.onsuccess = async () => {
+                    const project = request.result;
+                    if (!project) {
+                        resolve(null);
+                        return;
+                    }
+
+                    // Determine which version to load
+                    const targetVersion = version !== null ? version : project.currentVersion;
+
+                    // Load layers from version if available
+                    if (targetVersion && targetVersion > 0) {
+                        try {
+                            const versionData = await this.loadProjectVersion(projectId, targetVersion);
+                            if (versionData) {
+                                project.layers = versionData.layers;
+                                project.loadedVersion = targetVersion;
+                                project.isOldVersion = version !== null && version < project.currentVersion;
+                            }
+                        } catch (e) {
+                            console.warn('Failed to load project version:', e);
+                        }
+                    }
+
+                    resolve(project);
+                };
+                request.onerror = () => reject(request.error);
+            } catch (error) {
+                reject(error);
+            }
+        });
+    }
+
+    /**
+     * Delete project from IndexedDB (including all versions)
      */
     async deleteProject(projectId) {
+        // Delete all versions first
+        await this.deleteAllProjectVersions(projectId);
+
         return new Promise((resolve, reject) => {
             const transaction = this.db.transaction(['projects'], 'readwrite');
             const store = transaction.objectStore('projects');
@@ -155,7 +308,8 @@ export class StorageManager {
                         width: cursor.value.width,
                         height: cursor.value.height,
                         profile: cursor.value.profile || 'digital',
-                        tags: cursor.value.tags || []
+                        tags: cursor.value.tags || [],
+                        currentVersion: cursor.value.currentVersion || 1
                     });
                     cursor.continue();
                 } else {
@@ -440,13 +594,14 @@ export class StorageManager {
      */
     async clearAll() {
         return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction(['projects', 'settings', 'tags'], 'readwrite');
+            const stores = ['projects', 'settings', 'tags', 'projectVersions'].filter(
+                store => this.db.objectStoreNames.contains(store)
+            );
+            const transaction = this.db.transaction(stores, 'readwrite');
 
-            transaction.objectStore('projects').clear();
-            transaction.objectStore('settings').clear();
-            if (this.db.objectStoreNames.contains('tags')) {
-                transaction.objectStore('tags').clear();
-            }
+            stores.forEach(store => {
+                transaction.objectStore(store).clear();
+            });
 
             transaction.oncomplete = () => resolve();
             transaction.onerror = () => reject(transaction.error);

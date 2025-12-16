@@ -163,8 +163,10 @@ async function handleProjectCreate(config) {
 
 /**
  * Handle project load from welcome screen
+ * @param {string} projectId - Project ID to load
+ * @param {Object} versionInfo - Optional version info { version, currentVersion }
  */
-async function handleProjectLoad(projectId) {
+async function handleProjectLoad(projectId, versionInfo = null) {
     try {
         // Show main app
         const appElement = document.getElementById('app');
@@ -179,8 +181,9 @@ async function handleProjectLoad(projectId) {
         }
 
         if (projectId) {
-            // Load specific project
-            await window.paintApp.loadProject(projectId);
+            // Load specific project (optionally at specific version)
+            const version = versionInfo?.version || null;
+            await window.paintApp.loadProject(projectId, version);
         } else {
             // Open project browser (null projectId)
             window.paintApp.ui?.showProjectBrowser?.();
@@ -189,7 +192,7 @@ async function handleProjectLoad(projectId) {
         // Initialize file importer
         fileImporter = new FileImporter(window.paintApp);
 
-        console.log('Project loaded:', projectId);
+        console.log('Project loaded:', projectId, versionInfo ? `(v${versionInfo.version})` : '');
 
     } catch (error) {
         console.error('Failed to load project:', error);
