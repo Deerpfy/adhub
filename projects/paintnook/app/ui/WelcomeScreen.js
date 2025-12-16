@@ -805,8 +805,18 @@ export class WelcomeScreen {
         // Close handlers
         modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
         modal.querySelector('.btn-cancel').addEventListener('click', () => modal.remove());
+
+        // Track mousedown to prevent closing when drag-selecting text ends outside modal
+        let mouseDownTarget = null;
+        modal.addEventListener('mousedown', (e) => {
+            mouseDownTarget = e.target;
+        });
         modal.addEventListener('click', (e) => {
-            if (e.target === modal) modal.remove();
+            // Only close if both mousedown and click were on the overlay
+            if (e.target === modal && mouseDownTarget === modal) {
+                modal.remove();
+            }
+            mouseDownTarget = null;
         });
 
         // Form submit
@@ -940,8 +950,18 @@ export class WelcomeScreen {
         // Close handlers
         modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
         modal.querySelector('.btn-done').addEventListener('click', () => modal.remove());
+
+        // Track mousedown to prevent closing when drag-selecting text ends outside modal
+        let mouseDownTarget = null;
+        modal.addEventListener('mousedown', (e) => {
+            mouseDownTarget = e.target;
+        });
         modal.addEventListener('click', (e) => {
-            if (e.target === modal) modal.remove();
+            // Only close if both mousedown and click were on the overlay
+            if (e.target === modal && mouseDownTarget === modal) {
+                modal.remove();
+            }
+            mouseDownTarget = null;
         });
     }
 
@@ -1064,8 +1084,18 @@ export class WelcomeScreen {
         // Close handlers
         modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
         modal.querySelector('.btn-cancel').addEventListener('click', () => modal.remove());
+
+        // Track mousedown to prevent closing when drag-selecting text ends outside modal
+        let mouseDownTarget = null;
+        modal.addEventListener('mousedown', (e) => {
+            mouseDownTarget = e.target;
+        });
         modal.addEventListener('click', (e) => {
-            if (e.target === modal) modal.remove();
+            // Only close if both mousedown and click were on the overlay
+            if (e.target === modal && mouseDownTarget === modal) {
+                modal.remove();
+            }
+            mouseDownTarget = null;
         });
     }
 
@@ -1185,11 +1215,19 @@ export class WelcomeScreen {
             modal.remove();
             previewTooltip.remove();
         });
+
+        // Track mousedown to prevent closing when drag-selecting text ends outside modal
+        let mouseDownTarget = null;
+        modal.addEventListener('mousedown', (e) => {
+            mouseDownTarget = e.target;
+        });
         modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
+            // Only close if both mousedown and click were on the overlay
+            if (e.target === modal && mouseDownTarget === modal) {
                 modal.remove();
                 previewTooltip.remove();
             }
+            mouseDownTarget = null;
         });
     }
 
