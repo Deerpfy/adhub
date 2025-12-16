@@ -105,6 +105,14 @@ export class TextTool {
 
         this.editingLayer = layer;
 
+        // Hide the text on canvas while editing (will show in overlay instead)
+        this.editingLayerContent = layer.textContent;
+
+        // Clear the layer canvas during editing to avoid double rendering
+        const ctx = layer.canvas.getContext('2d');
+        ctx.clearRect(0, 0, layer.canvas.width, layer.canvas.height);
+        this.app.canvas.render();
+
         // Create text input overlay
         this.createTextEditor(layer);
     }
@@ -265,6 +273,32 @@ export class TextTool {
         });
         toolbar.appendChild(italicBtn);
 
+        // Color picker
+        const colorInput = document.createElement('input');
+        colorInput.type = 'color';
+        colorInput.className = 'text-toolbar-color';
+        colorInput.value = layer.textStyle.color || '#000000';
+        colorInput.title = 'Barva textu';
+        colorInput.style.cssText = `
+            width: 32px;
+            height: 32px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            padding: 0;
+        `;
+        colorInput.addEventListener('input', (e) => {
+            layer.textStyle.color = e.target.value;
+            this.textInput.style.color = e.target.value;
+            // Also update the app's primary color so new text uses this color
+            this.app.color?.setPrimaryColor(e.target.value);
+        });
+        colorInput.addEventListener('change', (e) => {
+            layer.textStyle.color = e.target.value;
+            this.textInput.style.color = e.target.value;
+        });
+        toolbar.appendChild(colorInput);
+
         // Rasterize button
         const rasterizeBtn = document.createElement('button');
         rasterizeBtn.className = 'text-toolbar-btn rasterize-btn';
@@ -308,13 +342,14 @@ export class TextTool {
 
     /**
      * Update text content on the layer
+     * Note: We don't render to canvas during editing to avoid double display
      */
     updateTextContent() {
         if (!this.editingLayer || !this.textInput) return;
 
         this.editingLayer.textContent = this.textInput.value;
-        this.renderTextLayer(this.editingLayer);
-        this.app.canvas.render();
+        // Don't render during editing - text is shown in overlay
+        // Rendering happens when finishEditing() is called
     }
 
     /**
@@ -381,8 +416,12 @@ export class TextTool {
      * Finish editing text
      */
     finishEditing() {
-        if (this.textInput) {
-            this.updateTextContent();
+        if (this.editingLayer && this.textInput) {
+            // Save the text content
+            this.editingLayer.textContent = this.textInput.value;
+
+            // Now render the text to the layer canvas (was hidden during editing)
+            this.renderTextLayer(this.editingLayer);
         }
 
         if (this.textOverlay) {
@@ -392,6 +431,7 @@ export class TextTool {
 
         this.textInput = null;
         this.editingLayer = null;
+        this.editingLayerContent = null;
 
         // Re-render canvas
         this.app.canvas?.render();
