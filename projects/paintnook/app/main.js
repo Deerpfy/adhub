@@ -140,11 +140,10 @@ async function handleProjectCreate(config) {
                 window.paintApp.vectorUI.syncWithVectorManager();
             }
 
-            // Hide raster mode UI panels (they conflict with vector panels)
+            // Hide left toolbar in vector mode (vector has its own tools)
+            // Note: panelRight stays visible - VectorUI swaps its sections
             const toolbarLeft = document.getElementById('toolbarLeft');
-            const panelRight = document.getElementById('panelRight');
             if (toolbarLeft) toolbarLeft.style.display = 'none';
-            if (panelRight) panelRight.style.display = 'none';
 
             // Hide pixel art UI if visible
             if (window.paintApp.ui?.pixelArtUI) {
