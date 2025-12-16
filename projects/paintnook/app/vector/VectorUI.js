@@ -341,6 +341,11 @@ export class VectorUI {
                 if (this.app.settings) {
                     this.app.settings.quickshapeEnabled = e.target.checked;
                 }
+                // Sync with floating QS button (left side)
+                this.app.ui?.updateQuickShapeToggleButton?.();
+                // Sync with brush settings checkbox
+                const brushCheckbox = document.getElementById('quickshapeEnabled');
+                if (brushCheckbox) brushCheckbox.checked = e.target.checked;
             });
         }
     }

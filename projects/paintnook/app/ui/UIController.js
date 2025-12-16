@@ -311,6 +311,9 @@ export class UIController {
             // Sync with checkbox in brush settings
             const checkbox = document.getElementById('quickshapeEnabled');
             if (checkbox) checkbox.checked = this.app.settings.quickshapeEnabled;
+            // Sync with vector mode checkbox
+            const vectorCheckbox = document.getElementById('vectorQuickshapeEnabled');
+            if (vectorCheckbox) vectorCheckbox.checked = this.app.settings.quickshapeEnabled;
         });
 
         // Initialize button state
