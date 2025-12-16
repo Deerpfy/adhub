@@ -70,13 +70,13 @@ export class VectorUI {
                     <svg viewBox="0 0 24 24" width="20" height="20">
                         <path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z" fill="none" stroke="currentColor" stroke-width="2"/>
                     </svg>
-                    <span class="shortcut-key">V</span>
+                    <span class="tool-shortcut">V</span>
                 </button>
                 <button class="vector-tool-btn" data-tool="pen" title="Pero (P)">
                     <svg viewBox="0 0 24 24" width="20" height="20">
                         <path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z" fill="currentColor"/>
                     </svg>
-                    <span class="shortcut-key">P</span>
+                    <span class="tool-shortcut">P</span>
                 </button>
             </div>
             <div class="vector-toolbox-divider"></div>
@@ -85,38 +85,38 @@ export class VectorUI {
                     <svg viewBox="0 0 24 24" width="20" height="20">
                         <line x1="4" y1="20" x2="20" y2="4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
                     </svg>
-                    <span class="shortcut-key">L</span>
+                    <span class="tool-shortcut">L</span>
                 </button>
                 <button class="vector-tool-btn" data-tool="arrow" title="Šipka (A)">
                     <svg viewBox="0 0 24 24" width="20" height="20">
                         <line x1="5" y1="19" x2="16" y2="8" stroke="currentColor" stroke-width="2"/>
                         <polygon points="19,5 12,7 17,12" fill="currentColor"/>
                     </svg>
-                    <span class="shortcut-key">A</span>
+                    <span class="tool-shortcut">A</span>
                 </button>
                 <button class="vector-tool-btn" data-tool="rectangle" title="Obdélník (R)">
                     <svg viewBox="0 0 24 24" width="20" height="20">
                         <rect x="4" y="6" width="16" height="12" fill="none" stroke="currentColor" stroke-width="2"/>
                     </svg>
-                    <span class="shortcut-key">R</span>
+                    <span class="tool-shortcut">R</span>
                 </button>
                 <button class="vector-tool-btn" data-tool="ellipse" title="Elipsa (E)">
                     <svg viewBox="0 0 24 24" width="20" height="20">
                         <ellipse cx="12" cy="12" rx="8" ry="6" fill="none" stroke="currentColor" stroke-width="2"/>
                     </svg>
-                    <span class="shortcut-key">E</span>
+                    <span class="tool-shortcut">E</span>
                 </button>
                 <button class="vector-tool-btn" data-tool="polygon" title="Mnohoúhelník (G)">
                     <svg viewBox="0 0 24 24" width="20" height="20">
                         <polygon points="12,3 21,10 18,21 6,21 3,10" fill="none" stroke="currentColor" stroke-width="2"/>
                     </svg>
-                    <span class="shortcut-key">G</span>
+                    <span class="tool-shortcut">G</span>
                 </button>
                 <button class="vector-tool-btn" data-tool="star" title="Hvězda (S)">
                     <svg viewBox="0 0 24 24" width="20" height="20">
                         <polygon points="12,2 15,9 22,9 17,14 19,21 12,17 5,21 7,14 2,9 9,9" fill="none" stroke="currentColor" stroke-width="2"/>
                     </svg>
-                    <span class="shortcut-key">S</span>
+                    <span class="tool-shortcut">S</span>
                 </button>
             </div>
             <div class="vector-toolbox-divider"></div>
@@ -131,13 +131,13 @@ export class VectorUI {
                         </defs>
                         <rect x="3" y="6" width="18" height="12" rx="2" fill="url(#gradIcon)" stroke="currentColor" stroke-width="1"/>
                     </svg>
-                    <span class="shortcut-key">D</span>
+                    <span class="tool-shortcut">D</span>
                 </button>
                 <button class="vector-tool-btn" data-tool="text" title="Text (T)">
                     <svg viewBox="0 0 24 24" width="20" height="20">
                         <text x="6" y="18" font-size="16" font-weight="bold" fill="currentColor">T</text>
                     </svg>
-                    <span class="shortcut-key">T</span>
+                    <span class="tool-shortcut">T</span>
                 </button>
             </div>
         `;
