@@ -443,6 +443,7 @@ export class WelcomeScreen {
             const projectTags = (project.tags || [])
                 .map(tagId => this.tags.find(t => t.id === tagId))
                 .filter(Boolean);
+            const currentVersion = project.currentVersion || 1;
 
             return `
                 <div class="project-card" data-project-id="${this.escapeHtml(project.id)}">
@@ -453,6 +454,16 @@ export class WelcomeScreen {
                             </svg>
                         ` : ''}
                         <span class="project-profile-badge" style="background: ${profile.badge.bg}">${profile.badge.text}</span>
+                        ${currentVersion > 1 ? `
+                            <button class="project-version-badge" data-project-id="${this.escapeHtml(project.id)}" title="Zobrazit historie verzí">
+                                <svg viewBox="0 0 24 24" width="12" height="12">
+                                    <path d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42A8.954 8.954 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z" fill="currentColor"/>
+                                </svg>
+                                v${currentVersion}
+                            </button>
+                        ` : `
+                            <span class="project-version-badge project-version-badge--static" title="Verze 1">v1</span>
+                        `}
                     </div>
                     <div class="project-info">
                         <h4 class="project-name">${this.escapeHtml(project.name)}</h4>
@@ -598,11 +609,20 @@ export class WelcomeScreen {
         // Project cards click
         this.container.querySelectorAll('.project-card').forEach(card => {
             card.addEventListener('click', (e) => {
-                // Ignore if clicking action buttons
-                if (e.target.closest('.project-action-btn')) return;
+                // Ignore if clicking action buttons or version badge
+                if (e.target.closest('.project-action-btn') || e.target.closest('.project-version-badge')) return;
 
                 const projectId = card.dataset.projectId;
                 this.loadProject(projectId);
+            });
+        });
+
+        // Version badge click
+        this.container.querySelectorAll('.project-version-badge:not(.project-version-badge--static)').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const projectId = btn.dataset.projectId;
+                this.showVersionHistory(projectId);
             });
         });
 
@@ -1063,6 +1083,145 @@ export class WelcomeScreen {
         await this.storage.deleteProject(projectId);
         this.projects = this.projects.filter(p => p.id !== projectId);
         this.updateProjectsList();
+    }
+
+    /**
+     * Show version history modal for a project
+     */
+    async showVersionHistory(projectId) {
+        const project = this.projects.find(p => p.id === projectId);
+        if (!project) return;
+
+        // Get all versions
+        const versions = await this.storage.getProjectVersions(projectId);
+        const currentVersion = project.currentVersion || 1;
+
+        const modal = document.createElement('div');
+        modal.className = 'welcome-modal';
+
+        modal.innerHTML = `
+            <div class="welcome-modal-content version-history-modal">
+                <button class="modal-close" aria-label="Zavřít">&times;</button>
+                <h2>Historie verzí: ${this.escapeHtml(project.name)}</h2>
+                <p class="version-history-subtitle">Aktuální verze: v${currentVersion}</p>
+
+                <div class="version-list" id="versionList">
+                    ${versions.length === 0 ? `
+                        <p class="no-versions-msg">Žádné verze k dispozici</p>
+                    ` : versions.map(v => `
+                        <div class="version-item ${v.version === currentVersion ? 'version-item--current' : ''}" data-version="${v.version}">
+                            <div class="version-preview" style="background-image: url('${this.escapeHtml(v.thumbnail || '')}')">
+                                ${!v.thumbnail ? `
+                                    <svg viewBox="0 0 24 24" width="24" height="24">
+                                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" fill="currentColor"/>
+                                    </svg>
+                                ` : ''}
+                            </div>
+                            <div class="version-info">
+                                <span class="version-number">v${v.version}</span>
+                                <span class="version-date">${this.formatDate(v.timestamp)}</span>
+                                ${v.version === currentVersion ? '<span class="version-current-badge">Aktuální</span>' : ''}
+                            </div>
+                            <div class="version-actions">
+                                <button class="btn-load-version" data-version="${v.version}" data-project-id="${this.escapeHtml(projectId)}" title="Načíst tuto verzi">
+                                    <svg viewBox="0 0 24 24" width="18" height="18">
+                                        <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" fill="currentColor"/>
+                                    </svg>
+                                    Načíst
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel">Zavřít</button>
+                </div>
+            </div>
+        `;
+
+        document.body.appendChild(modal);
+
+        // Preview tooltip element
+        const previewTooltip = document.createElement('div');
+        previewTooltip.className = 'version-preview-tooltip';
+        previewTooltip.style.display = 'none';
+        document.body.appendChild(previewTooltip);
+
+        // Hover preview
+        modal.querySelectorAll('.version-item').forEach(item => {
+            item.addEventListener('mouseenter', async (e) => {
+                const version = parseInt(item.dataset.version);
+                const versionData = versions.find(v => v.version === version);
+                if (versionData && versionData.thumbnail) {
+                    previewTooltip.innerHTML = `<img src="${this.escapeHtml(versionData.thumbnail)}" alt="Preview v${version}">`;
+                    previewTooltip.style.display = 'block';
+                    this.positionTooltip(previewTooltip, item);
+                }
+            });
+
+            item.addEventListener('mouseleave', () => {
+                previewTooltip.style.display = 'none';
+            });
+        });
+
+        // Load version buttons
+        modal.querySelectorAll('.btn-load-version').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const version = parseInt(btn.dataset.version);
+                const projId = btn.dataset.projectId;
+                modal.remove();
+                previewTooltip.remove();
+                this.loadProjectVersion(projId, version, currentVersion);
+            });
+        });
+
+        // Close handlers
+        modal.querySelector('.modal-close').addEventListener('click', () => {
+            modal.remove();
+            previewTooltip.remove();
+        });
+        modal.querySelector('.btn-cancel').addEventListener('click', () => {
+            modal.remove();
+            previewTooltip.remove();
+        });
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.remove();
+                previewTooltip.remove();
+            }
+        });
+    }
+
+    /**
+     * Position tooltip relative to element
+     */
+    positionTooltip(tooltip, element) {
+        const rect = element.getBoundingClientRect();
+        const tooltipRect = tooltip.getBoundingClientRect();
+
+        let left = rect.right + 16;
+        let top = rect.top;
+
+        // Keep within viewport
+        if (left + tooltipRect.width > window.innerWidth) {
+            left = rect.left - tooltipRect.width - 16;
+        }
+        if (top + tooltipRect.height > window.innerHeight) {
+            top = window.innerHeight - tooltipRect.height - 16;
+        }
+
+        tooltip.style.left = `${left}px`;
+        tooltip.style.top = `${top}px`;
+    }
+
+    /**
+     * Load a specific version of a project
+     */
+    loadProjectVersion(projectId, version, currentVersion) {
+        this.hide();
+        // Pass version info to the callback
+        this.onProjectLoad(projectId, { version, currentVersion });
     }
 
     /**

@@ -5625,3 +5625,302 @@ body.pixel-art-mode .color-picker-section:hover {
 .vector-option-btn.active svg {
     color: var(--primary-light);
 }
+
+/* =============================================
+   Version History UI
+   ============================================= */
+
+/* Version badge on project card */
+.project-version-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    transition: var(--transition);
+    backdrop-filter: blur(4px);
+    z-index: 10;
+}
+
+.project-version-badge:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: scale(1.05);
+}
+
+.project-version-badge--static {
+    cursor: default;
+    opacity: 0.8;
+}
+
+.project-version-badge--static:hover {
+    background: rgba(0, 0, 0, 0.7);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: none;
+}
+
+.project-version-badge svg {
+    color: var(--primary-light);
+}
+
+/* Version History Modal */
+.version-history-modal {
+    max-width: 600px;
+}
+
+.version-history-subtitle {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+    margin-bottom: 16px;
+}
+
+.version-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.version-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    transition: var(--transition);
+}
+
+.version-item:hover {
+    border-color: var(--primary-color);
+    background: var(--bg-hover);
+}
+
+.version-item--current {
+    border-color: var(--success-color);
+    background: rgba(16, 185, 129, 0.1);
+}
+
+.version-item--current:hover {
+    border-color: var(--success-color);
+}
+
+.version-preview {
+    width: 80px;
+    height: 60px;
+    background: var(--bg-color);
+    background-size: cover;
+    background-position: center;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}
+
+.version-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.version-number {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--text-primary);
+}
+
+.version-date {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+
+.version-current-badge {
+    display: inline-block;
+    width: fit-content;
+    padding: 2px 8px;
+    background: var(--success-color);
+    border-radius: 4px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+}
+
+.version-actions {
+    flex-shrink: 0;
+}
+
+.btn-load-version {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    background: var(--primary-color);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-load-version:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.no-versions-msg {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 32px;
+}
+
+/* Version preview tooltip */
+.version-preview-tooltip {
+    position: fixed;
+    z-index: 10000;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 8px;
+    box-shadow: var(--shadow-lg);
+    max-width: 300px;
+    max-height: 250px;
+    overflow: hidden;
+}
+
+.version-preview-tooltip img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    display: block;
+}
+
+/* Old version warning banner */
+.old-version-banner {
+    position: fixed;
+    top: var(--header-height);
+    left: 0;
+    right: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 10px 20px;
+    background: linear-gradient(135deg, var(--warning-color), #d97706);
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.old-version-banner svg {
+    flex-shrink: 0;
+}
+
+.old-version-banner-text {
+    flex: 1;
+}
+
+.old-version-banner-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.old-version-banner .btn-banner {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.old-version-banner .btn-banner--primary {
+    background: white;
+    color: var(--warning-color);
+}
+
+.old-version-banner .btn-banner--secondary {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.old-version-banner .btn-banner:hover {
+    transform: translateY(-1px);
+}
+
+/* Save version modal */
+.save-version-modal {
+    max-width: 500px;
+}
+
+.save-version-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.save-version-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.save-version-option:hover {
+    border-color: var(--primary-color);
+}
+
+.save-version-option.selected {
+    border-color: var(--primary-color);
+    background: rgba(139, 92, 246, 0.1);
+}
+
+.save-version-option input[type="radio"] {
+    margin-top: 3px;
+    accent-color: var(--primary-color);
+}
+
+.save-version-option-content {
+    flex: 1;
+}
+
+.save-version-option-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.save-version-option-desc {
+    font-size: 0.8125rem;
+    color: var(--text-muted);
+}
+
+/* Adjust main content when banner is visible */
+body.has-old-version-banner .main-content {
+    margin-top: 44px;
+}

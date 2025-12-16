@@ -31,6 +31,12 @@ export class PaintApp {
         this.currentProject = null;
         this.unsavedChanges = false;
 
+        // Version tracking
+        this.loadedVersion = null;       // Which version is currently loaded
+        this.currentVersion = null;      // Latest version number
+        this.isOldVersion = false;       // Whether we're viewing an old version
+        this.oldVersionBanner = null;    // Reference to warning banner element
+
         // Settings
         this.settings = {
             canvasWidth: 1920,
@@ -236,9 +242,16 @@ export class PaintApp {
 
     /**
      * Save current project
+     * @param {Object} options - Save options
+     * @param {boolean} options.forceNewVersion - Force creating new version even from old version
      */
-    async saveProject() {
+    async saveProject(options = {}) {
         if (!this.currentProject) return;
+
+        // Check if saving from old version
+        if (this.isOldVersion && !options.forceNewVersion) {
+            return this.showSaveVersionDialog();
+        }
 
         try {
             // Update modified date
@@ -257,17 +270,193 @@ export class PaintApp {
                 thumbnail
             };
 
-            // Save to storage
-            await this.storage.saveProject(projectData);
+            // Save to storage with versioning
+            const savedData = await this.storage.saveProject(projectData, {
+                createNewVersion: true
+            });
+
+            // Update version tracking
+            this.currentVersion = savedData.version || savedData.currentVersion;
+            this.loadedVersion = this.currentVersion;
+            this.isOldVersion = false;
+            this.currentProject.currentVersion = this.currentVersion;
+
+            // Remove old version banner if exists
+            this.hideOldVersionBanner();
 
             this.unsavedChanges = false;
-            this.ui.showNotification('Projekt uložen', 'success');
+            this.ui.showNotification(`Projekt uložen (v${this.currentVersion})`, 'success');
 
-            return projectData;
+            return savedData;
         } catch (error) {
             console.error('Save error:', error);
             this.ui.showNotification('Chyba při ukládání', 'error');
             throw error;
+        }
+    }
+
+    /**
+     * Show dialog for saving when in old version
+     */
+    showSaveVersionDialog() {
+        return new Promise((resolve) => {
+            const modal = document.createElement('div');
+            modal.className = 'welcome-modal';
+            modal.innerHTML = `
+                <div class="welcome-modal-content save-version-modal">
+                    <button class="modal-close" aria-label="Zavřít">&times;</button>
+                    <h2>Uložit změny</h2>
+                    <p style="color: var(--text-secondary); margin-bottom: 16px;">
+                        Prohlížíte starší verzi (v${this.loadedVersion}). Aktuální verze je v${this.currentVersion}.
+                        <br>Jak chcete uložit změny?
+                    </p>
+
+                    <div class="save-version-options">
+                        <label class="save-version-option selected" data-action="new">
+                            <input type="radio" name="saveAction" value="new" checked>
+                            <div class="save-version-option-content">
+                                <div class="save-version-option-title">Uložit jako novou verzi (v${this.currentVersion + 1})</div>
+                                <div class="save-version-option-desc">Vytvoří novou verzi a zachová historii. Doporučeno.</div>
+                            </div>
+                        </label>
+
+                        <label class="save-version-option" data-action="overwrite">
+                            <input type="radio" name="saveAction" value="overwrite">
+                            <div class="save-version-option-content">
+                                <div class="save-version-option-title">Přepsat aktuální verzi (v${this.currentVersion})</div>
+                                <div class="save-version-option-desc">Přepíše nejnovější verzi. Původní v${this.currentVersion} bude nahrazena.</div>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="modal-footer" style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px;">
+                        <button type="button" class="btn-cancel" style="padding: 10px 20px; background: var(--bg-tertiary); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-primary); cursor: pointer;">Zrušit</button>
+                        <button type="button" class="btn-save" style="padding: 10px 20px; background: var(--primary-color); border: none; border-radius: 8px; color: white; font-weight: 600; cursor: pointer;">Uložit</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // Handle option selection
+            modal.querySelectorAll('.save-version-option').forEach(opt => {
+                opt.addEventListener('click', () => {
+                    modal.querySelectorAll('.save-version-option').forEach(o => o.classList.remove('selected'));
+                    opt.classList.add('selected');
+                    opt.querySelector('input').checked = true;
+                });
+            });
+
+            // Handle save
+            modal.querySelector('.btn-save').addEventListener('click', async () => {
+                const action = modal.querySelector('input[name="saveAction"]:checked').value;
+                modal.remove();
+
+                if (action === 'new') {
+                    // Save as new version
+                    await this.saveProject({ forceNewVersion: true });
+                } else {
+                    // Overwrite current version
+                    await this.saveProjectOverwrite();
+                }
+                resolve();
+            });
+
+            // Handle close
+            const close = () => {
+                modal.remove();
+                resolve();
+            };
+
+            modal.querySelector('.modal-close').addEventListener('click', close);
+            modal.querySelector('.btn-cancel').addEventListener('click', close);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) close();
+            });
+        });
+    }
+
+    /**
+     * Save project by overwriting current version
+     */
+    async saveProjectOverwrite() {
+        if (!this.currentProject) return;
+
+        try {
+            this.currentProject.modified = new Date().toISOString();
+
+            const layersData = await this.layers.serialize();
+            const thumbnail = this.createThumbnail();
+
+            const projectData = {
+                ...this.currentProject,
+                layers: layersData,
+                thumbnail
+            };
+
+            // Save with overwrite flag
+            await this.storage.saveProject(projectData, {
+                createNewVersion: false,
+                overwriteVersion: true
+            });
+
+            // Update state
+            this.loadedVersion = this.currentVersion;
+            this.isOldVersion = false;
+            this.hideOldVersionBanner();
+
+            this.unsavedChanges = false;
+            this.ui.showNotification(`Verze v${this.currentVersion} přepsána`, 'success');
+
+        } catch (error) {
+            console.error('Save overwrite error:', error);
+            this.ui.showNotification('Chyba při ukládání', 'error');
+            throw error;
+        }
+    }
+
+    /**
+     * Show banner warning about old version
+     */
+    showOldVersionBanner() {
+        if (this.oldVersionBanner) return;
+
+        this.oldVersionBanner = document.createElement('div');
+        this.oldVersionBanner.className = 'old-version-banner';
+        this.oldVersionBanner.innerHTML = `
+            <svg viewBox="0 0 24 24" width="20" height="20">
+                <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" fill="currentColor"/>
+            </svg>
+            <span class="old-version-banner-text">
+                Prohlížíte starší verzi <strong>v${this.loadedVersion}</strong>. Nejnovější verze je v${this.currentVersion}.
+            </span>
+            <div class="old-version-banner-actions">
+                <button class="btn-banner btn-banner--primary" data-action="load-latest">Načíst nejnovější</button>
+                <button class="btn-banner btn-banner--secondary" data-action="dismiss">Rozumím</button>
+            </div>
+        `;
+
+        document.body.appendChild(this.oldVersionBanner);
+        document.body.classList.add('has-old-version-banner');
+
+        // Handle actions
+        this.oldVersionBanner.querySelector('[data-action="load-latest"]').addEventListener('click', async () => {
+            await this.loadProject(this.currentProject.id);
+        });
+
+        this.oldVersionBanner.querySelector('[data-action="dismiss"]').addEventListener('click', () => {
+            this.hideOldVersionBanner();
+        });
+    }
+
+    /**
+     * Hide old version banner
+     */
+    hideOldVersionBanner() {
+        if (this.oldVersionBanner) {
+            this.oldVersionBanner.remove();
+            this.oldVersionBanner = null;
+            document.body.classList.remove('has-old-version-banner');
         }
     }
 
@@ -312,10 +501,12 @@ export class PaintApp {
 
     /**
      * Load a project
+     * @param {string} projectId - Project ID
+     * @param {number|null} version - Optional specific version to load
      */
-    async loadProject(projectId) {
+    async loadProject(projectId, version = null) {
         try {
-            const projectData = await this.storage.loadProject(projectId);
+            const projectData = await this.storage.loadProject(projectId, version);
             if (!projectData) {
                 throw new Error('Project not found');
             }
@@ -325,6 +516,9 @@ export class PaintApp {
 
             // Reset modes before loading new project
             this.resetModes();
+
+            // Hide any existing version banner
+            this.hideOldVersionBanner();
 
             // Setup canvas
             this.canvas.resize(projectData.width, projectData.height);
@@ -345,8 +539,14 @@ export class PaintApp {
                 gridSize: projectData.gridSize || 16,
                 tags: projectData.tags || [],
                 created: projectData.created,
-                modified: projectData.modified
+                modified: projectData.modified,
+                currentVersion: projectData.currentVersion || 1
             };
+
+            // Update version tracking
+            this.currentVersion = projectData.currentVersion || 1;
+            this.loadedVersion = projectData.loadedVersion || this.currentVersion;
+            this.isOldVersion = projectData.isOldVersion || false;
 
             // Render
             this.canvas.render();
@@ -357,7 +557,14 @@ export class PaintApp {
             this.applyProfileSettings();
 
             this.unsavedChanges = false;
-            this.ui.showNotification('Projekt načten', 'success');
+
+            // Show notification and banner if loading old version
+            if (this.isOldVersion) {
+                this.ui.showNotification(`Načtena verze v${this.loadedVersion} (nejnovější: v${this.currentVersion})`, 'warning');
+                this.showOldVersionBanner();
+            } else {
+                this.ui.showNotification(`Projekt načten (v${this.currentVersion})`, 'success');
+            }
 
         } catch (error) {
             console.error('Load error:', error);
