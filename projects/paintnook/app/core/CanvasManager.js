@@ -1029,9 +1029,8 @@ export class CanvasManager {
         const screenY = canvasY * this.zoom + this.panY;
         const screenSize = actualSize * this.zoom;
 
-        // Check brush type for shape (square for pixel/square brushes)
+        // Get brush type for shape
         const brushType = this.app.brush?.currentBrushType || 'round';
-        const isSquare = brushType === 'square' || brushType === 'pixel';
         const isEraser = tool === 'eraser';
 
         // Update cursor position and size (in screen pixels)
@@ -1040,8 +1039,30 @@ export class CanvasManager {
         this.brushCursor.style.left = `${screenX}px`;
         this.brushCursor.style.top = `${screenY}px`;
 
-        // Update cursor classes for shape variants
-        this.brushCursor.classList.toggle('square', isSquare);
+        // Remove all shape classes first
+        this.brushCursor.classList.remove('square', 'marker', 'ink', 'calligraphy');
+
+        // Add appropriate shape class based on brush type
+        // Each brush type has a specific cursor shape matching its stamp
+        switch (brushType) {
+            case 'square':
+            case 'pixel':
+                this.brushCursor.classList.add('square');
+                break;
+            case 'marker':
+                this.brushCursor.classList.add('marker');
+                break;
+            case 'ink':
+                this.brushCursor.classList.add('ink');
+                break;
+            case 'calligraphy':
+                this.brushCursor.classList.add('calligraphy');
+                break;
+            // round, soft, airbrush, charcoal, watercolor, splatter, chalk
+            // all use circular cursor (default)
+        }
+
+        // Update state classes
         this.brushCursor.classList.toggle('eraser', isEraser);
         this.brushCursor.classList.toggle('drawing', this.isDrawing);
 
