@@ -397,6 +397,11 @@ body {
     background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
 }
 
+/* Hide system cursor when brush cursor is active */
+.canvas-container.brush-cursor-active {
+    cursor: none;
+}
+
 .canvas-wrapper {
     position: absolute;
     transform-origin: 0 0;

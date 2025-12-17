@@ -1012,19 +1012,25 @@ export class CanvasManager {
             return;
         }
 
-        // Get brush size
+        // Get brush size in canvas pixels
         const brushSize = this.app.brush?.size || 10;
+
+        // Convert to screen coordinates (cursor is now in container, not wrapper)
+        // Screen position = canvas position * zoom + pan offset
+        const screenX = canvasX * this.zoom + this.panX;
+        const screenY = canvasY * this.zoom + this.panY;
+        const screenSize = brushSize * this.zoom;
 
         // Check brush type for shape (square for pixel/square brushes)
         const brushType = this.app.brush?.currentBrushType || 'round';
         const isSquare = brushType === 'square' || brushType === 'pixel';
         const isEraser = tool === 'eraser';
 
-        // Update cursor position and size
-        this.brushCursor.style.width = `${brushSize}px`;
-        this.brushCursor.style.height = `${brushSize}px`;
-        this.brushCursor.style.left = `${canvasX}px`;
-        this.brushCursor.style.top = `${canvasY}px`;
+        // Update cursor position and size (in screen pixels)
+        this.brushCursor.style.width = `${screenSize}px`;
+        this.brushCursor.style.height = `${screenSize}px`;
+        this.brushCursor.style.left = `${screenX}px`;
+        this.brushCursor.style.top = `${screenY}px`;
 
         // Update cursor classes for shape variants
         this.brushCursor.classList.toggle('square', isSquare);
@@ -1036,22 +1042,24 @@ export class CanvasManager {
     }
 
     /**
-     * Show the brush cursor
+     * Show the brush cursor and hide system cursor
      */
     showBrushCursor() {
         if (!this.brushCursor || this.brushCursorVisible) return;
 
         this.brushCursor.classList.add('visible');
+        this.container?.classList.add('brush-cursor-active');
         this.brushCursorVisible = true;
     }
 
     /**
-     * Hide the brush cursor
+     * Hide the brush cursor and restore system cursor
      */
     hideBrushCursor() {
         if (!this.brushCursor || !this.brushCursorVisible) return;
 
         this.brushCursor.classList.remove('visible');
+        this.container?.classList.remove('brush-cursor-active');
         this.brushCursorVisible = false;
     }
 

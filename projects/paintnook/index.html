@@ -301,9 +301,10 @@
                     <canvas id="previewCanvas" class="preview-canvas"></canvas>
                     <!-- Overlay canvas for grid, guides, symmetry lines - inside wrapper so it transforms with canvas -->
                     <canvas id="overlayCanvas" class="overlay-canvas"></canvas>
-                    <!-- Brush cursor preview - shows brush size and color -->
-                    <div id="brushCursor" class="brush-cursor"></div>
                 </div>
+
+                <!-- Brush cursor preview - outside wrapper for accurate screen positioning -->
+                <div id="brushCursor" class="brush-cursor"></div>
 
                 <!-- QuickShape indicator -->
                 <div class="quickshape-indicator" id="quickshapeIndicator" style="display: none;">
