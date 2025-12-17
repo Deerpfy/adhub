@@ -423,6 +423,39 @@ body {
     z-index: 10;
 }
 
+/* Brush Cursor Preview - shows brush size and color outline */
+.brush-cursor {
+    position: absolute;
+    pointer-events: none;
+    z-index: 15;
+    border-radius: 50%;
+    border: 1.5px solid;
+    box-sizing: border-box;
+    transform: translate(-50%, -50%);
+    opacity: 0;
+    transition: opacity 0.1s ease;
+    mix-blend-mode: difference;
+}
+
+.brush-cursor.visible {
+    opacity: 1;
+}
+
+.brush-cursor.square {
+    border-radius: 0;
+}
+
+/* Hide brush cursor during drawing */
+.brush-cursor.drawing {
+    opacity: 0.3;
+}
+
+/* Eraser cursor - dashed outline */
+.brush-cursor.eraser {
+    border-style: dashed;
+    mix-blend-mode: normal;
+}
+
 /* Floating Controls Panel (top-left of workspace) */
 .floating-controls {
     position: absolute;

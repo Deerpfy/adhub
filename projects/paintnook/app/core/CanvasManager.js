@@ -45,6 +45,10 @@ export class CanvasManager {
 
         // Remote stroke data for collaboration
         this.remoteStrokes = new Map(); // peerId -> stroke state
+
+        // Brush cursor preview
+        this.brushCursor = null;
+        this.brushCursorVisible = false;
     }
 
     /**
@@ -68,6 +72,9 @@ export class CanvasManager {
 
         // Setup event listeners
         this.setupEventListeners();
+
+        // Initialize brush cursor
+        this.brushCursor = document.getElementById('brushCursor');
 
         // Initial resize
         this.resize(this.width, this.height);
@@ -220,6 +227,9 @@ export class CanvasManager {
         const pos = this.screenToCanvas(e.clientX, e.clientY);
         this.app.ui?.updateCursorPosition(Math.round(pos.x), Math.round(pos.y));
 
+        // Update brush cursor preview
+        this.updateBrushCursor(pos.x, pos.y);
+
         // Broadcast cursor position for collaboration
         if (this.app.collab) {
             this.app.collab.broadcastCursor(pos.x, pos.y);
@@ -260,13 +270,16 @@ export class CanvasManager {
     }
 
     /**
-     * Handle pointer leave event - clears ghost paint preview
+     * Handle pointer leave event - clears ghost paint preview and brush cursor
      */
     handlePointerLeave(e) {
         // Handle drawing end if was drawing
         if (this.isDrawing) {
             this.handlePointerUp(e);
         }
+
+        // Hide brush cursor when leaving canvas
+        this.hideBrushCursor();
 
         // Clear ghost paint preview when cursor leaves canvas
         if (this.app.ui?.pixelArtUI) {
@@ -352,6 +365,9 @@ export class CanvasManager {
     processDrawEvent(e) {
         const pos = this.screenToCanvas(e.clientX, e.clientY);
         this.pressure = e.pressure || 0.5;
+
+        // Update brush cursor position during drawing
+        this.updateBrushCursor(pos.x, pos.y);
 
         // Update pressure display (only for last event to avoid UI spam)
         if (this.app.settings.pressureSensitivity && e.pressure !== undefined) {
@@ -967,6 +983,82 @@ export class CanvasManager {
         this.app.ui?.updateLayersList();
         this.app.markUnsaved();
         this.app.ui?.showNotification('Výběr smazán', 'success');
+    }
+
+    // =============================================
+    // Brush Cursor Preview Methods
+    // =============================================
+
+    /**
+     * Update brush cursor position and appearance
+     * @param {number} canvasX - X position in canvas coordinates
+     * @param {number} canvasY - Y position in canvas coordinates
+     */
+    updateBrushCursor(canvasX, canvasY) {
+        if (!this.brushCursor) return;
+
+        // Check if current tool should show brush cursor
+        const tool = this.app.tools?.currentTool;
+        const cursorTools = ['brush', 'pencil', 'eraser'];
+
+        if (!cursorTools.includes(tool)) {
+            this.hideBrushCursor();
+            return;
+        }
+
+        // Skip if vector mode is active
+        if (this.app.vector?.enabled) {
+            this.hideBrushCursor();
+            return;
+        }
+
+        // Get brush size
+        const brushSize = this.app.brush?.size || 10;
+
+        // Get current color (for visual feedback)
+        const isEraser = tool === 'eraser';
+        const color = isEraser
+            ? 'rgba(255, 255, 255, 0.8)'
+            : (this.app.color?.getPrimaryColor() || '#ffffff');
+
+        // Check brush type for shape
+        const brushType = this.app.brush?.currentBrushType || 'round';
+        const isSquare = brushType === 'square' || brushType === 'pixel';
+
+        // Update cursor style
+        this.brushCursor.style.width = `${brushSize}px`;
+        this.brushCursor.style.height = `${brushSize}px`;
+        this.brushCursor.style.left = `${canvasX}px`;
+        this.brushCursor.style.top = `${canvasY}px`;
+        this.brushCursor.style.borderColor = color;
+
+        // Update cursor classes
+        this.brushCursor.classList.toggle('square', isSquare);
+        this.brushCursor.classList.toggle('eraser', isEraser);
+        this.brushCursor.classList.toggle('drawing', this.isDrawing);
+
+        // Show cursor
+        this.showBrushCursor();
+    }
+
+    /**
+     * Show the brush cursor
+     */
+    showBrushCursor() {
+        if (!this.brushCursor || this.brushCursorVisible) return;
+
+        this.brushCursor.classList.add('visible');
+        this.brushCursorVisible = true;
+    }
+
+    /**
+     * Hide the brush cursor
+     */
+    hideBrushCursor() {
+        if (!this.brushCursor || !this.brushCursorVisible) return;
+
+        this.brushCursor.classList.remove('visible');
+        this.brushCursorVisible = false;
     }
 
     // =============================================
