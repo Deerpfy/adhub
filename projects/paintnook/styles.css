@@ -446,10 +446,21 @@ body {
     transform: translate(-50%, -50%);
     opacity: 0;
     transition: opacity 0.1s ease;
+    /* For real brush preview */
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
 }
 
 .brush-cursor.visible {
     opacity: 1;
+}
+
+/* When showing real brush stamp preview */
+.brush-cursor.preview-stamp {
+    outline: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
+    border-radius: 0;
 }
 
 .brush-cursor.square {

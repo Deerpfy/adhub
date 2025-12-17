@@ -49,6 +49,13 @@ export class CanvasManager {
         // Brush cursor preview
         this.brushCursor = null;
         this.brushCursorVisible = false;
+        // Cache for brush stamp preview
+        this.brushPreviewCache = {
+            type: null,
+            size: null,
+            color: null,
+            dataUrl: null
+        };
     }
 
     /**
@@ -1042,42 +1049,47 @@ export class CanvasManager {
         // Remove all shape/style classes first
         this.brushCursor.classList.remove(
             'square', 'marker', 'ink', 'calligraphy',
-            'soft-brush', 'airbrush', 'splatter'
+            'soft-brush', 'airbrush', 'splatter', 'preview-stamp'
         );
 
-        // Add appropriate shape class based on brush type
-        // Each brush type has a specific cursor shape matching its stamp
-        switch (brushType) {
-            // Hard-edged brushes with specific shapes
-            case 'square':
-            case 'pixel':
-                this.brushCursor.classList.add('square');
-                break;
-            case 'marker':
-                this.brushCursor.classList.add('marker');
-                break;
-            case 'ink':
-                this.brushCursor.classList.add('ink');
-                break;
-            case 'calligraphy':
-                this.brushCursor.classList.add('calligraphy');
-                break;
+        // Brushes that should show real stamp preview (textured/random)
+        const previewStampBrushes = ['charcoal', 'watercolor', 'splatter', 'chalk'];
 
-            // Soft/textured brushes - show outer boundary is approximate
-            case 'soft':
-            case 'charcoal':
-            case 'watercolor':
-            case 'chalk':
-                this.brushCursor.classList.add('soft-brush');
-                break;
-            case 'airbrush':
-                this.brushCursor.classList.add('airbrush');
-                break;
-            case 'splatter':
-                this.brushCursor.classList.add('splatter');
-                break;
+        if (previewStampBrushes.includes(brushType) && !isEraser) {
+            // Show real brush stamp preview
+            this.updateBrushStampPreview(brushType, Math.ceil(actualSize), isEraser);
+            this.brushCursor.classList.add('preview-stamp');
+        } else {
+            // Clear background image for outline-only cursors
+            this.brushCursor.style.backgroundImage = '';
 
-            // 'round' uses default circular cursor (solid outline)
+            // Add appropriate shape class based on brush type
+            switch (brushType) {
+                // Hard-edged brushes with specific shapes
+                case 'square':
+                case 'pixel':
+                    this.brushCursor.classList.add('square');
+                    break;
+                case 'marker':
+                    this.brushCursor.classList.add('marker');
+                    break;
+                case 'ink':
+                    this.brushCursor.classList.add('ink');
+                    break;
+                case 'calligraphy':
+                    this.brushCursor.classList.add('calligraphy');
+                    break;
+
+                // Soft brushes - dashed outline to indicate soft edge
+                case 'soft':
+                    this.brushCursor.classList.add('soft-brush');
+                    break;
+                case 'airbrush':
+                    this.brushCursor.classList.add('airbrush');
+                    break;
+
+                // 'round' uses default circular cursor (solid outline)
+            }
         }
 
         // Update state classes
@@ -1086,6 +1098,46 @@ export class CanvasManager {
 
         // Show cursor
         this.showBrushCursor();
+    }
+
+    /**
+     * Update brush stamp preview image (for textured brushes)
+     * Generates real brush stamp and displays it as cursor background
+     */
+    updateBrushStampPreview(brushType, size, isEraser) {
+        if (!this.app.brush || !this.brushCursor) return;
+
+        // Get current color
+        const color = isEraser ? '#ffffff' : (this.app.color?.getPrimaryColor() || '#000000');
+
+        // Check cache - regenerate only if changed
+        const cache = this.brushPreviewCache;
+        if (cache.type === brushType && cache.size === size && cache.color === color && cache.dataUrl) {
+            this.brushCursor.style.backgroundImage = `url(${cache.dataUrl})`;
+            return;
+        }
+
+        // Generate brush stamp using BrushEngine
+        // Use a reasonable preview size (min 16px for visibility)
+        const previewSize = Math.max(16, Math.min(size, 128));
+        const stamp = this.app.brush.getBrushStamp(previewSize, this.app.brush.hardness);
+
+        if (!stamp) return;
+
+        // Color the brush stamp
+        const coloredStamp = this.app.brush.colorBrush(stamp, color);
+
+        // Convert to data URL
+        const dataUrl = coloredStamp.toDataURL('image/png');
+
+        // Update cache
+        cache.type = brushType;
+        cache.size = size;
+        cache.color = color;
+        cache.dataUrl = dataUrl;
+
+        // Apply to cursor
+        this.brushCursor.style.backgroundImage = `url(${dataUrl})`;
     }
 
     /**
