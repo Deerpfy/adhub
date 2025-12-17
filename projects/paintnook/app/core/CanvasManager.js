@@ -1029,9 +1029,8 @@ export class CanvasManager {
         const screenY = canvasY * this.zoom + this.panY;
         const screenSize = actualSize * this.zoom;
 
-        // Check brush type for shape (square for pixel/square brushes)
+        // Get brush type for shape
         const brushType = this.app.brush?.currentBrushType || 'round';
-        const isSquare = brushType === 'square' || brushType === 'pixel';
         const isEraser = tool === 'eraser';
 
         // Update cursor position and size (in screen pixels)
@@ -1040,8 +1039,48 @@ export class CanvasManager {
         this.brushCursor.style.left = `${screenX}px`;
         this.brushCursor.style.top = `${screenY}px`;
 
-        // Update cursor classes for shape variants
-        this.brushCursor.classList.toggle('square', isSquare);
+        // Remove all shape/style classes first
+        this.brushCursor.classList.remove(
+            'square', 'marker', 'ink', 'calligraphy',
+            'soft-brush', 'airbrush', 'splatter'
+        );
+
+        // Add appropriate shape class based on brush type
+        // Each brush type has a specific cursor shape matching its stamp
+        switch (brushType) {
+            // Hard-edged brushes with specific shapes
+            case 'square':
+            case 'pixel':
+                this.brushCursor.classList.add('square');
+                break;
+            case 'marker':
+                this.brushCursor.classList.add('marker');
+                break;
+            case 'ink':
+                this.brushCursor.classList.add('ink');
+                break;
+            case 'calligraphy':
+                this.brushCursor.classList.add('calligraphy');
+                break;
+
+            // Soft/textured brushes - show outer boundary is approximate
+            case 'soft':
+            case 'charcoal':
+            case 'watercolor':
+            case 'chalk':
+                this.brushCursor.classList.add('soft-brush');
+                break;
+            case 'airbrush':
+                this.brushCursor.classList.add('airbrush');
+                break;
+            case 'splatter':
+                this.brushCursor.classList.add('splatter');
+                break;
+
+            // 'round' uses default circular cursor (solid outline)
+        }
+
+        // Update state classes
         this.brushCursor.classList.toggle('eraser', isEraser);
         this.brushCursor.classList.toggle('drawing', this.isDrawing);
 
