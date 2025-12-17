@@ -1015,11 +1015,19 @@ export class CanvasManager {
         // Get brush size in canvas pixels
         const brushSize = this.app.brush?.size || 10;
 
+        // Calculate actual size accounting for pressure sensitivity
+        // This matches BrushEngine.drawStroke() calculation
+        const pressureSensitivity = this.app.settings?.pressureSensitivity;
+        const currentPressure = this.pressure || 0.5;
+        const actualSize = pressureSensitivity
+            ? Math.max(1, brushSize * currentPressure)
+            : brushSize;
+
         // Convert to screen coordinates (cursor is now in container, not wrapper)
         // Screen position = canvas position * zoom + pan offset
         const screenX = canvasX * this.zoom + this.panX;
         const screenY = canvasY * this.zoom + this.panY;
-        const screenSize = brushSize * this.zoom;
+        const screenSize = actualSize * this.zoom;
 
         // Check brush type for shape (square for pixel/square brushes)
         const brushType = this.app.brush?.currentBrushType || 'round';
