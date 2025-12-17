@@ -49,6 +49,9 @@ export class CanvasManager {
         // Brush cursor preview
         this.brushCursor = null;
         this.brushCursorVisible = false;
+        // Last known cursor position in canvas coordinates (for zoom updates)
+        this.lastCursorCanvasX = 0;
+        this.lastCursorCanvasY = 0;
         // Cache for brush stamp preview
         this.brushPreviewCache = {
             type: null,
@@ -151,6 +154,11 @@ export class CanvasManager {
     updateTransform() {
         this.wrapper.style.transform = `translate(${this.panX}px, ${this.panY}px) scale(${this.zoom})`;
         this.app.ui?.updateZoomLevel(Math.round(this.zoom * 100));
+
+        // Update brush cursor position/size when zoom changes
+        if (this.brushCursorVisible) {
+            this.updateBrushCursor(this.lastCursorCanvasX, this.lastCursorCanvasY);
+        }
     }
 
     /**
@@ -1003,6 +1011,10 @@ export class CanvasManager {
      */
     updateBrushCursor(canvasX, canvasY) {
         if (!this.brushCursor) return;
+
+        // Store last cursor position for zoom updates
+        this.lastCursorCanvasX = canvasX;
+        this.lastCursorCanvasY = canvasY;
 
         // Check if current tool should show brush cursor
         const tool = this.app.tools?.currentTool;
