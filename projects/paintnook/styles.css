@@ -423,18 +423,19 @@ body {
     z-index: 10;
 }
 
-/* Brush Cursor Preview - shows brush size and color outline */
+/* Brush Cursor Preview - double outline for visibility on any background */
+/* Uses white inner border + black outer shadow (like Photoshop/Krita) */
 .brush-cursor {
     position: absolute;
     pointer-events: none;
     z-index: 15;
     border-radius: 50%;
-    border: 1.5px solid;
+    border: 1px solid rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6);
     box-sizing: border-box;
     transform: translate(-50%, -50%);
     opacity: 0;
     transition: opacity 0.1s ease;
-    mix-blend-mode: difference;
 }
 
 .brush-cursor.visible {
@@ -445,15 +446,14 @@ body {
     border-radius: 0;
 }
 
-/* Hide brush cursor during drawing */
+/* Reduced opacity during drawing */
 .brush-cursor.drawing {
-    opacity: 0.3;
+    opacity: 0.4;
 }
 
 /* Eraser cursor - dashed outline */
 .brush-cursor.eraser {
     border-style: dashed;
-    mix-blend-mode: normal;
 }
 
 /* Floating Controls Panel (top-left of workspace) */
