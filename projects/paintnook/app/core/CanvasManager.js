@@ -1015,24 +1015,18 @@ export class CanvasManager {
         // Get brush size
         const brushSize = this.app.brush?.size || 10;
 
-        // Get current color (for visual feedback)
-        const isEraser = tool === 'eraser';
-        const color = isEraser
-            ? 'rgba(255, 255, 255, 0.8)'
-            : (this.app.color?.getPrimaryColor() || '#ffffff');
-
-        // Check brush type for shape
+        // Check brush type for shape (square for pixel/square brushes)
         const brushType = this.app.brush?.currentBrushType || 'round';
         const isSquare = brushType === 'square' || brushType === 'pixel';
+        const isEraser = tool === 'eraser';
 
-        // Update cursor style
+        // Update cursor position and size
         this.brushCursor.style.width = `${brushSize}px`;
         this.brushCursor.style.height = `${brushSize}px`;
         this.brushCursor.style.left = `${canvasX}px`;
         this.brushCursor.style.top = `${canvasY}px`;
-        this.brushCursor.style.borderColor = color;
 
-        // Update cursor classes
+        // Update cursor classes for shape variants
         this.brushCursor.classList.toggle('square', isSquare);
         this.brushCursor.classList.toggle('eraser', isEraser);
         this.brushCursor.classList.toggle('drawing', this.isDrawing);
