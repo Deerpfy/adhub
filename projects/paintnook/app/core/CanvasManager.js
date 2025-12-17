@@ -1039,12 +1039,16 @@ export class CanvasManager {
         this.brushCursor.style.left = `${screenX}px`;
         this.brushCursor.style.top = `${screenY}px`;
 
-        // Remove all shape classes first
-        this.brushCursor.classList.remove('square', 'marker', 'ink', 'calligraphy');
+        // Remove all shape/style classes first
+        this.brushCursor.classList.remove(
+            'square', 'marker', 'ink', 'calligraphy',
+            'soft-brush', 'airbrush', 'splatter'
+        );
 
         // Add appropriate shape class based on brush type
         // Each brush type has a specific cursor shape matching its stamp
         switch (brushType) {
+            // Hard-edged brushes with specific shapes
             case 'square':
             case 'pixel':
                 this.brushCursor.classList.add('square');
@@ -1058,8 +1062,22 @@ export class CanvasManager {
             case 'calligraphy':
                 this.brushCursor.classList.add('calligraphy');
                 break;
-            // round, soft, airbrush, charcoal, watercolor, splatter, chalk
-            // all use circular cursor (default)
+
+            // Soft/textured brushes - show outer boundary is approximate
+            case 'soft':
+            case 'charcoal':
+            case 'watercolor':
+            case 'chalk':
+                this.brushCursor.classList.add('soft-brush');
+                break;
+            case 'airbrush':
+                this.brushCursor.classList.add('airbrush');
+                break;
+            case 'splatter':
+                this.brushCursor.classList.add('splatter');
+                break;
+
+            // 'round' uses default circular cursor (solid outline)
         }
 
         // Update state classes
