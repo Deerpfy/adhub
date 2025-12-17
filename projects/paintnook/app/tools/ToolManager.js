@@ -138,10 +138,16 @@ export class ToolManager {
         const container = this.app.canvas?.container;
         if (!container) return;
 
+        // Tools that use brush cursor preview - hide system cursor
+        const brushCursorTools = ['brush', 'pencil', 'eraser'];
+
+        if (brushCursorTools.includes(this.currentTool)) {
+            // Let CSS .brush-cursor-active handle cursor: none
+            container.style.cursor = '';
+            return;
+        }
+
         const cursors = {
-            brush: 'crosshair',
-            pencil: 'crosshair',
-            eraser: 'crosshair',
             fill: 'crosshair',
             eyedropper: 'crosshair',
             line: 'crosshair',
