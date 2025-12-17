@@ -83,6 +83,13 @@ export class VectorManager {
 
         // ID counter for elements
         this.idCounter = 0;
+
+        // Vector cursor preview
+        this.vectorCursor = null;
+        this.vectorCursorVisible = false;
+        // Last known cursor position in SVG coordinates (for zoom updates)
+        this.lastCursorSvgX = 0;
+        this.lastCursorSvgY = 0;
     }
 
     /**
@@ -94,6 +101,9 @@ export class VectorManager {
             console.warn('VectorManager: Canvas container not found');
             return;
         }
+
+        // Initialize vector cursor (reuse brush cursor element)
+        this.vectorCursor = document.getElementById('brushCursor');
     }
 
     /**
@@ -136,6 +146,9 @@ export class VectorManager {
      */
     disable() {
         if (!this.enabled) return;
+
+        // Hide vector cursor
+        this.hideVectorCursor();
 
         // Remove SVG
         if (this.svgElement && this.svgElement.parentNode) {
@@ -208,6 +221,7 @@ export class VectorManager {
             pointerDown: this.handlePointerDown.bind(this),
             pointerMove: this.handlePointerMove.bind(this),
             pointerUp: this.handlePointerUp.bind(this),
+            pointerLeave: this.handlePointerLeave.bind(this),
             wheel: this.handleWheel.bind(this),
             keyDown: this.handleKeyDown.bind(this),
             keyUp: this.handleKeyUp.bind(this)
@@ -216,7 +230,7 @@ export class VectorManager {
         this.svgElement.addEventListener('pointerdown', this._boundHandlers.pointerDown);
         this.svgElement.addEventListener('pointermove', this._boundHandlers.pointerMove);
         this.svgElement.addEventListener('pointerup', this._boundHandlers.pointerUp);
-        this.svgElement.addEventListener('pointerleave', this._boundHandlers.pointerUp);
+        this.svgElement.addEventListener('pointerleave', this._boundHandlers.pointerLeave);
 
         // Mouse wheel for zoom
         this.container.addEventListener('wheel', this._boundHandlers.wheel, { passive: false });
@@ -281,6 +295,9 @@ export class VectorManager {
         // Update cursor position
         this.app.ui?.updateCursorPosition(Math.round(pos.x), Math.round(pos.y));
 
+        // Update vector cursor preview
+        this.updateVectorCursor(pos.x, pos.y);
+
         if (this.isDrawing) {
             this.continueDraw(pos);
         }
@@ -310,6 +327,30 @@ export class VectorManager {
         }
 
         this.isDragging = false;
+    }
+
+    /**
+     * Handle pointer leave
+     */
+    handlePointerLeave(e) {
+        if (!this.enabled) return;
+
+        // End any drawing in progress
+        if (this.isDrawing) {
+            const pos = this.getSVGCoordinates(e);
+            this.endDraw(pos);
+            this.isDrawing = false;
+        }
+
+        // End panning
+        if (this.isPanning) {
+            this.endPan();
+        }
+
+        this.isDragging = false;
+
+        // Hide vector cursor when leaving canvas
+        this.hideVectorCursor();
     }
 
     /**
@@ -396,6 +437,11 @@ export class VectorManager {
         if (wrapper) {
             wrapper.style.transform = `translate(${this.panX}px, ${this.panY}px) scale(${this.zoom})`;
             this.app.ui?.updateZoomLevel(Math.round(this.zoom * 100));
+        }
+
+        // Update vector cursor position/size when zoom changes
+        if (this.vectorCursorVisible) {
+            this.updateVectorCursor(this.lastCursorSvgX, this.lastCursorSvgY);
         }
     }
 
@@ -1882,5 +1928,124 @@ export class VectorManager {
                 this.svgElement.style.backgroundImage = 'none';
             }
         }
+    }
+
+    // ==========================================
+    // Vector Cursor Preview
+    // ==========================================
+
+    /**
+     * Update vector cursor position and appearance
+     * @param {number} svgX - X position in SVG coordinates
+     * @param {number} svgY - Y position in SVG coordinates
+     */
+    updateVectorCursor(svgX, svgY) {
+        if (!this.vectorCursor || !this.enabled) return;
+
+        // Store last cursor position for zoom updates
+        this.lastCursorSvgX = svgX;
+        this.lastCursorSvgY = svgY;
+
+        // Tools that should show strokeWidth cursor
+        const strokeCursorTools = ['pen', 'line', 'arrow', 'rectangle', 'ellipse', 'polygon', 'star'];
+        const tool = this.currentTool;
+
+        // Select tool shows a small indicator, others hide cursor
+        if (tool === 'select' || tool === 'text' || tool === 'gradient') {
+            this.hideVectorCursor();
+            return;
+        }
+
+        if (!strokeCursorTools.includes(tool)) {
+            this.hideVectorCursor();
+            return;
+        }
+
+        // Get stroke width
+        const strokeWidth = this.toolSettings.strokeWidth || 2;
+
+        // Convert SVG coordinates to screen coordinates
+        // The SVG is inside the wrapper which has transform applied
+        const wrapper = document.getElementById('canvasWrapper');
+        if (!wrapper) return;
+
+        const wrapperRect = wrapper.getBoundingClientRect();
+        const containerRect = this.container.getBoundingClientRect();
+
+        // Calculate screen position relative to container
+        const scaleX = wrapperRect.width / this.width;
+        const scaleY = wrapperRect.height / this.height;
+
+        const screenX = wrapperRect.left - containerRect.left + (svgX * scaleX);
+        const screenY = wrapperRect.top - containerRect.top + (svgY * scaleY);
+        const screenSize = Math.max(strokeWidth * this.zoom, 4); // Minimum 4px visible
+
+        // Update cursor position and size
+        this.vectorCursor.style.width = `${screenSize}px`;
+        this.vectorCursor.style.height = `${screenSize}px`;
+        this.vectorCursor.style.left = `${screenX}px`;
+        this.vectorCursor.style.top = `${screenY}px`;
+
+        // Clear brush cursor classes and add vector classes
+        this.vectorCursor.classList.remove(
+            'square', 'marker', 'ink', 'calligraphy',
+            'soft-brush', 'airbrush', 'splatter', 'preview-stamp',
+            'eraser', 'drawing'
+        );
+        this.vectorCursor.classList.add('vector-cursor');
+
+        // Remove all vector tool classes first
+        this.vectorCursor.classList.remove(
+            'vector-pen', 'vector-line', 'vector-arrow',
+            'vector-shape', 'vector-select'
+        );
+
+        // Add tool-specific class
+        switch (tool) {
+            case 'pen':
+                this.vectorCursor.classList.add('vector-pen');
+                break;
+            case 'line':
+                this.vectorCursor.classList.add('vector-line');
+                break;
+            case 'arrow':
+                this.vectorCursor.classList.add('vector-arrow');
+                break;
+            case 'rectangle':
+            case 'ellipse':
+            case 'polygon':
+            case 'star':
+                this.vectorCursor.classList.add('vector-shape');
+                break;
+        }
+
+        // Show cursor
+        this.showVectorCursor();
+    }
+
+    /**
+     * Show vector cursor and hide system cursor
+     */
+    showVectorCursor() {
+        if (!this.vectorCursor || !this.container) return;
+
+        this.vectorCursor.classList.add('visible');
+        this.container.classList.add('vector-cursor-active');
+        this.vectorCursorVisible = true;
+    }
+
+    /**
+     * Hide vector cursor and restore system cursor
+     */
+    hideVectorCursor() {
+        if (!this.vectorCursor || !this.container) return;
+
+        this.vectorCursor.classList.remove('visible', 'vector-cursor');
+        this.vectorCursor.classList.remove(
+            'vector-pen', 'vector-line', 'vector-arrow',
+            'vector-shape', 'vector-select'
+        );
+        this.container.classList.remove('vector-cursor-active');
+        this.vectorCursorVisible = false;
     }
 }
