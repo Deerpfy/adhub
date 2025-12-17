@@ -522,6 +522,47 @@ body {
     outline-style: dashed;
 }
 
+/* Vector Cursor Preview - shows strokeWidth as circle outline */
+.brush-cursor.vector-cursor {
+    border-radius: 50%;
+    outline: 1.5px solid rgba(100, 149, 237, 0.9); /* Cornflower blue */
+    box-shadow: inset 0 0 0 1.5px rgba(0, 0, 0, 0.4);
+    background: none !important;
+}
+
+/* Different cursor styles for vector tools */
+.brush-cursor.vector-pen {
+    outline-color: rgba(100, 149, 237, 0.9);
+}
+
+.brush-cursor.vector-line {
+    outline-color: rgba(50, 205, 50, 0.9); /* Lime green */
+}
+
+.brush-cursor.vector-arrow {
+    outline-color: rgba(255, 165, 0, 0.9); /* Orange */
+}
+
+.brush-cursor.vector-shape {
+    outline-style: dashed;
+    outline-color: rgba(186, 85, 211, 0.9); /* Medium orchid */
+}
+
+.brush-cursor.vector-select {
+    outline-style: dotted;
+    outline-color: rgba(255, 255, 255, 0.7);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.3);
+}
+
+/* Hide system cursor when vector cursor is active */
+.canvas-container.vector-cursor-active {
+    cursor: none !important;
+}
+
+.canvas-container.vector-cursor-active * {
+    cursor: none !important;
+}
+
 /* Floating Controls Panel (top-left of workspace) */
 .floating-controls {
     position: absolute;
