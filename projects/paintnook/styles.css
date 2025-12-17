@@ -461,6 +461,10 @@ body {
     outline: 1px solid rgba(255, 255, 255, 0.5);
     box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3);
     border-radius: 0;
+    /* Fill entire cursor area with brush stamp - explicit to override base */
+    background-size: 100% 100% !important;
+    background-repeat: no-repeat !important;
+    background-position: center center !important;
 }
 
 .brush-cursor.square {

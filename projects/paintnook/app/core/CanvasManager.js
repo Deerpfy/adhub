@@ -1117,9 +1117,9 @@ export class CanvasManager {
             return;
         }
 
-        // Generate brush stamp using BrushEngine
-        // Use a reasonable preview size (min 16px for visibility)
-        const previewSize = Math.max(16, Math.min(size, 128));
+        // Generate brush stamp using BrushEngine at actual size for 1:1 preview
+        // Minimum 8px for visibility, max 256px for performance
+        const previewSize = Math.max(8, Math.min(size, 256));
         const stamp = this.app.brush.getBrushStamp(previewSize, this.app.brush.hardness);
 
         if (!stamp) return;
