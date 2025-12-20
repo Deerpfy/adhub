@@ -742,6 +742,87 @@ Prompt to analyze:
                     ],
                     tip: 'Not all steps are required. Minimum: Task. Recommended: Role + Task + Context + Format.',
                     legend: 'Color Legend',
+                },
+                // ==================== AUTO-SAVE & DRAFT SYSTEM ====================
+                autoSave: {
+                    status: {
+                        idle: '',
+                        saving: 'Saving...',
+                        saved: 'Saved',
+                        error: 'Save failed'
+                    },
+                    recovery: {
+                        title: 'Recover Draft?',
+                        message: 'We found an unsaved draft from your last session.',
+                        lastSaved: 'Last saved',
+                        recover: 'Recover',
+                        discard: 'Discard',
+                    },
+                    history: {
+                        title: 'Draft History',
+                        empty: 'No saved drafts',
+                        load: 'Load',
+                        clear: 'Clear History',
+                        clearConfirm: 'Clear all draft history?',
+                    },
+                    recovered: 'Draft recovered!',
+                    loaded: 'Draft loaded!',
+                    newPrompt: 'New prompt started',
+                },
+                // ==================== TOKEN COUNTER ====================
+                tokens: {
+                    title: 'Token Estimation',
+                    count: 'Estimated tokens',
+                    limit: 'Model limit',
+                    usage: 'Usage',
+                    warning: 'Approaching limit',
+                    error: 'Exceeds limit',
+                    ok: 'Within limits',
+                    note: 'Estimates are approximate. Actual token count may vary by model.',
+                },
+                // ==================== PROMPT QUALITY SCORING ====================
+                quality: {
+                    title: 'Prompt Quality',
+                    score: 'Score',
+                    grade: 'Grade',
+                    suggestions: 'Suggestions',
+                    suggestionKeys: {
+                        taskMissing: 'Add a task description - this is required',
+                        taskRequired: 'Expand your task description for clarity',
+                        taskMore: 'Add more detail to your task',
+                        roleMissing: 'Define a role for better results',
+                        roleMore: 'Expand the role description',
+                        contextMore: 'Add more context information',
+                        formatMissing: 'Specify the output format',
+                        formatMore: 'Add more format details',
+                        methodsMissing: 'Consider adding prompting methods',
+                        methodsMore: 'Try adding another method',
+                    },
+                },
+                // ==================== KEYBOARD SHORTCUTS ====================
+                shortcuts: {
+                    title: 'Keyboard Shortcuts',
+                    save: 'Save prompt',
+                    copy: 'Copy to clipboard',
+                    verify: 'Verify with AI',
+                    newPrompt: 'New prompt',
+                    database: 'Open/close database',
+                    showHelp: 'Show shortcuts',
+                    close: 'Close modal',
+                },
+                // ==================== QUICK-START TEMPLATES ====================
+                quickStart: {
+                    title: 'Quick-Start Templates',
+                    subtitle: 'Ready-to-use prompt templates for common tasks',
+                    use: 'Use Template',
+                    applied: 'Template applied!',
+                    templates: {
+                        blog_post: { name: 'Blog Post', desc: 'Write an engaging blog article' },
+                        debug_code: { name: 'Debug Code', desc: 'Find and fix bugs in your code' },
+                        data_analysis: { name: 'Data Analysis', desc: 'Analyze data and extract insights' },
+                        social_media: { name: 'Social Media', desc: 'Create social media content' },
+                        email_professional: { name: 'Professional Email', desc: 'Write business emails' },
+                    },
                 }
             },
             cs: {
@@ -1206,6 +1287,87 @@ Prompt k analýze:
                     ],
                     tip: 'Ne všechny kroky jsou povinné. Minimum: Úkol. Doporučeno: Role + Úkol + Kontext + Formát.',
                     legend: 'Legenda barev',
+                },
+                // ==================== AUTO-SAVE & DRAFT SYSTEM ====================
+                autoSave: {
+                    status: {
+                        idle: '',
+                        saving: 'Ukládám...',
+                        saved: 'Uloženo',
+                        error: 'Uložení selhalo'
+                    },
+                    recovery: {
+                        title: 'Obnovit koncept?',
+                        message: 'Našli jsme neuložený koncept z vaší poslední relace.',
+                        lastSaved: 'Naposledy uloženo',
+                        recover: 'Obnovit',
+                        discard: 'Zahodit',
+                    },
+                    history: {
+                        title: 'Historie konceptů',
+                        empty: 'Žádné uložené koncepty',
+                        load: 'Načíst',
+                        clear: 'Vymazat historii',
+                        clearConfirm: 'Vymazat celou historii konceptů?',
+                    },
+                    recovered: 'Koncept obnoven!',
+                    loaded: 'Koncept načten!',
+                    newPrompt: 'Nový prompt zahájen',
+                },
+                // ==================== TOKEN COUNTER ====================
+                tokens: {
+                    title: 'Odhad tokenů',
+                    count: 'Odhadované tokeny',
+                    limit: 'Limit modelu',
+                    usage: 'Využití',
+                    warning: 'Blíží se limitu',
+                    error: 'Překračuje limit',
+                    ok: 'V mezích limitu',
+                    note: 'Odhady jsou přibližné. Skutečný počet tokenů se může lišit podle modelu.',
+                },
+                // ==================== PROMPT QUALITY SCORING ====================
+                quality: {
+                    title: 'Kvalita promptu',
+                    score: 'Skóre',
+                    grade: 'Známka',
+                    suggestions: 'Návrhy',
+                    suggestionKeys: {
+                        taskMissing: 'Přidejte popis úkolu - toto je povinné',
+                        taskRequired: 'Rozšiřte popis úkolu pro větší jasnost',
+                        taskMore: 'Přidejte více detailů k úkolu',
+                        roleMissing: 'Definujte roli pro lepší výsledky',
+                        roleMore: 'Rozšiřte popis role',
+                        contextMore: 'Přidejte více kontextových informací',
+                        formatMissing: 'Specifikujte formát výstupu',
+                        formatMore: 'Přidejte více detailů formátu',
+                        methodsMissing: 'Zvažte přidání promptingových metod',
+                        methodsMore: 'Zkuste přidat další metodu',
+                    },
+                },
+                // ==================== KEYBOARD SHORTCUTS ====================
+                shortcuts: {
+                    title: 'Klávesové zkratky',
+                    save: 'Uložit prompt',
+                    copy: 'Kopírovat do schránky',
+                    verify: 'Ověřit pomocí AI',
+                    newPrompt: 'Nový prompt',
+                    database: 'Otevřít/zavřít databázi',
+                    showHelp: 'Zobrazit zkratky',
+                    close: 'Zavřít okno',
+                },
+                // ==================== QUICK-START TEMPLATES ====================
+                quickStart: {
+                    title: 'Rychlé šablony',
+                    subtitle: 'Připravené šablony promptů pro běžné úkoly',
+                    use: 'Použít šablonu',
+                    applied: 'Šablona aplikována!',
+                    templates: {
+                        blog_post: { name: 'Blogový článek', desc: 'Napište poutavý blogový článek' },
+                        debug_code: { name: 'Ladění kódu', desc: 'Najděte a opravte chyby v kódu' },
+                        data_analysis: { name: 'Analýza dat', desc: 'Analyzujte data a získejte poznatky' },
+                        social_media: { name: 'Sociální sítě', desc: 'Vytvořte obsah pro sociální sítě' },
+                        email_professional: { name: 'Profesionální email', desc: 'Napište obchodní emaily' },
+                    },
                 }
             }
         };
@@ -1408,6 +1570,264 @@ Prompt k analýze:
         const DB_KEY = 'ai_prompt_formatter_db';
         const FOLDERS_KEY = 'ai_prompt_formatter_folders';
         const TAGS_KEY = 'ai_prompt_formatter_tags';
+
+        // ==================== AUTO-SAVE & DRAFT SYSTEM ====================
+        const AUTOSAVE_KEY = 'ai_prompt_formatter_autosave';
+        const AUTOSAVE_HISTORY_KEY = 'ai_prompt_formatter_autosave_history';
+        const AUTOSAVE_INTERVAL = 30000; // 30 seconds
+        const MAX_AUTOSAVE_SLOTS = 10;
+
+        // Load current auto-save draft
+        const loadAutosaveDraft = () => {
+            try {
+                const data = localStorage.getItem(AUTOSAVE_KEY);
+                return data ? JSON.parse(data) : null;
+            } catch { return null; }
+        };
+
+        // Save current draft
+        const saveAutosaveDraft = (draft) => {
+            try {
+                localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({
+                    ...draft,
+                    savedAt: new Date().toISOString()
+                }));
+                return true;
+            } catch { return false; }
+        };
+
+        // Clear auto-save draft
+        const clearAutosaveDraft = () => {
+            localStorage.removeItem(AUTOSAVE_KEY);
+        };
+
+        // Load auto-save history (past drafts)
+        const loadAutosaveHistory = () => {
+            try {
+                const data = localStorage.getItem(AUTOSAVE_HISTORY_KEY);
+                return data ? JSON.parse(data) : [];
+            } catch { return []; }
+        };
+
+        // Add to auto-save history (max 10 slots)
+        const addToAutosaveHistory = (draft) => {
+            try {
+                const history = loadAutosaveHistory();
+                const newEntry = {
+                    ...draft,
+                    id: Date.now().toString(),
+                    savedAt: new Date().toISOString()
+                };
+                // Add to beginning and limit to MAX_AUTOSAVE_SLOTS
+                const updated = [newEntry, ...history].slice(0, MAX_AUTOSAVE_SLOTS);
+                localStorage.setItem(AUTOSAVE_HISTORY_KEY, JSON.stringify(updated));
+                return true;
+            } catch { return false; }
+        };
+
+        // Clear auto-save history
+        const clearAutosaveHistory = () => {
+            localStorage.removeItem(AUTOSAVE_HISTORY_KEY);
+        };
+
+        // ==================== TOKEN ESTIMATION ====================
+        // Approximate token count (rough estimate: ~4 chars per token for English)
+        const estimateTokens = (text) => {
+            if (!text) return 0;
+            // More accurate estimation: count words and characters
+            const words = text.trim().split(/\s+/).filter(w => w.length > 0).length;
+            const chars = text.length;
+            // GPT-style tokenization: roughly 0.75 tokens per word for English
+            // For mixed content (code, special chars), use character-based estimate
+            const wordBasedTokens = Math.ceil(words * 1.3);
+            const charBasedTokens = Math.ceil(chars / 4);
+            return Math.max(wordBasedTokens, charBasedTokens);
+        };
+
+        // Model token limits (context windows)
+        const MODEL_TOKEN_LIMITS = {
+            claude: { name: 'Claude', limit: 200000, warning: 150000 },
+            gpt: { name: 'ChatGPT', limit: 128000, warning: 100000 },
+            gemini: { name: 'Gemini', limit: 1000000, warning: 800000 },
+            llama: { name: 'Llama', limit: 128000, warning: 100000 },
+            mistral: { name: 'Mistral', limit: 32000, warning: 25000 },
+            cohere: { name: 'Cohere', limit: 128000, warning: 100000 },
+            grok: { name: 'Grok', limit: 128000, warning: 100000 },
+            deepseek: { name: 'DeepSeek', limit: 64000, warning: 50000 },
+            general: { name: 'General', limit: 32000, warning: 25000 }
+        };
+
+        // ==================== PROMPT QUALITY SCORING ====================
+        const calculatePromptScore = (fields, methods, template, extendedFields) => {
+            let score = 0;
+            const maxScore = 100;
+            const suggestions = [];
+
+            // Core elements (60 points)
+            // Task is most important (25 points)
+            if (fields.task?.length > 50) {
+                score += 25;
+            } else if (fields.task?.length > 20) {
+                score += 15;
+                suggestions.push({ type: 'task', priority: 'medium', key: 'taskMore' });
+            } else if (fields.task?.length > 5) {
+                score += 8;
+                suggestions.push({ type: 'task', priority: 'high', key: 'taskRequired' });
+            } else {
+                suggestions.push({ type: 'task', priority: 'critical', key: 'taskMissing' });
+            }
+
+            // Role (15 points)
+            if (fields.role?.length > 20) {
+                score += 15;
+            } else if (fields.role?.length > 5) {
+                score += 8;
+                suggestions.push({ type: 'role', priority: 'low', key: 'roleMore' });
+            } else {
+                suggestions.push({ type: 'role', priority: 'medium', key: 'roleMissing' });
+            }
+
+            // Context (10 points)
+            if (fields.context?.length > 30) {
+                score += 10;
+            } else if (fields.context?.length > 10) {
+                score += 5;
+                suggestions.push({ type: 'context', priority: 'low', key: 'contextMore' });
+            }
+
+            // Output Format (10 points)
+            if (fields.outputFormat?.length > 10) {
+                score += 10;
+            } else if (fields.outputFormat?.length > 0) {
+                score += 5;
+                suggestions.push({ type: 'format', priority: 'low', key: 'formatMore' });
+            } else {
+                suggestions.push({ type: 'format', priority: 'medium', key: 'formatMissing' });
+            }
+
+            // Methods (20 points)
+            if (methods.length >= 2) {
+                score += 15;
+            } else if (methods.length === 1) {
+                score += 10;
+                suggestions.push({ type: 'methods', priority: 'low', key: 'methodsMore' });
+            } else {
+                suggestions.push({ type: 'methods', priority: 'low', key: 'methodsMissing' });
+            }
+
+            // Bonus for using recommended methods for the template
+            const recommendedMethods = METHOD_CATEGORIES[template] || [];
+            const usesRecommended = methods.some(m => recommendedMethods.includes(m));
+            if (usesRecommended) {
+                score += 5;
+            }
+
+            // Advanced elements (20 points)
+            // Constraints (10 points)
+            if (fields.constraints?.length > 20) {
+                score += 10;
+            } else if (fields.constraints?.length > 0) {
+                score += 5;
+            }
+
+            // Examples (10 points)
+            if (fields.examples?.length > 20) {
+                score += 10;
+            } else if (fields.examples?.length > 0) {
+                score += 5;
+            }
+
+            // Determine grade
+            const finalScore = Math.min(score, maxScore);
+            let grade, gradeColor;
+            if (finalScore >= 80) {
+                grade = 'A';
+                gradeColor = '#22c55e'; // green
+            } else if (finalScore >= 60) {
+                grade = 'B';
+                gradeColor = '#84cc16'; // lime
+            } else if (finalScore >= 40) {
+                grade = 'C';
+                gradeColor = '#eab308'; // yellow
+            } else if (finalScore >= 20) {
+                grade = 'D';
+                gradeColor = '#f97316'; // orange
+            } else {
+                grade = 'F';
+                gradeColor = '#ef4444'; // red
+            }
+
+            return {
+                score: finalScore,
+                grade,
+                gradeColor,
+                suggestions: suggestions.slice(0, 3) // Top 3 suggestions
+            };
+        };
+
+        // ==================== QUICK-START TEMPLATES ====================
+        const QUICKSTART_TEMPLATES = {
+            blog_post: {
+                icon: 'FileText',
+                fields: {
+                    role: 'a professional content writer and SEO specialist',
+                    task: 'Write an engaging blog post about [TOPIC]. The post should be informative, well-structured, and optimized for search engines.',
+                    context: 'Target audience: [AUDIENCE]. The blog should maintain a [TONE] tone while providing actionable insights.',
+                    constraints: 'Length: 1000-1500 words. Include an attention-grabbing headline, subheadings, and a clear call-to-action.',
+                    outputFormat: 'Markdown format with:\n- Compelling headline\n- Introduction hook\n- 3-5 main sections with subheadings\n- Bullet points for key takeaways\n- Conclusion with CTA',
+                },
+                template: 'creative',
+                methods: ['emotion', 'fewshot']
+            },
+            debug_code: {
+                icon: 'Bug',
+                fields: {
+                    role: 'an expert software engineer and debugging specialist',
+                    task: 'Debug the following [LANGUAGE] code. Identify the bug, explain why it occurs, and provide a corrected version.',
+                    context: 'The code is supposed to [EXPECTED_BEHAVIOR] but instead [ACTUAL_BEHAVIOR].',
+                    constraints: 'Explain the bug clearly. Provide the complete corrected code. Include comments explaining the fix.',
+                    outputFormat: '1. Bug identification\n2. Root cause explanation\n3. Corrected code with comments\n4. Prevention tips',
+                },
+                template: 'coding',
+                methods: ['cot', 'pal']
+            },
+            data_analysis: {
+                icon: 'BarChart',
+                fields: {
+                    role: 'a data analyst and business intelligence expert',
+                    task: 'Analyze the provided data set and extract meaningful insights, trends, and recommendations.',
+                    context: 'This data represents [DATA_DESCRIPTION]. The goal is to [ANALYSIS_GOAL].',
+                    constraints: 'Focus on actionable insights. Use statistical reasoning. Highlight key patterns and anomalies.',
+                    outputFormat: '1. Executive Summary\n2. Key Findings (with data points)\n3. Trend Analysis\n4. Recommendations\n5. Next Steps',
+                },
+                template: 'analysis',
+                methods: ['cot', 'stepback']
+            },
+            social_media: {
+                icon: 'Share2',
+                fields: {
+                    role: 'a social media marketing expert and copywriter',
+                    task: 'Create engaging social media content about [TOPIC] for [PLATFORM].',
+                    context: 'Brand voice: [BRAND_VOICE]. Target audience: [AUDIENCE]. Campaign goal: [GOAL].',
+                    constraints: 'Keep within platform character limits. Include relevant hashtags. Make it shareable and engaging.',
+                    outputFormat: '- Main post copy\n- Hashtags (5-10 relevant)\n- Call-to-action\n- Best posting time suggestion\n- Alternative versions (2-3)',
+                },
+                template: 'marketing',
+                methods: ['emotion', 'analogical']
+            },
+            email_professional: {
+                icon: 'Mail',
+                fields: {
+                    role: 'a professional business communication specialist',
+                    task: 'Write a professional email to [RECIPIENT] regarding [SUBJECT].',
+                    context: 'Purpose: [PURPOSE]. Our relationship with the recipient is [RELATIONSHIP]. Desired outcome: [OUTCOME].',
+                    constraints: 'Keep it concise and professional. Clear subject line. Appropriate greeting and closing.',
+                    outputFormat: 'Subject: [Clear subject]\n\n[Greeting]\n\n[Body - 2-3 paragraphs]\n\n[Call to action]\n\n[Professional closing]',
+                },
+                template: 'email',
+                methods: ['risen', 'emotion']
+            }
+        };
 
         // Predefined tag colors palette
         const TAG_COLORS = [
@@ -1825,6 +2245,25 @@ Prompt k analýze:
             const prevTemplateRef = useRef(null);
             const prevTargetRef = useRef(null);
 
+            // ==================== AUTO-SAVE & DRAFT SYSTEM STATES ====================
+            const [autoSaveStatus, setAutoSaveStatus] = useState('idle'); // 'idle' | 'saving' | 'saved' | 'error'
+            const [lastAutoSave, setLastAutoSave] = useState(null);
+            const [showDraftRecovery, setShowDraftRecovery] = useState(false);
+            const [recoveryDraft, setRecoveryDraft] = useState(null);
+            const [showDraftHistory, setShowDraftHistory] = useState(false);
+            const [draftHistory, setDraftHistory] = useState([]);
+            const autoSaveTimerRef = useRef(null);
+            const lastSavedStateRef = useRef(null);
+
+            // ==================== TOKEN COUNTER STATES ====================
+            const [showTokenInfo, setShowTokenInfo] = useState(false);
+
+            // ==================== KEYBOARD SHORTCUTS STATES ====================
+            const [showShortcuts, setShowShortcuts] = useState(false);
+
+            // ==================== QUICK-START TEMPLATES STATES ====================
+            const [showQuickStart, setShowQuickStart] = useState(false);
+
             // Tutorial steps configuration
             const tutorialSteps = [
                 { id: 'welcome', target: null, position: 'center' },
@@ -1961,6 +2400,235 @@ Prompt k analýze:
                 setFolders(loadFolders());
                 setTags(loadTags());
             }, []);
+
+            // ==================== AUTO-SAVE & DRAFT SYSTEM LOGIC ====================
+            // Check for draft recovery on mount
+            useEffect(() => {
+                const draft = loadAutosaveDraft();
+                if (draft && draft.fields) {
+                    // Check if there's meaningful content to recover
+                    const hasContent = Object.values(draft.fields).some(v => v && v.length > 0);
+                    if (hasContent) {
+                        setRecoveryDraft(draft);
+                        setShowDraftRecovery(true);
+                    }
+                }
+                // Load draft history
+                setDraftHistory(loadAutosaveHistory());
+            }, []);
+
+            // Auto-save timer effect
+            useEffect(() => {
+                const performAutoSave = () => {
+                    // Only save if there's meaningful content
+                    const hasContent = Object.values(fields).some(v => v && v.length > 0);
+                    if (!hasContent) return;
+
+                    // Check if state has changed since last save
+                    const currentState = JSON.stringify({ fields, template, target, selectedMethods, exampleFileType, exampleHeaders, exampleRows, selectedFeatures, extendedFields });
+                    if (currentState === lastSavedStateRef.current) return;
+
+                    setAutoSaveStatus('saving');
+                    const draft = {
+                        fields, template, target, selectedMethods, lang,
+                        exampleFileType, exampleHeaders, exampleRows,
+                        selectedFeatures, extendedFields
+                    };
+
+                    if (saveAutosaveDraft(draft)) {
+                        lastSavedStateRef.current = currentState;
+                        setLastAutoSave(new Date());
+                        setAutoSaveStatus('saved');
+                        // Also add to history periodically (every 5 minutes)
+                        const history = loadAutosaveHistory();
+                        const lastHistoryTime = history.length > 0 ? new Date(history[0].savedAt).getTime() : 0;
+                        if (Date.now() - lastHistoryTime > 300000) { // 5 minutes
+                            addToAutosaveHistory(draft);
+                            setDraftHistory(loadAutosaveHistory());
+                        }
+                        // Reset to idle after 3 seconds
+                        setTimeout(() => setAutoSaveStatus('idle'), 3000);
+                    } else {
+                        setAutoSaveStatus('error');
+                        setTimeout(() => setAutoSaveStatus('idle'), 3000);
+                    }
+                };
+
+                // Clear existing timer
+                if (autoSaveTimerRef.current) {
+                    clearInterval(autoSaveTimerRef.current);
+                }
+
+                // Set up new timer
+                autoSaveTimerRef.current = setInterval(performAutoSave, AUTOSAVE_INTERVAL);
+
+                // Cleanup on unmount
+                return () => {
+                    if (autoSaveTimerRef.current) {
+                        clearInterval(autoSaveTimerRef.current);
+                    }
+                };
+            }, [fields, template, target, selectedMethods, exampleFileType, exampleHeaders, exampleRows, selectedFeatures, extendedFields, lang]);
+
+            // Immediate save on significant field changes (debounced)
+            const saveOnChangeRef = useRef(null);
+            useEffect(() => {
+                const hasContent = Object.values(fields).some(v => v && v.length > 0);
+                if (!hasContent) return;
+
+                if (saveOnChangeRef.current) {
+                    clearTimeout(saveOnChangeRef.current);
+                }
+
+                saveOnChangeRef.current = setTimeout(() => {
+                    const currentState = JSON.stringify({ fields, template, target, selectedMethods });
+                    if (currentState !== lastSavedStateRef.current) {
+                        const draft = {
+                            fields, template, target, selectedMethods, lang,
+                            exampleFileType, exampleHeaders, exampleRows,
+                            selectedFeatures, extendedFields
+                        };
+                        saveAutosaveDraft(draft);
+                        lastSavedStateRef.current = currentState;
+                        setLastAutoSave(new Date());
+                    }
+                }, 2000); // 2 second debounce
+
+                return () => {
+                    if (saveOnChangeRef.current) {
+                        clearTimeout(saveOnChangeRef.current);
+                    }
+                };
+            }, [fields]);
+
+            // Recover draft function
+            const recoverDraft = () => {
+                if (recoveryDraft) {
+                    setTemplate(recoveryDraft.template || 'general');
+                    setTarget(recoveryDraft.target || 'claude');
+                    setFields(recoveryDraft.fields || { role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '' });
+                    setSelectedMethods(recoveryDraft.selectedMethods || []);
+                    if (recoveryDraft.lang) setLang(recoveryDraft.lang);
+                    setExampleFileType(recoveryDraft.exampleFileType || 'none');
+                    setExampleHeaders(recoveryDraft.exampleHeaders || '');
+                    setExampleRows(recoveryDraft.exampleRows || [{ id: 1, content: '' }]);
+                    setSelectedFeatures(recoveryDraft.selectedFeatures || {});
+                    setExtendedFields({ ...extendedFields, ...(recoveryDraft.extendedFields || {}) });
+                    showNotification(t.autoSave?.recovered || 'Draft recovered!');
+                }
+                setShowDraftRecovery(false);
+                setRecoveryDraft(null);
+            };
+
+            // Dismiss draft recovery
+            const dismissDraftRecovery = () => {
+                setShowDraftRecovery(false);
+                setRecoveryDraft(null);
+                clearAutosaveDraft();
+            };
+
+            // Load draft from history
+            const loadDraftFromHistory = (draft) => {
+                setTemplate(draft.template || 'general');
+                setTarget(draft.target || 'claude');
+                setFields(draft.fields || { role: '', task: '', context: '', constraints: '', outputFormat: '', examples: '' });
+                setSelectedMethods(draft.selectedMethods || []);
+                if (draft.lang) setLang(draft.lang);
+                setExampleFileType(draft.exampleFileType || 'none');
+                setExampleHeaders(draft.exampleHeaders || '');
+                setExampleRows(draft.exampleRows || [{ id: 1, content: '' }]);
+                setSelectedFeatures(draft.selectedFeatures || {});
+                setExtendedFields({ ...extendedFields, ...(draft.extendedFields || {}) });
+                setShowDraftHistory(false);
+                showNotification(t.autoSave?.loaded || 'Draft loaded!');
+            };
+
+            // ==================== KEYBOARD SHORTCUTS ====================
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    // Don't trigger if user is typing in an input/textarea
+                    const isTyping = e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA';
+
+                    // Ctrl/Cmd + S: Save prompt
+                    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                        e.preventDefault();
+                        if (formattedPrompt && !saveModalOpen) {
+                            setSaveModalOpen(true);
+                        }
+                    }
+
+                    // Ctrl/Cmd + Enter: Verify with AI
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                        e.preventDefault();
+                        if (formattedPrompt && !verifyLoading) {
+                            verifyPromptWithAI();
+                        }
+                    }
+
+                    // Ctrl/Cmd + Shift + N: New prompt (reset form)
+                    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'N') {
+                        e.preventDefault();
+                        resetForm();
+                        showNotification(t.autoSave?.newPrompt || 'New prompt started');
+                    }
+
+                    // Escape: Close modals
+                    if (e.key === 'Escape') {
+                        if (showShortcuts) setShowShortcuts(false);
+                        else if (showQuickStart) setShowQuickStart(false);
+                        else if (showDraftHistory) setShowDraftHistory(false);
+                        else if (showTokenInfo) setShowTokenInfo(false);
+                        else if (showVerifyModal) setShowVerifyModal(false);
+                        else if (saveModalOpen) setSaveModalOpen(false);
+                        else if (showShareModal) setShowShareModal(false);
+                        else if (showDatabase) setShowDatabase(false);
+                    }
+
+                    // Ctrl/Cmd + ?: Show shortcuts
+                    if ((e.ctrlKey || e.metaKey) && e.key === '/') {
+                        e.preventDefault();
+                        setShowShortcuts(prev => !prev);
+                    }
+
+                    // Ctrl/Cmd + D: Open database
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'd' && !isTyping) {
+                        e.preventDefault();
+                        setShowDatabase(prev => !prev);
+                    }
+                };
+
+                document.addEventListener('keydown', handleKeyDown);
+                return () => document.removeEventListener('keydown', handleKeyDown);
+            }, [formattedPrompt, saveModalOpen, verifyLoading, showShortcuts, showQuickStart, showDraftHistory, showTokenInfo, showVerifyModal, showShareModal, showDatabase]);
+
+            // ==================== PROMPT QUALITY SCORE (doesn't depend on formattedPrompt) ====================
+            // Calculate prompt quality score
+            const promptScore = useMemo(() => {
+                return calculatePromptScore(fields, selectedMethods, template, extendedFields);
+            }, [fields, selectedMethods, template, extendedFields]);
+
+            // Get current model's token limits (doesn't depend on formattedPrompt)
+            const currentModelLimits = useMemo(() => {
+                return MODEL_TOKEN_LIMITS[target] || MODEL_TOKEN_LIMITS.general;
+            }, [target]);
+
+            // NOTE: tokenCount and tokenWarning are defined after formattedPrompt
+
+            // ==================== QUICK-START TEMPLATE FUNCTIONS ====================
+            const applyQuickStartTemplate = (templateKey) => {
+                const quickTemplate = QUICKSTART_TEMPLATES[templateKey];
+                if (!quickTemplate) return;
+
+                setTemplate(quickTemplate.template || 'general');
+                setFields({
+                    ...fields,
+                    ...quickTemplate.fields,
+                    examples: fields.examples || '' // Preserve existing examples
+                });
+                setSelectedMethods(quickTemplate.methods || []);
+                setShowQuickStart(false);
+                showNotification(t.quickStart?.applied || 'Template applied!');
+            };
 
             // ==================== FOLDERS & TAGS CRUD FUNCTIONS ====================
             // Folder CRUD
@@ -2625,6 +3293,19 @@ Prompt k analýze:
             const formattedPrompt = useMemo(() => {
                 return promptSections.map(s => s.text).join('\n\n').trim();
             }, [promptSections]);
+
+            // ==================== TOKEN COUNTER (depends on formattedPrompt) ====================
+            // Calculate token count for current prompt
+            const tokenCount = useMemo(() => {
+                return estimateTokens(formattedPrompt);
+            }, [formattedPrompt]);
+
+            // Token warning status
+            const tokenWarning = useMemo(() => {
+                if (tokenCount >= currentModelLimits.limit) return 'error';
+                if (tokenCount >= currentModelLimits.warning) return 'warning';
+                return 'ok';
+            }, [tokenCount, currentModelLimits]);
 
             // ==================== VERIFICATION API FUNCTIONS ====================
             // Verify prompt using FREE Pollinations.ai API (no key required!)
@@ -3410,6 +4091,256 @@ Prompt k analýze:
                         </div>
                     )}
 
+                    {/* ==================== NEW FEATURE MODALS ==================== */}
+
+                    {/* Draft Recovery Modal */}
+                    {showDraftRecovery && recoveryDraft && (
+                        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+                            <div className="bg-slate-800 p-6 rounded-xl border border-amber-500/50 w-96 shadow-2xl shadow-amber-500/20">
+                                <div className="flex items-center gap-3 mb-4">
+                                    <div className="w-12 h-12 bg-amber-500/20 rounded-full flex items-center justify-center">
+                                        <Icon name="History" size={24} className="text-amber-400" />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-lg font-bold text-white">{t.autoSave?.recovery?.title || 'Recover Draft?'}</h3>
+                                        <p className="text-xs text-slate-400">
+                                            {t.autoSave?.recovery?.lastSaved || 'Last saved'}: {recoveryDraft.savedAt ? new Date(recoveryDraft.savedAt).toLocaleString() : 'Unknown'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <p className="text-slate-300 text-sm mb-4">
+                                    {t.autoSave?.recovery?.message || 'We found an unsaved draft from your last session.'}
+                                </p>
+                                {/* Draft preview */}
+                                <div className="bg-slate-900/50 border border-slate-700 rounded-lg p-3 mb-4 max-h-32 overflow-y-auto">
+                                    <p className="text-xs text-slate-400 mb-1">{t.fields?.task?.label || 'Task'}:</p>
+                                    <p className="text-sm text-slate-300 line-clamp-3">{recoveryDraft.fields?.task || 'No task'}</p>
+                                </div>
+                                <div className="flex gap-3">
+                                    <button
+                                        onClick={dismissDraftRecovery}
+                                        className="flex-1 px-4 py-2.5 bg-slate-700 text-white rounded-lg hover:bg-slate-600 font-medium"
+                                    >
+                                        {t.autoSave?.recovery?.discard || 'Discard'}
+                                    </button>
+                                    <button
+                                        onClick={recoverDraft}
+                                        className="flex-1 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 text-slate-900 rounded-lg hover:from-amber-400 hover:to-orange-400 font-medium flex items-center justify-center gap-2"
+                                    >
+                                        <Icon name="RotateCcw" size={16} />
+                                        {t.autoSave?.recovery?.recover || 'Recover'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Draft History Modal */}
+                    {showDraftHistory && (
+                        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShowDraftHistory(false)}>
+                            <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 w-[420px] max-w-[95vw] max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Icon name="History" size={20} className="text-amber-400" />
+                                        {t.autoSave?.history?.title || 'Draft History'}
+                                    </h3>
+                                    <button onClick={() => setShowDraftHistory(false)} className="text-slate-400 hover:text-white">
+                                        <Icon name="X" size={20} />
+                                    </button>
+                                </div>
+                                <div className="flex-1 overflow-y-auto space-y-2">
+                                    {draftHistory.length === 0 ? (
+                                        <div className="text-center text-slate-500 py-8">
+                                            <Icon name="FileX" size={32} className="mx-auto mb-2 opacity-50" />
+                                            <p>{t.autoSave?.history?.empty || 'No saved drafts'}</p>
+                                        </div>
+                                    ) : (
+                                        draftHistory.map(draft => (
+                                            <div key={draft.id} className="p-3 bg-slate-900/50 border border-slate-700 rounded-lg hover:border-amber-500/30 transition-colors">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <p className="text-sm font-medium text-white line-clamp-1">{draft.fields?.task?.substring(0, 50) || 'Untitled'}{draft.fields?.task?.length > 50 ? '...' : ''}</p>
+                                                        <p className="text-xs text-slate-500">{new Date(draft.savedAt).toLocaleString()}</p>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => loadDraftFromHistory(draft)}
+                                                        className="px-3 py-1 bg-amber-500/20 text-amber-400 rounded hover:bg-amber-500/30 text-xs font-medium"
+                                                    >
+                                                        {t.autoSave?.history?.load || 'Load'}
+                                                    </button>
+                                                </div>
+                                                <div className="flex gap-2 flex-wrap">
+                                                    {draft.template && <span className="px-2 py-0.5 bg-slate-700 rounded text-xs text-slate-400">{draft.template}</span>}
+                                                    {draft.target && <span className="px-2 py-0.5 bg-slate-700 rounded text-xs text-slate-400">{draft.target}</span>}
+                                                </div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                                {draftHistory.length > 0 && (
+                                    <div className="mt-4 pt-4 border-t border-slate-700">
+                                        <button
+                                            onClick={() => { clearAutosaveHistory(); setDraftHistory([]); }}
+                                            className="w-full px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 text-sm"
+                                        >
+                                            <Icon name="Trash2" size={14} className="inline mr-2" />
+                                            {t.autoSave?.history?.clear || 'Clear History'}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Token Info & Quality Score Modal */}
+                    {showTokenInfo && (
+                        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShowTokenInfo(false)}>
+                            <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 w-[400px] max-w-[95vw]" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Icon name="BarChart2" size={20} className="text-amber-400" />
+                                        {t.quality?.title || 'Prompt Quality'} & {t.tokens?.title || 'Tokens'}
+                                    </h3>
+                                    <button onClick={() => setShowTokenInfo(false)} className="text-slate-400 hover:text-white">
+                                        <Icon name="X" size={20} />
+                                    </button>
+                                </div>
+
+                                {/* Quality Score Section */}
+                                <div className="mb-4 p-4 bg-slate-900/50 border border-slate-700 rounded-lg">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <span className="text-sm text-slate-400">{t.quality?.grade || 'Grade'}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-3xl font-bold" style={{ color: promptScore.gradeColor }}>{promptScore.grade}</span>
+                                            <span className="text-lg text-slate-400">{promptScore.score}/100</span>
+                                        </div>
+                                    </div>
+                                    <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden">
+                                        <div className="h-full transition-all duration-500" style={{ width: `${promptScore.score}%`, backgroundColor: promptScore.gradeColor }} />
+                                    </div>
+                                    {promptScore.suggestions.length > 0 && (
+                                        <div className="mt-3 space-y-1">
+                                            <p className="text-xs text-slate-500">{t.quality?.suggestions || 'Suggestions'}:</p>
+                                            {promptScore.suggestions.map((s, i) => (
+                                                <p key={i} className="text-xs text-slate-400 flex items-center gap-1">
+                                                    <Icon name="Lightbulb" size={10} className="text-amber-400" />
+                                                    {t.quality?.suggestionKeys?.[s.key] || s.key}
+                                                </p>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Token Counter Section */}
+                                <div className="p-4 bg-slate-900/50 border border-slate-700 rounded-lg">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm text-slate-400">{t.tokens?.count || 'Estimated tokens'}</span>
+                                        <span className={`text-lg font-medium ${tokenWarning === 'error' ? 'text-red-400' : tokenWarning === 'warning' ? 'text-yellow-400' : 'text-green-400'}`}>
+                                            ~{tokenCount.toLocaleString()}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center justify-between mb-2">
+                                        <span className="text-sm text-slate-400">{t.tokens?.limit || 'Model limit'} ({currentModelLimits.name})</span>
+                                        <span className="text-sm text-slate-300">{currentModelLimits.limit.toLocaleString()}</span>
+                                    </div>
+                                    <div className="w-full h-2 bg-slate-700 rounded-full overflow-hidden mb-2">
+                                        <div className={`h-full transition-all duration-300 ${tokenWarning === 'error' ? 'bg-red-500' : tokenWarning === 'warning' ? 'bg-yellow-500' : 'bg-green-500'}`}
+                                            style={{ width: `${Math.min((tokenCount / currentModelLimits.limit) * 100, 100)}%` }} />
+                                    </div>
+                                    <p className="text-xs text-slate-500">{t.tokens?.note || 'Estimates are approximate. Actual token count may vary by model.'}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Keyboard Shortcuts Modal */}
+                    {showShortcuts && (
+                        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShowShortcuts(false)}>
+                            <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 w-[380px] max-w-[95vw]" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-center mb-4">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Icon name="Keyboard" size={20} className="text-amber-400" />
+                                        {t.shortcuts?.title || 'Keyboard Shortcuts'}
+                                    </h3>
+                                    <button onClick={() => setShowShortcuts(false)} className="text-slate-400 hover:text-white">
+                                        <Icon name="X" size={20} />
+                                    </button>
+                                </div>
+                                <div className="space-y-2">
+                                    {[
+                                        { keys: ['Ctrl', 'S'], action: t.shortcuts?.save || 'Save prompt' },
+                                        { keys: ['Ctrl', 'Enter'], action: t.shortcuts?.verify || 'Verify with AI' },
+                                        { keys: ['Ctrl', 'Shift', 'N'], action: t.shortcuts?.newPrompt || 'New prompt' },
+                                        { keys: ['Ctrl', 'D'], action: t.shortcuts?.database || 'Open/close database' },
+                                        { keys: ['Ctrl', '/'], action: t.shortcuts?.showHelp || 'Show shortcuts' },
+                                        { keys: ['Esc'], action: t.shortcuts?.close || 'Close modal' },
+                                    ].map((shortcut, i) => (
+                                        <div key={i} className="flex items-center justify-between py-2 border-b border-slate-700/50 last:border-0">
+                                            <div className="flex gap-1">
+                                                {shortcut.keys.map((key, j) => (
+                                                    <span key={j} className="px-2 py-1 bg-slate-700 border border-slate-600 rounded text-xs font-mono text-slate-300">
+                                                        {key}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                            <span className="text-sm text-slate-400">{shortcut.action}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Quick-Start Templates Modal */}
+                    {showQuickStart && (
+                        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShowQuickStart(false)}>
+                            <div className="bg-slate-800 p-5 rounded-xl border border-slate-700 w-[500px] max-w-[95vw] max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
+                                <div className="flex justify-between items-center mb-2">
+                                    <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                        <Icon name="Zap" size={20} className="text-amber-400" />
+                                        {t.quickStart?.title || 'Quick-Start Templates'}
+                                    </h3>
+                                    <button onClick={() => setShowQuickStart(false)} className="text-slate-400 hover:text-white">
+                                        <Icon name="X" size={20} />
+                                    </button>
+                                </div>
+                                <p className="text-sm text-slate-400 mb-4">{t.quickStart?.subtitle || 'Ready-to-use prompt templates for common tasks'}</p>
+                                <div className="flex-1 overflow-y-auto space-y-2">
+                                    {Object.entries(QUICKSTART_TEMPLATES).map(([key, template]) => (
+                                        <button
+                                            key={key}
+                                            onClick={() => applyQuickStartTemplate(key)}
+                                            className="w-full p-4 bg-slate-900/50 border border-slate-700 rounded-lg hover:border-amber-500/50 hover:bg-slate-900/80 transition-all text-left group"
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-10 h-10 bg-amber-500/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                                                    <Icon name={template.icon} size={20} className="text-amber-400" />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <h4 className="font-medium text-white group-hover:text-amber-400 transition-colors">
+                                                        {t.quickStart?.templates?.[key]?.name || key.replace(/_/g, ' ')}
+                                                    </h4>
+                                                    <p className="text-sm text-slate-500 line-clamp-2">
+                                                        {t.quickStart?.templates?.[key]?.desc || template.fields.task.substring(0, 80)}
+                                                    </p>
+                                                    <div className="flex gap-2 mt-2">
+                                                        <span className="px-2 py-0.5 bg-slate-700 rounded text-xs text-slate-400">{template.template}</span>
+                                                        {template.methods.slice(0, 2).map(m => (
+                                                            <span key={m} className="px-2 py-0.5 bg-purple-500/20 text-purple-400 rounded text-xs">{m}</span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                <Icon name="ArrowRight" size={16} className="text-slate-600 group-hover:text-amber-400 transition-colors mt-2" />
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ==================== END NEW FEATURE MODALS ==================== */}
+
                     {/* Tutorial Confirm Modal */}
                     {showTutorialConfirm && (
                         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50" onClick={() => setShowTutorialConfirm(false)}>
@@ -4155,11 +5086,52 @@ Prompt k analýze:
                                     <Icon name="Download" size={16} className="text-blue-400" />
                                 </button>
 
+                                {/* Quick-Start Templates Button */}
+                                <button
+                                    onClick={() => setShowQuickStart(true)}
+                                    className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-lg text-white hover:from-amber-500/30 hover:to-orange-500/30"
+                                    title={t.quickStart?.title || 'Quick-Start Templates'}
+                                >
+                                    <Icon name="Zap" size={16} className="text-amber-400" />
+                                    <span className="hidden sm:inline text-sm text-amber-300">{lang === 'cs' ? 'Šablony' : 'Templates'}</span>
+                                </button>
+
+                                {/* Draft History Button */}
+                                <button
+                                    onClick={() => setShowDraftHistory(true)}
+                                    className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700"
+                                    title={t.autoSave?.history?.title || 'Draft History'}
+                                >
+                                    <Icon name="History" size={16} className="text-purple-400" />
+                                    {draftHistory.length > 0 && <span className="text-xs text-purple-400">{draftHistory.length}</span>}
+                                </button>
+
+                                {/* Keyboard Shortcuts Button */}
+                                <button
+                                    onClick={() => setShowShortcuts(true)}
+                                    className="hidden md:flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700"
+                                    title={t.shortcuts?.title || 'Keyboard Shortcuts (Ctrl+/)'}
+                                >
+                                    <Icon name="Keyboard" size={16} className="text-slate-400" />
+                                </button>
+
                                 {/* Database Button */}
                                 <button onClick={() => setShowDatabase(true)} className="flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700">
                                     <Icon name="Database" size={16} className="text-amber-400" />
                                     <span className="text-sm">{savedPrompts.length}</span>
                                 </button>
+
+                                {/* Auto-Save Status Indicator */}
+                                {autoSaveStatus !== 'idle' && (
+                                    <div className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs ${
+                                        autoSaveStatus === 'saving' ? 'text-amber-400' :
+                                        autoSaveStatus === 'saved' ? 'text-green-400' :
+                                        'text-red-400'
+                                    }`}>
+                                        <Icon name={autoSaveStatus === 'saving' ? 'Loader2' : autoSaveStatus === 'saved' ? 'Check' : 'AlertCircle'} size={12} className={autoSaveStatus === 'saving' ? 'animate-spin' : ''} />
+                                        <span>{t.autoSave?.status?.[autoSaveStatus] || autoSaveStatus}</span>
+                                    </div>
+                                )}
 
                                 {/* Language Selector */}
                                 <div className="relative">
@@ -4890,9 +5862,39 @@ Prompt k analýze:
                                     )}
                                 </div>
                                 {formattedPrompt && (
-                                    <div className="mt-3 flex justify-between text-xs text-slate-500">
-                                        <span>{t.optimizedFor} {aiTargets.find(a => a.id === target)?.name}</span>
-                                        <span>{formattedPrompt.length} {t.chars}</span>
+                                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+                                        {/* Left side: Model & Quality Score */}
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-slate-500">{t.optimizedFor} {aiTargets.find(a => a.id === target)?.name}</span>
+                                            {/* Quality Score Badge */}
+                                            <button
+                                                onClick={() => setShowTokenInfo(true)}
+                                                className="flex items-center gap-1.5 px-2 py-0.5 rounded-full transition-colors hover:bg-slate-700"
+                                                style={{ backgroundColor: `${promptScore.gradeColor}20`, border: `1px solid ${promptScore.gradeColor}40` }}
+                                            >
+                                                <span className="font-medium" style={{ color: promptScore.gradeColor }}>{promptScore.grade}</span>
+                                                <span className="text-slate-400">{promptScore.score}/100</span>
+                                            </button>
+                                        </div>
+                                        {/* Right side: Tokens & Chars */}
+                                        <div className="flex items-center gap-3">
+                                            {/* Token Counter */}
+                                            <button
+                                                onClick={() => setShowTokenInfo(true)}
+                                                className={`flex items-center gap-1.5 px-2 py-0.5 rounded transition-colors hover:bg-slate-700 ${
+                                                    tokenWarning === 'error' ? 'text-red-400 bg-red-500/10' :
+                                                    tokenWarning === 'warning' ? 'text-yellow-400 bg-yellow-500/10' :
+                                                    'text-slate-400'
+                                                }`}
+                                            >
+                                                <Icon name="Hash" size={12} />
+                                                <span>~{tokenCount.toLocaleString()} tokens</span>
+                                                {tokenWarning !== 'ok' && (
+                                                    <Icon name={tokenWarning === 'error' ? 'AlertCircle' : 'AlertTriangle'} size={12} />
+                                                )}
+                                            </button>
+                                            <span className="text-slate-500">{formattedPrompt.length} {t.chars}</span>
+                                        </div>
                                     </div>
                                 )}
                             </div>
