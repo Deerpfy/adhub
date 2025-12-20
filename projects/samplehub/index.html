@@ -26,7 +26,7 @@
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                    <span class="logo-icon">🎵</span>
+                    <span class="logo-icon"><svg class="icon"><use href="icons.svg#icon-logo"></use></svg></span>
                     <span class="logo-text">SampleHub</span>
                 </div>
                 <span class="version-badge">v1.0</span>
@@ -34,25 +34,25 @@
 
             <nav class="sidebar-nav">
                 <button class="nav-item active" data-view="library">
-                    <span class="nav-icon">📚</span>
+                    <span class="nav-icon"><svg class="icon"><use href="icons.svg#icon-library"></use></svg></span>
                     <span class="nav-text" data-i18n="nav.library">Knihovna</span>
                     <span class="nav-count" id="libraryCount">0</span>
                 </button>
                 <button class="nav-item" data-view="browse">
-                    <span class="nav-icon">🔍</span>
+                    <span class="nav-icon"><svg class="icon"><use href="icons.svg#icon-browse"></use></svg></span>
                     <span class="nav-text" data-i18n="nav.browse">Procházet</span>
                 </button>
                 <button class="nav-item" data-view="discover">
-                    <span class="nav-icon">🌐</span>
+                    <span class="nav-icon"><svg class="icon"><use href="icons.svg#icon-discover"></use></svg></span>
                     <span class="nav-text" data-i18n="nav.discover">Discover</span>
                 </button>
                 <button class="nav-item" data-view="packs">
-                    <span class="nav-icon">📦</span>
+                    <span class="nav-icon"><svg class="icon"><use href="icons.svg#icon-packs"></use></svg></span>
                     <span class="nav-text" data-i18n="nav.packs">Packy</span>
                     <span class="nav-count" id="packsCount">0</span>
                 </button>
                 <button class="nav-item" data-view="favorites">
-                    <span class="nav-icon">⭐</span>
+                    <span class="nav-icon"><svg class="icon"><use href="icons.svg#icon-favorites"></use></svg></span>
                     <span class="nav-text" data-i18n="nav.favorites">Oblíbené</span>
                     <span class="nav-count" id="favoritesCount">0</span>
                 </button>
@@ -117,11 +117,11 @@
 
             <div class="sidebar-footer">
                 <button class="btn-import" id="importBtn">
-                    <span>📥</span>
+                    <svg class="icon"><use href="icons.svg#icon-import"></use></svg>
                     <span data-i18n="action.import">Import</span>
                 </button>
                 <button class="btn-settings" id="settingsBtn">
-                    <span>⚙️</span>
+                    <svg class="icon"><use href="icons.svg#icon-settings"></use></svg>
                 </button>
             </div>
         </aside>
@@ -132,7 +132,7 @@
             <!-- Top Bar -->
             <header class="top-bar">
                 <button class="menu-toggle" id="menuToggle">
-                    <span>☰</span>
+                    <svg class="icon"><use href="icons.svg#icon-menu"></use></svg>
                 </button>
 
                 <div class="search-container">
@@ -141,12 +141,12 @@
                            class="search-input"
                            placeholder="Hledat samply..."
                            data-i18n-placeholder="search.placeholder">
-                    <span class="search-icon">🔍</span>
+                    <span class="search-icon"><svg class="icon"><use href="icons.svg#icon-search"></use></svg></span>
                 </div>
 
                 <div class="top-bar-actions">
                     <button class="btn-icon" id="viewToggle" title="Změnit zobrazení">
-                        <span id="viewIcon">▦</span>
+                        <span id="viewIcon"><svg class="icon"><use href="icons.svg#icon-grid"></use></svg></span>
                     </button>
                     <div class="offline-indicator" id="offlineIndicator">
                         <span class="offline-dot"></span>
@@ -162,13 +162,13 @@
                 <section class="view active" id="libraryView">
                     <div class="view-header">
                         <h2 class="view-title">
-                            <span>📚</span>
+                            <svg class="icon"><use href="icons.svg#icon-library"></use></svg>
                             <span data-i18n="view.library">Moje knihovna</span>
                         </h2>
                         <div class="view-actions">
                             <span class="sample-count" id="sampleCountDisplay">0 samplů</span>
                             <button class="btn-sort" id="sortBtn">
-                                <span>↕️</span>
+                                <svg class="icon"><use href="icons.svg#icon-sort"></use></svg>
                                 <span data-i18n="action.sort">Seřadit</span>
                             </button>
                         </div>
@@ -176,11 +176,11 @@
 
                     <!-- Empty State -->
                     <div class="empty-state" id="emptyState">
-                        <div class="empty-icon">🎵</div>
+                        <div class="empty-icon"><svg class="icon icon-4x"><use href="icons.svg#icon-waveform"></use></svg></div>
                         <h3 class="empty-title" data-i18n="empty.title">Zatím žádné samply</h3>
                         <p class="empty-text" data-i18n="empty.text">Importujte své sample packy nebo přetáhněte soubory sem</p>
                         <button class="btn-primary btn-large" id="emptyImportBtn">
-                            <span>📥</span>
+                            <svg class="icon"><use href="icons.svg#icon-import"></use></svg>
                             <span data-i18n="action.importSamples">Importovat samply</span>
                         </button>
                     </div>
@@ -193,34 +193,34 @@
                 <section class="view" id="browseView">
                     <div class="view-header">
                         <h2 class="view-title">
-                            <span>🔍</span>
+                            <svg class="icon"><use href="icons.svg#icon-browse"></use></svg>
                             <span data-i18n="view.browse">Procházet</span>
                         </h2>
                     </div>
 
                     <div class="browse-categories">
                         <div class="category-card" data-category="drums">
-                            <span class="category-icon">🥁</span>
+                            <span class="category-icon"><svg class="icon icon-2x"><use href="icons.svg#icon-waveform"></use></svg></span>
                             <span class="category-name">Drums</span>
                         </div>
                         <div class="category-card" data-category="bass">
-                            <span class="category-icon">🎸</span>
+                            <span class="category-icon"><svg class="icon icon-2x"><use href="icons.svg#icon-waveform"></use></svg></span>
                             <span class="category-name">Bass</span>
                         </div>
                         <div class="category-card" data-category="synth">
-                            <span class="category-icon">🎹</span>
+                            <span class="category-icon"><svg class="icon icon-2x"><use href="icons.svg#icon-key"></use></svg></span>
                             <span class="category-name">Synth</span>
                         </div>
                         <div class="category-card" data-category="vocal">
-                            <span class="category-icon">🎤</span>
+                            <span class="category-icon"><svg class="icon icon-2x"><use href="icons.svg#icon-waveform"></use></svg></span>
                             <span class="category-name">Vocals</span>
                         </div>
                         <div class="category-card" data-category="fx">
-                            <span class="category-icon">✨</span>
+                            <span class="category-icon"><svg class="icon icon-2x"><use href="icons.svg#icon-waveform"></use></svg></span>
                             <span class="category-name">FX</span>
                         </div>
                         <div class="category-card" data-category="loop">
-                            <span class="category-icon">🔄</span>
+                            <span class="category-icon"><svg class="icon icon-2x"><use href="icons.svg#icon-loop"></use></svg></span>
                             <span class="category-name">Loops</span>
                         </div>
                     </div>
@@ -232,7 +232,7 @@
                 <section class="view" id="discoverView">
                     <div class="view-header">
                         <h2 class="view-title">
-                            <span>🌐</span>
+                            <svg class="icon"><use href="icons.svg#icon-discover"></use></svg>
                             <span data-i18n="view.discover">Discover Sample Packs</span>
                         </h2>
                         <div class="discover-status" id="discoverStatus">
@@ -248,7 +248,7 @@
                                    class="search-input discover-input"
                                    placeholder="Hledat sample packy (např. Cymatics, Splice, KSHMR)...">
                             <button class="btn-primary" id="discoverSearchBtn">
-                                <span>🔍</span>
+                                <svg class="icon"><use href="icons.svg#icon-search"></use></svg>
                                 <span>Hledat</span>
                             </button>
                         </div>
@@ -271,12 +271,12 @@
                     </div>
 
                     <div class="discover-info-banner" id="discoverBanner">
-                        <span class="banner-icon">⚠️</span>
+                        <span class="banner-icon"><svg class="icon icon-xl icon-warning"><use href="icons.svg#icon-warning"></use></svg></span>
                         <div class="banner-content">
                             <strong>Právní upozornění</strong>
                             <p>Tato funkce pouze vyhledává veřejně indexovaný obsah. Stahování chráněného obsahu může být v některých zemích nelegální. Používejte zodpovědně.</p>
                         </div>
-                        <button class="banner-close" id="closeBanner">×</button>
+                        <button class="banner-close" id="closeBanner"><svg class="icon"><use href="icons.svg#icon-close"></use></svg></button>
                     </div>
 
                     <div class="discover-loading" id="discoverLoading" style="display: none">
@@ -286,7 +286,7 @@
 
                     <div class="discover-results" id="discoverResults">
                         <div class="discover-empty">
-                            <div class="empty-icon">🔎</div>
+                            <div class="empty-icon"><svg class="icon icon-4x"><use href="icons.svg#icon-search"></use></svg></div>
                             <h3>Vyhledejte sample packy</h3>
                             <p>Zadejte název producenta, labelu nebo packu pro vyhledání ve veřejných torrent indexech</p>
                         </div>
@@ -297,11 +297,11 @@
                 <section class="view" id="packsView">
                     <div class="view-header">
                         <h2 class="view-title">
-                            <span>📦</span>
+                            <svg class="icon"><use href="icons.svg#icon-packs"></use></svg>
                             <span data-i18n="view.packs">Sample Packy</span>
                         </h2>
                         <button class="btn-primary" id="addPackBtn">
-                            <span>➕</span>
+                            <svg class="icon"><use href="icons.svg#icon-plus"></use></svg>
                             <span data-i18n="action.addPack">Přidat pack</span>
                         </button>
                     </div>
@@ -313,7 +313,7 @@
                 <section class="view" id="favoritesView">
                     <div class="view-header">
                         <h2 class="view-title">
-                            <span>⭐</span>
+                            <svg class="icon"><use href="icons.svg#icon-favorites"></use></svg>
                             <span data-i18n="view.favorites">Oblíbené</span>
                         </h2>
                     </div>
@@ -327,7 +327,7 @@
         <!-- Audio Player Bar (fixed at bottom) -->
         <div class="player-bar" id="playerBar">
             <div class="player-info">
-                <div class="player-artwork" id="playerArtwork">🎵</div>
+                <div class="player-artwork" id="playerArtwork"><svg class="icon icon-xl"><use href="icons.svg#icon-waveform"></use></svg></div>
                 <div class="player-details">
                     <div class="player-title" id="playerTitle">Není vybráno</div>
                     <div class="player-meta" id="playerMeta">--</div>
@@ -336,16 +336,16 @@
 
             <div class="player-controls">
                 <button class="player-btn" id="prevBtn" title="Předchozí">
-                    <span>⏮️</span>
+                    <svg class="icon"><use href="icons.svg#icon-prev"></use></svg>
                 </button>
                 <button class="player-btn player-btn-main" id="playPauseBtn" title="Přehrát/Pozastavit">
-                    <span id="playPauseIcon">▶️</span>
+                    <span id="playPauseIcon"><svg class="icon"><use href="icons.svg#icon-play"></use></svg></span>
                 </button>
                 <button class="player-btn" id="nextBtn" title="Další">
-                    <span>⏭️</span>
+                    <svg class="icon"><use href="icons.svg#icon-next"></use></svg>
                 </button>
                 <button class="player-btn" id="loopBtn" title="Opakovat">
-                    <span>🔁</span>
+                    <svg class="icon"><use href="icons.svg#icon-loop"></use></svg>
                 </button>
             </div>
 
@@ -360,7 +360,7 @@
 
             <div class="player-volume">
                 <button class="player-btn" id="volumeBtn" title="Hlasitost">
-                    <span id="volumeIcon">🔊</span>
+                    <span id="volumeIcon"><svg class="icon"><use href="icons.svg#icon-volume-high"></use></svg></span>
                 </button>
                 <input type="range"
                        id="volumeSlider"
@@ -376,16 +376,16 @@
     <div class="modal-overlay" id="importModal">
         <div class="modal-content modal-large">
             <div class="modal-header">
-                <h3 class="modal-title">📥 Import Samplů</h3>
-                <button class="modal-close" id="closeImportModal">&times;</button>
+                <h3 class="modal-title"><svg class="icon"><use href="icons.svg#icon-import"></use></svg> Import Samplů</h3>
+                <button class="modal-close" id="closeImportModal"><svg class="icon"><use href="icons.svg#icon-close"></use></svg></button>
             </div>
             <div class="modal-body">
                 <div class="import-dropzone" id="importDropzone">
-                    <div class="dropzone-icon">📁</div>
+                    <div class="dropzone-icon"><svg class="icon icon-3x"><use href="icons.svg#icon-folder"></use></svg></div>
                     <p class="dropzone-text">Přetáhněte soubory nebo složky sem</p>
                     <p class="dropzone-subtext">Podporované formáty: WAV, MP3, FLAC, AIFF, OGG</p>
                     <button class="btn-primary" id="selectFilesBtn">
-                        <span>📂</span>
+                        <svg class="icon"><use href="icons.svg#icon-folder-open"></use></svg>
                         <span>Vybrat soubory</span>
                     </button>
                     <input type="file"
@@ -428,8 +428,8 @@
     <div class="modal-overlay" id="settingsModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 class="modal-title">⚙️ Nastavení</h3>
-                <button class="modal-close" id="closeSettingsModal">&times;</button>
+                <h3 class="modal-title"><svg class="icon"><use href="icons.svg#icon-settings"></use></svg> Nastavení</h3>
+                <button class="modal-close" id="closeSettingsModal"><svg class="icon"><use href="icons.svg#icon-close"></use></svg></button>
             </div>
             <div class="modal-body">
                 <div class="settings-section">
@@ -459,11 +459,11 @@
                 <div class="settings-section">
                     <h4>Data</h4>
                     <button class="btn-secondary" id="exportDataBtn">
-                        <span>📤</span>
+                        <svg class="icon"><use href="icons.svg#icon-export"></use></svg>
                         <span>Exportovat knihovnu</span>
                     </button>
                     <button class="btn-danger" id="clearDataBtn">
-                        <span>🗑️</span>
+                        <svg class="icon"><use href="icons.svg#icon-trash"></use></svg>
                         <span>Vymazat vše</span>
                     </button>
                 </div>
@@ -484,8 +484,8 @@
     <div class="modal-overlay" id="packDetailModal">
         <div class="modal-content modal-large">
             <div class="modal-header">
-                <h3 class="modal-title" id="packDetailTitle">📦 Pack</h3>
-                <button class="modal-close" id="closePackDetailModal">&times;</button>
+                <h3 class="modal-title" id="packDetailTitle"><svg class="icon"><use href="icons.svg#icon-packs"></use></svg> Pack</h3>
+                <button class="modal-close" id="closePackDetailModal"><svg class="icon"><use href="icons.svg#icon-close"></use></svg></button>
             </div>
             <div class="modal-body">
                 <div class="pack-detail-info" id="packDetailInfo"></div>
@@ -497,24 +497,24 @@
     <!-- Sample Context Menu -->
     <div class="context-menu" id="contextMenu">
         <button class="context-item" data-action="play">
-            <span>▶️</span>
+            <svg class="icon"><use href="icons.svg#icon-play"></use></svg>
             <span>Přehrát</span>
         </button>
         <button class="context-item" data-action="favorite">
-            <span>⭐</span>
+            <svg class="icon"><use href="icons.svg#icon-favorites"></use></svg>
             <span>Oblíbené</span>
         </button>
         <button class="context-item" data-action="edit">
-            <span>✏️</span>
+            <svg class="icon"><use href="icons.svg#icon-edit"></use></svg>
             <span>Upravit</span>
         </button>
         <button class="context-item" data-action="export">
-            <span>📤</span>
+            <svg class="icon"><use href="icons.svg#icon-export"></use></svg>
             <span>Exportovat</span>
         </button>
         <div class="context-divider"></div>
         <button class="context-item context-danger" data-action="delete">
-            <span>🗑️</span>
+            <svg class="icon"><use href="icons.svg#icon-trash"></use></svg>
             <span>Smazat</span>
         </button>
     </div>
