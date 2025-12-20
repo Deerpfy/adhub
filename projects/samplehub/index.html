@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#0a0a0f">
+    <meta name="description" content="SampleHub - Offline Sample Pack Manager pro hudební produkci">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>SampleHub - Sample Pack Manager</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎵</text></svg>">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- App Container -->
+    <div id="app" class="app-container">
+
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-icon">🎵</span>
+                    <span class="logo-text">SampleHub</span>
+                </div>
+                <span class="version-badge">v1.0</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <button class="nav-item active" data-view="library">
+                    <span class="nav-icon">📚</span>
+                    <span class="nav-text" data-i18n="nav.library">Knihovna</span>
+                    <span class="nav-count" id="libraryCount">0</span>
+                </button>
+                <button class="nav-item" data-view="browse">
+                    <span class="nav-icon">🔍</span>
+                    <span class="nav-text" data-i18n="nav.browse">Procházet</span>
+                </button>
+                <button class="nav-item" data-view="packs">
+                    <span class="nav-icon">📦</span>
+                    <span class="nav-text" data-i18n="nav.packs">Packy</span>
+                    <span class="nav-count" id="packsCount">0</span>
+                </button>
+                <button class="nav-item" data-view="favorites">
+                    <span class="nav-icon">⭐</span>
+                    <span class="nav-text" data-i18n="nav.favorites">Oblíbené</span>
+                    <span class="nav-count" id="favoritesCount">0</span>
+                </button>
+            </nav>
+
+            <div class="sidebar-section">
+                <h3 class="section-label" data-i18n="sidebar.filters">Filtry</h3>
+                <div class="filter-group">
+                    <label class="filter-label" data-i18n="filter.genre">Žánr</label>
+                    <select id="genreFilter" class="filter-select">
+                        <option value="">Všechny</option>
+                        <option value="dubstep">Dubstep</option>
+                        <option value="house">House</option>
+                        <option value="dnb">Drum & Bass</option>
+                        <option value="hiphop">Hip-Hop</option>
+                        <option value="trap">Trap</option>
+                        <option value="ambient">Ambient</option>
+                        <option value="techno">Techno</option>
+                        <option value="other">Ostatní</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label" data-i18n="filter.type">Typ</label>
+                    <select id="typeFilter" class="filter-select">
+                        <option value="">Všechny</option>
+                        <option value="loop">Loops</option>
+                        <option value="oneshot">One-shots</option>
+                        <option value="drum">Drums</option>
+                        <option value="bass">Bass</option>
+                        <option value="synth">Synth</option>
+                        <option value="vocal">Vocals</option>
+                        <option value="fx">FX</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">BPM</label>
+                    <div class="bpm-range">
+                        <input type="number" id="bpmMin" class="bpm-input" placeholder="Min" min="60" max="200">
+                        <span class="bpm-separator">-</span>
+                        <input type="number" id="bpmMax" class="bpm-input" placeholder="Max" min="60" max="200">
+                    </div>
+                </div>
+                <div class="filter-group">
+                    <label class="filter-label">Key</label>
+                    <select id="keyFilter" class="filter-select">
+                        <option value="">Všechny</option>
+                        <option value="C">C</option>
+                        <option value="C#">C#</option>
+                        <option value="D">D</option>
+                        <option value="D#">D#</option>
+                        <option value="E">E</option>
+                        <option value="F">F</option>
+                        <option value="F#">F#</option>
+                        <option value="G">G</option>
+                        <option value="G#">G#</option>
+                        <option value="A">A</option>
+                        <option value="A#">A#</option>
+                        <option value="B">B</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button class="btn-import" id="importBtn">
+                    <span>📥</span>
+                    <span data-i18n="action.import">Import</span>
+                </button>
+                <button class="btn-settings" id="settingsBtn">
+                    <span>⚙️</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+
+            <!-- Top Bar -->
+            <header class="top-bar">
+                <button class="menu-toggle" id="menuToggle">
+                    <span>☰</span>
+                </button>
+
+                <div class="search-container">
+                    <input type="text"
+                           id="searchInput"
+                           class="search-input"
+                           placeholder="Hledat samply..."
+                           data-i18n-placeholder="search.placeholder">
+                    <span class="search-icon">🔍</span>
+                </div>
+
+                <div class="top-bar-actions">
+                    <button class="btn-icon" id="viewToggle" title="Změnit zobrazení">
+                        <span id="viewIcon">▦</span>
+                    </button>
+                    <div class="offline-indicator" id="offlineIndicator">
+                        <span class="offline-dot"></span>
+                        <span class="offline-text">Offline</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Content Views -->
+            <div class="content-wrapper">
+
+                <!-- Library View -->
+                <section class="view active" id="libraryView">
+                    <div class="view-header">
+                        <h2 class="view-title">
+                            <span>📚</span>
+                            <span data-i18n="view.library">Moje knihovna</span>
+                        </h2>
+                        <div class="view-actions">
+                            <span class="sample-count" id="sampleCountDisplay">0 samplů</span>
+                            <button class="btn-sort" id="sortBtn">
+                                <span>↕️</span>
+                                <span data-i18n="action.sort">Seřadit</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Empty State -->
+                    <div class="empty-state" id="emptyState">
+                        <div class="empty-icon">🎵</div>
+                        <h3 class="empty-title" data-i18n="empty.title">Zatím žádné samply</h3>
+                        <p class="empty-text" data-i18n="empty.text">Importujte své sample packy nebo přetáhněte soubory sem</p>
+                        <button class="btn-primary btn-large" id="emptyImportBtn">
+                            <span>📥</span>
+                            <span data-i18n="action.importSamples">Importovat samply</span>
+                        </button>
+                    </div>
+
+                    <!-- Samples Grid -->
+                    <div class="samples-grid" id="samplesGrid"></div>
+                </section>
+
+                <!-- Browse View -->
+                <section class="view" id="browseView">
+                    <div class="view-header">
+                        <h2 class="view-title">
+                            <span>🔍</span>
+                            <span data-i18n="view.browse">Procházet</span>
+                        </h2>
+                    </div>
+
+                    <div class="browse-categories">
+                        <div class="category-card" data-category="drums">
+                            <span class="category-icon">🥁</span>
+                            <span class="category-name">Drums</span>
+                        </div>
+                        <div class="category-card" data-category="bass">
+                            <span class="category-icon">🎸</span>
+                            <span class="category-name">Bass</span>
+                        </div>
+                        <div class="category-card" data-category="synth">
+                            <span class="category-icon">🎹</span>
+                            <span class="category-name">Synth</span>
+                        </div>
+                        <div class="category-card" data-category="vocal">
+                            <span class="category-icon">🎤</span>
+                            <span class="category-name">Vocals</span>
+                        </div>
+                        <div class="category-card" data-category="fx">
+                            <span class="category-icon">✨</span>
+                            <span class="category-name">FX</span>
+                        </div>
+                        <div class="category-card" data-category="loop">
+                            <span class="category-icon">🔄</span>
+                            <span class="category-name">Loops</span>
+                        </div>
+                    </div>
+
+                    <div class="browse-results" id="browseResults"></div>
+                </section>
+
+                <!-- Packs View -->
+                <section class="view" id="packsView">
+                    <div class="view-header">
+                        <h2 class="view-title">
+                            <span>📦</span>
+                            <span data-i18n="view.packs">Sample Packy</span>
+                        </h2>
+                        <button class="btn-primary" id="addPackBtn">
+                            <span>➕</span>
+                            <span data-i18n="action.addPack">Přidat pack</span>
+                        </button>
+                    </div>
+
+                    <div class="packs-grid" id="packsGrid"></div>
+                </section>
+
+                <!-- Favorites View -->
+                <section class="view" id="favoritesView">
+                    <div class="view-header">
+                        <h2 class="view-title">
+                            <span>⭐</span>
+                            <span data-i18n="view.favorites">Oblíbené</span>
+                        </h2>
+                    </div>
+
+                    <div class="samples-grid" id="favoritesGrid"></div>
+                </section>
+
+            </div>
+        </main>
+
+        <!-- Audio Player Bar (fixed at bottom) -->
+        <div class="player-bar" id="playerBar">
+            <div class="player-info">
+                <div class="player-artwork" id="playerArtwork">🎵</div>
+                <div class="player-details">
+                    <div class="player-title" id="playerTitle">Není vybráno</div>
+                    <div class="player-meta" id="playerMeta">--</div>
+                </div>
+            </div>
+
+            <div class="player-controls">
+                <button class="player-btn" id="prevBtn" title="Předchozí">
+                    <span>⏮️</span>
+                </button>
+                <button class="player-btn player-btn-main" id="playPauseBtn" title="Přehrát/Pozastavit">
+                    <span id="playPauseIcon">▶️</span>
+                </button>
+                <button class="player-btn" id="nextBtn" title="Další">
+                    <span>⏭️</span>
+                </button>
+                <button class="player-btn" id="loopBtn" title="Opakovat">
+                    <span>🔁</span>
+                </button>
+            </div>
+
+            <div class="player-waveform-container">
+                <div class="waveform" id="waveform"></div>
+                <div class="player-time">
+                    <span id="currentTime">0:00</span>
+                    <span>/</span>
+                    <span id="totalTime">0:00</span>
+                </div>
+            </div>
+
+            <div class="player-volume">
+                <button class="player-btn" id="volumeBtn" title="Hlasitost">
+                    <span id="volumeIcon">🔊</span>
+                </button>
+                <input type="range"
+                       id="volumeSlider"
+                       class="volume-slider"
+                       min="0"
+                       max="100"
+                       value="80">
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 class="modal-title">📥 Import Samplů</h3>
+                <button class="modal-close" id="closeImportModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="import-dropzone" id="importDropzone">
+                    <div class="dropzone-icon">📁</div>
+                    <p class="dropzone-text">Přetáhněte soubory nebo složky sem</p>
+                    <p class="dropzone-subtext">Podporované formáty: WAV, MP3, FLAC, AIFF, OGG</p>
+                    <button class="btn-primary" id="selectFilesBtn">
+                        <span>📂</span>
+                        <span>Vybrat soubory</span>
+                    </button>
+                    <input type="file"
+                           id="fileInput"
+                           multiple
+                           accept=".wav,.mp3,.flac,.aiff,.ogg,.aif"
+                           style="display: none">
+                </div>
+
+                <div class="import-options">
+                    <h4>Možnosti importu</h4>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="autoDetectBpm" checked>
+                        <span>Automaticky detekovat BPM</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="autoDetectKey" checked>
+                        <span>Automaticky detekovat tóninu</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="createPack">
+                        <span>Vytvořit nový pack</span>
+                    </label>
+                    <div class="pack-name-input" id="packNameInput" style="display: none">
+                        <input type="text" id="newPackName" placeholder="Název packu">
+                    </div>
+                </div>
+
+                <div class="import-progress" id="importProgress" style="display: none">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <p class="progress-text" id="progressText">Importuji...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">⚙️ Nastavení</h3>
+                <button class="modal-close" id="closeSettingsModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-section">
+                    <h4>Přehrávání</h4>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="autoPlayNext" checked>
+                        <span>Automaticky přehrát další</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="fadeOnStop">
+                        <span>Fade out při zastavení</span>
+                    </label>
+                </div>
+
+                <div class="settings-section">
+                    <h4>Zobrazení</h4>
+                    <div class="settings-row">
+                        <label>Waveform barva</label>
+                        <input type="color" id="waveformColor" value="#7C3AED">
+                    </div>
+                    <div class="settings-row">
+                        <label>Progress barva</label>
+                        <input type="color" id="progressColor" value="#A78BFA">
+                    </div>
+                </div>
+
+                <div class="settings-section">
+                    <h4>Data</h4>
+                    <button class="btn-secondary" id="exportDataBtn">
+                        <span>📤</span>
+                        <span>Exportovat knihovnu</span>
+                    </button>
+                    <button class="btn-danger" id="clearDataBtn">
+                        <span>🗑️</span>
+                        <span>Vymazat vše</span>
+                    </button>
+                </div>
+
+                <div class="settings-section">
+                    <h4>O aplikaci</h4>
+                    <p class="settings-info">
+                        SampleHub v1.0<br>
+                        Offline-first sample manager<br>
+                        <small>Data jsou uložena lokálně v prohlížeči</small>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pack Detail Modal -->
+    <div class="modal-overlay" id="packDetailModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 class="modal-title" id="packDetailTitle">📦 Pack</h3>
+                <button class="modal-close" id="closePackDetailModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="pack-detail-info" id="packDetailInfo"></div>
+                <div class="pack-detail-samples" id="packDetailSamples"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sample Context Menu -->
+    <div class="context-menu" id="contextMenu">
+        <button class="context-item" data-action="play">
+            <span>▶️</span>
+            <span>Přehrát</span>
+        </button>
+        <button class="context-item" data-action="favorite">
+            <span>⭐</span>
+            <span>Oblíbené</span>
+        </button>
+        <button class="context-item" data-action="edit">
+            <span>✏️</span>
+            <span>Upravit</span>
+        </button>
+        <button class="context-item" data-action="export">
+            <span>📤</span>
+            <span>Exportovat</span>
+        </button>
+        <div class="context-divider"></div>
+        <button class="context-item context-danger" data-action="delete">
+            <span>🗑️</span>
+            <span>Smazat</span>
+        </button>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="db.js"></script>
+    <script src="audio.js"></script>
+    <script src="script.js"></script>
+
+    <!-- Register Service Worker -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('SW registered:', reg.scope))
+                    .catch(err => console.error('SW registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>
