@@ -28,8 +28,8 @@ const DiscoverModule = (function() {
         'piratebay': {
             name: 'PirateBay',
             baseUrl: 'https://apibay.org',
-            // API endpoint - no CORS issues
-            searchUrl: (q) => `https://apibay.org/q.php?q=${encodeURIComponent(q)}&cat=100`,
+            // API endpoint without category filter for more results
+            searchUrl: (q) => `https://apibay.org/q.php?q=${encodeURIComponent(q)}`,
             parseResults: parsePirateBayResults,
             isApi: true,
             enabled: true
@@ -504,37 +504,80 @@ const DiscoverModule = (function() {
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
 
-        doc.querySelectorAll('table.table-list tbody tr').forEach(row => {
-            try {
-                const nameCell = row.querySelector('td.coll-1');
-                if (!nameCell) return;
+        console.log('[1337x] Parsing HTML, length:', html.length);
 
-                const link = nameCell.querySelector('a:nth-child(2)');
+        // Try multiple selectors
+        const rows = doc.querySelectorAll('table.table-list tbody tr, .table-list-wrap table tbody tr, table tbody tr');
+        console.log('[1337x] Found rows:', rows.length);
+
+        rows.forEach((row, idx) => {
+            try {
+                // Skip if no cells
+                const cells = row.querySelectorAll('td');
+                if (cells.length < 2) return;
+
+                // Find the name link - try multiple selectors
+                let link = row.querySelector('td.coll-1 a.name, td.coll-1 a:nth-child(2), td:first-child a:nth-child(2), td a[href*="/torrent/"]');
+                if (!link) {
+                    // Try any link that looks like a torrent link
+                    const links = row.querySelectorAll('a');
+                    for (const l of links) {
+                        const href = l.getAttribute('href') || '';
+                        if (href.includes('/torrent/') && l.textContent.trim().length > 5) {
+                            link = l;
+                            break;
+                        }
+                    }
+                }
+
                 if (!link) return;
 
                 const title = link.textContent.trim();
+                if (!title || title.length < 3) return;
+
                 const href = link.getAttribute('href');
                 const id = href?.split('/').filter(Boolean).pop() || Math.random().toString(36);
 
-                const seedersCell = row.querySelector('td.coll-2');
-                const leechersCell = row.querySelector('td.coll-3');
-                const sizeCell = row.querySelector('td.coll-4');
+                // Find seeders/leechers - try text content that looks like numbers
+                let seeders = 0, leechers = 0, size = 'N/A';
+
+                cells.forEach((cell, cellIdx) => {
+                    const text = cell.textContent.trim();
+                    const className = cell.className || '';
+
+                    if (className.includes('coll-2') || className.includes('seeds')) {
+                        seeders = parseInt(text) || 0;
+                    } else if (className.includes('coll-3') || className.includes('leeches')) {
+                        leechers = parseInt(text) || 0;
+                    } else if (className.includes('coll-4') || className.includes('size')) {
+                        size = text.split(/\s+/).slice(0, 2).join(' ') || 'N/A';
+                    }
+                });
+
+                // If we didn't find by class, try by position
+                if (seeders === 0 && cells.length >= 3) {
+                    seeders = parseInt(cells[cells.length - 3]?.textContent) || 0;
+                    leechers = parseInt(cells[cells.length - 2]?.textContent) || 0;
+                }
+
+                console.log('[1337x] Parsed:', title.substring(0, 50), 'S:', seeders, 'L:', leechers);
 
                 results.push({
                     id: `1337x-${id}`,
                     title,
                     url: baseUrl + href,
                     magnetUri: null,
-                    seeders: parseInt(seedersCell?.textContent) || 0,
-                    leechers: parseInt(leechersCell?.textContent) || 0,
-                    size: sizeCell?.textContent.trim().split(/\s+/).slice(0, 2).join(' ') || 'N/A',
+                    seeders,
+                    leechers,
+                    size,
                     source: '1337x'
                 });
             } catch (e) {
-                console.warn('[1337x] Parse error:', e);
+                console.warn('[1337x] Parse row error:', e);
             }
         });
 
+        console.log('[1337x] Total parsed:', results.length);
         return results;
     }
 
