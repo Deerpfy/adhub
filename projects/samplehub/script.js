@@ -573,6 +573,20 @@
         const sample = state.samples.find(s => s.id === sampleId);
         if (!sample) return;
 
+        // Check if clicking the same sample - toggle play/pause
+        const audioState = AudioEngine.getState();
+        if (audioState.sampleId === sampleId) {
+            if (audioState.isPlaying) {
+                AudioEngine.pause();
+                renderCurrentView();
+                return;
+            } else if (audioState.isPaused) {
+                AudioEngine.play();
+                renderCurrentView();
+                return;
+            }
+        }
+
         try {
             state.currentSample = sample;
 
