@@ -157,6 +157,16 @@ const AudioEngine = (function() {
             initAudioContext();
         }
 
+        // Stop any current playback before loading new audio
+        if (currentSource) {
+            currentSource.stop();
+            currentSource.disconnect();
+            currentSource = null;
+        }
+        isPlaying = false;
+        isPaused = false;
+        pauseTime = 0;
+
         if (callbacks.onLoadStart) {
             callbacks.onLoadStart();
         }
