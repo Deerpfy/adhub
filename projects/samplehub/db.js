@@ -128,16 +128,19 @@ const SampleHubDB = (function() {
     async function addSample(sample) {
         await ensureDB();
 
-        // Remove string id - autoIncrement requires numeric or undefined id
+        // Remove id from sample - let autoIncrement generate it
         const { id: sampleId, ...sampleWithoutId } = sample;
         const sampleData = {
             ...sampleWithoutId,
-            // Only use id if it's a valid number, otherwise let autoIncrement work
-            id: (typeof sampleId === 'number' && !isNaN(sampleId)) ? sampleId : undefined,
             addedAt: sample.addedAt || new Date().toISOString(),
             favorite: sample.favorite || false,
             playCount: sample.playCount || 0
         };
+
+        // Only add id property if it's a valid number, otherwise omit for autoIncrement
+        if (typeof sampleId === 'number' && !isNaN(sampleId)) {
+            sampleData.id = sampleId;
+        }
 
         return new Promise((resolve, reject) => {
             const transaction = db.transaction(STORES.SAMPLES, 'readwrite');
@@ -166,16 +169,19 @@ const SampleHubDB = (function() {
             transaction.onerror = () => reject(transaction.error);
 
             samples.forEach(sample => {
-                // Remove string id - autoIncrement requires numeric or undefined id
+                // Remove id from sample - let autoIncrement generate it
                 const { id: sampleId, ...sampleWithoutId } = sample;
                 const sampleData = {
                     ...sampleWithoutId,
-                    // Only use id if it's a valid number, otherwise let autoIncrement work
-                    id: (typeof sampleId === 'number' && !isNaN(sampleId)) ? sampleId : undefined,
                     addedAt: sample.addedAt || new Date().toISOString(),
                     favorite: sample.favorite || false,
                     playCount: sample.playCount || 0
                 };
+
+                // Only add id property if it's a valid number, otherwise omit for autoIncrement
+                if (typeof sampleId === 'number' && !isNaN(sampleId)) {
+                    sampleData.id = sampleId;
+                }
 
                 const request = store.add(sampleData);
                 request.onsuccess = () => ids.push(request.result);
