@@ -1,28 +1,52 @@
 /**
- * SampleHub - Discover Module
- * Handles torrent search functionality in the frontend
- * Version: 1.0
+ * SampleHub - Discover Module (Browser-Only)
+ * Handles torrent search functionality purely in the browser
+ * Uses CORS proxies to fetch content from torrent indexers
+ * Version: 2.0
  */
 
 const DiscoverModule = (function() {
     'use strict';
 
-    // Configuration
-    const config = {
-        serverUrl: 'http://localhost:3456',
-        defaultSources: ['1337x', 'solidtorrents', 'nyaa'],
-        resultsPerPage: 50
+    // CORS Proxies (fallback chain)
+    const CORS_PROXIES = [
+        'https://api.allorigins.win/raw?url=',
+        'https://corsproxy.io/?',
+        'https://api.codetabs.com/v1/proxy?quest='
+    ];
+
+    // Torrent sources configuration
+    const SOURCES = {
+        '1337x': {
+            name: '1337x',
+            baseUrl: 'https://1337x.to',
+            searchUrl: (q, page) => `https://1337x.to/sort-category-search/${encodeURIComponent(q)}/Music/seeders/desc/${page}/`,
+            parseResults: parse1337xResults,
+            parseDetails: parse1337xDetails
+        },
+        'nyaa': {
+            name: 'Nyaa',
+            baseUrl: 'https://nyaa.si',
+            searchUrl: (q, page) => `https://nyaa.si/?f=0&c=2_0&q=${encodeURIComponent(q)}&p=${page}`,
+            parseResults: parseNyaaResults,
+            parseDetails: parseNyaaDetails
+        },
+        'limetorrents': {
+            name: 'LimeTorrents',
+            baseUrl: 'https://www.limetorrents.lol',
+            searchUrl: (q, page) => `https://www.limetorrents.lol/search/music/${encodeURIComponent(q)}/seeds/${page}/`,
+            parseResults: parseLimeResults,
+            parseDetails: null
+        }
     };
 
     // State
     let state = {
-        isServerOnline: false,
         isSearching: false,
         currentQuery: '',
         results: [],
-        sources: [...config.defaultSources],
-        useTor: false,
-        useProxy: false
+        sources: ['1337x', 'nyaa', 'limetorrents'],
+        currentProxyIndex: 0
     };
 
     // DOM Elements
@@ -34,10 +58,7 @@ const DiscoverModule = (function() {
     function init() {
         cacheElements();
         bindEvents();
-        checkServerStatus();
-
-        // Check server status periodically
-        setInterval(checkServerStatus, 30000);
+        updateStatusIndicator(true); // Browser-only is always "ready"
     }
 
     /**
@@ -49,8 +70,6 @@ const DiscoverModule = (function() {
             searchInput: document.getElementById('discoverSearchInput'),
             searchBtn: document.getElementById('discoverSearchBtn'),
             sourceToggles: document.getElementById('sourceToggles'),
-            useTor: document.getElementById('useTor'),
-            useProxy: document.getElementById('useProxy'),
             banner: document.getElementById('discoverBanner'),
             closeBanner: document.getElementById('closeBanner'),
             loading: document.getElementById('discoverLoading'),
@@ -62,7 +81,6 @@ const DiscoverModule = (function() {
      * Bind event listeners
      */
     function bindEvents() {
-        // Search
         if (elements.searchBtn) {
             elements.searchBtn.addEventListener('click', performSearch);
         }
@@ -75,37 +93,10 @@ const DiscoverModule = (function() {
             });
         }
 
-        // Source toggles
         if (elements.sourceToggles) {
-            elements.sourceToggles.addEventListener('change', (e) => {
-                if (e.target.type === 'checkbox') {
-                    updateSources();
-                }
-            });
+            elements.sourceToggles.addEventListener('change', updateSources);
         }
 
-        // Anonymity options
-        if (elements.useTor) {
-            elements.useTor.addEventListener('change', (e) => {
-                state.useTor = e.target.checked;
-                if (state.useTor) {
-                    state.useProxy = false;
-                    elements.useProxy.checked = false;
-                }
-            });
-        }
-
-        if (elements.useProxy) {
-            elements.useProxy.addEventListener('change', (e) => {
-                state.useProxy = e.target.checked;
-                if (state.useProxy) {
-                    state.useTor = false;
-                    elements.useTor.checked = false;
-                }
-            });
-        }
-
-        // Banner close
         if (elements.closeBanner) {
             elements.closeBanner.addEventListener('click', () => {
                 elements.banner.style.display = 'none';
@@ -113,8 +104,7 @@ const DiscoverModule = (function() {
             });
         }
 
-        // Check if banner was dismissed
-        if (localStorage.getItem('discoverBannerDismissed') === 'true') {
+        if (localStorage.getItem('discoverBannerDismissed') === 'true' && elements.banner) {
             elements.banner.style.display = 'none';
         }
     }
@@ -126,52 +116,60 @@ const DiscoverModule = (function() {
         const checkboxes = elements.sourceToggles.querySelectorAll('input[type="checkbox"]');
         state.sources = [];
         checkboxes.forEach(cb => {
-            if (cb.checked) {
+            if (cb.checked && SOURCES[cb.value]) {
                 state.sources.push(cb.value);
             }
         });
     }
 
     /**
-     * Check if server is online
-     */
-    async function checkServerStatus() {
-        try {
-            const response = await fetch(`${config.serverUrl}/api/health`, {
-                method: 'GET',
-                timeout: 5000
-            });
-
-            if (response.ok) {
-                state.isServerOnline = true;
-                updateStatusIndicator(true);
-            } else {
-                throw new Error('Server returned non-OK status');
-            }
-        } catch (error) {
-            state.isServerOnline = false;
-            updateStatusIndicator(false);
-        }
-    }
-
-    /**
      * Update status indicator
      */
-    function updateStatusIndicator(online) {
+    function updateStatusIndicator(ready) {
         if (!elements.status) return;
 
         const dot = elements.status.querySelector('.status-dot');
         const text = elements.status.querySelector('.status-text');
 
-        if (online) {
+        if (ready) {
             dot.classList.remove('offline');
             dot.classList.add('online');
-            text.textContent = 'Server online';
+            text.textContent = 'Připraveno';
         } else {
             dot.classList.remove('online');
             dot.classList.add('offline');
-            text.textContent = 'Server offline';
+            text.textContent = 'Chyba';
         }
+    }
+
+    /**
+     * Fetch with CORS proxy fallback
+     */
+    async function fetchWithProxy(url) {
+        let lastError;
+
+        for (let i = 0; i < CORS_PROXIES.length; i++) {
+            const proxyIndex = (state.currentProxyIndex + i) % CORS_PROXIES.length;
+            const proxyUrl = CORS_PROXIES[proxyIndex] + encodeURIComponent(url);
+
+            try {
+                const response = await fetch(proxyUrl, {
+                    headers: {
+                        'Accept': 'text/html,application/xhtml+xml'
+                    }
+                });
+
+                if (response.ok) {
+                    state.currentProxyIndex = proxyIndex;
+                    return await response.text();
+                }
+            } catch (error) {
+                lastError = error;
+                console.warn(`[Discover] Proxy ${proxyIndex} failed:`, error.message);
+            }
+        }
+
+        throw new Error(`All proxies failed: ${lastError?.message || 'Unknown error'}`);
     }
 
     /**
@@ -185,11 +183,6 @@ const DiscoverModule = (function() {
             return;
         }
 
-        if (!state.isServerOnline) {
-            showToast('Server není dostupný. Spusťte: npm start v adresáři server/', 'error');
-            return;
-        }
-
         if (state.sources.length === 0) {
             showToast('Vyberte alespoň jeden zdroj', 'warning');
             return;
@@ -200,36 +193,39 @@ const DiscoverModule = (function() {
         showLoading(true);
 
         try {
-            // Build search URL
-            const params = new URLSearchParams({
-                q: query,
-                sources: state.sources.join(','),
-                limit: config.resultsPerPage
+            // Search all sources in parallel
+            const searchPromises = state.sources.map(async (sourceId) => {
+                const source = SOURCES[sourceId];
+                if (!source) return [];
+
+                try {
+                    const url = source.searchUrl(query, 1);
+                    const html = await fetchWithProxy(url);
+                    return source.parseResults(html, source.baseUrl);
+                } catch (error) {
+                    console.error(`[Discover] ${sourceId} search failed:`, error);
+                    return [];
+                }
             });
 
-            if (state.useTor) {
-                params.append('tor', 'true');
-            }
+            const allResults = await Promise.all(searchPromises);
+            state.results = allResults.flat();
 
-            const response = await fetch(`${config.serverUrl}/api/search?${params}`);
+            // Sort by seeders
+            state.results.sort((a, b) => (b.seeders || 0) - (a.seeders || 0));
 
-            if (!response.ok) {
-                throw new Error(`Server error: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            state.results = data.results || [];
             renderResults(state.results);
 
             if (state.results.length === 0) {
                 showEmptyResults();
+            } else {
+                showToast(`Nalezeno ${state.results.length} výsledků`, 'success');
             }
 
         } catch (error) {
             console.error('[Discover] Search failed:', error);
-            showToast(`Chyba při vyhledávání: ${error.message}`, 'error');
-            showEmptyResults('Nepodařilo se načíst výsledky');
+            showToast('Chyba při vyhledávání', 'error');
+            showEmptyResults('Nepodařilo se načíst výsledky. Zkuste to znovu.');
         } finally {
             state.isSearching = false;
             showLoading(false);
@@ -237,7 +233,7 @@ const DiscoverModule = (function() {
     }
 
     /**
-     * Show/hide loading state
+     * Show/hide loading
      */
     function showLoading(show) {
         if (elements.loading) {
@@ -249,32 +245,80 @@ const DiscoverModule = (function() {
     }
 
     /**
-     * Render search results
+     * Render results
      */
     function renderResults(results) {
         if (!elements.results) return;
 
         elements.results.innerHTML = results.map(result => createResultCard(result)).join('');
 
-        // Bind result card events
+        // Bind events
         elements.results.querySelectorAll('.btn-magnet').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const magnetUri = e.currentTarget.dataset.magnet;
-                copyMagnetLink(magnetUri);
+                if (magnetUri) {
+                    copyToClipboard(magnetUri);
+                    showToast('Magnet link zkopírován', 'success');
+                } else {
+                    // Need to fetch details first
+                    const source = e.currentTarget.dataset.source;
+                    const id = e.currentTarget.dataset.id;
+                    const url = e.currentTarget.dataset.url;
+                    fetchMagnetLink(source, id, url, e.currentTarget);
+                }
             });
         });
 
         elements.results.querySelectorAll('.btn-details').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const source = e.currentTarget.dataset.source;
-                const id = e.currentTarget.dataset.id;
-                showTorrentDetails(source, id);
+                const url = e.currentTarget.dataset.url;
+                window.open(url, '_blank');
             });
         });
     }
 
     /**
-     * Create result card HTML
+     * Fetch magnet link from details page
+     */
+    async function fetchMagnetLink(source, id, url, button) {
+        const originalText = button.innerHTML;
+        button.innerHTML = '<span>⏳</span><span>Načítám...</span>';
+        button.disabled = true;
+
+        try {
+            const html = await fetchWithProxy(url);
+            const sourceConfig = SOURCES[source];
+
+            let magnetUri = null;
+
+            // Try to extract magnet from HTML
+            const magnetMatch = html.match(/magnet:\?xt=urn:btih:[a-zA-Z0-9]+[^"'\s]*/);
+            if (magnetMatch) {
+                magnetUri = magnetMatch[0];
+            }
+
+            if (magnetUri) {
+                button.dataset.magnet = magnetUri;
+                copyToClipboard(magnetUri);
+                showToast('Magnet link zkopírován', 'success');
+                button.innerHTML = '<span>🧲</span><span>Zkopírováno!</span>';
+                setTimeout(() => {
+                    button.innerHTML = '<span>🧲</span><span>Kopírovat magnet</span>';
+                    button.disabled = false;
+                }, 2000);
+            } else {
+                throw new Error('Magnet not found');
+            }
+        } catch (error) {
+            console.error('[Discover] Failed to fetch magnet:', error);
+            showToast('Nepodařilo se získat magnet link', 'error');
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }
+    }
+
+    /**
+     * Create result card
      */
     function createResultCard(result) {
         const seedersClass = result.seeders > 10 ? 'seeders' : (result.seeders > 0 ? '' : 'leechers');
@@ -294,27 +338,23 @@ const DiscoverModule = (function() {
                         </span>
                         <span class="torrent-meta-item">
                             <span>📦</span>
-                            <span>${result.sizeHuman || 'N/A'}</span>
+                            <span>${result.size || 'N/A'}</span>
                         </span>
-                        ${result.uploadDate ? `
-                            <span class="torrent-meta-item">
-                                <span>📅</span>
-                                <span>${result.uploadDate}</span>
-                            </span>
-                        ` : ''}
                         <span class="torrent-source">${result.source}</span>
                     </div>
                 </div>
                 <div class="torrent-actions">
-                    ${result.magnetUri ? `
-                        <button class="btn-magnet" data-magnet="${escapeHtml(result.magnetUri)}">
-                            <span>🧲</span>
-                            <span>Kopírovat magnet</span>
-                        </button>
-                    ` : ''}
-                    <button class="btn-details" data-source="${result.source}" data-id="${result.id}">
-                        <span>📋</span>
-                        <span>Detaily</span>
+                    <button class="btn-magnet"
+                            data-magnet="${result.magnetUri ? escapeHtml(result.magnetUri) : ''}"
+                            data-source="${result.source}"
+                            data-id="${result.id}"
+                            data-url="${escapeHtml(result.url)}">
+                        <span>🧲</span>
+                        <span>${result.magnetUri ? 'Kopírovat magnet' : 'Získat magnet'}</span>
+                    </button>
+                    <button class="btn-details" data-url="${escapeHtml(result.url)}">
+                        <span>🔗</span>
+                        <span>Otevřít</span>
                     </button>
                 </div>
             </div>
@@ -322,7 +362,7 @@ const DiscoverModule = (function() {
     }
 
     /**
-     * Show empty results state
+     * Show empty results
      */
     function showEmptyResults(message = null) {
         if (!elements.results) return;
@@ -331,168 +371,214 @@ const DiscoverModule = (function() {
             <div class="discover-empty">
                 <div class="empty-icon">🔎</div>
                 <h3>${message || 'Žádné výsledky'}</h3>
-                <p>Zkuste upravit vyhledávací dotaz nebo zvolit jiné zdroje</p>
+                <p>Zkuste upravit hledaný výraz nebo zvolit jiné zdroje</p>
             </div>
         `;
     }
 
     /**
-     * Copy magnet link to clipboard
+     * Copy to clipboard
      */
-    async function copyMagnetLink(magnetUri) {
+    async function copyToClipboard(text) {
         try {
-            await navigator.clipboard.writeText(magnetUri);
-            showToast('Magnet link zkopírován do schránky', 'success');
-        } catch (error) {
-            // Fallback for older browsers
+            await navigator.clipboard.writeText(text);
+        } catch {
             const textarea = document.createElement('textarea');
-            textarea.value = magnetUri;
+            textarea.value = text;
             document.body.appendChild(textarea);
             textarea.select();
             document.execCommand('copy');
             document.body.removeChild(textarea);
-            showToast('Magnet link zkopírován do schránky', 'success');
         }
     }
 
     /**
-     * Show torrent details
-     */
-    async function showTorrentDetails(source, id) {
-        try {
-            const response = await fetch(`${config.serverUrl}/api/torrent/${source}/${id}`);
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch details');
-            }
-
-            const details = await response.json();
-
-            // Find the card and expand it with details
-            const card = elements.results.querySelector(`[data-id="${id}"][data-source="${source}"]`);
-            if (card) {
-                // Check if details already shown
-                const existingFiles = card.querySelector('.torrent-files');
-                if (existingFiles) {
-                    existingFiles.remove();
-                    return;
-                }
-
-                // Add file list
-                const filesHtml = createFileListHtml(details);
-                card.insertAdjacentHTML('beforeend', filesHtml);
-            }
-
-        } catch (error) {
-            console.error('[Discover] Failed to fetch details:', error);
-            showToast('Nepodařilo se načíst detaily', 'error');
-        }
-    }
-
-    /**
-     * Create file list HTML
-     */
-    function createFileListHtml(details) {
-        const files = details.files || [];
-        const audioExtensions = ['.wav', '.mp3', '.flac', '.aiff', '.ogg', '.aif'];
-
-        const isAudioFile = (name) => {
-            const ext = name.toLowerCase().match(/\.[a-z0-9]+$/);
-            return ext && audioExtensions.includes(ext[0]);
-        };
-
-        const formatSize = (bytes) => {
-            if (!bytes) return 'N/A';
-            const units = ['B', 'KB', 'MB', 'GB'];
-            let i = 0;
-            while (bytes >= 1024 && i < units.length - 1) {
-                bytes /= 1024;
-                i++;
-            }
-            return `${bytes.toFixed(1)} ${units[i]}`;
-        };
-
-        const audioFiles = files.filter(f => isAudioFile(f.name));
-
-        return `
-            <div class="torrent-files">
-                <div class="torrent-files-header">
-                    <h4>Soubory (${files.length} celkem, ${audioFiles.length} audio)</h4>
-                </div>
-                <div class="file-list">
-                    ${files.slice(0, 50).map(file => `
-                        <div class="file-item ${isAudioFile(file.name) ? 'file-audio' : ''}">
-                            <span class="file-name">${escapeHtml(file.name)}</span>
-                            <span class="file-size">${formatSize(file.size || file.length)}</span>
-                        </div>
-                    `).join('')}
-                    ${files.length > 50 ? `
-                        <div class="file-item">
-                            <span class="file-name">... a ${files.length - 50} dalších souborů</span>
-                        </div>
-                    ` : ''}
-                </div>
-            </div>
-        `;
-    }
-
-    /**
-     * Show toast notification
+     * Show toast
      */
     function showToast(message, type = 'info') {
-        // Use global showToast if available
         if (typeof window.showToast === 'function') {
             window.showToast(message, type);
-            return;
         }
-
-        // Fallback toast implementation
-        const container = document.getElementById('toastContainer');
-        if (!container) return;
-
-        const toast = document.createElement('div');
-        toast.className = `toast toast-${type}`;
-        toast.textContent = message;
-
-        container.appendChild(toast);
-
-        setTimeout(() => {
-            toast.classList.add('toast-hide');
-            setTimeout(() => toast.remove(), 300);
-        }, 3000);
     }
 
     /**
      * Escape HTML
      */
     function escapeHtml(text) {
+        if (!text) return '';
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
     }
 
+    // ===========================================
+    // PARSERS
+    // ===========================================
+
     /**
-     * Public API
+     * Parse 1337x search results
      */
+    function parse1337xResults(html, baseUrl) {
+        const results = [];
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        doc.querySelectorAll('table.table-list tbody tr').forEach(row => {
+            try {
+                const nameCell = row.querySelector('td.coll-1');
+                const seedersCell = row.querySelector('td.coll-2');
+                const leechersCell = row.querySelector('td.coll-3');
+                const sizeCell = row.querySelector('td.coll-4');
+
+                if (!nameCell) return;
+
+                const link = nameCell.querySelector('a:nth-child(2)');
+                if (!link) return;
+
+                const title = link.textContent.trim();
+                const href = link.getAttribute('href');
+                const id = href ? href.split('/').filter(Boolean).pop() : null;
+
+                results.push({
+                    id,
+                    title,
+                    url: baseUrl + href,
+                    magnetUri: null, // Need to fetch from detail page
+                    seeders: parseInt(seedersCell?.textContent) || 0,
+                    leechers: parseInt(leechersCell?.textContent) || 0,
+                    size: sizeCell?.textContent.trim().split(/\s+/).slice(0, 2).join(' ') || 'N/A',
+                    source: '1337x'
+                });
+            } catch (e) {
+                console.warn('[1337x] Parse error:', e);
+            }
+        });
+
+        return results;
+    }
+
+    /**
+     * Parse 1337x details
+     */
+    function parse1337xDetails(html) {
+        const magnetMatch = html.match(/magnet:\?xt=urn:btih:[a-zA-Z0-9]+[^"'\s]*/);
+        return magnetMatch ? magnetMatch[0] : null;
+    }
+
+    /**
+     * Parse Nyaa search results
+     */
+    function parseNyaaResults(html, baseUrl) {
+        const results = [];
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        doc.querySelectorAll('table.torrent-list tbody tr').forEach(row => {
+            try {
+                const titleCell = row.querySelector('td:nth-child(2)');
+                const linksCell = row.querySelector('td:nth-child(3)');
+                const sizeCell = row.querySelector('td:nth-child(4)');
+                const seedersCell = row.querySelector('td:nth-child(6)');
+                const leechersCell = row.querySelector('td:nth-child(7)');
+
+                const titleLink = titleCell?.querySelector('a:not(.comments)');
+                if (!titleLink) return;
+
+                const title = titleLink.textContent.trim();
+                const href = titleLink.getAttribute('href');
+                const id = href ? href.replace('/view/', '') : null;
+
+                const magnetLink = linksCell?.querySelector('a[href^="magnet:"]');
+                const magnetUri = magnetLink?.getAttribute('href');
+
+                results.push({
+                    id,
+                    title,
+                    url: baseUrl + href,
+                    magnetUri,
+                    seeders: parseInt(seedersCell?.textContent) || 0,
+                    leechers: parseInt(leechersCell?.textContent) || 0,
+                    size: sizeCell?.textContent.trim() || 'N/A',
+                    source: 'nyaa'
+                });
+            } catch (e) {
+                console.warn('[Nyaa] Parse error:', e);
+            }
+        });
+
+        return results;
+    }
+
+    /**
+     * Parse Nyaa details
+     */
+    function parseNyaaDetails(html) {
+        const magnetMatch = html.match(/magnet:\?xt=urn:btih:[a-zA-Z0-9]+[^"'\s]*/);
+        return magnetMatch ? magnetMatch[0] : null;
+    }
+
+    /**
+     * Parse LimeTorrents results
+     */
+    function parseLimeResults(html, baseUrl) {
+        const results = [];
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+
+        doc.querySelectorAll('table.table2 tr.table2').forEach(row => {
+            try {
+                const nameCell = row.querySelector('td.tdleft');
+                const sizeCell = row.querySelector('td.tdnormal:nth-child(3)');
+                const seedersCell = row.querySelector('td.tdseed');
+                const leechersCell = row.querySelector('td.tdleech');
+
+                const link = nameCell?.querySelector('a.csprite_dl14');
+                const titleLink = nameCell?.querySelector('div.tt-name a:nth-child(2)');
+
+                if (!titleLink) return;
+
+                const title = titleLink.textContent.trim();
+                const href = titleLink.getAttribute('href');
+                const id = href ? href.split('/').filter(Boolean).pop() : null;
+
+                // LimeTorrents has magnet in the row
+                const magnetLink = row.querySelector('a[href^="magnet:"]');
+                const magnetUri = magnetLink?.getAttribute('href');
+
+                results.push({
+                    id,
+                    title,
+                    url: baseUrl + href,
+                    magnetUri,
+                    seeders: parseInt(seedersCell?.textContent) || 0,
+                    leechers: parseInt(leechersCell?.textContent) || 0,
+                    size: sizeCell?.textContent.trim() || 'N/A',
+                    source: 'limetorrents'
+                });
+            } catch (e) {
+                console.warn('[LimeTorrents] Parse error:', e);
+            }
+        });
+
+        return results;
+    }
+
+    // ===========================================
+    // PUBLIC API
+    // ===========================================
+
     return {
         init,
         performSearch,
-        checkServerStatus,
-        getState: () => ({ ...state }),
-        setServerUrl: (url) => { config.serverUrl = url; }
+        checkServerStatus: () => updateStatusIndicator(true),
+        getState: () => ({ ...state })
     };
 
 })();
 
 // Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    // Only initialize if discover view exists
     if (document.getElementById('discoverView')) {
         DiscoverModule.init();
     }
 });
-
-// Export for module use
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = DiscoverModule;
-}
