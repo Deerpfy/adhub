@@ -1,0 +1,27 @@
+{
+  "name": "samplehub-server",
+  "version": "1.0.0",
+  "description": "Backend server for SampleHub - torrent indexer scraping with proxy/Tor support",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "parse-torrent": "^11.0.16",
+    "magnet-uri": "^6.2.0",
+    "socks-proxy-agent": "^8.0.2",
+    "https-proxy-agent": "^7.0.2",
+    "node-fetch": "^3.3.2",
+    "bencode": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["torrent", "scraper", "sample-packs", "music-production"],
+  "license": "MIT"
+}

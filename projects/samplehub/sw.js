@@ -16,6 +16,7 @@ const STATIC_ASSETS = [
     './script.js',
     './db.js',
     './audio.js',
+    './discover.js',
     './manifest.json'
 ];
 

@@ -42,6 +42,10 @@
                     <span class="nav-icon">🔍</span>
                     <span class="nav-text" data-i18n="nav.browse">Procházet</span>
                 </button>
+                <button class="nav-item" data-view="discover">
+                    <span class="nav-icon">🌐</span>
+                    <span class="nav-text" data-i18n="nav.discover">Discover</span>
+                </button>
                 <button class="nav-item" data-view="packs">
                     <span class="nav-icon">📦</span>
                     <span class="nav-text" data-i18n="nav.packs">Packy</span>
@@ -222,6 +226,97 @@
                     </div>
 
                     <div class="browse-results" id="browseResults"></div>
+                </section>
+
+                <!-- Discover View (Torrent Search) -->
+                <section class="view" id="discoverView">
+                    <div class="view-header">
+                        <h2 class="view-title">
+                            <span>🌐</span>
+                            <span data-i18n="view.discover">Discover Sample Packs</span>
+                        </h2>
+                        <div class="discover-status" id="discoverStatus">
+                            <span class="status-dot offline"></span>
+                            <span class="status-text">Server offline</span>
+                        </div>
+                    </div>
+
+                    <div class="discover-search">
+                        <div class="discover-search-row">
+                            <input type="text"
+                                   id="discoverSearchInput"
+                                   class="search-input discover-input"
+                                   placeholder="Hledat sample packy (např. Cymatics, Splice, KSHMR)...">
+                            <button class="btn-primary" id="discoverSearchBtn">
+                                <span>🔍</span>
+                                <span>Hledat</span>
+                            </button>
+                        </div>
+
+                        <div class="discover-filters">
+                            <div class="filter-group">
+                                <label class="filter-label">Zdroje</label>
+                                <div class="source-toggles" id="sourceToggles">
+                                    <label class="toggle-label">
+                                        <input type="checkbox" value="1337x" checked>
+                                        <span>1337x</span>
+                                    </label>
+                                    <label class="toggle-label">
+                                        <input type="checkbox" value="solidtorrents" checked>
+                                        <span>SolidTorrents</span>
+                                    </label>
+                                    <label class="toggle-label">
+                                        <input type="checkbox" value="nyaa" checked>
+                                        <span>Nyaa</span>
+                                    </label>
+                                    <label class="toggle-label">
+                                        <input type="checkbox" value="rutracker">
+                                        <span>RuTracker</span>
+                                    </label>
+                                    <label class="toggle-label">
+                                        <input type="checkbox" value="tpb">
+                                        <span>TPB</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="filter-group">
+                                <label class="filter-label">Anonymita</label>
+                                <div class="anonymity-options">
+                                    <label class="toggle-label">
+                                        <input type="checkbox" id="useTor">
+                                        <span>Použít Tor</span>
+                                    </label>
+                                    <label class="toggle-label">
+                                        <input type="checkbox" id="useProxy">
+                                        <span>Použít proxy</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="discover-info-banner" id="discoverBanner">
+                        <span class="banner-icon">⚠️</span>
+                        <div class="banner-content">
+                            <strong>Právní upozornění</strong>
+                            <p>Tato funkce pouze vyhledává veřejně indexovaný obsah. Stahování chráněného obsahu může být v některých zemích nelegální. Používejte zodpovědně.</p>
+                        </div>
+                        <button class="banner-close" id="closeBanner">×</button>
+                    </div>
+
+                    <div class="discover-loading" id="discoverLoading" style="display: none">
+                        <div class="loading-spinner"></div>
+                        <p>Prohledávám zdroje...</p>
+                    </div>
+
+                    <div class="discover-results" id="discoverResults">
+                        <div class="discover-empty">
+                            <div class="empty-icon">🔎</div>
+                            <h3>Vyhledejte sample packy</h3>
+                            <p>Zadejte název producenta, labelu nebo packu pro vyhledání ve veřejných torrent indexech</p>
+                        </div>
+                    </div>
                 </section>
 
                 <!-- Packs View -->
@@ -456,6 +551,7 @@
     <!-- Scripts -->
     <script src="db.js"></script>
     <script src="audio.js"></script>
+    <script src="discover.js"></script>
     <script src="script.js"></script>
 
     <!-- Register Service Worker -->
