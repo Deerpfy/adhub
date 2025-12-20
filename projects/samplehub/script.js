@@ -1333,6 +1333,116 @@
     }
 
     // =============================================
+    // TORRENT IMPORT HANDLING
+    // =============================================
+
+    /**
+     * Handle torrent import event from TorrentDownloader
+     */
+    async function handleTorrentImport(event) {
+        const { pack, samples: torrentSamples } = event.detail;
+
+        console.log('[TorrentImport] Importing pack:', pack.name, 'with', torrentSamples.length, 'samples');
+
+        try {
+            // Create pack
+            if (pack) {
+                const existingPack = state.packs.find(p => p.id === pack.id);
+                if (!existingPack) {
+                    const packRecord = {
+                        id: pack.id,
+                        name: pack.name,
+                        source: 'torrent',
+                        createdAt: pack.createdAt,
+                        sampleCount: torrentSamples.length
+                    };
+
+                    try {
+                        await SampleHubDB.addPack(packRecord);
+                    } catch (e) {
+                        console.warn('[TorrentImport] Pack save failed (continuing):', e);
+                    }
+                    state.packs.push(packRecord);
+                }
+            }
+
+            // Import samples
+            for (const sample of torrentSamples) {
+                try {
+                    // Sample already has blob and blobUrl from TorrentDownloader
+                    const sampleRecord = {
+                        id: sample.id,
+                        name: sample.name,
+                        filename: sample.filename,
+                        format: sample.extension?.replace('.', '') || 'unknown',
+                        size: sample.size,
+                        type: detectSampleType(sample.filename),
+                        genre: '',
+                        packId: sample.packId,
+                        packName: sample.packName,
+                        duration: null,
+                        bpm: null,
+                        key: null,
+                        audioBlob: sample.blob,
+                        blobUrl: sample.blobUrl,
+                        source: 'torrent',
+                        addedAt: sample.addedAt,
+                        isFavorite: false
+                    };
+
+                    try {
+                        await SampleHubDB.addSample(sampleRecord);
+                    } catch (e) {
+                        console.warn('[TorrentImport] Sample save failed (continuing):', e);
+                    }
+
+                    state.samples.push(sampleRecord);
+                } catch (e) {
+                    console.error('[TorrentImport] Failed to import sample:', sample.name, e);
+                }
+            }
+
+            // Update UI
+            updateCounts();
+            renderCurrentView();
+
+        } catch (error) {
+            console.error('[TorrentImport] Import failed:', error);
+            showToast('Chyba při importu torrentu', 'error');
+        }
+    }
+
+    /**
+     * Handle play-audio event from TorrentDownloader
+     */
+    function handlePlayAudio(event) {
+        const { name, url, source } = event.detail;
+
+        if (!url) return;
+
+        console.log('[PlayAudio] Playing:', name, 'from', source);
+
+        // Create a temporary sample-like object for the player
+        const tempSample = {
+            id: 'temp-' + Date.now(),
+            name: name,
+            blobUrl: url,
+            source: source
+        };
+
+        // Play the audio
+        if (typeof AudioEngine !== 'undefined' && AudioEngine.play) {
+            AudioEngine.play(tempSample);
+            state.currentSample = tempSample;
+            updatePlayerUI(tempSample);
+        }
+    }
+
+    // Register torrent event handlers
+    window.addEventListener('torrent-import', handleTorrentImport);
+    window.addEventListener('play-audio', handlePlayAudio);
+
+    // =============================================
     // GLOBAL EXPORTS
     // =============================================
 
