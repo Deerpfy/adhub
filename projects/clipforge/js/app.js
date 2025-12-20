@@ -168,31 +168,57 @@ const ClipForge = {
     async init() {
         console.log(`ClipForge v${this.version} initializing...`);
 
-        // Detect language
-        this.detectLanguage();
+        try {
+            // Detect language
+            this.detectLanguage();
 
-        // Initialize database
-        await ClipForgeDB.init();
+            // Initialize database
+            await ClipForgeDB.init();
 
-        // Initialize modules
-        Preview.init();
-        Export.init();
+            // Initialize modules
+            Preview.init();
+            Export.init();
 
-        // Setup UI
-        this.setupUI();
-        this.bindEvents();
-        this.bindKeyboardShortcuts();
+            // Setup UI
+            this.setupUI();
+            this.bindEvents();
+            this.bindKeyboardShortcuts();
 
-        // Register service worker
-        this.registerServiceWorker();
+            // Register service worker
+            this.registerServiceWorker();
 
-        // Check for last project
-        await this.loadLastProject();
+            // Check for last project
+            await this.loadLastProject();
 
-        // Setup online/offline detection
-        this.setupNetworkStatus();
+            // Setup online/offline detection
+            this.setupNetworkStatus();
 
-        console.log('ClipForge initialized');
+            console.log('ClipForge initialized');
+        } catch (error) {
+            console.error('ClipForge initialization failed:', error);
+        } finally {
+            // Always hide loading screen
+            this.hideLoadingScreen();
+        }
+    },
+
+    /**
+     * Hide loading screen and show main app
+     */
+    hideLoadingScreen() {
+        const loadingScreen = document.getElementById('loading-screen');
+        const app = document.getElementById('app');
+
+        if (loadingScreen) {
+            loadingScreen.classList.add('hidden');
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+            }, 300);
+        }
+
+        if (app) {
+            app.style.display = '';
+        }
     },
 
     /**
