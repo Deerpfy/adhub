@@ -409,10 +409,13 @@ const ClipForge = {
      * Setup media drop zone
      */
     setupMediaDropZone() {
-        const dropZone = document.getElementById('media-drop-zone');
-        const fileInput = document.getElementById('media-file-input');
+        const dropZone = document.getElementById('media-upload-zone');
+        const fileInput = document.getElementById('media-input');
 
-        if (!dropZone) return;
+        if (!dropZone) {
+            console.warn('Media upload zone not found');
+            return;
+        }
 
         // Click to select
         dropZone.addEventListener('click', () => fileInput?.click());
@@ -448,8 +451,13 @@ const ClipForge = {
      * @param {File[]} files
      */
     async handleMediaFiles(files) {
+        // Auto-create project if none exists
         if (!this.currentProject) {
-            this.showToast('Nejprve vytvořte projekt', 'warning');
+            await this.autoCreateProject();
+        }
+
+        if (!this.currentProject) {
+            this.showToast('Nelze vytvořit projekt', 'error');
             return;
         }
 
@@ -457,10 +465,10 @@ const ClipForge = {
             try {
                 const media = await ClipForgeDB.storeMedia(file, this.currentProject.id);
                 this.addMediaToLibrary(media);
-                this.showToast(this.t('mediaAdded'), 'success');
+                this.showToast(`${file.name} přidáno`, 'success');
             } catch (error) {
                 console.error('Failed to add media:', error);
-                this.showToast(this.t('errorLoadingMedia'), 'error');
+                this.showToast(`Chyba: ${file.name}`, 'error');
             }
         }
     },
@@ -826,6 +834,40 @@ const ClipForge = {
         } catch (error) {
             console.error('Failed to create project:', error);
             this.showToast('Chyba při vytváření projektu', 'error');
+        }
+    },
+
+    /**
+     * Auto-create a default project (used when importing media without a project)
+     */
+    async autoCreateProject() {
+        const projectData = {
+            name: 'Nový projekt',
+            width: 1920,
+            height: 1080,
+            fps: 30,
+            tracks: [
+                { id: 'video-1', name: 'Video 1', type: 'video', clips: [], muted: false, locked: false },
+                { id: 'audio-1', name: 'Audio 1', type: 'audio', clips: [], muted: false, locked: false },
+                { id: 'text-1', name: 'Text', type: 'text', clips: [], muted: false, locked: false }
+            ],
+            duration: 0
+        };
+
+        try {
+            const project = await ClipForgeDB.createProject(projectData);
+            this.currentProject = project;
+
+            Timeline.init(project);
+            Preview.setDimensions(project.width, project.height);
+
+            // Update project name input
+            const nameInput = document.getElementById('project-name-input');
+            if (nameInput) nameInput.value = project.name;
+
+            console.log('Auto-created project:', project.id);
+        } catch (error) {
+            console.error('Failed to auto-create project:', error);
         }
     },
 
