@@ -886,7 +886,7 @@ const ClipForge = {
     async registerServiceWorker() {
         if ('serviceWorker' in navigator) {
             try {
-                const registration = await navigator.serviceWorker.register('/projects/clipforge/sw.js');
+                const registration = await navigator.serviceWorker.register('./sw.js');
                 console.log('Service Worker registered:', registration.scope);
             } catch (error) {
                 console.warn('Service Worker registration failed:', error);
