@@ -341,11 +341,14 @@ const AudioEngine = (function() {
         if (!isPlaying || !currentSource) return;
 
         pauseTime = audioContext.currentTime - startTime;
+
+        // Set flags BEFORE stop() to prevent onended from triggering callbacks
+        isPlaying = false;
+        isPaused = true;
+
         currentSource.stop();
         currentSource.disconnect();
         currentSource = null;
-        isPlaying = false;
-        isPaused = true;
 
         // Stop animation
         stopAnimation();
@@ -416,12 +419,26 @@ const AudioEngine = (function() {
         if (!currentBuffer) return;
 
         time = Math.max(0, Math.min(time, duration));
+
+        const wasPlaying = isPlaying;
+
+        // Stop current source if playing (without triggering callbacks)
+        if (currentSource) {
+            isPlaying = false;
+            isPaused = true;
+            currentSource.stop();
+            currentSource.disconnect();
+            currentSource = null;
+        }
+
         pauseTime = time;
 
-        if (isPlaying) {
-            pause();
+        if (wasPlaying) {
+            // Resume playing from new position
+            isPaused = true; // So play() uses pauseTime as offset
             play();
         } else {
+            // Just update the waveform display
             drawWaveform(time / duration);
         }
     }
