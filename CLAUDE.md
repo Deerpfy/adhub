@@ -172,6 +172,47 @@ const BASE_TRANSLATIONS = {
 2. Pridej `index.html` jako vstupni bod
 3. Edituj `script.js` a pridej do `getLocalizedConfig()`
 4. Pridej preklady do `BASE_TRANSLATIONS`
+5. Pridej konfiguraci do `.github/scripts/analyze-projects.py` (PROJECT_CONFIGS)
+
+### 5. Automaticka analyza projektu (GitHub Action)
+
+Repository obsahuje automaticky system pro generovani ANALYSIS.md souboru.
+
+**Jak to funguje:**
+- Pri push do `main` vetve (zmeny v `projects/**`) se spusti GitHub Action
+- Action detekuje zmemene projekty a aktualizuje POUZE jejich ANALYSIS.md
+- Zmeny se automaticky commitnou
+
+**Dulezite pro Claude Code:**
+- NEUPRAVUJ rucne soubory `projects/*/ANALYSIS.md` - jsou generovany automaticky
+- Pri pridani noveho projektu PRIDEJ konfiguraci do `.github/scripts/analyze-projects.py`:
+
+```python
+PROJECT_CONFIGS = {
+    "nazev-projektu": {
+        "name": "Nazev Projektu",
+        "type": "Web App",
+        "version": "1.0",
+        "status": "Active",
+        "technologies": ["HTML/CSS/JS", "React", ...],
+        "category": "Category",
+        "description": "Popis projektu",
+        "main_file": "index.html",
+        "features": [
+            "Feature 1",
+            "Feature 2"
+        ]
+    }
+}
+```
+
+**Manualni spusteni:**
+- GitHub -> Actions -> "Project Analysis" -> Run workflow
+- Lze zadat konkretni projekt nebo analyzovat vse
+
+**Soubory:**
+- `.github/workflows/project-analysis.yml` - GitHub Action workflow
+- `.github/scripts/analyze-projects.py` - Python skript pro generovani analyzy
 
 ---
 
