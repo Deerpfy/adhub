@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="ClipForge - Offline video editor. Stříhej videa přímo v prohlížeči bez připojení k internetu.">
+    <meta name="theme-color" content="#8b5cf6">
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+
+    <!-- Preload critical resources -->
+    <link rel="preload" href="css/editor.css" as="style">
+    <link rel="preload" href="js/app.js" as="script">
+
+    <title>ClipForge - Offline Video Editor</title>
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/editor.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <span class="loading-icon">🎬</span>
+                <span class="loading-title">ClipForge</span>
+            </div>
+            <div class="loading-progress">
+                <div class="loading-bar"></div>
+            </div>
+            <p class="loading-text">Načítání editoru...</p>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="app" class="app-container" style="display: none;">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <div class="logo">
+                    <span class="logo-icon">🎬</span>
+                    <span class="logo-text">ClipForge</span>
+                </div>
+                <span class="version-badge">v1.0 OFFLINE</span>
+            </div>
+
+            <div class="header-center">
+                <input type="text" id="project-name" class="project-name-input" value="Nový projekt" spellcheck="false">
+            </div>
+
+            <div class="header-right">
+                <button id="btn-new-project" class="btn btn-ghost" title="Nový projekt">
+                    <span>📄</span>
+                    <span class="btn-text">Nový</span>
+                </button>
+                <button id="btn-open-project" class="btn btn-ghost" title="Otevřít projekt">
+                    <span>📂</span>
+                    <span class="btn-text">Otevřít</span>
+                </button>
+                <button id="btn-save-project" class="btn btn-ghost" title="Uložit projekt">
+                    <span>💾</span>
+                    <span class="btn-text">Uložit</span>
+                </button>
+                <button id="btn-export" class="btn btn-primary" title="Exportovat video">
+                    <span>📤</span>
+                    <span class="btn-text">Export</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="app-main">
+            <!-- Sidebar - Media Library -->
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-tabs">
+                    <button class="sidebar-tab active" data-tab="media">
+                        <span>🎥</span> Média
+                    </button>
+                    <button class="sidebar-tab" data-tab="text">
+                        <span>📝</span> Text
+                    </button>
+                    <button class="sidebar-tab" data-tab="audio">
+                        <span>🎵</span> Audio
+                    </button>
+                    <button class="sidebar-tab" data-tab="filters">
+                        <span>🎨</span> Filtry
+                    </button>
+                    <button class="sidebar-tab" data-tab="templates">
+                        <span>📋</span> Šablony
+                    </button>
+                </div>
+
+                <!-- Media Tab -->
+                <div class="sidebar-content active" data-content="media">
+                    <div class="media-upload-zone" id="media-upload-zone">
+                        <div class="upload-icon">📁</div>
+                        <p class="upload-text">Přetáhni média sem</p>
+                        <p class="upload-subtext">nebo klikni pro výběr</p>
+                        <input type="file" id="media-input" multiple accept="video/*,audio/*,image/*" hidden>
+                    </div>
+                    <div class="media-library" id="media-library">
+                        <!-- Media items will be dynamically added -->
+                    </div>
+                </div>
+
+                <!-- Text Tab -->
+                <div class="sidebar-content" data-content="text">
+                    <div class="text-templates">
+                        <button class="text-template-btn" data-style="title">
+                            <span class="template-preview title">Nadpis</span>
+                        </button>
+                        <button class="text-template-btn" data-style="subtitle">
+                            <span class="template-preview subtitle">Podnadpis</span>
+                        </button>
+                        <button class="text-template-btn" data-style="caption">
+                            <span class="template-preview caption">Titulky</span>
+                        </button>
+                        <button class="text-template-btn" data-style="lower-third">
+                            <span class="template-preview lower-third">Dolní třetina</span>
+                        </button>
+                    </div>
+                    <div class="text-editor-panel" id="text-editor-panel" style="display: none;">
+                        <h4>Upravit text</h4>
+                        <textarea id="text-content" placeholder="Zadej text..."></textarea>
+                        <div class="text-options">
+                            <label>
+                                Font:
+                                <select id="text-font">
+                                    <option value="Inter">Inter</option>
+                                    <option value="Arial">Arial</option>
+                                    <option value="Georgia">Georgia</option>
+                                    <option value="Courier New">Courier</option>
+                                </select>
+                            </label>
+                            <label>
+                                Velikost:
+                                <input type="range" id="text-size" min="12" max="120" value="48">
+                                <span id="text-size-value">48px</span>
+                            </label>
+                            <label>
+                                Barva:
+                                <input type="color" id="text-color" value="#ffffff">
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audio Tab -->
+                <div class="sidebar-content" data-content="audio">
+                    <div class="audio-controls">
+                        <h4>Hlasitost</h4>
+                        <label class="audio-slider">
+                            <span>Master:</span>
+                            <input type="range" id="master-volume" min="0" max="100" value="100">
+                            <span id="master-volume-value">100%</span>
+                        </label>
+                    </div>
+                    <div class="audio-effects">
+                        <h4>Audio efekty</h4>
+                        <button class="audio-effect-btn" data-effect="fade-in">
+                            <span>📈</span> Fade In
+                        </button>
+                        <button class="audio-effect-btn" data-effect="fade-out">
+                            <span>📉</span> Fade Out
+                        </button>
+                        <button class="audio-effect-btn" data-effect="mute">
+                            <span>🔇</span> Ztlumit
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filters Tab -->
+                <div class="sidebar-content" data-content="filters">
+                    <div class="filters-grid">
+                        <button class="filter-btn" data-filter="none">
+                            <span class="filter-preview none"></span>
+                            <span>Žádný</span>
+                        </button>
+                        <button class="filter-btn" data-filter="grayscale">
+                            <span class="filter-preview grayscale"></span>
+                            <span>Černobílý</span>
+                        </button>
+                        <button class="filter-btn" data-filter="sepia">
+                            <span class="filter-preview sepia"></span>
+                            <span>Sépia</span>
+                        </button>
+                        <button class="filter-btn" data-filter="vintage">
+                            <span class="filter-preview vintage"></span>
+                            <span>Vintage</span>
+                        </button>
+                        <button class="filter-btn" data-filter="warm">
+                            <span class="filter-preview warm"></span>
+                            <span>Teplý</span>
+                        </button>
+                        <button class="filter-btn" data-filter="cool">
+                            <span class="filter-preview cool"></span>
+                            <span>Studený</span>
+                        </button>
+                        <button class="filter-btn" data-filter="bright">
+                            <span class="filter-preview bright"></span>
+                            <span>Světlý</span>
+                        </button>
+                        <button class="filter-btn" data-filter="contrast">
+                            <span class="filter-preview contrast"></span>
+                            <span>Kontrast</span>
+                        </button>
+                    </div>
+                    <div class="color-adjustments">
+                        <h4>Úpravy barev</h4>
+                        <label>
+                            Jas:
+                            <input type="range" id="brightness" min="0" max="200" value="100">
+                        </label>
+                        <label>
+                            Kontrast:
+                            <input type="range" id="contrast" min="0" max="200" value="100">
+                        </label>
+                        <label>
+                            Saturace:
+                            <input type="range" id="saturation" min="0" max="200" value="100">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Templates Tab -->
+                <div class="sidebar-content" data-content="templates">
+                    <div class="templates-grid">
+                        <div class="template-card" data-template="tiktok">
+                            <div class="template-thumb aspect-9-16"></div>
+                            <span>TikTok/Reels</span>
+                            <small>9:16</small>
+                        </div>
+                        <div class="template-card" data-template="youtube">
+                            <div class="template-thumb aspect-16-9"></div>
+                            <span>YouTube</span>
+                            <small>16:9</small>
+                        </div>
+                        <div class="template-card" data-template="instagram">
+                            <div class="template-thumb aspect-1-1"></div>
+                            <span>Instagram</span>
+                            <small>1:1</small>
+                        </div>
+                        <div class="template-card" data-template="story">
+                            <div class="template-thumb aspect-9-16"></div>
+                            <span>Story</span>
+                            <small>9:16</small>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Preview Area -->
+            <section class="preview-area">
+                <div class="preview-container" id="preview-container">
+                    <canvas id="preview-canvas"></canvas>
+                    <video id="preview-video" style="display: none;"></video>
+                </div>
+
+                <!-- Playback Controls -->
+                <div class="playback-controls">
+                    <button id="btn-skip-back" class="control-btn" title="Zpět o 5s">
+                        <span>⏪</span>
+                    </button>
+                    <button id="btn-play-pause" class="control-btn play-btn" title="Přehrát/Pozastavit">
+                        <span id="play-icon">▶️</span>
+                    </button>
+                    <button id="btn-skip-forward" class="control-btn" title="Vpřed o 5s">
+                        <span>⏩</span>
+                    </button>
+                    <div class="time-display">
+                        <span id="current-time">00:00:00</span>
+                        <span>/</span>
+                        <span id="total-time">00:00:00</span>
+                    </div>
+                    <div class="playback-speed">
+                        <select id="playback-speed">
+                            <option value="0.25">0.25x</option>
+                            <option value="0.5">0.5x</option>
+                            <option value="1" selected>1x</option>
+                            <option value="1.5">1.5x</option>
+                            <option value="2">2x</option>
+                        </select>
+                    </div>
+                    <button id="btn-fullscreen" class="control-btn" title="Celá obrazovka">
+                        <span>⛶</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Properties Panel -->
+            <aside class="properties-panel" id="properties-panel">
+                <div class="panel-header">
+                    <h3>Vlastnosti</h3>
+                    <button id="btn-close-properties" class="btn-close">×</button>
+                </div>
+                <div class="panel-content" id="properties-content">
+                    <p class="no-selection">Vyber klip pro úpravy</p>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Timeline -->
+        <footer class="timeline-container">
+            <!-- Timeline Toolbar -->
+            <div class="timeline-toolbar">
+                <div class="toolbar-left">
+                    <button id="btn-split" class="toolbar-btn" title="Rozdělit klip (S)">
+                        <span>✂️</span>
+                    </button>
+                    <button id="btn-delete" class="toolbar-btn" title="Smazat (Del)">
+                        <span>🗑️</span>
+                    </button>
+                    <button id="btn-undo" class="toolbar-btn" title="Zpět (Ctrl+Z)">
+                        <span>↩️</span>
+                    </button>
+                    <button id="btn-redo" class="toolbar-btn" title="Vpřed (Ctrl+Y)">
+                        <span>↪️</span>
+                    </button>
+                </div>
+                <div class="toolbar-center">
+                    <div class="zoom-control">
+                        <button id="btn-zoom-out" class="toolbar-btn" title="Oddálit">−</button>
+                        <input type="range" id="timeline-zoom" min="10" max="200" value="100">
+                        <button id="btn-zoom-in" class="toolbar-btn" title="Přiblížit">+</button>
+                    </div>
+                </div>
+                <div class="toolbar-right">
+                    <button id="btn-add-track" class="toolbar-btn" title="Přidat stopu">
+                        <span>➕</span> Stopa
+                    </button>
+                </div>
+            </div>
+
+            <!-- Timeline Ruler -->
+            <div class="timeline-ruler" id="timeline-ruler">
+                <!-- Time markers will be generated dynamically -->
+            </div>
+
+            <!-- Timeline Tracks -->
+            <div class="timeline-scroll" id="timeline-scroll">
+                <div class="timeline-tracks" id="timeline-tracks">
+                    <!-- Track: Video 1 -->
+                    <div class="timeline-track" data-track="video-1" data-type="video">
+                        <div class="track-header">
+                            <span class="track-icon">🎬</span>
+                            <span class="track-name">Video 1</span>
+                            <button class="track-btn track-mute" title="Ztlumit">🔊</button>
+                            <button class="track-btn track-lock" title="Zamknout">🔓</button>
+                        </div>
+                        <div class="track-clips" data-track-id="video-1">
+                            <!-- Clips will be added dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Track: Audio 1 -->
+                    <div class="timeline-track" data-track="audio-1" data-type="audio">
+                        <div class="track-header">
+                            <span class="track-icon">🎵</span>
+                            <span class="track-name">Audio 1</span>
+                            <button class="track-btn track-mute" title="Ztlumit">🔊</button>
+                            <button class="track-btn track-lock" title="Zamknout">🔓</button>
+                        </div>
+                        <div class="track-clips" data-track-id="audio-1">
+                            <!-- Clips will be added dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- Track: Text -->
+                    <div class="timeline-track" data-track="text-1" data-type="text">
+                        <div class="track-header">
+                            <span class="track-icon">📝</span>
+                            <span class="track-name">Text</span>
+                            <button class="track-btn track-visible" title="Skrýt">👁️</button>
+                            <button class="track-btn track-lock" title="Zamknout">🔓</button>
+                        </div>
+                        <div class="track-clips" data-track-id="text-1">
+                            <!-- Clips will be added dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Playhead -->
+                <div class="playhead" id="playhead">
+                    <div class="playhead-head"></div>
+                    <div class="playhead-line"></div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal-overlay" id="export-modal">
+        <div class="modal-content export-modal">
+            <div class="modal-header">
+                <h2>Exportovat video</h2>
+                <button class="modal-close" id="close-export-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="export-options">
+                    <div class="export-option">
+                        <label>Formát:</label>
+                        <select id="export-format">
+                            <option value="mp4">MP4 (H.264)</option>
+                            <option value="webm">WebM (VP9)</option>
+                            <option value="gif">GIF (animovaný)</option>
+                        </select>
+                    </div>
+                    <div class="export-option">
+                        <label>Rozlišení:</label>
+                        <select id="export-resolution">
+                            <option value="1080">1080p (Full HD)</option>
+                            <option value="720">720p (HD)</option>
+                            <option value="480">480p (SD)</option>
+                            <option value="original">Původní</option>
+                        </select>
+                    </div>
+                    <div class="export-option">
+                        <label>Kvalita:</label>
+                        <select id="export-quality">
+                            <option value="high">Vysoká</option>
+                            <option value="medium" selected>Střední</option>
+                            <option value="low">Nízká</option>
+                        </select>
+                    </div>
+                    <div class="export-option">
+                        <label>FPS:</label>
+                        <select id="export-fps">
+                            <option value="60">60 fps</option>
+                            <option value="30" selected>30 fps</option>
+                            <option value="24">24 fps</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="export-progress" id="export-progress" style="display: none;">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="export-progress-fill"></div>
+                    </div>
+                    <p class="progress-text" id="export-progress-text">Exportuji...</p>
+                </div>
+                <div class="export-actions">
+                    <button class="btn btn-ghost" id="btn-cancel-export">Zrušit</button>
+                    <button class="btn btn-primary" id="btn-start-export">
+                        <span>📤</span> Exportovat
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects Modal -->
+    <div class="modal-overlay" id="projects-modal">
+        <div class="modal-content projects-modal">
+            <div class="modal-header">
+                <h2>Moje projekty</h2>
+                <button class="modal-close" id="close-projects-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="projects-list" id="projects-list">
+                    <!-- Projects will be dynamically loaded -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Offline Indicator -->
+    <div class="offline-indicator" id="offline-indicator">
+        <span>📴</span> Offline režim
+    </div>
+
+    <!-- Scripts -->
+    <script src="js/db.js"></script>
+    <script src="js/timeline.js"></script>
+    <script src="js/preview.js"></script>
+    <script src="js/export.js"></script>
+    <script src="js/app.js"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('SW registered:', reg.scope))
+                    .catch(err => console.error('SW registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>
