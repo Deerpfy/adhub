@@ -29,8 +29,8 @@ Research-backed AI prompt formatting tool with multi-model support
 ### Key Metrics
 | Metric | Value |
 |--------|-------|
-| Total Files | 10 |
-| Total Size | 523.5 KB |
+| Total Files | 4 |
+| Total Size | 523.3 KB |
 | Main Entry | `index.html` |
 
 ---
@@ -48,9 +48,13 @@ Research-backed AI prompt formatting tool with multi-model support
 | lucide | SVG Icon Library |
 | react | UI Component Framework |
 | react-dom | React DOM Rendering |
+| tailwindcss | Utility-first CSS Framework |
 
 ### Browser Features Used
-- Standard web APIs
+- localStorage
+- Notifications
+- Clipboard API
+- File API
 
 ---
 
@@ -59,23 +63,14 @@ Research-backed AI prompt formatting tool with multi-model support
 ### File Types
 | Extension | Count |
 |-----------|-------|
-| `.json` | 3 |
-| `.js` | 2 |
 | `.html` | 2 |
 | `.md` | 2 |
-| `.css` | 1 |
 
 ### Directory Layout
 ```
 ai-prompting/
-├── app.js
 ├── archive/
-├── babel.config.json
 ├── index.html
-├── package-lock.json
-├── package.json
-├── styles.css
-├── tailwind.config.js
 ```
 
 ---
@@ -98,11 +93,15 @@ ai-prompting/
 ## 5. Dependencies & APIs
 
 ### External APIs
-No external APIs detected.
+| API | Purpose |
+|-----|--------|
+| Pollinations.ai | Free AI text generation |
+| IP Geolocation | User location detection |
 
 ### Third-Party Libraries
 - react
 - react-dom
+- tailwindcss
 - babel
 - lucide
 - lz-string
@@ -114,7 +113,7 @@ No external APIs detected.
 ### Data Storage
 | Storage Type | Data Stored |
 |--------------|-------------|
-| None | No persistent storage |
+| localStorage | User preferences, saved data |
 
 ### Privacy Considerations
 - 100% client-side processing (where applicable)
