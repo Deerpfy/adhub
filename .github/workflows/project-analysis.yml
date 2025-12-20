@@ -1,0 +1,81 @@
+name: Project Analysis
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'projects/**'
+  workflow_dispatch:
+    inputs:
+      project:
+        description: 'Project to analyze (leave empty for all changed)'
+        required: false
+        type: string
+      force_all:
+        description: 'Force analyze all projects'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  analyze:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for change detection
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Get changed projects
+        id: changes
+        run: |
+          if [ "${{ github.event.inputs.force_all }}" == "true" ]; then
+            echo "Force analyzing all projects"
+            PROJECTS=$(ls -d projects/*/ 2>/dev/null | sed 's|projects/||g' | sed 's|/||g' | tr '\n' ',' | sed 's/,$//')
+          elif [ -n "${{ github.event.inputs.project }}" ]; then
+            echo "Analyzing specified project: ${{ github.event.inputs.project }}"
+            PROJECTS="${{ github.event.inputs.project }}"
+          else
+            echo "Detecting changed projects..."
+            # Get changed files in the last commit
+            CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || git diff --name-only HEAD)
+            echo "Changed files:"
+            echo "$CHANGED_FILES"
+
+            # Extract unique project names from changed paths
+            PROJECTS=$(echo "$CHANGED_FILES" | grep '^projects/' | cut -d'/' -f2 | sort -u | tr '\n' ',' | sed 's/,$//')
+          fi
+
+          echo "Projects to analyze: $PROJECTS"
+          echo "projects=$PROJECTS" >> $GITHUB_OUTPUT
+
+      - name: Run project analysis
+        if: steps.changes.outputs.projects != ''
+        run: |
+          python .github/scripts/analyze-projects.py "${{ steps.changes.outputs.projects }}"
+
+      - name: Commit and push analysis updates
+        if: steps.changes.outputs.projects != ''
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+
+          # Check if there are changes to commit
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git add projects/*/ANALYSIS.md
+            git commit -m "docs: auto-update project analysis for ${{ steps.changes.outputs.projects }}" || echo "No changes to commit"
+            git push
+          fi
