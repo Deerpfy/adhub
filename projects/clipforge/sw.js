@@ -9,19 +9,18 @@
 
 const CACHE_NAME = 'clipforge-v1.0.0';
 
-// Assets to cache
+// Assets to cache (relative paths for portability)
 const ASSETS = [
-    '/projects/clipforge/',
-    '/projects/clipforge/index.html',
-    '/projects/clipforge/css/editor.css',
-    '/projects/clipforge/js/db.js',
-    '/projects/clipforge/js/timeline.js',
-    '/projects/clipforge/js/preview.js',
-    '/projects/clipforge/js/export.js',
-    '/projects/clipforge/js/app.js',
-    '/projects/clipforge/manifest.json',
-    '/projects/clipforge/assets/icon-192.png',
-    '/projects/clipforge/assets/icon-512.png'
+    './',
+    './index.html',
+    './css/editor.css',
+    './js/db.js',
+    './js/timeline.js',
+    './js/preview.js',
+    './js/export.js',
+    './js/app.js',
+    './manifest.json',
+    './assets/icon.svg'
 ];
 
 // External assets (CDN)
