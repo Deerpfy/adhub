@@ -1,0 +1,55 @@
+{
+  "name": "SampleHub - Sample Pack Manager",
+  "short_name": "SampleHub",
+  "description": "Offline-first sample pack manager pro hudební produkci. Organizujte, přehrávejte a spravujte své audio samply.",
+  "version": "1.0.0",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0a0a0f",
+  "theme_color": "#7C3AED",
+  "orientation": "any",
+  "scope": "./",
+  "lang": "cs",
+  "categories": ["music", "entertainment", "productivity"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect width='512' height='512' rx='64' fill='%237C3AED'/><text x='256' y='340' font-size='280' text-anchor='middle' fill='white'>🎵</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect width='192' height='192' rx='24' fill='%237C3AED'/><text x='96' y='130' font-size='100' text-anchor='middle' fill='white'>🎵</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Knihovna",
+      "short_name": "Knihovna",
+      "description": "Zobrazit knihovnu samplů",
+      "url": "./?view=library",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><text y='72' font-size='72'>📚</text></svg>", "sizes": "96x96" }]
+    },
+    {
+      "name": "Import",
+      "short_name": "Import",
+      "description": "Importovat nové samply",
+      "url": "./?action=import",
+      "icons": [{ "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><text y='72' font-size='72'>📥</text></svg>", "sizes": "96x96" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false,
+  "features": [
+    "Offline-first architecture",
+    "Audio waveform visualization",
+    "BPM and key detection",
+    "Sample organization by packs",
+    "Favorites system",
+    "Import WAV, MP3, FLAC, AIFF, OGG"
+  ]
+}

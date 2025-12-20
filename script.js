@@ -319,6 +319,8 @@ const BASE_TRANSLATIONS = {
         tool_bg_remover_desc: 'Offline AI nástroj pro odstranění pozadí z obrázků. Magic Brush pro ruční doladění, vlastní pozadí, AI stíny. 100% v prohlížeči, bez serveru.',
         tool_slidersnap_name: 'SliderSnap',
         tool_slidersnap_desc: 'Offline before/after porovnávač obrázků. Interaktivní slider, GIF export, IndexedDB ukládání. 100% offline PWA.',
+        tool_samplehub_name: 'SampleHub',
+        tool_samplehub_desc: 'Offline sample pack manager pro hudební produkci. Organizace, přehrávání a správa audio samplů s waveform vizualizací, BPM detekcí a PWA podporou.',
         category_gaming: 'gaming',
         category_documentation: 'dokumentace',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
@@ -711,6 +713,8 @@ const BASE_TRANSLATIONS = {
         tool_bg_remover_desc: 'Offline AI tool for removing backgrounds from images. Magic Brush for manual refinement, custom backgrounds, AI shadows. 100% in browser, no server.',
         tool_slidersnap_name: 'SliderSnap',
         tool_slidersnap_desc: 'Offline before/after image comparison tool. Interactive slider, GIF export, IndexedDB storage. 100% offline PWA.',
+        tool_samplehub_name: 'SampleHub',
+        tool_samplehub_desc: 'Offline sample pack manager for music production. Organization, playback and management of audio samples with waveform visualization, BPM detection and PWA support.',
         category_gaming: 'gaming',
         category_documentation: 'documentation',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
@@ -1661,6 +1665,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["design", "image", "comparison", "before-after", "slider", "gif", "offline", "pwa"]
+            },
+            {
+                "id": "samplehub",
+                "name": t('tool_samplehub_name'),
+                "description": t('tool_samplehub_desc'),
+                "category": "tools",
+                "icon": "🎵",
+                "url": "projects/samplehub/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["audio", "samples", "music", "production", "offline", "pwa", "waveform", "bpm"]
             }
         ],
         "links": [
