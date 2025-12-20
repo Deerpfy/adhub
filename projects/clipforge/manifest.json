@@ -1,0 +1,115 @@
+{
+    "name": "ClipForge - Offline Video Editor",
+    "short_name": "ClipForge",
+    "description": "Profesionální offline editor videa bez serveru. Střihejte videa přímo v prohlížeči.",
+    "start_url": "/projects/clipforge/",
+    "display": "standalone",
+    "background_color": "#0a0a0f",
+    "theme_color": "#8b5cf6",
+    "orientation": "landscape",
+    "icons": [
+        {
+            "src": "assets/icon-72.png",
+            "sizes": "72x72",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/icon-96.png",
+            "sizes": "96x96",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/icon-128.png",
+            "sizes": "128x128",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/icon-144.png",
+            "sizes": "144x144",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/icon-152.png",
+            "sizes": "152x152",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "assets/icon-384.png",
+            "sizes": "384x384",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["productivity", "utilities", "entertainment"],
+    "screenshots": [
+        {
+            "src": "assets/screenshot-wide.png",
+            "sizes": "1920x1080",
+            "type": "image/png",
+            "form_factor": "wide"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Nový projekt",
+            "short_name": "Nový",
+            "description": "Vytvořit nový video projekt",
+            "url": "/projects/clipforge/?action=new",
+            "icons": [
+                {
+                    "src": "assets/icon-new.png",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
+            "name": "Otevřít projekt",
+            "short_name": "Otevřít",
+            "description": "Otevřít existující projekt",
+            "url": "/projects/clipforge/?action=open",
+            "icons": [
+                {
+                    "src": "assets/icon-open.png",
+                    "sizes": "96x96"
+                }
+            ]
+        }
+    ],
+    "file_handlers": [
+        {
+            "action": "/projects/clipforge/",
+            "accept": {
+                "video/*": [".mp4", ".webm", ".mov", ".avi", ".mkv"],
+                "image/*": [".jpg", ".jpeg", ".png", ".gif", ".webp"],
+                "audio/*": [".mp3", ".wav", ".ogg", ".m4a"]
+            }
+        }
+    ],
+    "share_target": {
+        "action": "/projects/clipforge/",
+        "method": "POST",
+        "enctype": "multipart/form-data",
+        "params": {
+            "files": [
+                {
+                    "name": "media",
+                    "accept": ["video/*", "image/*", "audio/*"]
+                }
+            ]
+        }
+    },
+    "lang": "cs",
+    "dir": "ltr",
+    "prefer_related_applications": false
+}
