@@ -128,9 +128,12 @@ const SampleHubDB = (function() {
     async function addSample(sample) {
         await ensureDB();
 
+        // Remove string id - autoIncrement requires numeric or undefined id
+        const { id: sampleId, ...sampleWithoutId } = sample;
         const sampleData = {
-            ...sample,
-            id: sample.id || undefined,
+            ...sampleWithoutId,
+            // Only use id if it's a valid number, otherwise let autoIncrement work
+            id: (typeof sampleId === 'number' && !isNaN(sampleId)) ? sampleId : undefined,
             addedAt: sample.addedAt || new Date().toISOString(),
             favorite: sample.favorite || false,
             playCount: sample.playCount || 0
@@ -163,8 +166,12 @@ const SampleHubDB = (function() {
             transaction.onerror = () => reject(transaction.error);
 
             samples.forEach(sample => {
+                // Remove string id - autoIncrement requires numeric or undefined id
+                const { id: sampleId, ...sampleWithoutId } = sample;
                 const sampleData = {
-                    ...sample,
+                    ...sampleWithoutId,
+                    // Only use id if it's a valid number, otherwise let autoIncrement work
+                    id: (typeof sampleId === 'number' && !isNaN(sampleId)) ? sampleId : undefined,
                     addedAt: sample.addedAt || new Date().toISOString(),
                     favorite: sample.favorite || false,
                     playCount: sample.playCount || 0
