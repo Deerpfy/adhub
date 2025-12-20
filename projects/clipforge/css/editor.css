@@ -166,6 +166,80 @@ body {
 }
 
 /* =============================================
+   SVG ICONS
+   ============================================= */
+svg {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.loading-icon {
+    width: 48px;
+    height: 48px;
+    color: var(--primary-color);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.logo-icon {
+    width: 28px;
+    height: 28px;
+    color: var(--primary-color);
+}
+
+.btn-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.tab-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.upload-icon {
+    width: 48px;
+    height: 48px;
+    color: var(--primary-color);
+    margin-bottom: 12px;
+}
+
+.control-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.toolbar-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.track-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--text-secondary);
+}
+
+.track-btn-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.effect-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.close-icon {
+    width: 18px;
+    height: 18px;
+}
+
+.offline-icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* =============================================
    APP CONTAINER
    ============================================= */
 .app-container {
@@ -381,14 +455,14 @@ body {
 }
 
 .media-upload-zone:hover,
-.media-upload-zone.dragover {
+.media-upload-zone.drag-over {
     border-color: var(--primary-color);
     background: rgba(139, 92, 246, 0.1);
 }
 
-.upload-icon {
-    font-size: 2rem;
-    margin-bottom: 8px;
+.media-upload-zone.drag-over {
+    border-style: solid;
+    transform: scale(1.02);
 }
 
 .upload-text {
@@ -399,7 +473,14 @@ body {
 
 .upload-subtext {
     color: var(--text-muted);
-    font-size: 0.8rem;
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+}
+
+.upload-formats {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    opacity: 0.7;
 }
 
 /* Media Library */
