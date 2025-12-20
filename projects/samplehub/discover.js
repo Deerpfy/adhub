@@ -2,17 +2,17 @@
  * SampleHub - Discover Module (Browser-Only)
  * Handles torrent search functionality purely in the browser
  * Uses CORS proxies to fetch content from torrent indexers
- * Version: 2.1
+ * Version: 3.0
  */
 
 const DiscoverModule = (function() {
     'use strict';
 
-    // CORS Proxies (fallback chain)
+    // CORS Proxies (fallback chain) - tested and working
     const CORS_PROXIES = [
-        'https://api.allorigins.win/raw?url=',
-        'https://corsproxy.io/?',
-        'https://api.codetabs.com/v1/proxy?quest='
+        (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+        (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+        (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`
     ];
 
     // Torrent sources configuration
@@ -20,23 +20,27 @@ const DiscoverModule = (function() {
         '1337x': {
             name: '1337x',
             baseUrl: 'https://1337x.to',
-            searchUrl: (q, page) => `https://1337x.to/sort-category-search/${encodeURIComponent(q)}/Music/seeders/desc/${page}/`,
+            // Simple search URL without category filter
+            searchUrl: (q, page) => `https://1337x.to/search/${encodeURIComponent(q)}/${page}/`,
             parseResults: parse1337xResults,
-            parseDetails: parse1337xDetails
+            enabled: true
         },
-        'nyaa': {
-            name: 'Nyaa',
-            baseUrl: 'https://nyaa.si',
-            searchUrl: (q, page) => `https://nyaa.si/?f=0&c=2_0&q=${encodeURIComponent(q)}&p=${page}`,
-            parseResults: parseNyaaResults,
-            parseDetails: parseNyaaDetails
+        'piratebay': {
+            name: 'PirateBay',
+            baseUrl: 'https://apibay.org',
+            // API endpoint - no CORS issues
+            searchUrl: (q) => `https://apibay.org/q.php?q=${encodeURIComponent(q)}&cat=100`,
+            parseResults: parsePirateBayResults,
+            isApi: true,
+            enabled: true
         },
-        'limetorrents': {
-            name: 'LimeTorrents',
-            baseUrl: 'https://www.limetorrents.lol',
-            searchUrl: (q, page) => `https://www.limetorrents.lol/search/music/${encodeURIComponent(q)}/seeds/${page}/`,
-            parseResults: parseLimeResults,
-            parseDetails: null
+        'yts': {
+            name: 'YTS API',
+            baseUrl: 'https://yts.mx',
+            searchUrl: (q) => `https://yts.mx/api/v2/list_movies.json?query_term=${encodeURIComponent(q)}&limit=50`,
+            parseResults: parseYTSResults,
+            isApi: true,
+            enabled: false // Movies, not samples
         }
     };
 
@@ -46,7 +50,7 @@ const DiscoverModule = (function() {
         currentQuery: '',
         currentPage: 1,
         results: [],
-        sources: ['1337x', 'nyaa', 'limetorrents'],
+        sources: ['1337x', 'piratebay'],
         currentProxyIndex: 0,
         searchHistory: [],
         wishlist: []
@@ -55,21 +59,22 @@ const DiscoverModule = (function() {
     // DOM Elements
     let elements = {};
 
-    // IndexedDB for wishlist persistence
+    // IndexedDB
     const DB_NAME = 'samplehub-discover';
     const DB_VERSION = 1;
     let db = null;
 
     /**
-     * Initialize the module
+     * Initialize
      */
     function init() {
+        console.log('[Discover] Initializing...');
         cacheElements();
         bindEvents();
         initDB().then(() => {
             loadWishlist();
             loadSearchHistory();
-        });
+        }).catch(console.error);
         updateStatusIndicator(true);
     }
 
@@ -79,22 +84,16 @@ const DiscoverModule = (function() {
     function initDB() {
         return new Promise((resolve, reject) => {
             const request = indexedDB.open(DB_NAME, DB_VERSION);
-
             request.onerror = () => reject(request.error);
             request.onsuccess = () => {
                 db = request.result;
                 resolve(db);
             };
-
             request.onupgradeneeded = (event) => {
                 const database = event.target.result;
-
-                // Wishlist store
                 if (!database.objectStoreNames.contains('wishlist')) {
                     database.createObjectStore('wishlist', { keyPath: 'id' });
                 }
-
-                // Search history store
                 if (!database.objectStoreNames.contains('history')) {
                     database.createObjectStore('history', { keyPath: 'query' });
                 }
@@ -119,7 +118,7 @@ const DiscoverModule = (function() {
     }
 
     /**
-     * Bind event listeners
+     * Bind events
      */
     function bindEvents() {
         if (elements.searchBtn) {
@@ -128,14 +127,8 @@ const DiscoverModule = (function() {
 
         if (elements.searchInput) {
             elements.searchInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    performSearch(1);
-                }
+                if (e.key === 'Enter') performSearch(1);
             });
-
-            // Search suggestions
-            elements.searchInput.addEventListener('input', debounce(showSearchSuggestions, 300));
-            elements.searchInput.addEventListener('focus', showSearchSuggestions);
         }
 
         if (elements.sourceToggles) {
@@ -152,29 +145,10 @@ const DiscoverModule = (function() {
         if (localStorage.getItem('discoverBannerDismissed') === 'true' && elements.banner) {
             elements.banner.style.display = 'none';
         }
-
-        // Close suggestions on click outside
-        document.addEventListener('click', (e) => {
-            const suggestions = document.getElementById('searchSuggestions');
-            if (suggestions && !suggestions.contains(e.target) && e.target !== elements.searchInput) {
-                suggestions.remove();
-            }
-        });
     }
 
     /**
-     * Debounce helper
-     */
-    function debounce(func, wait) {
-        let timeout;
-        return function(...args) {
-            clearTimeout(timeout);
-            timeout = setTimeout(() => func.apply(this, args), wait);
-        };
-    }
-
-    /**
-     * Update sources from toggles
+     * Update sources
      */
     function updateSources() {
         const checkboxes = elements.sourceToggles.querySelectorAll('input[type="checkbox"]');
@@ -184,56 +158,62 @@ const DiscoverModule = (function() {
                 state.sources.push(cb.value);
             }
         });
+        console.log('[Discover] Sources:', state.sources);
     }
 
     /**
-     * Update status indicator
+     * Update status
      */
     function updateStatusIndicator(ready) {
         if (!elements.status) return;
-
         const dot = elements.status.querySelector('.status-dot');
         const text = elements.status.querySelector('.status-text');
-
-        if (ready) {
-            dot.classList.remove('offline');
-            dot.classList.add('online');
-            text.textContent = 'Připraveno';
-        } else {
-            dot.classList.remove('online');
-            dot.classList.add('offline');
-            text.textContent = 'Chyba';
-        }
+        dot.classList.toggle('online', ready);
+        dot.classList.toggle('offline', !ready);
+        text.textContent = ready ? 'Připraveno' : 'Chyba';
     }
 
     /**
-     * Fetch with CORS proxy fallback
+     * Fetch with CORS proxy
      */
-    async function fetchWithProxy(url) {
-        let lastError;
+    async function fetchWithProxy(url, isApi = false) {
+        console.log('[Discover] Fetching:', url);
 
+        // If it's an API with CORS headers, try direct first
+        if (isApi) {
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    const text = await response.text();
+                    console.log('[Discover] Direct fetch success');
+                    return text;
+                }
+            } catch (e) {
+                console.log('[Discover] Direct fetch failed, trying proxies');
+            }
+        }
+
+        // Try each proxy
         for (let i = 0; i < CORS_PROXIES.length; i++) {
             const proxyIndex = (state.currentProxyIndex + i) % CORS_PROXIES.length;
-            const proxyUrl = CORS_PROXIES[proxyIndex] + encodeURIComponent(url);
+            const proxyUrl = CORS_PROXIES[proxyIndex](url);
 
             try {
-                const response = await fetch(proxyUrl, {
-                    headers: {
-                        'Accept': 'text/html,application/xhtml+xml'
-                    }
-                });
+                console.log('[Discover] Trying proxy', proxyIndex);
+                const response = await fetch(proxyUrl);
 
                 if (response.ok) {
                     state.currentProxyIndex = proxyIndex;
-                    return await response.text();
+                    const text = await response.text();
+                    console.log('[Discover] Proxy', proxyIndex, 'success, got', text.length, 'chars');
+                    return text;
                 }
             } catch (error) {
-                lastError = error;
                 console.warn(`[Discover] Proxy ${proxyIndex} failed:`, error.message);
             }
         }
 
-        throw new Error(`All proxies failed: ${lastError?.message || 'Unknown error'}`);
+        throw new Error('All fetch methods failed');
     }
 
     /**
@@ -252,40 +232,49 @@ const DiscoverModule = (function() {
             return;
         }
 
+        console.log('[Discover] Searching:', query, 'page:', page, 'sources:', state.sources);
+
         state.isSearching = true;
         state.currentQuery = query;
         state.currentPage = page;
         showLoading(true);
-
-        // Add to history
         addToHistory(query);
 
         try {
-            // Search all sources in parallel
-            const searchPromises = state.sources.map(async (sourceId) => {
+            const allResults = [];
+
+            // Search each source
+            for (const sourceId of state.sources) {
                 const source = SOURCES[sourceId];
-                if (!source) return [];
+                if (!source || !source.enabled) continue;
 
                 try {
+                    console.log('[Discover] Searching', sourceId);
                     const url = source.searchUrl(query, page);
-                    const html = await fetchWithProxy(url);
-                    return source.parseResults(html, source.baseUrl);
+                    const data = await fetchWithProxy(url, source.isApi);
+
+                    let results;
+                    if (source.isApi) {
+                        results = source.parseResults(data, sourceId);
+                    } else {
+                        results = source.parseResults(data, source.baseUrl, sourceId);
+                    }
+
+                    console.log('[Discover]', sourceId, 'found', results.length, 'results');
+                    allResults.push(...results);
                 } catch (error) {
-                    console.error(`[Discover] ${sourceId} search failed:`, error);
-                    return [];
+                    console.error(`[Discover] ${sourceId} failed:`, error);
                 }
-            });
+            }
 
-            const allResults = await Promise.all(searchPromises);
-            state.results = allResults.flat();
-
-            // Sort by seeders
+            state.results = allResults;
             state.results.sort((a, b) => (b.seeders || 0) - (a.seeders || 0));
 
+            console.log('[Discover] Total results:', state.results.length);
             renderResults(state.results);
 
             if (state.results.length === 0) {
-                showEmptyResults();
+                showEmptyResults('Žádné výsledky. Zkuste jiný dotaz.');
             } else {
                 showToast(`Nalezeno ${state.results.length} výsledků`, 'success');
             }
@@ -293,7 +282,7 @@ const DiscoverModule = (function() {
         } catch (error) {
             console.error('[Discover] Search failed:', error);
             showToast('Chyba při vyhledávání', 'error');
-            showEmptyResults('Nepodařilo se načíst výsledky. Zkuste to znovu.');
+            showEmptyResults('Chyba při vyhledávání. Zkuste to znovu.');
         } finally {
             state.isSearching = false;
             showLoading(false);
@@ -304,12 +293,8 @@ const DiscoverModule = (function() {
      * Show/hide loading
      */
     function showLoading(show) {
-        if (elements.loading) {
-            elements.loading.style.display = show ? 'flex' : 'none';
-        }
-        if (elements.results) {
-            elements.results.style.display = show ? 'none' : 'flex';
-        }
+        if (elements.loading) elements.loading.style.display = show ? 'flex' : 'none';
+        if (elements.results) elements.results.style.display = show ? 'none' : 'flex';
     }
 
     /**
@@ -318,9 +303,8 @@ const DiscoverModule = (function() {
     function renderResults(results) {
         if (!elements.results) return;
 
-        let html = results.map(result => createResultCard(result)).join('');
+        let html = results.map(createResultCard).join('');
 
-        // Add pagination
         if (results.length >= 20) {
             html += `
                 <div class="discover-pagination">
@@ -332,140 +316,115 @@ const DiscoverModule = (function() {
         }
 
         elements.results.innerHTML = html;
-
-        // Bind events
         bindResultEvents();
     }
 
     /**
-     * Bind result card events
+     * Bind result events
      */
     function bindResultEvents() {
-        // Magnet buttons
         elements.results.querySelectorAll('.btn-magnet').forEach(btn => {
             btn.addEventListener('click', handleMagnetClick);
         });
 
-        // Open magnet buttons
         elements.results.querySelectorAll('.btn-open-magnet').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const magnetUri = e.currentTarget.dataset.magnet;
                 if (magnetUri) {
                     window.location.href = magnetUri;
-                    showToast('Otevírám v torrent klientu...', 'info');
+                    showToast('Otevírám torrent klient...', 'info');
                 }
             });
         });
 
-        // Details buttons
         elements.results.querySelectorAll('.btn-details').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const url = e.currentTarget.dataset.url;
-                window.open(url, '_blank');
+                window.open(e.currentTarget.dataset.url, '_blank');
             });
         });
 
-        // Wishlist buttons
         elements.results.querySelectorAll('.btn-wishlist').forEach(btn => {
             btn.addEventListener('click', handleWishlistClick);
         });
 
-        // Pagination buttons
         elements.results.querySelectorAll('.btn-page').forEach(btn => {
             btn.addEventListener('click', (e) => {
-                const page = parseInt(e.currentTarget.dataset.page);
-                performSearch(page);
+                performSearch(parseInt(e.currentTarget.dataset.page));
             });
         });
     }
 
     /**
-     * Handle magnet button click
+     * Handle magnet click
      */
     async function handleMagnetClick(e) {
         const btn = e.currentTarget;
-        const magnetUri = btn.dataset.magnet;
+        let magnetUri = btn.dataset.magnet;
 
         if (magnetUri) {
             copyToClipboard(magnetUri);
             showToast('Magnet link zkopírován', 'success');
         } else {
-            // Need to fetch from detail page
             const url = btn.dataset.url;
-            await fetchMagnetLink(url, btn);
-        }
-    }
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<span>⏳</span><span>Načítám...</span>';
+            btn.disabled = true;
 
-    /**
-     * Fetch magnet link from details page
-     */
-    async function fetchMagnetLink(url, button) {
-        const originalText = button.innerHTML;
-        button.innerHTML = '<span>⏳</span><span>Načítám...</span>';
-        button.disabled = true;
+            try {
+                const html = await fetchWithProxy(url);
+                const match = html.match(/magnet:\?xt=urn:btih:[a-zA-Z0-9]+[^"'\s<]*/);
 
-        try {
-            const html = await fetchWithProxy(url);
+                if (match) {
+                    magnetUri = match[0];
+                    btn.dataset.magnet = magnetUri;
 
-            // Try to extract magnet from HTML
-            const magnetMatch = html.match(/magnet:\?xt=urn:btih:[a-zA-Z0-9]+[^"'\s<]*/);
-
-            if (magnetMatch) {
-                const magnetUri = magnetMatch[0];
-                button.dataset.magnet = magnetUri;
-
-                // Update card with open magnet button
-                const card = button.closest('.torrent-card');
-                if (card) {
-                    const actionsDiv = card.querySelector('.torrent-actions');
+                    // Add download button
+                    const card = btn.closest('.torrent-card');
+                    const actions = card.querySelector('.torrent-actions');
                     const openBtn = document.createElement('button');
                     openBtn.className = 'btn-open-magnet';
                     openBtn.dataset.magnet = magnetUri;
                     openBtn.innerHTML = '<span>⬇️</span><span>Stáhnout</span>';
-                    openBtn.addEventListener('click', () => {
+                    openBtn.onclick = () => {
                         window.location.href = magnetUri;
-                        showToast('Otevírám v torrent klientu...', 'info');
-                    });
-                    actionsDiv.insertBefore(openBtn, actionsDiv.firstChild);
-                }
+                        showToast('Otevírám torrent klient...', 'info');
+                    };
+                    actions.insertBefore(openBtn, actions.firstChild);
 
-                copyToClipboard(magnetUri);
-                showToast('Magnet link zkopírován', 'success');
-                button.innerHTML = '<span>🧲</span><span>Zkopírovat znovu</span>';
-                button.disabled = false;
-            } else {
-                throw new Error('Magnet not found');
+                    copyToClipboard(magnetUri);
+                    showToast('Magnet link zkopírován', 'success');
+                    btn.innerHTML = '<span>🧲</span><span>Kopírovat</span>';
+                } else {
+                    throw new Error('Magnet nenalezen');
+                }
+            } catch (error) {
+                console.error('[Discover] Magnet fetch failed:', error);
+                showToast('Nepodařilo se získat magnet', 'error');
+                btn.innerHTML = originalHtml;
             }
-        } catch (error) {
-            console.error('[Discover] Failed to fetch magnet:', error);
-            showToast('Nepodařilo se získat magnet link', 'error');
-            button.innerHTML = originalText;
-            button.disabled = false;
+            btn.disabled = false;
         }
     }
 
     /**
-     * Handle wishlist button click
+     * Handle wishlist click
      */
     async function handleWishlistClick(e) {
         const btn = e.currentTarget;
         const card = btn.closest('.torrent-card');
         const id = card.dataset.id;
-        const source = card.dataset.source;
 
         const isInWishlist = state.wishlist.some(item => item.id === id);
 
         if (isInWishlist) {
             await removeFromWishlist(id);
             btn.innerHTML = '<span>💾</span>';
-            btn.title = 'Přidat do wishlistu';
             showToast('Odebráno z wishlistu', 'info');
         } else {
-            const result = state.results.find(r => r.id === id && r.source === source);
+            const result = state.results.find(r => r.id === id);
             if (result) {
                 await addToWishlist(result);
                 btn.innerHTML = '<span>✅</span>';
-                btn.title = 'V wishlistu';
                 showToast('Přidáno do wishlistu', 'success');
             }
         }
@@ -477,6 +436,7 @@ const DiscoverModule = (function() {
     function createResultCard(result) {
         const seedersClass = result.seeders > 10 ? 'seeders' : (result.seeders > 0 ? '' : 'leechers');
         const isInWishlist = state.wishlist.some(item => item.id === result.id);
+        const hasMagnet = !!result.magnetUri;
 
         return `
             <div class="torrent-card" data-id="${result.id}" data-source="${result.source}">
@@ -484,37 +444,30 @@ const DiscoverModule = (function() {
                     <div class="torrent-title">${escapeHtml(result.title)}</div>
                     <div class="torrent-meta">
                         <span class="torrent-meta-item ${seedersClass}">
-                            <span>▲</span>
-                            <span>${result.seeders || 0}</span>
+                            <span>▲</span> ${result.seeders || 0}
                         </span>
                         <span class="torrent-meta-item leechers">
-                            <span>▼</span>
-                            <span>${result.leechers || 0}</span>
+                            <span>▼</span> ${result.leechers || 0}
                         </span>
                         <span class="torrent-meta-item">
-                            <span>📦</span>
-                            <span>${result.size || 'N/A'}</span>
+                            <span>📦</span> ${result.size || 'N/A'}
                         </span>
                         <span class="torrent-source">${result.source}</span>
                     </div>
                 </div>
                 <div class="torrent-actions">
-                    ${result.magnetUri ? `
-                        <button class="btn-open-magnet" data-magnet="${escapeHtml(result.magnetUri)}" title="Otevřít v torrent klientu">
-                            <span>⬇️</span>
-                            <span>Stáhnout</span>
+                    ${hasMagnet ? `
+                        <button class="btn-open-magnet" data-magnet="${escapeHtml(result.magnetUri)}" title="Stáhnout">
+                            <span>⬇️</span><span>Stáhnout</span>
                         </button>
                     ` : ''}
                     <button class="btn-magnet"
-                            data-magnet="${result.magnetUri ? escapeHtml(result.magnetUri) : ''}"
-                            data-source="${result.source}"
-                            data-id="${result.id}"
+                            data-magnet="${hasMagnet ? escapeHtml(result.magnetUri) : ''}"
                             data-url="${escapeHtml(result.url)}"
-                            title="Kopírovat magnet link">
-                        <span>🧲</span>
-                        <span>${result.magnetUri ? 'Kopírovat' : 'Získat magnet'}</span>
+                            title="Kopírovat magnet">
+                        <span>🧲</span><span>${hasMagnet ? 'Kopírovat' : 'Získat magnet'}</span>
                     </button>
-                    <button class="btn-wishlist" title="${isInWishlist ? 'V wishlistu' : 'Přidat do wishlistu'}">
+                    <button class="btn-wishlist" title="Wishlist">
                         <span>${isInWishlist ? '✅' : '💾'}</span>
                     </button>
                     <button class="btn-details" data-url="${escapeHtml(result.url)}" title="Otevřít stránku">
@@ -528,185 +481,15 @@ const DiscoverModule = (function() {
     /**
      * Show empty results
      */
-    function showEmptyResults(message = null) {
+    function showEmptyResults(message) {
         if (!elements.results) return;
-
         elements.results.innerHTML = `
             <div class="discover-empty">
                 <div class="empty-icon">🔎</div>
                 <h3>${message || 'Žádné výsledky'}</h3>
-                <p>Zkuste upravit hledaný výraz nebo zvolit jiné zdroje</p>
+                <p>Zkuste upravit hledaný výraz</p>
             </div>
         `;
-    }
-
-    /**
-     * Show search suggestions
-     */
-    function showSearchSuggestions() {
-        const query = elements.searchInput.value.trim().toLowerCase();
-        let existing = document.getElementById('searchSuggestions');
-
-        if (!query && state.searchHistory.length === 0) {
-            if (existing) existing.remove();
-            return;
-        }
-
-        const suggestions = state.searchHistory
-            .filter(item => !query || item.query.toLowerCase().includes(query))
-            .slice(0, 5);
-
-        if (suggestions.length === 0) {
-            if (existing) existing.remove();
-            return;
-        }
-
-        if (!existing) {
-            existing = document.createElement('div');
-            existing.id = 'searchSuggestions';
-            existing.className = 'search-suggestions';
-            elements.searchInput.parentNode.appendChild(existing);
-        }
-
-        existing.innerHTML = suggestions.map(item => `
-            <div class="suggestion-item" data-query="${escapeHtml(item.query)}">
-                <span>🕐</span>
-                <span>${escapeHtml(item.query)}</span>
-            </div>
-        `).join('');
-
-        existing.querySelectorAll('.suggestion-item').forEach(item => {
-            item.addEventListener('click', () => {
-                elements.searchInput.value = item.dataset.query;
-                existing.remove();
-                performSearch(1);
-            });
-        });
-    }
-
-    /**
-     * Add to search history
-     */
-    async function addToHistory(query) {
-        const existing = state.searchHistory.findIndex(h => h.query.toLowerCase() === query.toLowerCase());
-        if (existing > -1) {
-            state.searchHistory.splice(existing, 1);
-        }
-
-        state.searchHistory.unshift({ query, timestamp: Date.now() });
-        state.searchHistory = state.searchHistory.slice(0, 20);
-
-        if (db) {
-            const tx = db.transaction('history', 'readwrite');
-            const store = tx.objectStore('history');
-            store.put({ query, timestamp: Date.now() });
-        }
-    }
-
-    /**
-     * Load search history
-     */
-    async function loadSearchHistory() {
-        if (!db) return;
-
-        const tx = db.transaction('history', 'readonly');
-        const store = tx.objectStore('history');
-        const request = store.getAll();
-
-        request.onsuccess = () => {
-            state.searchHistory = request.result
-                .sort((a, b) => b.timestamp - a.timestamp)
-                .slice(0, 20);
-        };
-    }
-
-    /**
-     * Add to wishlist
-     */
-    async function addToWishlist(item) {
-        const wishlistItem = {
-            id: item.id,
-            title: item.title,
-            source: item.source,
-            magnetUri: item.magnetUri,
-            url: item.url,
-            size: item.size,
-            seeders: item.seeders,
-            addedAt: Date.now()
-        };
-
-        state.wishlist.push(wishlistItem);
-
-        if (db) {
-            const tx = db.transaction('wishlist', 'readwrite');
-            const store = tx.objectStore('wishlist');
-            store.put(wishlistItem);
-        }
-    }
-
-    /**
-     * Remove from wishlist
-     */
-    async function removeFromWishlist(id) {
-        state.wishlist = state.wishlist.filter(item => item.id !== id);
-
-        if (db) {
-            const tx = db.transaction('wishlist', 'readwrite');
-            const store = tx.objectStore('wishlist');
-            store.delete(id);
-        }
-    }
-
-    /**
-     * Load wishlist
-     */
-    async function loadWishlist() {
-        if (!db) return;
-
-        const tx = db.transaction('wishlist', 'readonly');
-        const store = tx.objectStore('wishlist');
-        const request = store.getAll();
-
-        request.onsuccess = () => {
-            state.wishlist = request.result || [];
-        };
-    }
-
-    /**
-     * Copy to clipboard
-     */
-    async function copyToClipboard(text) {
-        try {
-            await navigator.clipboard.writeText(text);
-        } catch {
-            const textarea = document.createElement('textarea');
-            textarea.value = text;
-            textarea.style.position = 'fixed';
-            textarea.style.opacity = '0';
-            document.body.appendChild(textarea);
-            textarea.select();
-            document.execCommand('copy');
-            document.body.removeChild(textarea);
-        }
-    }
-
-    /**
-     * Show toast
-     */
-    function showToast(message, type = 'info') {
-        if (typeof window.showToast === 'function') {
-            window.showToast(message, type);
-        }
-    }
-
-    /**
-     * Escape HTML
-     */
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 
     // ===========================================
@@ -714,9 +497,9 @@ const DiscoverModule = (function() {
     // ===========================================
 
     /**
-     * Parse 1337x search results
+     * Parse 1337x results
      */
-    function parse1337xResults(html, baseUrl) {
+    function parse1337xResults(html, baseUrl, sourceId) {
         const results = [];
         const parser = new DOMParser();
         const doc = parser.parseFromString(html, 'text/html');
@@ -724,10 +507,6 @@ const DiscoverModule = (function() {
         doc.querySelectorAll('table.table-list tbody tr').forEach(row => {
             try {
                 const nameCell = row.querySelector('td.coll-1');
-                const seedersCell = row.querySelector('td.coll-2');
-                const leechersCell = row.querySelector('td.coll-3');
-                const sizeCell = row.querySelector('td.coll-4');
-
                 if (!nameCell) return;
 
                 const link = nameCell.querySelector('a:nth-child(2)');
@@ -735,10 +514,14 @@ const DiscoverModule = (function() {
 
                 const title = link.textContent.trim();
                 const href = link.getAttribute('href');
-                const id = href ? href.split('/').filter(Boolean).pop() : null;
+                const id = href?.split('/').filter(Boolean).pop() || Math.random().toString(36);
+
+                const seedersCell = row.querySelector('td.coll-2');
+                const leechersCell = row.querySelector('td.coll-3');
+                const sizeCell = row.querySelector('td.coll-4');
 
                 results.push({
-                    id,
+                    id: `1337x-${id}`,
                     title,
                     url: baseUrl + href,
                     magnetUri: null,
@@ -756,106 +539,167 @@ const DiscoverModule = (function() {
     }
 
     /**
-     * Parse 1337x details
+     * Parse PirateBay API results
      */
-    function parse1337xDetails(html) {
-        const magnetMatch = html.match(/magnet:\?xt=urn:btih:[a-zA-Z0-9]+[^"'\s]*/);
-        return magnetMatch ? magnetMatch[0] : null;
-    }
-
-    /**
-     * Parse Nyaa search results
-     */
-    function parseNyaaResults(html, baseUrl) {
+    function parsePirateBayResults(data, sourceId) {
         const results = [];
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
 
-        doc.querySelectorAll('table.torrent-list tbody tr').forEach(row => {
-            try {
-                const titleCell = row.querySelector('td:nth-child(2)');
-                const linksCell = row.querySelector('td:nth-child(3)');
-                const sizeCell = row.querySelector('td:nth-child(4)');
-                const seedersCell = row.querySelector('td:nth-child(6)');
-                const leechersCell = row.querySelector('td:nth-child(7)');
+        try {
+            const items = JSON.parse(data);
 
-                const titleLink = titleCell?.querySelector('a:not(.comments)');
-                if (!titleLink) return;
+            if (!Array.isArray(items) || items.length === 0 || items[0].id === '0') {
+                return results;
+            }
 
-                const title = titleLink.textContent.trim();
-                const href = titleLink.getAttribute('href');
-                const id = href ? href.replace('/view/', '') : null;
+            items.forEach(item => {
+                const infoHash = item.info_hash;
+                // Add popular trackers for better connectivity
+                const trackers = [
+                    'udp://tracker.opentrackr.org:1337/announce',
+                    'udp://open.stealth.si:80/announce',
+                    'udp://tracker.torrent.eu.org:451/announce',
+                    'udp://tracker.bittor.pw:1337/announce',
+                    'udp://tracker.openbittorrent.com:6969/announce'
+                ];
+                const trackersStr = trackers.map(t => `&tr=${encodeURIComponent(t)}`).join('');
+                const magnetUri = `magnet:?xt=urn:btih:${infoHash}&dn=${encodeURIComponent(item.name)}${trackersStr}`;
 
-                const magnetLink = linksCell?.querySelector('a[href^="magnet:"]');
-                const magnetUri = magnetLink?.getAttribute('href');
+                // Format size
+                let size = 'N/A';
+                const bytes = parseInt(item.size);
+                if (bytes > 0) {
+                    if (bytes > 1073741824) size = (bytes / 1073741824).toFixed(2) + ' GB';
+                    else if (bytes > 1048576) size = (bytes / 1048576).toFixed(2) + ' MB';
+                    else size = (bytes / 1024).toFixed(2) + ' KB';
+                }
 
                 results.push({
-                    id,
-                    title,
-                    url: baseUrl + href,
+                    id: `tpb-${item.id}`,
+                    title: item.name,
+                    url: `https://thepiratebay.org/description.php?id=${item.id}`,
                     magnetUri,
-                    seeders: parseInt(seedersCell?.textContent) || 0,
-                    leechers: parseInt(leechersCell?.textContent) || 0,
-                    size: sizeCell?.textContent.trim() || 'N/A',
-                    source: 'nyaa'
+                    seeders: parseInt(item.seeders) || 0,
+                    leechers: parseInt(item.leechers) || 0,
+                    size,
+                    source: 'piratebay'
                 });
-            } catch (e) {
-                console.warn('[Nyaa] Parse error:', e);
-            }
-        });
+            });
+        } catch (e) {
+            console.error('[PirateBay] Parse error:', e);
+        }
 
         return results;
     }
 
     /**
-     * Parse Nyaa details
+     * Parse YTS API results
      */
-    function parseNyaaDetails(html) {
-        const magnetMatch = html.match(/magnet:\?xt=urn:btih:[a-zA-Z0-9]+[^"'\s]*/);
-        return magnetMatch ? magnetMatch[0] : null;
-    }
-
-    /**
-     * Parse LimeTorrents results
-     */
-    function parseLimeResults(html, baseUrl) {
+    function parseYTSResults(data, sourceId) {
         const results = [];
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(html, 'text/html');
 
-        doc.querySelectorAll('table.table2 tr.table2').forEach(row => {
-            try {
-                const nameCell = row.querySelector('td.tdleft');
-                const sizeCell = row.querySelector('td.tdnormal:nth-child(3)');
-                const seedersCell = row.querySelector('td.tdseed');
-                const leechersCell = row.querySelector('td.tdleech');
+        try {
+            const json = JSON.parse(data);
+            const movies = json.data?.movies || [];
 
-                const titleLink = nameCell?.querySelector('div.tt-name a:nth-child(2)');
-                if (!titleLink) return;
-
-                const title = titleLink.textContent.trim();
-                const href = titleLink.getAttribute('href');
-                const id = href ? href.split('/').filter(Boolean).pop() : null;
-
-                const magnetLink = row.querySelector('a[href^="magnet:"]');
-                const magnetUri = magnetLink?.getAttribute('href');
+            movies.forEach(movie => {
+                const torrent = movie.torrents?.[0];
+                if (!torrent) return;
 
                 results.push({
-                    id,
-                    title,
-                    url: baseUrl + href,
-                    magnetUri,
-                    seeders: parseInt(seedersCell?.textContent) || 0,
-                    leechers: parseInt(leechersCell?.textContent) || 0,
-                    size: sizeCell?.textContent.trim() || 'N/A',
-                    source: 'limetorrents'
+                    id: `yts-${movie.id}`,
+                    title: movie.title_long,
+                    url: torrent.url,
+                    magnetUri: null,
+                    seeders: torrent.seeds || 0,
+                    leechers: torrent.peers || 0,
+                    size: torrent.size || 'N/A',
+                    source: 'yts'
                 });
-            } catch (e) {
-                console.warn('[LimeTorrents] Parse error:', e);
-            }
-        });
+            });
+        } catch (e) {
+            console.error('[YTS] Parse error:', e);
+        }
 
         return results;
+    }
+
+    // ===========================================
+    // HELPERS
+    // ===========================================
+
+    async function addToHistory(query) {
+        const idx = state.searchHistory.findIndex(h => h.query.toLowerCase() === query.toLowerCase());
+        if (idx > -1) state.searchHistory.splice(idx, 1);
+        state.searchHistory.unshift({ query, timestamp: Date.now() });
+        state.searchHistory = state.searchHistory.slice(0, 20);
+        if (db) {
+            const tx = db.transaction('history', 'readwrite');
+            tx.objectStore('history').put({ query, timestamp: Date.now() });
+        }
+    }
+
+    async function loadSearchHistory() {
+        if (!db) return;
+        const tx = db.transaction('history', 'readonly');
+        const request = tx.objectStore('history').getAll();
+        request.onsuccess = () => {
+            state.searchHistory = (request.result || []).sort((a, b) => b.timestamp - a.timestamp).slice(0, 20);
+        };
+    }
+
+    async function addToWishlist(item) {
+        const wishlistItem = { ...item, addedAt: Date.now() };
+        state.wishlist.push(wishlistItem);
+        if (db) {
+            const tx = db.transaction('wishlist', 'readwrite');
+            tx.objectStore('wishlist').put(wishlistItem);
+        }
+    }
+
+    async function removeFromWishlist(id) {
+        state.wishlist = state.wishlist.filter(item => item.id !== id);
+        if (db) {
+            const tx = db.transaction('wishlist', 'readwrite');
+            tx.objectStore('wishlist').delete(id);
+        }
+    }
+
+    async function loadWishlist() {
+        if (!db) return;
+        const tx = db.transaction('wishlist', 'readonly');
+        const request = tx.objectStore('wishlist').getAll();
+        request.onsuccess = () => {
+            state.wishlist = request.result || [];
+        };
+    }
+
+    async function copyToClipboard(text) {
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch {
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.cssText = 'position:fixed;opacity:0';
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+        }
+    }
+
+    function showToast(message, type = 'info') {
+        if (typeof window.showToast === 'function') {
+            window.showToast(message, type);
+        } else {
+            console.log('[Toast]', type, message);
+        }
+    }
+
+    function escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 
     // ===========================================
@@ -872,7 +716,7 @@ const DiscoverModule = (function() {
 
 })();
 
-// Initialize when DOM is ready
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
     if (document.getElementById('discoverView')) {
         DiscoverModule.init();
