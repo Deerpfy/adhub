@@ -1,0 +1,21 @@
+{
+  "name": "ai-prompting",
+  "version": "2.1.0",
+  "description": "AI Prompt Formatter - Research-backed prompting techniques",
+  "main": "app.js",
+  "scripts": {
+    "build:js": "babel src/app.jsx --out-file app.js",
+    "build:css": "tailwindcss -i src/input.css -o styles.css --minify",
+    "build": "npm run build:js && npm run build:css",
+    "watch:css": "tailwindcss -i src/input.css -o styles.css --watch"
+  },
+  "keywords": ["ai", "prompting", "formatter"],
+  "author": "Deerpfy",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/cli": "^7.28.3",
+    "@babel/core": "^7.28.5",
+    "@babel/preset-react": "^7.28.5",
+    "tailwindcss": "^3.4.19"
+  }
+}
