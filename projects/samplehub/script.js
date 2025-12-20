@@ -386,6 +386,12 @@
             case 'browse':
                 renderBrowse();
                 break;
+            case 'discover':
+                // Discover view is handled by discover.js module
+                if (typeof DiscoverModule !== 'undefined') {
+                    DiscoverModule.checkServerStatus();
+                }
+                break;
             case 'packs':
                 renderPacks();
                 break;
@@ -1325,6 +1331,13 @@
             timeout = setTimeout(later, wait);
         };
     }
+
+    // =============================================
+    // GLOBAL EXPORTS
+    // =============================================
+
+    // Export showToast for use by other modules (e.g., discover.js)
+    window.showToast = showToast;
 
     // =============================================
     // START APPLICATION
