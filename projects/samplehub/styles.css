@@ -1602,6 +1602,144 @@ body {
 }
 
 /* =============================================
+   SVG ICONS
+   ============================================= */
+
+.icon {
+    width: 1em;
+    height: 1em;
+    display: inline-block;
+    vertical-align: middle;
+    fill: currentColor;
+    stroke: currentColor;
+    flex-shrink: 0;
+}
+
+.icon-sm {
+    width: 0.875em;
+    height: 0.875em;
+}
+
+.icon-lg {
+    width: 1.25em;
+    height: 1.25em;
+}
+
+.icon-xl {
+    width: 1.5em;
+    height: 1.5em;
+}
+
+.icon-2x {
+    width: 2em;
+    height: 2em;
+}
+
+.icon-3x {
+    width: 3em;
+    height: 3em;
+}
+
+.icon-4x {
+    width: 4em;
+    height: 4em;
+}
+
+/* Logo icon with gradient effect */
+.logo-icon .icon {
+    width: 1.8rem;
+    height: 1.8rem;
+    filter: drop-shadow(0 2px 8px rgba(139, 92, 246, 0.4));
+}
+
+/* Navigation icons */
+.nav-icon .icon {
+    width: 1.2rem;
+    height: 1.2rem;
+}
+
+/* Player controls */
+.player-btn .icon {
+    width: 1.2rem;
+    height: 1.2rem;
+}
+
+.player-btn-main .icon {
+    width: 1.3rem;
+    height: 1.3rem;
+}
+
+/* Category icons */
+.category-icon .icon {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+/* Empty state icon */
+.empty-icon .icon {
+    width: 4rem;
+    height: 4rem;
+    opacity: 0.4;
+}
+
+/* Dropzone icon */
+.dropzone-icon .icon {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Pack cover icon */
+.pack-cover .icon {
+    width: 3rem;
+    height: 3rem;
+}
+
+/* Sample card icon */
+.sample-icon .icon {
+    width: 2rem;
+    height: 2rem;
+}
+
+/* Icon color variants */
+.icon-primary {
+    color: var(--primary-color);
+}
+
+.icon-secondary {
+    color: var(--secondary-color);
+}
+
+.icon-success {
+    color: var(--success-color);
+}
+
+.icon-danger {
+    color: var(--danger-color);
+}
+
+.icon-warning {
+    color: var(--warning-color);
+}
+
+.icon-accent {
+    color: var(--accent-color);
+}
+
+.icon-muted {
+    color: var(--text-muted);
+}
+
+/* Animated loading icon */
+.icon-spin {
+    animation: iconSpin 1s linear infinite;
+}
+
+@keyframes iconSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* =============================================
    DISCOVER VIEW (Torrent Search)
    ============================================= */
 
