@@ -2239,3 +2239,50 @@ body {
         gap: 12px;
     }
 }
+
+/* Custom source styling */
+.custom-source {
+    border: 1px dashed var(--primary-color);
+    background: rgba(139, 92, 246, 0.05);
+}
+
+.custom-source:hover {
+    background: rgba(139, 92, 246, 0.1);
+}
+
+.remove-source-btn {
+    background: none;
+    border: none;
+    color: var(--danger-color);
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0 4px;
+    margin-left: auto;
+    opacity: 0.6;
+    transition: var(--transition);
+}
+
+.remove-source-btn:hover {
+    opacity: 1;
+}
+
+.add-source-btn {
+    border: 1px dashed var(--border-color);
+    background: transparent;
+    cursor: pointer;
+}
+
+.add-source-btn:hover {
+    border-color: var(--primary-color);
+    background: rgba(139, 92, 246, 0.1);
+}
+
+/* Source toggle with icon */
+.toggle-label .icon {
+    opacity: 0.7;
+}
+
+.toggle-label input:checked + .icon {
+    opacity: 1;
+    color: var(--primary-color);
+}
