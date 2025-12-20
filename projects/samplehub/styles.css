@@ -1960,6 +1960,121 @@ body {
     color: var(--primary-light);
 }
 
+/* Search Suggestions */
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    z-index: 100;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.suggestion-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.suggestion-item:hover {
+    background: var(--bg-hover);
+}
+
+/* Open Magnet Button */
+.btn-open-magnet {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, var(--success-color), #059669);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-open-magnet:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+}
+
+/* Wishlist Button */
+.btn-wishlist {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: var(--bg-tertiary);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-wishlist:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary-color);
+}
+
+/* Pagination */
+.discover-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 20px;
+    margin-top: 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+}
+
+.btn-page {
+    padding: 10px 20px;
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.btn-page:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.page-info {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+/* Torrent Actions Layout Fix */
+.torrent-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+/* Discover Search Row Position */
+.discover-search-row {
+    position: relative;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .discover-search-row {
@@ -1977,6 +2092,12 @@ body {
 
     .torrent-actions {
         flex-direction: row;
+        flex-wrap: wrap;
         justify-content: flex-start;
+    }
+
+    .discover-pagination {
+        flex-direction: column;
+        gap: 12px;
     }
 }
