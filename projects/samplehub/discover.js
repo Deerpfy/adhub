@@ -590,7 +590,20 @@ const DiscoverModule = (function() {
         elements.results.querySelectorAll('.btn-open-magnet').forEach(btn => {
             btn.addEventListener('click', (e) => {
                 const magnetUri = e.currentTarget.dataset.magnet;
-                if (magnetUri) {
+                const card = e.currentTarget.closest('.torrent-card');
+                const id = card?.dataset.id;
+                const result = state.results.find(r => r.id === id);
+
+                if (magnetUri && typeof TorrentDownloader !== 'undefined') {
+                    // Use in-browser WebTorrent downloader
+                    TorrentDownloader.downloadTorrent(magnetUri, {
+                        title: result?.title || 'Unknown',
+                        size: result?.size || 'N/A',
+                        seeders: result?.seeders || 0,
+                        leechers: result?.leechers || 0
+                    });
+                } else if (magnetUri) {
+                    // Fallback: open in external torrent client
                     window.location.href = magnetUri;
                     showToast('Otevírám torrent klient...', 'info');
                 }
@@ -638,14 +651,25 @@ const DiscoverModule = (function() {
                     btn.dataset.magnet = magnetUri;
 
                     const card = btn.closest('.torrent-card');
+                    const id = card?.dataset.id;
+                    const result = state.results.find(r => r.id === id);
                     const actions = card.querySelector('.torrent-actions');
                     const openBtn = document.createElement('button');
                     openBtn.className = 'btn-open-magnet';
                     openBtn.dataset.magnet = magnetUri;
                     openBtn.innerHTML = '<svg class="icon"><use href="icons.svg#icon-download"></use></svg><span>Stáhnout</span>';
                     openBtn.onclick = () => {
-                        window.location.href = magnetUri;
-                        showToast('Otevírám torrent klient...', 'info');
+                        if (typeof TorrentDownloader !== 'undefined') {
+                            TorrentDownloader.downloadTorrent(magnetUri, {
+                                title: result?.title || 'Unknown',
+                                size: result?.size || 'N/A',
+                                seeders: result?.seeders || 0,
+                                leechers: result?.leechers || 0
+                            });
+                        } else {
+                            window.location.href = magnetUri;
+                            showToast('Otevírám torrent klient...', 'info');
+                        }
                     };
                     actions.insertBefore(openBtn, actions.firstChild);
 

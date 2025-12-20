@@ -2286,3 +2286,319 @@ body {
     opacity: 1;
     color: var(--primary-color);
 }
+
+/* =============================================
+   DOWNLOADS PANEL
+   ============================================= */
+
+.downloads-panel {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 380px;
+    max-height: 400px;
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.downloads-panel.visible {
+    display: flex;
+}
+
+.downloads-panel.collapsed .downloads-list {
+    display: none;
+}
+
+.downloads-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: var(--bg-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.downloads-header h4 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.downloads-count {
+    background: var(--primary-color);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+}
+
+.downloads-toggle {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    transition: var(--transition);
+}
+
+.downloads-toggle:hover {
+    color: var(--text-color);
+}
+
+.downloads-panel.collapsed .downloads-toggle .icon {
+    transform: rotate(180deg);
+}
+
+.downloads-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+}
+
+.downloads-empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 20px;
+    font-size: 0.9rem;
+}
+
+.download-item {
+    background: var(--bg-color);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 8px;
+}
+
+.download-item:last-child {
+    margin-bottom: 0;
+}
+
+.download-item.downloading {
+    border-left: 3px solid var(--primary-color);
+}
+
+.download-item.completed {
+    border-left: 3px solid var(--success-color);
+}
+
+.download-item.error {
+    border-left: 3px solid var(--danger-color);
+}
+
+.download-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.download-name {
+    font-weight: 500;
+    font-size: 0.9rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.download-meta {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.download-progress {
+    height: 4px;
+    background: var(--border-color);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.download-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    border-radius: 2px;
+    transition: width 0.3s ease;
+}
+
+.download-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+}
+
+.download-actions button {
+    background: var(--surface-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 6px 10px;
+    cursor: pointer;
+    color: var(--text-color);
+    transition: var(--transition);
+}
+
+.download-actions button:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+/* =============================================
+   SAFETY WARNING MODAL
+   ============================================= */
+
+.warning-header {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(239, 68, 68, 0.2));
+    border-bottom: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.warning-header .modal-title {
+    color: var(--warning-color);
+}
+
+.warning-content {
+    text-align: left;
+}
+
+.warning-icon-large {
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.warning-content h4 {
+    text-align: center;
+    color: var(--danger-color);
+    margin-bottom: 16px;
+    font-size: 1.2rem;
+}
+
+.warning-text {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.warning-text p {
+    margin: 0 0 12px 0;
+}
+
+.warning-text ul {
+    margin: 0 0 12px 0;
+    padding-left: 20px;
+}
+
+.warning-text li {
+    margin-bottom: 6px;
+    line-height: 1.5;
+}
+
+.warning-recommendation {
+    color: var(--success-color);
+    margin-top: 16px !important;
+}
+
+.torrent-preview {
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.torrent-preview h5 {
+    margin: 0 0 8px 0;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+
+.torrent-preview .torrent-name {
+    font-weight: 600;
+    font-size: 1rem;
+    margin: 0 0 4px 0;
+    word-break: break-word;
+}
+
+.torrent-preview .torrent-size {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0 0 4px 0;
+}
+
+.torrent-preview .torrent-seeders {
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+.torrent-preview .seeders {
+    color: var(--success-color);
+    margin-right: 12px;
+}
+
+.torrent-preview .leechers {
+    color: var(--danger-color);
+}
+
+.warning-checkbox {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 16px;
+}
+
+.warning-checkbox input:checked + span {
+    color: var(--success-color);
+}
+
+.modal-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-color);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.btn-danger:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* =============================================
+   RESPONSIVE DOWNLOADS
+   ============================================= */
+
+@media (max-width: 480px) {
+    .downloads-panel {
+        right: 10px;
+        left: 10px;
+        width: auto;
+        bottom: 90px;
+    }
+}
