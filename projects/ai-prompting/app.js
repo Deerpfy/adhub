@@ -250,6 +250,17 @@ const BASE_TRANSLATIONS = {
       showAll: 'Show all',
       hideOthers: 'Hide others',
       bestFor: 'Best for this category',
+      selectMethods: 'Select Methods',
+      closeMethods: 'Done',
+      clearAll: 'Clear All',
+      groups: {
+        reasoning: 'Reasoning & Thinking',
+        efficiency: 'Efficiency & Speed',
+        selfImprovement: 'Self-Improvement',
+        inContext: 'In-Context Learning',
+        structured: 'Structured & Agentic',
+        quality: 'Output Quality'
+      },
       cot: {
         name: 'Chain-of-Thought',
         citation: 'Google Brain 2022',
@@ -1253,6 +1264,17 @@ Prompt to analyze:
       showAll: 'Zobrazit všechny',
       hideOthers: 'Skrýt ostatní',
       bestFor: 'Nejlepší pro tuto kategorii',
+      selectMethods: 'Vybrat metody',
+      closeMethods: 'Hotovo',
+      clearAll: 'Vymazat vše',
+      groups: {
+        reasoning: 'Uvažování & Myšlení',
+        efficiency: 'Efektivita & Rychlost',
+        selfImprovement: 'Sebe-zlepšování',
+        inContext: 'Kontextové učení',
+        structured: 'Strukturované & Agentní',
+        quality: 'Kvalita výstupu'
+      },
       cot: {
         name: 'Chain-of-Thought',
         citation: 'Google Brain 2022',
@@ -3348,6 +3370,35 @@ const methodIcons = {
   slowthink: 'Clock'         // Deliberate thinking
 };
 
+// ==================== METHOD GROUPS (Categories) ====================
+// Organize 29 methods into logical groups for better UI
+const METHOD_GROUPS = {
+  reasoning: {
+    icon: 'Brain',
+    methods: ['cot', 'zeroshot', 'tot', 'got', 'bot', 'thot', 's2a', 'stepback', 'selfask', 'slowthink']
+  },
+  efficiency: {
+    icon: 'Zap',
+    methods: ['cod', 'sot', 'selfdiscover', 'opro']
+  },
+  selfImprovement: {
+    icon: 'RotateCw',
+    methods: ['selfrefine', 'reflexion', 'selfconsistency', 'contrastive', 'rstar']
+  },
+  inContext: {
+    icon: 'BookOpen',
+    methods: ['fewshot', 'analogical', 'rar']
+  },
+  structured: {
+    icon: 'Target',
+    methods: ['risen', 'react', 'metaprompt', 'plansolve', 'pal']
+  },
+  quality: {
+    icon: 'Award',
+    methods: ['emotion', 'confidence']
+  }
+};
+
 // ==================== MAIN APP ====================
 const App = () => {
   const [lang, setLangState] = useState(() => localStorage.getItem('ai-prompt-lang') || 'en');
@@ -3370,6 +3421,8 @@ const App = () => {
   const [importCode, setImportCode] = useState('');
   const [showColors, setShowColors] = useState(true);
   const [showAllMethods, setShowAllMethods] = useState(false);
+  const [showMethodsModal, setShowMethodsModal] = useState(false);
+  const [expandedMethodGroup, setExpandedMethodGroup] = useState(null);
 
   // Model-specific features state - tracks which optional features are enabled for each model
   const [selectedFeatures, setSelectedFeatures] = useState({});
@@ -7178,87 +7231,152 @@ const App = () => {
     className: "flex items-center justify-between mb-3"
   }, /*#__PURE__*/React.createElement("h3", {
     className: "text-sm font-medium text-slate-300"
-  }, t.methods.title)), /*#__PURE__*/React.createElement("div", {
-    className: "mb-3"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-2 mb-2"
+  }, t.methods.title), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs text-amber-400"
+  }, selectedMethods.length > 0 && `${selectedMethods.length} ${t.methods.active}`)),
+
+  /* Selected Methods Badges */
+  selectedMethods.length > 0 && /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-1.5 mb-3"
+  }, selectedMethods.map(key => {
+    const method = t.methods[key];
+    if (!method) return null;
+    return /*#__PURE__*/React.createElement("div", {
+      key: key,
+      className: "flex items-center gap-1 px-2 py-1 bg-amber-500/20 border border-amber-500/40 rounded-full text-amber-300 group"
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: methodIcons[key],
+      size: 12,
+      className: "text-amber-400"
+    }), /*#__PURE__*/React.createElement("span", {
+      className: "text-xs font-medium"
+    }, method.name), /*#__PURE__*/React.createElement("button", {
+      onClick: () => toggleMethod(key),
+      className: "ml-0.5 text-amber-400/60 hover:text-amber-300 transition-colors"
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: "X",
+      size: 12
+    })));
+  })),
+
+  /* Select Methods Button */
+  /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShowMethodsModal(true),
+    className: "w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/40 rounded-lg text-amber-300 hover:border-amber-400 hover:text-amber-200 transition-all"
   }, /*#__PURE__*/React.createElement(Icon, {
-    name: "Star",
-    size: 14,
+    name: "FlaskConical",
+    size: 18,
     className: "text-amber-400"
   }), /*#__PURE__*/React.createElement("span", {
-    className: "text-xs font-medium text-amber-400"
-  }, t.methods.recommended)), /*#__PURE__*/React.createElement("div", {
-    className: "space-y-1.5"
-  }, Object.entries(t.methods).filter(([k]) => !['title', 'active', 'recommended', 'showAll', 'hideOthers', 'bestFor'].includes(k)).filter(([key]) => METHOD_CATEGORIES[template]?.includes(key)).map(([key, method]) => /*#__PURE__*/React.createElement("div", {
-    key: key,
-    className: "relative"
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => toggleMethod(key),
-    onMouseEnter: () => setShowMethodInfo(key),
-    onMouseLeave: () => setShowMethodInfo(null),
-    className: `w-full flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-left ${selectedMethods.includes(key) ? 'bg-amber-500/20 border-amber-500/50 text-amber-300' : 'bg-amber-500/5 border-amber-500/20 text-slate-300 hover:border-amber-500/40'}`
+    className: "text-sm font-medium"
+  }, t.methods.selectMethods || 'Select Methods'), /*#__PURE__*/React.createElement("span", {
+    className: "ml-auto text-xs text-amber-500/60"
+  }, "29")),
+
+  /* Clear All Button */
+  selectedMethods.length > 0 && /*#__PURE__*/React.createElement("button", {
+    onClick: () => setSelectedMethods([]),
+    className: "w-full mt-2 flex items-center justify-center gap-1 px-3 py-1.5 bg-slate-800/50 border border-slate-700 rounded-lg text-slate-400 hover:text-slate-300 hover:border-slate-600 text-xs transition-colors"
   }, /*#__PURE__*/React.createElement(Icon, {
-    name: methodIcons[key],
-    size: 16,
-    className: `flex-shrink-0 ${selectedMethods.includes(key) ? 'text-amber-400' : 'text-amber-400/60'}`
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "min-w-0 flex-1"
+    name: "Trash2",
+    size: 12
+  }), t.methods.clearAll || 'Clear All'),
+
+  /* Methods Modal */
+  showMethodsModal && /*#__PURE__*/React.createElement("div", {
+    className: "fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4",
+    onClick: e => e.target === e.currentTarget && setShowMethodsModal(false)
   }, /*#__PURE__*/React.createElement("div", {
-    className: "text-xs font-medium truncate"
-  }, method.name), /*#__PURE__*/React.createElement("div", {
-    className: "text-xs text-slate-500 truncate"
-  }, method.citation)), key === 'emotion' && /*#__PURE__*/React.createElement("span", {
-    className: "text-xs bg-green-500/20 text-green-400 px-1.5 py-0.5 rounded",
-    title: "Works with all categories"
-  }, "\u2605"), key === 'pal' && template === 'coding' && /*#__PURE__*/React.createElement("span", {
-    className: "text-xs bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded",
-    title: "Best for coding"
-  }, "\u26A1")), showMethodInfo === key && /*#__PURE__*/React.createElement("div", {
-    className: "absolute left-full ml-2 top-0 w-48 p-3 bg-slate-800 border border-slate-600 rounded-lg shadow-xl z-20"
+    className: "bg-slate-800 border border-slate-600 rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "text-xs font-medium text-white mb-1"
-  }, method.name), /*#__PURE__*/React.createElement("div", {
-    className: "text-xs text-amber-400"
-  }, method.tip)))))), /*#__PURE__*/React.createElement("button", {
-    onClick: () => setShowAllMethods(!showAllMethods),
-    className: "w-full flex items-center justify-center gap-2 px-3 py-1.5 bg-slate-700/50 border border-slate-600 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700 text-xs mb-3 transition-colors"
+    className: "flex items-center justify-between px-4 py-3 border-b border-slate-700 bg-slate-850"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
   }, /*#__PURE__*/React.createElement(Icon, {
-    name: showAllMethods ? "ChevronUp" : "ChevronDown",
-    size: 14
-  }), showAllMethods ? t.methods.hideOthers : t.methods.showAll), showAllMethods && /*#__PURE__*/React.createElement("div", {
-    className: "space-y-1.5 pt-2 border-t border-slate-700"
-  }, Object.entries(t.methods).filter(([k]) => !['title', 'active', 'recommended', 'showAll', 'hideOthers', 'bestFor'].includes(k)).filter(([key]) => !METHOD_CATEGORIES[template]?.includes(key)).map(([key, method]) => /*#__PURE__*/React.createElement("div", {
-    key: key,
-    className: "relative"
-  }, /*#__PURE__*/React.createElement("button", {
-    onClick: () => toggleMethod(key),
-    onMouseEnter: () => setShowMethodInfo(key),
-    onMouseLeave: () => setShowMethodInfo(null),
-    className: `w-full flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-left ${selectedMethods.includes(key) ? 'bg-amber-500/20 border-amber-500/50 text-amber-300' : 'bg-slate-800/50 border-slate-700 text-slate-400 hover:border-slate-600'}`
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: methodIcons[key],
-    size: 16,
-    className: `flex-shrink-0 ${selectedMethods.includes(key) ? 'text-amber-400' : 'text-slate-500'}`
-  }), /*#__PURE__*/React.createElement("div", {
-    className: "min-w-0"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "text-xs font-medium truncate"
-  }, method.name), /*#__PURE__*/React.createElement("div", {
-    className: "text-xs text-slate-500 truncate"
-  }, method.citation))), showMethodInfo === key && /*#__PURE__*/React.createElement("div", {
-    className: "absolute left-full ml-2 top-0 w-48 p-3 bg-slate-800 border border-slate-600 rounded-lg shadow-xl z-20"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "text-xs font-medium text-white mb-1"
-  }, method.name), /*#__PURE__*/React.createElement("div", {
-    className: "text-xs text-amber-400"
-  }, method.tip))))), selectedMethods.length > 0 && /*#__PURE__*/React.createElement("div", {
-    className: "mt-3 p-2 bg-slate-800/50 rounded-lg border border-slate-700"
-  }, /*#__PURE__*/React.createElement("div", {
-    className: "text-xs text-slate-400"
-  }, /*#__PURE__*/React.createElement("span", {
+    name: "FlaskConical",
+    size: 20,
     className: "text-amber-400"
-  }, selectedMethods.length), " ", t.methods.active))), /*#__PURE__*/React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("h3", {
+    className: "text-base font-semibold text-white"
+  }, t.methods.title), /*#__PURE__*/React.createElement("span", {
+    className: "text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full"
+  }, selectedMethods.length, " ", t.methods.active)), /*#__PURE__*/React.createElement("button", {
+    onClick: () => setShowMethodsModal(false),
+    className: "flex items-center gap-1 px-3 py-1.5 bg-amber-500 text-slate-900 rounded-lg text-sm font-medium hover:bg-amber-400 transition-colors"
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "Check",
+    size: 16
+  }), t.methods.closeMethods || 'Done')),
+
+  /* Modal Content - Categories */
+  /*#__PURE__*/React.createElement("div", {
+    className: "overflow-y-auto max-h-[calc(80vh-60px)] p-4 space-y-3"
+  }, Object.entries(METHOD_GROUPS).map(([groupKey, group]) => {
+    const groupMethods = group.methods.filter(m => t.methods[m]);
+    const selectedInGroup = groupMethods.filter(m => selectedMethods.includes(m)).length;
+    const isExpanded = expandedMethodGroup === groupKey;
+
+    return /*#__PURE__*/React.createElement("div", {
+      key: groupKey,
+      className: "border border-slate-700 rounded-lg overflow-hidden"
+    }, /*#__PURE__*/React.createElement("button", {
+      onClick: () => setExpandedMethodGroup(isExpanded ? null : groupKey),
+      className: "w-full flex items-center justify-between px-4 py-3 bg-slate-750 hover:bg-slate-700 transition-colors"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex items-center gap-3"
+    }, /*#__PURE__*/React.createElement(Icon, {
+      name: group.icon,
+      size: 18,
+      className: "text-amber-400"
+    }), /*#__PURE__*/React.createElement("span", {
+      className: "text-sm font-medium text-white"
+    }, t.methods.groups?.[groupKey] || groupKey), /*#__PURE__*/React.createElement("span", {
+      className: "text-xs text-slate-500"
+    }, `(${groupMethods.length})`)), /*#__PURE__*/React.createElement("div", {
+      className: "flex items-center gap-2"
+    }, selectedInGroup > 0 && /*#__PURE__*/React.createElement("span", {
+      className: "text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full"
+    }, selectedInGroup), /*#__PURE__*/React.createElement(Icon, {
+      name: isExpanded ? "ChevronUp" : "ChevronDown",
+      size: 16,
+      className: "text-slate-400"
+    }))),
+
+    /* Expanded Methods List */
+    isExpanded && /*#__PURE__*/React.createElement("div", {
+      className: "px-4 py-3 bg-slate-800/50 border-t border-slate-700 grid grid-cols-1 sm:grid-cols-2 gap-2"
+    }, groupMethods.map(methodKey => {
+      const method = t.methods[methodKey];
+      if (!method) return null;
+      const isSelected = selectedMethods.includes(methodKey);
+      const isRecommended = METHOD_CATEGORIES[template]?.includes(methodKey);
+
+      return /*#__PURE__*/React.createElement("button", {
+        key: methodKey,
+        onClick: () => toggleMethod(methodKey),
+        className: `flex items-center gap-2 px-3 py-2 rounded-lg border transition-all text-left ${isSelected ? 'bg-amber-500/20 border-amber-500/50 text-amber-300' : 'bg-slate-800/50 border-slate-700 text-slate-300 hover:border-slate-500'}`
+      }, /*#__PURE__*/React.createElement("div", {
+        className: `w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-amber-500 border-amber-500' : 'border-slate-500'}`
+      }, isSelected && /*#__PURE__*/React.createElement(Icon, {
+        name: "Check",
+        size: 12,
+        className: "text-slate-900"
+      })), /*#__PURE__*/React.createElement(Icon, {
+        name: methodIcons[methodKey],
+        size: 14,
+        className: isSelected ? 'text-amber-400' : 'text-slate-400'
+      }), /*#__PURE__*/React.createElement("div", {
+        className: "min-w-0 flex-1"
+      }, /*#__PURE__*/React.createElement("div", {
+        className: "text-xs font-medium truncate flex items-center gap-1"
+      }, method.name, isRecommended && /*#__PURE__*/React.createElement("span", {
+        className: "text-amber-400",
+        title: t.methods.recommended
+      }, "\u2605")), /*#__PURE__*/React.createElement("div", {
+        className: "text-xs text-slate-500 truncate"
+      }, method.citation)));
+    })));
+  }))))), /*#__PURE__*/React.createElement("div", {
     id: "preview-section",
     className: `lg:col-span-2 flex flex-col ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'preview-section' ? 'tutorial-highlight' : ''}`
   }, /*#__PURE__*/React.createElement("div", {
