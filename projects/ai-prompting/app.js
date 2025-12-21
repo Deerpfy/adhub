@@ -324,6 +324,57 @@ const BASE_TRANSLATIONS = {
         name: 'Rephrase & Respond',
         citation: 'UCLA 2023',
         tip: 'Rephrase question before answering. Reduces ambiguity.'
+      },
+      // === NEW 2024-2025 RESEARCH-BACKED METHODS ===
+      sot: {
+        name: 'Skeleton-of-Thought',
+        citation: 'Microsoft + Tsinghua ICLR 2024',
+        tip: 'Parallel answer generation. 2.39× faster, better for structured outputs.'
+      },
+      got: {
+        name: 'Graph of Thoughts',
+        citation: 'ETH Zürich AAAI 2024',
+        tip: 'Non-linear reasoning with graph structure. +62% on sorting tasks.'
+      },
+      bot: {
+        name: 'Buffer of Thoughts',
+        citation: 'Peking + Stanford NeurIPS 2024',
+        tip: 'Meta-cognitive templates for reasoning. +51% on Checkmate-in-One.'
+      },
+      thot: {
+        name: 'Thread of Thought',
+        citation: 'NAVER 2024',
+        tip: 'Handles chaotic contexts. Segments and analyzes step by step.'
+      },
+      s2a: {
+        name: 'System 2 Attention',
+        citation: 'Meta AI 2024',
+        tip: 'Filters irrelevant info from context. 62.8%→80.3% factuality.'
+      },
+      metaprompt: {
+        name: 'Meta-Prompting',
+        citation: 'Stanford 2024',
+        tip: 'LLM as conductor + multi-expert system. +17.1% on complex tasks.'
+      },
+      reflexion: {
+        name: 'Reflexion',
+        citation: 'Princeton NeurIPS 2023',
+        tip: 'Verbal reinforcement learning with memory. Self-improving agent.'
+      },
+      contrastive: {
+        name: 'Contrastive CoT',
+        citation: 'Alibaba DAMO 2024',
+        tip: 'Learn from both correct AND incorrect examples. +17.8% accuracy.'
+      },
+      opro: {
+        name: 'OPRO',
+        citation: 'Google DeepMind 2024',
+        tip: 'LLM optimizes its own prompts. +8% GSM8K, +50% BIG-Bench.'
+      },
+      confidence: {
+        name: 'Confidence Calibration',
+        citation: 'ICLR 2024',
+        tip: 'Express uncertainty honestly. Calibrated confidence levels.'
       }
     },
     // Model-specific features (2025) - optional capabilities per AI model
@@ -821,6 +872,27 @@ Prompt to analyze:
       analogicalSimple: "Think of similar problems you've solved before, then apply the same approach here.",
       rarInstructions: "Rephrase and expand the question to ensure clarity, then respond to the rephrased version.",
       rarSimple: "First rephrase this question more clearly, then answer the rephrased version.",
+      // === NEW 2024-2025 METHOD PROMPT PARTS ===
+      sotInstructions: "Use Skeleton-of-Thought approach:\n1. SKELETON: First, outline the main points/sections of your answer as a brief skeleton\n2. PARALLEL EXPANSION: Then expand each point in detail\nThis enables faster, more structured responses.",
+      sotSimple: "First create a skeleton outline of your answer, then expand each point in detail.",
+      gotInstructions: "Use Graph-of-Thoughts reasoning:\n1. Generate multiple initial thoughts about this problem\n2. Evaluate each thought's validity and combine promising ones\n3. Refine and synthesize the best ideas into a coherent solution\n4. Backtrack if needed and explore alternative paths",
+      gotSimple: "Explore multiple reasoning paths, combine the best ideas, and synthesize into a solution.",
+      botInstructions: "Apply Buffer-of-Thoughts approach:\n1. Recall relevant problem-solving templates from similar challenges\n2. Identify the core problem type and applicable reasoning pattern\n3. Instantiate the template with specifics from this problem\n4. Execute the reasoning pattern step by step",
+      botSimple: "Recall relevant problem-solving templates, then apply the most suitable one to this problem.",
+      thotInstructions: "Use Thread-of-Thought for this complex context:\n1. Walk through the context in manageable parts step by step\n2. Summarize and analyze each segment as you go\n3. Extract key information relevant to the question\n4. Synthesize findings into a coherent answer",
+      thotSimple: "Walk through this context step by step, summarizing and analyzing as you go, then answer.",
+      s2aInstructions: "Apply System 2 Attention:\n1. First, rewrite the context removing any irrelevant or potentially biasing information\n2. Identify what truly matters for answering this question\n3. Now reason carefully based only on the relevant, filtered information",
+      s2aSimple: "Filter out irrelevant information from the context, then answer based only on what matters.",
+      metapromptInstructions: "Use Meta-Prompting approach:\n1. Break down this complex task into subtasks\n2. For each subtask, adopt the role of a relevant expert\n3. Have each expert solve their part independently\n4. Synthesize all expert contributions into a final answer\n5. Critically verify the integrated solution",
+      metapromptSimple: "Break this into subtasks, solve each as a different expert, then synthesize the results.",
+      reflexionInstructions: "Apply Reflexion for iterative improvement:\n1. Generate your initial response to the task\n2. Reflect: What worked well? What could be better? Any errors?\n3. Store these insights in your working memory\n4. Generate an improved response incorporating lessons learned\n5. Repeat until satisfied with quality",
+      reflexionSimple: "Generate a response, reflect on what could be improved, then create a better version.",
+      contrastiveInstructions: "Use Contrastive Chain-of-Thought:\n1. Consider the correct approach to this problem\n2. Also consider what would be an INCORRECT approach and why\n3. Contrast the two to clarify the right reasoning path\n4. Proceed with the correct approach, having learned from potential mistakes",
+      contrastiveSimple: "Consider both correct and incorrect approaches, then use this contrast to solve correctly.",
+      oproInstructions: "Apply OPRO (Optimization by Prompting):\n1. Consider: what phrasing would lead to the best response for this task?\n2. Take a deep breath and work on this problem step by step\n3. Let's think carefully about the problem and solve it together",
+      oproSimple: "Take a deep breath and work on this problem step by step. Think carefully before answering.",
+      confidenceInstructions: "Express calibrated confidence in your answer:\n1. Solve the problem using appropriate reasoning\n2. Assess your confidence level (0-100%) for each part of your answer\n3. Be honest about uncertainty - state what you're confident about and what you're less sure of\n4. If confidence is low, explain why and what information would help",
+      confidenceSimple: "Provide your answer with an honest assessment of your confidence level (0-100%).",
       stepsFollow: 'Follow these steps',
       constraints: 'Requirements/Constraints',
       examplesIntro: 'Here are examples of the expected input-output format:',
@@ -1225,6 +1297,57 @@ Prompt to analyze:
         name: 'Rephrase & Respond',
         citation: 'UCLA 2023',
         tip: 'Přeformuluj otázku před odpovědí. Snižuje nejednoznačnost.'
+      },
+      // === NOVÉ METODY 2024-2025 PODLOŽENÉ VÝZKUMEM ===
+      sot: {
+        name: 'Skeleton-of-Thought',
+        citation: 'Microsoft + Tsinghua ICLR 2024',
+        tip: 'Paralelní generování odpovědi. 2.39× rychlejší, lepší pro strukturované výstupy.'
+      },
+      got: {
+        name: 'Graph of Thoughts',
+        citation: 'ETH Zürich AAAI 2024',
+        tip: 'Nelineární uvažování s grafovou strukturou. +62% na třídících úlohách.'
+      },
+      bot: {
+        name: 'Buffer of Thoughts',
+        citation: 'Peking + Stanford NeurIPS 2024',
+        tip: 'Meta-kognitivní šablony pro uvažování. +51% na Checkmate-in-One.'
+      },
+      thot: {
+        name: 'Thread of Thought',
+        citation: 'NAVER 2024',
+        tip: 'Zvládá chaotické kontexty. Segmentuje a analyzuje krok za krokem.'
+      },
+      s2a: {
+        name: 'System 2 Attention',
+        citation: 'Meta AI 2024',
+        tip: 'Filtruje irelevantní info z kontextu. 62.8%→80.3% faktičnost.'
+      },
+      metaprompt: {
+        name: 'Meta-Prompting',
+        citation: 'Stanford 2024',
+        tip: 'LLM jako dirigent + multi-expertní systém. +17.1% na složitých úlohách.'
+      },
+      reflexion: {
+        name: 'Reflexion',
+        citation: 'Princeton NeurIPS 2023',
+        tip: 'Verbální reinforcement learning s pamětí. Sebe-zlepšující agent.'
+      },
+      contrastive: {
+        name: 'Contrastive CoT',
+        citation: 'Alibaba DAMO 2024',
+        tip: 'Učení ze správných I nesprávných příkladů. +17.8% přesnost.'
+      },
+      opro: {
+        name: 'OPRO',
+        citation: 'Google DeepMind 2024',
+        tip: 'LLM optimalizuje vlastní prompty. +8% GSM8K, +50% BIG-Bench.'
+      },
+      confidence: {
+        name: 'Confidence Calibration',
+        citation: 'ICLR 2024',
+        tip: 'Vyjadřuj nejistotu upřímně. Kalibrované úrovně jistoty.'
       }
     },
     database: {
@@ -1436,6 +1559,27 @@ Prompt k analýze:
       analogicalSimple: "Vzpomeň si na podobné problémy, které jsi řešil dříve, pak aplikuj stejný přístup zde.",
       rarInstructions: "Přeformuluj a rozšiř otázku pro zajištění jasnosti, pak odpověz na přeformulovanou verzi.",
       rarSimple: "Nejprve přeformuluj tuto otázku jasněji, pak odpověz na přeformulovanou verzi.",
+      // === NOVÉ METODY 2024-2025 PROMPT PARTS ===
+      sotInstructions: "Použij přístup Skeleton-of-Thought:\n1. KOSTRA: Nejprve načrtni hlavní body/sekce tvé odpovědi jako stručnou kostru\n2. PARALELNÍ ROZŠÍŘENÍ: Pak rozveď každý bod detailně\nToto umožňuje rychlejší, strukturovanější odpovědi.",
+      sotSimple: "Nejprve vytvoř kostru osnovy své odpovědi, pak rozveď každý bod detailně.",
+      gotInstructions: "Použij Graph-of-Thoughts uvažování:\n1. Vygeneruj několik počátečních myšlenek o tomto problému\n2. Zhodnoť validitu každé myšlenky a kombinuj slibné\n3. Vylepši a syntetizuj nejlepší nápady do koherentního řešení\n4. V případě potřeby se vrať a prozkoumej alternativní cesty",
+      gotSimple: "Prozkoumej více cest uvažování, kombinuj nejlepší nápady a syntetizuj do řešení.",
+      botInstructions: "Aplikuj přístup Buffer-of-Thoughts:\n1. Vzpomeň si na relevantní šablony řešení problémů z podobných výzev\n2. Identifikuj základní typ problému a aplikovatelný vzorec uvažování\n3. Instanciuj šablonu se specifiky z tohoto problému\n4. Proveď vzorec uvažování krok za krokem",
+      botSimple: "Vzpomeň si na relevantní šablony řešení problémů, pak aplikuj nejvhodnější na tento problém.",
+      thotInstructions: "Použij Thread-of-Thought pro tento složitý kontext:\n1. Projdi kontext po zvládnutelných částech krok za krokem\n2. Sumarizuj a analyzuj každý segment průběžně\n3. Extrahuj klíčové informace relevantní pro otázku\n4. Syntetizuj zjištění do koherentní odpovědi",
+      thotSimple: "Projdi tento kontext krok za krokem, sumarizuj a analyzuj průběžně, pak odpověz.",
+      s2aInstructions: "Aplikuj System 2 Attention:\n1. Nejprve přepiš kontext a odstraň irelevantní nebo potenciálně zavádějící informace\n2. Identifikuj, co skutečně záleží pro zodpovězení této otázky\n3. Nyní pečlivě uvažuj pouze na základě relevantních, filtrovaných informací",
+      s2aSimple: "Odfiltruj irelevantní informace z kontextu, pak odpověz pouze na základě toho, co záleží.",
+      metapromptInstructions: "Použij přístup Meta-Prompting:\n1. Rozlož tento složitý úkol na podúkoly\n2. Pro každý podúkol přijmi roli relevantního experta\n3. Nech každého experta vyřešit jeho část nezávisle\n4. Syntetizuj všechny expertní příspěvky do finální odpovědi\n5. Kriticky ověř integrované řešení",
+      metapromptSimple: "Rozlož na podúkoly, vyřeš každý jako jiný expert, pak syntetizuj výsledky.",
+      reflexionInstructions: "Aplikuj Reflexion pro iterativní zlepšování:\n1. Vygeneruj svou počáteční odpověď na úkol\n2. Reflektuj: Co fungovalo dobře? Co by mohlo být lepší? Nějaké chyby?\n3. Ulož tyto poznatky do své pracovní paměti\n4. Vygeneruj vylepšenou odpověď zahrnující naučené lekce\n5. Opakuj až do spokojenosti s kvalitou",
+      reflexionSimple: "Vygeneruj odpověď, reflektuj co by mohlo být lepší, pak vytvoř lepší verzi.",
+      contrastiveInstructions: "Použij Contrastive Chain-of-Thought:\n1. Zvaž správný přístup k tomuto problému\n2. Také zvaž, jaký by byl NESPRÁVNÝ přístup a proč\n3. Kontrastuj oba pro objasnění správné cesty uvažování\n4. Pokračuj se správným přístupem, poučen z potenciálních chyb",
+      contrastiveSimple: "Zvaž jak správný, tak nesprávný přístup, pak použij tento kontrast k správnému řešení.",
+      oproInstructions: "Aplikuj OPRO (Optimization by Prompting):\n1. Zvaž: jaká formulace by vedla k nejlepší odpovědi pro tento úkol?\n2. Zhluboka se nadechni a pracuj na tomto problému krok za krokem\n3. Pojďme o problému pečlivě přemýšlet a vyřešit ho společně",
+      oproSimple: "Zhluboka se nadechni a pracuj na tomto problému krok za krokem. Před odpovědí pečlivě přemýšlej.",
+      confidenceInstructions: "Vyjádři kalibrovanou jistotu ve své odpovědi:\n1. Vyřeš problém pomocí vhodného uvažování\n2. Zhodnoť svou úroveň jistoty (0-100%) pro každou část odpovědi\n3. Buď upřímný ohledně nejistoty - uveď, čím si jistý a čím méně\n4. Pokud je jistota nízká, vysvětli proč a jaké informace by pomohly",
+      confidenceSimple: "Poskytni odpověď s upřímným hodnocením své úrovně jistoty (0-100%).",
       stepsFollow: 'Následuj tyto kroky',
       constraints: 'Požadavky/Omezení',
       examplesIntro: 'Zde jsou příklady očekávaného formátu vstup-výstup:',
@@ -2791,7 +2935,7 @@ const saveTags = tags => {
 
 // ==================== SHARE CODE SYSTEM ====================
 // Generate share code from prompt data (using LZ-String URI encoding)
-const ALL_METHODS = ['cot', 'zeroshot', 'fewshot', 'tot', 'selfconsistency', 'react', 'risen', 'emotion', 'plansolve', 'selfask', 'pal', 'selfrefine', 'stepback', 'analogical', 'rar'];
+const ALL_METHODS = ['cot', 'zeroshot', 'fewshot', 'tot', 'selfconsistency', 'react', 'risen', 'emotion', 'plansolve', 'selfask', 'pal', 'selfrefine', 'stepback', 'analogical', 'rar', 'sot', 'got', 'bot', 'thot', 's2a', 'metaprompt', 'reflexion', 'contrastive', 'opro', 'confidence'];
 // Template and target indices for share code encoding
 const ALL_TEMPLATES = ['general', 'coding', 'creative', 'analysis', 'explanation', 'email', 'academic', 'data', 'marketing', 'summarization', 'image_gen', 'translation', 'business', 'customer_service', 'productivity'];
 const ALL_TARGETS = ['claude', 'gpt', 'gemini', 'llama', 'mistral', 'cohere', 'general'];
@@ -2930,23 +3074,24 @@ const templateIcons = {
 // ==================== METHOD-CATEGORY MAPPING ====================
 // Defines which methods are recommended for each prompt category
 // Based on research: EmotionPrompt works everywhere, PAL is best for coding
+// Updated 2024-2025: Added SoT, GoT, BoT, ThoT, S2A, Meta-Prompting, Reflexion, Contrastive, OPRO, Confidence
 const METHOD_CATEGORIES = {
-  general: ['emotion', 'fewshot', 'risen', 'rar', 'zeroshot', 'cot'],
-  coding: ['emotion', 'pal', 'cot', 'fewshot', 'zeroshot', 'tot', 'selfconsistency', 'react', 'plansolve', 'selfrefine'],
-  creative: ['emotion', 'fewshot', 'analogical', 'selfrefine', 'rar'],
-  analysis: ['emotion', 'fewshot', 'cot', 'zeroshot', 'tot', 'selfconsistency', 'react', 'plansolve', 'selfask', 'stepback'],
-  explanation: ['emotion', 'fewshot', 'zeroshot', 'selfask', 'stepback', 'analogical', 'rar'],
+  general: ['emotion', 'fewshot', 'risen', 'rar', 'zeroshot', 'cot', 'sot', 'opro', 'confidence'],
+  coding: ['emotion', 'pal', 'cot', 'fewshot', 'zeroshot', 'tot', 'selfconsistency', 'react', 'plansolve', 'selfrefine', 'got', 'bot', 'reflexion', 'metaprompt'],
+  creative: ['emotion', 'fewshot', 'analogical', 'selfrefine', 'rar', 'sot', 'reflexion'],
+  analysis: ['emotion', 'fewshot', 'cot', 'zeroshot', 'tot', 'selfconsistency', 'react', 'plansolve', 'selfask', 'stepback', 'got', 's2a', 'thot', 'metaprompt', 'contrastive', 'confidence'],
+  explanation: ['emotion', 'fewshot', 'zeroshot', 'selfask', 'stepback', 'analogical', 'rar', 'sot', 'thot'],
   // New categories from 2025 research
-  email: ['emotion', 'fewshot', 'rar', 'risen'],
-  academic: ['emotion', 'fewshot', 'cot', 'selfask', 'stepback', 'selfrefine'],
-  data: ['emotion', 'pal', 'cot', 'fewshot', 'plansolve'],
-  marketing: ['emotion', 'fewshot', 'analogical', 'selfrefine', 'rar'],
-  summarization: ['emotion', 'cot', 'zeroshot', 'stepback'],
-  image_gen: ['fewshot', 'analogical', 'rar'],
-  translation: ['emotion', 'fewshot', 'rar', 'selfrefine'],
-  business: ['emotion', 'fewshot', 'risen', 'cot', 'plansolve'],
-  customer_service: ['emotion', 'fewshot', 'rar', 'risen'],
-  productivity: ['emotion', 'plansolve', 'risen', 'zeroshot']
+  email: ['emotion', 'fewshot', 'rar', 'risen', 'sot'],
+  academic: ['emotion', 'fewshot', 'cot', 'selfask', 'stepback', 'selfrefine', 'got', 'bot', 's2a', 'contrastive', 'confidence'],
+  data: ['emotion', 'pal', 'cot', 'fewshot', 'plansolve', 'got', 'bot', 'confidence'],
+  marketing: ['emotion', 'fewshot', 'analogical', 'selfrefine', 'rar', 'sot', 'reflexion'],
+  summarization: ['emotion', 'cot', 'zeroshot', 'stepback', 'thot', 's2a', 'sot'],
+  image_gen: ['fewshot', 'analogical', 'rar', 'sot'],
+  translation: ['emotion', 'fewshot', 'rar', 'selfrefine', 'contrastive'],
+  business: ['emotion', 'fewshot', 'risen', 'cot', 'plansolve', 'sot', 'metaprompt', 'confidence'],
+  customer_service: ['emotion', 'fewshot', 'rar', 'risen', 'reflexion'],
+  productivity: ['emotion', 'plansolve', 'risen', 'zeroshot', 'sot', 'opro']
 };
 
 // Extended sections visibility per template category
@@ -3123,7 +3268,18 @@ const methodIcons = {
   selfrefine: 'RotateCw',
   stepback: 'ArrowLeftCircle',
   analogical: 'GitCompare',
-  rar: 'MessageCircle'
+  rar: 'MessageCircle',
+  // === NEW 2024-2025 METHOD ICONS ===
+  sot: 'Layers',             // Skeleton structure
+  got: 'Share2',             // Graph network
+  bot: 'Database',           // Buffer/memory storage
+  thot: 'AlignJustify',      // Thread/segments
+  s2a: 'Filter',             // Filtering attention
+  metaprompt: 'Users',       // Multi-expert
+  reflexion: 'History',      // Memory/reflection loop
+  contrastive: 'Columns',    // Compare positive/negative
+  opro: 'Sparkles',          // Optimization magic
+  confidence: 'Gauge'        // Confidence meter
 };
 
 // ==================== MAIN APP ====================
@@ -4139,6 +4295,17 @@ const App = () => {
     addMethodSection('stepback', 'abstraction', p.stepbackInstructions, p.stepbackSimple);
     addMethodSection('analogical', 'analogical_reasoning', p.analogicalInstructions, p.analogicalSimple);
     addMethodSection('rar', 'clarification', p.rarInstructions, p.rarSimple);
+    // === NEW 2024-2025 METHODS ===
+    addMethodSection('sot', 'skeleton_approach', p.sotInstructions, p.sotSimple);
+    addMethodSection('got', 'graph_reasoning', p.gotInstructions, p.gotSimple);
+    addMethodSection('bot', 'buffer_templates', p.botInstructions, p.botSimple);
+    addMethodSection('thot', 'thread_analysis', p.thotInstructions, p.thotSimple);
+    addMethodSection('s2a', 'focused_attention', p.s2aInstructions, p.s2aSimple);
+    addMethodSection('metaprompt', 'multi_expert', p.metapromptInstructions, p.metapromptSimple);
+    addMethodSection('reflexion', 'reflection_loop', p.reflexionInstructions, p.reflexionSimple);
+    addMethodSection('contrastive', 'contrastive_learning', p.contrastiveInstructions, p.contrastiveSimple);
+    addMethodSection('opro', 'optimized_thinking', p.oproInstructions, p.oproSimple);
+    addMethodSection('confidence', 'confidence_calibration', p.confidenceInstructions, p.confidenceSimple);
 
     // Constraints/Steps
     if (fields.constraints) {
