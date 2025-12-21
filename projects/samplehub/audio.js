@@ -136,14 +136,23 @@ const AudioEngine = (function() {
      * Handle click on waveform for seeking
      * @param {MouseEvent} event
      */
+    let isSeeking = false; // Prevent rapid seek calls
+
     function handleWaveformClick(event) {
-        if (!currentBuffer) return;
+        if (!currentBuffer || isSeeking) return;
+
+        isSeeking = true;
 
         const rect = waveformCanvas.getBoundingClientRect();
         const clickPosition = (event.clientX - rect.left) / rect.width;
         const seekTime = clickPosition * duration;
 
         seek(seekTime);
+
+        // Reset seeking flag after a short delay
+        setTimeout(() => {
+            isSeeking = false;
+        }, 100);
     }
 
     /**
@@ -157,15 +166,17 @@ const AudioEngine = (function() {
             initAudioContext();
         }
 
+        // Set flags BEFORE stop() to prevent onended from triggering callbacks
+        isPlaying = false;
+        isPaused = false;
+        pauseTime = 0;
+
         // Stop any current playback before loading new audio
         if (currentSource) {
             currentSource.stop();
             currentSource.disconnect();
             currentSource = null;
         }
-        isPlaying = false;
-        isPaused = false;
-        pauseTime = 0;
 
         if (callbacks.onLoadStart) {
             callbacks.onLoadStart();
@@ -295,10 +306,18 @@ const AudioEngine = (function() {
             audioContext.resume();
         }
 
-        // Stop current playback
+        // Stop current playback (set flags first to prevent onended callback)
         if (currentSource) {
+            const wasPlaying = isPlaying;
+            isPlaying = false;
+            isPaused = true;
             currentSource.stop();
             currentSource.disconnect();
+            currentSource = null;
+            // Restore state for the new playback
+            if (!wasPlaying) {
+                isPaused = true;
+            }
         }
 
         // Create new source
@@ -382,14 +401,15 @@ const AudioEngine = (function() {
      * Internal stop function
      */
     function performStop() {
+        // Set flags BEFORE stop() to prevent onended from triggering callbacks
+        isPlaying = false;
+        isPaused = false;
+
         if (currentSource) {
             currentSource.stop();
             currentSource.disconnect();
             currentSource = null;
         }
-
-        isPlaying = false;
-        isPaused = false;
         pauseTime = 0;
 
         stopAnimation();
