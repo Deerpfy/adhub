@@ -1,8 +1,8 @@
 # Kompletní katalog výzkumem podložených metod promptingu
 
-**Verze**: 2.0 (Aktualizace 2024-2025)
+**Verze**: 3.0 (Aktualizace Feb 2025)
 **Datum**: 2025-12-21
-**Celkem metod**: 25 (15 původních + 10 nových)
+**Celkem metod**: 29 (15 původních 2020-2023 + 10 nových 2024 + 4 nejnovější 2025)
 
 ---
 
@@ -263,7 +263,53 @@
 
 ---
 
-## Matice doporučení: Metoda × AI Model
+## ČÁST 3: Nejnovější metody 2025
+
+### 26. Chain of Draft (CoD)
+| Atribut | Hodnota |
+|---------|---------|
+| **Citace** | [Xu et al., Zoom Research Feb 2025](https://arxiv.org/abs/2502.18600) |
+| **Zlepšení** | 80% redukce tokenů, 76.2% rychlejší inference, 91.1% přesnost |
+| **Nejlepší pro** | **All** - univerzální optimalizace |
+| **Kategorie** | General, Data, Summarization, Email, Business |
+| **Trigger** | "Think step by step, but keep each thinking step to 5 words at most. Return answer after ####." |
+| **Jak funguje** | Minimalistické reasoning - každý krok max ~5 slov |
+| **Poznámka** | Nejefektivnější metoda 2025. Ideální pro produkci kde záleží na nákladech. |
+
+### 27. Self-Discover
+| Atribut | Hodnota |
+|---------|---------|
+| **Citace** | [Zhou et al., Google DeepMind 2024](https://deepmind.google/research/publications/64816/) |
+| **Zlepšení** | +32% vs CoT, 10-40× méně compute než Self-Consistency |
+| **Nejlepší pro** | **GPT**, **Claude**, **Gemini** |
+| **Kategorie** | General, Coding, Analysis, Academic, Business |
+| **Jak funguje** | LLM vybírá a adaptuje reasoning moduly (dekompozice, kritické myšlení, atd.) pro konkrétní úkol |
+| **Poznámka** | Task-specific reasoning. Struktura jako JSON pro lepší interpretovatelnost. |
+
+### 28. rStar MCTS
+| Atribut | Hodnota |
+|---------|---------|
+| **Citace** | [rStar-Math, Microsoft + CMU Jan 2025](https://arxiv.org/abs/2501.04519) |
+| **Zlepšení** | 7B model dosahuje 90% MATH (vs o1-preview 85.5%), 53.3% AIME |
+| **Nejlepší pro** | **Claude**, **GPT**, malé modely (Llama, Mistral) |
+| **Kategorie** | Coding, Data, Academic (zejména matematika) |
+| **Jak funguje** | Monte Carlo Tree Search - generuje více cest, vyhodnocuje, vybírá nejlepší |
+| **Poznámka** | Umožňuje malým modelům konkurovat velkým. GPU náročné. |
+
+### 29. Slow Thinking (Extended Deliberation)
+| Atribut | Hodnota |
+|---------|---------|
+| **Citace** | [DeepSeek R1](https://arxiv.org/abs/2501.12948), [OpenAI o1/o3](https://openai.com/o1/) 2025 |
+| **Zlepšení** | Nativní v reasoning modelech - nejlepší pro komplexní problémy |
+| **Nejlepší pro** | **GPT o1/o3** (nativní), **DeepSeek R1** (nativní), **Claude** (extended thinking) |
+| **Kategorie** | Coding, Analysis, Academic (složité problémy) |
+| **Trigger** | "Wait... let me think about this more carefully. Hmm, I should consider..." |
+| **Jak funguje** | Rozšířená deliberace s váhacími značkami ("wait", "hmm", "let me reconsider") |
+| **Poznámka** | ThinkPO studie: +8.6% math accuracy, +25.9% délka output. Použít jen pro složité problémy. |
+
+---
+
+## Matice doporučení: Metoda × AI Model (Aktualizováno 2025)
 
 | Metoda | Claude | GPT-4/o1 | Gemini | Llama | DeepSeek |
 |--------|--------|----------|--------|-------|----------|
@@ -347,6 +393,13 @@ ReAct + Reflexion + Meta-Prompting
 22. [Contrastive CoT](https://github.com/DAMO-NLP-SG/contrastive-cot) - Alibaba DAMO
 23. [OPRO](https://arxiv.org/abs/2309.03409) - Google DeepMind
 24. [Confidence Calibration](https://arxiv.org/abs/2306.13063) - ICLR 2024
+
+### Nejnovější papers (2025)
+25. [Chain of Draft](https://arxiv.org/abs/2502.18600) - Zoom Research (Feb 2025)
+26. [Self-Discover](https://deepmind.google/research/publications/64816/) - Google DeepMind
+27. [rStar-Math](https://arxiv.org/abs/2501.04519) - Microsoft + CMU (Jan 2025)
+28. [DeepSeek R1](https://arxiv.org/abs/2501.12948) - DeepSeek (Jan 2025)
+29. [Thinking Preference Optimization](https://arxiv.org/abs/2502.13173) - Feb 2025
 
 ### Survey papers
 - [The Prompt Report 2025](https://arxiv.org/abs/2406.06608) - 58 technik, 33 termínů

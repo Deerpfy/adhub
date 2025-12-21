@@ -375,6 +375,27 @@ const BASE_TRANSLATIONS = {
         name: 'Confidence Calibration',
         citation: 'ICLR 2024',
         tip: 'Express uncertainty honestly. Calibrated confidence levels.'
+      },
+      // === 2025 CUTTING-EDGE METHODS ===
+      cod: {
+        name: 'Chain of Draft',
+        citation: 'Zoom Research Feb 2025',
+        tip: 'Minimal reasoning (~5 words/step). 80% less tokens, same accuracy.'
+      },
+      selfdiscover: {
+        name: 'Self-Discover',
+        citation: 'Google DeepMind 2024',
+        tip: 'LLM discovers task-specific reasoning. +32% vs CoT, 10-40× less compute.'
+      },
+      rstar: {
+        name: 'rStar MCTS',
+        citation: 'Microsoft Jan 2025',
+        tip: 'Monte Carlo Tree Search. 7B model rivals o1-preview on MATH (90%).'
+      },
+      slowthink: {
+        name: 'Slow Thinking',
+        citation: 'DeepSeek R1 / OpenAI o1 2025',
+        tip: 'Extended deliberation with hesitation markers. For complex problems.'
       }
     },
     // Model-specific features (2025) - optional capabilities per AI model
@@ -893,6 +914,15 @@ Prompt to analyze:
       oproSimple: "Take a deep breath and work on this problem step by step. Think carefully before answering.",
       confidenceInstructions: "Express calibrated confidence in your answer:\n1. Solve the problem using appropriate reasoning\n2. Assess your confidence level (0-100%) for each part of your answer\n3. Be honest about uncertainty - state what you're confident about and what you're less sure of\n4. If confidence is low, explain why and what information would help",
       confidenceSimple: "Provide your answer with an honest assessment of your confidence level (0-100%).",
+      // === 2025 METHODS PROMPT PARTS ===
+      codInstructions: "Use Chain of Draft - think step by step but keep each step to ~5 words maximum:\n1. [brief step 1]\n2. [brief step 2]\n...\n#### [final answer]\nBe concise. Each reasoning step should capture only the essential insight.",
+      codSimple: "Think step by step, but keep each thinking step to 5 words at most. Return answer after ####.",
+      selfdiscoverInstructions: "Self-discover the best reasoning approach:\n1. SELECT: Which reasoning modules apply? (decomposition, critical thinking, creative thinking, etc.)\n2. ADAPT: How should these modules be tailored to this specific task?\n3. IMPLEMENT: Create a step-by-step reasoning plan in JSON-like structure\n4. EXECUTE: Follow your discovered plan to solve the problem",
+      selfdiscoverSimple: "First determine the best reasoning approach for this task, then apply it systematically.",
+      rstarInstructions: "Apply systematic search reasoning:\n1. Generate multiple candidate solutions or approaches\n2. Evaluate each candidate's validity and promise\n3. Expand the most promising paths further\n4. Verify solutions through multiple reasoning trajectories\n5. Select the answer with highest confidence across paths",
+      rstarSimple: "Generate multiple solution paths, evaluate each, and select the most validated answer.",
+      slowthinkInstructions: "Engage in extended deliberation:\n- Wait... let me think about this more carefully\n- Hmm, I should consider multiple angles here\n- Let me reconsider and verify my reasoning\n- Actually, let me step back and think again\nTake your time. Thorough reasoning is more important than speed.",
+      slowthinkSimple: "Take your time. Think deeply and carefully. Use 'wait', 'hmm', 'let me reconsider' as needed.",
       stepsFollow: 'Follow these steps',
       constraints: 'Requirements/Constraints',
       examplesIntro: 'Here are examples of the expected input-output format:',
@@ -1348,6 +1378,27 @@ Prompt to analyze:
         name: 'Confidence Calibration',
         citation: 'ICLR 2024',
         tip: 'Vyjadřuj nejistotu upřímně. Kalibrované úrovně jistoty.'
+      },
+      // === 2025 NEJNOVĚJŠÍ METODY ===
+      cod: {
+        name: 'Chain of Draft',
+        citation: 'Zoom Research Feb 2025',
+        tip: 'Minimální reasoning (~5 slov/krok). 80% méně tokenů, stejná přesnost.'
+      },
+      selfdiscover: {
+        name: 'Self-Discover',
+        citation: 'Google DeepMind 2024',
+        tip: 'LLM objeví strukturu reasoning pro úkol. +32% vs CoT, 10-40× méně výpočtů.'
+      },
+      rstar: {
+        name: 'rStar MCTS',
+        citation: 'Microsoft Jan 2025',
+        tip: 'Monte Carlo Tree Search. 7B model konkuruje o1-preview na MATH (90%).'
+      },
+      slowthink: {
+        name: 'Slow Thinking',
+        citation: 'DeepSeek R1 / OpenAI o1 2025',
+        tip: 'Rozšířená deliberace s váhacími značkami. Pro složité problémy.'
       }
     },
     database: {
@@ -1580,6 +1631,15 @@ Prompt k analýze:
       oproSimple: "Zhluboka se nadechni a pracuj na tomto problému krok za krokem. Před odpovědí pečlivě přemýšlej.",
       confidenceInstructions: "Vyjádři kalibrovanou jistotu ve své odpovědi:\n1. Vyřeš problém pomocí vhodného uvažování\n2. Zhodnoť svou úroveň jistoty (0-100%) pro každou část odpovědi\n3. Buď upřímný ohledně nejistoty - uveď, čím si jistý a čím méně\n4. Pokud je jistota nízká, vysvětli proč a jaké informace by pomohly",
       confidenceSimple: "Poskytni odpověď s upřímným hodnocením své úrovně jistoty (0-100%).",
+      // === 2025 METODY PROMPT PARTS ===
+      codInstructions: "Použij Chain of Draft - přemýšlej krok za krokem, ale každý krok max ~5 slov:\n1. [stručný krok 1]\n2. [stručný krok 2]\n...\n#### [finální odpověď]\nBuď stručný. Každý krok reasoning zachyť jen esenciální poznatek.",
+      codSimple: "Přemýšlej krok za krokem, ale každý krok max 5 slov. Odpověď za ####.",
+      selfdiscoverInstructions: "Sám objev nejlepší přístup k reasoning:\n1. VYBER: Které moduly reasoning platí? (dekompozice, kritické myšlení, kreativita, atd.)\n2. PŘIZPŮSOB: Jak by měly být tyto moduly upraveny pro tento konkrétní úkol?\n3. IMPLEMENTUJ: Vytvoř plán reasoning krok za krokem v JSON-like struktuře\n4. PROVEĎ: Následuj svůj objevený plán k vyřešení problému",
+      selfdiscoverSimple: "Nejprve urči nejlepší přístup k reasoning pro tento úkol, pak ho systematicky aplikuj.",
+      rstarInstructions: "Aplikuj systematické search reasoning:\n1. Vygeneruj více kandidátních řešení nebo přístupů\n2. Zhodnoť validitu a slibnost každého kandidáta\n3. Dále rozveď nejslibnější cesty\n4. Ověř řešení přes více trajektorií reasoning\n5. Vyber odpověď s nejvyšší jistotou napříč cestami",
+      rstarSimple: "Vygeneruj více cest řešení, zhodnoť každou a vyber nejlépe validovanou odpověď.",
+      slowthinkInstructions: "Zapoj se do rozšířené deliberace:\n- Počkej... nech mě o tom přemýšlet pečlivěji\n- Hmm, měl bych zvážit více úhlů pohledu\n- Nech mě přehodnotit a ověřit své uvažování\n- Vlastně, nech mě ustoupit a zamyslet se znovu\nNespěchej. Důkladné uvažování je důležitější než rychlost.",
+      slowthinkSimple: "Nespěchej. Přemýšlej hluboce a pečlivě. Používej 'počkej', 'hmm', 'nech mě přehodnotit' dle potřeby.",
       stepsFollow: 'Následuj tyto kroky',
       constraints: 'Požadavky/Omezení',
       examplesIntro: 'Zde jsou příklady očekávaného formátu vstup-výstup:',
@@ -2935,7 +2995,7 @@ const saveTags = tags => {
 
 // ==================== SHARE CODE SYSTEM ====================
 // Generate share code from prompt data (using LZ-String URI encoding)
-const ALL_METHODS = ['cot', 'zeroshot', 'fewshot', 'tot', 'selfconsistency', 'react', 'risen', 'emotion', 'plansolve', 'selfask', 'pal', 'selfrefine', 'stepback', 'analogical', 'rar', 'sot', 'got', 'bot', 'thot', 's2a', 'metaprompt', 'reflexion', 'contrastive', 'opro', 'confidence'];
+const ALL_METHODS = ['cot', 'zeroshot', 'fewshot', 'tot', 'selfconsistency', 'react', 'risen', 'emotion', 'plansolve', 'selfask', 'pal', 'selfrefine', 'stepback', 'analogical', 'rar', 'sot', 'got', 'bot', 'thot', 's2a', 'metaprompt', 'reflexion', 'contrastive', 'opro', 'confidence', 'cod', 'selfdiscover', 'rstar', 'slowthink'];
 // Template and target indices for share code encoding
 const ALL_TEMPLATES = ['general', 'coding', 'creative', 'analysis', 'explanation', 'email', 'academic', 'data', 'marketing', 'summarization', 'image_gen', 'translation', 'business', 'customer_service', 'productivity'];
 const ALL_TARGETS = ['claude', 'gpt', 'gemini', 'llama', 'mistral', 'cohere', 'general'];
@@ -3075,23 +3135,24 @@ const templateIcons = {
 // Defines which methods are recommended for each prompt category
 // Based on research: EmotionPrompt works everywhere, PAL is best for coding
 // Updated 2024-2025: Added SoT, GoT, BoT, ThoT, S2A, Meta-Prompting, Reflexion, Contrastive, OPRO, Confidence
+// Updated Feb 2025: Added CoD (Chain of Draft), Self-Discover, rStar, Slow Thinking
 const METHOD_CATEGORIES = {
-  general: ['emotion', 'fewshot', 'risen', 'rar', 'zeroshot', 'cot', 'sot', 'opro', 'confidence'],
-  coding: ['emotion', 'pal', 'cot', 'fewshot', 'zeroshot', 'tot', 'selfconsistency', 'react', 'plansolve', 'selfrefine', 'got', 'bot', 'reflexion', 'metaprompt'],
-  creative: ['emotion', 'fewshot', 'analogical', 'selfrefine', 'rar', 'sot', 'reflexion'],
-  analysis: ['emotion', 'fewshot', 'cot', 'zeroshot', 'tot', 'selfconsistency', 'react', 'plansolve', 'selfask', 'stepback', 'got', 's2a', 'thot', 'metaprompt', 'contrastive', 'confidence'],
-  explanation: ['emotion', 'fewshot', 'zeroshot', 'selfask', 'stepback', 'analogical', 'rar', 'sot', 'thot'],
+  general: ['emotion', 'fewshot', 'risen', 'rar', 'zeroshot', 'cot', 'sot', 'opro', 'confidence', 'cod', 'selfdiscover'],
+  coding: ['emotion', 'pal', 'cot', 'fewshot', 'zeroshot', 'tot', 'selfconsistency', 'react', 'plansolve', 'selfrefine', 'got', 'bot', 'reflexion', 'metaprompt', 'selfdiscover', 'rstar', 'slowthink'],
+  creative: ['emotion', 'fewshot', 'analogical', 'selfrefine', 'rar', 'sot', 'reflexion', 'cod'],
+  analysis: ['emotion', 'fewshot', 'cot', 'zeroshot', 'tot', 'selfconsistency', 'react', 'plansolve', 'selfask', 'stepback', 'got', 's2a', 'thot', 'metaprompt', 'contrastive', 'confidence', 'selfdiscover', 'slowthink'],
+  explanation: ['emotion', 'fewshot', 'zeroshot', 'selfask', 'stepback', 'analogical', 'rar', 'sot', 'thot', 'cod'],
   // New categories from 2025 research
-  email: ['emotion', 'fewshot', 'rar', 'risen', 'sot'],
-  academic: ['emotion', 'fewshot', 'cot', 'selfask', 'stepback', 'selfrefine', 'got', 'bot', 's2a', 'contrastive', 'confidence'],
-  data: ['emotion', 'pal', 'cot', 'fewshot', 'plansolve', 'got', 'bot', 'confidence'],
-  marketing: ['emotion', 'fewshot', 'analogical', 'selfrefine', 'rar', 'sot', 'reflexion'],
-  summarization: ['emotion', 'cot', 'zeroshot', 'stepback', 'thot', 's2a', 'sot'],
+  email: ['emotion', 'fewshot', 'rar', 'risen', 'sot', 'cod'],
+  academic: ['emotion', 'fewshot', 'cot', 'selfask', 'stepback', 'selfrefine', 'got', 'bot', 's2a', 'contrastive', 'confidence', 'selfdiscover', 'rstar', 'slowthink'],
+  data: ['emotion', 'pal', 'cot', 'fewshot', 'plansolve', 'got', 'bot', 'confidence', 'rstar', 'cod'],
+  marketing: ['emotion', 'fewshot', 'analogical', 'selfrefine', 'rar', 'sot', 'reflexion', 'cod'],
+  summarization: ['emotion', 'cot', 'zeroshot', 'stepback', 'thot', 's2a', 'sot', 'cod'],
   image_gen: ['fewshot', 'analogical', 'rar', 'sot'],
-  translation: ['emotion', 'fewshot', 'rar', 'selfrefine', 'contrastive'],
-  business: ['emotion', 'fewshot', 'risen', 'cot', 'plansolve', 'sot', 'metaprompt', 'confidence'],
-  customer_service: ['emotion', 'fewshot', 'rar', 'risen', 'reflexion'],
-  productivity: ['emotion', 'plansolve', 'risen', 'zeroshot', 'sot', 'opro']
+  translation: ['emotion', 'fewshot', 'rar', 'selfrefine', 'contrastive', 'cod'],
+  business: ['emotion', 'fewshot', 'risen', 'cot', 'plansolve', 'sot', 'metaprompt', 'confidence', 'selfdiscover', 'cod'],
+  customer_service: ['emotion', 'fewshot', 'rar', 'risen', 'reflexion', 'cod'],
+  productivity: ['emotion', 'plansolve', 'risen', 'zeroshot', 'sot', 'opro', 'cod']
 };
 
 // Extended sections visibility per template category
@@ -3279,7 +3340,12 @@ const methodIcons = {
   reflexion: 'History',      // Memory/reflection loop
   contrastive: 'Columns',    // Compare positive/negative
   opro: 'Sparkles',          // Optimization magic
-  confidence: 'Gauge'        // Confidence meter
+  confidence: 'Gauge',       // Confidence meter
+  // === 2025 METHOD ICONS ===
+  cod: 'Zap',                // Fast/efficient
+  selfdiscover: 'Compass',   // Self-navigation
+  rstar: 'TreeDeciduous',    // Tree search (MCTS)
+  slowthink: 'Clock'         // Deliberate thinking
 };
 
 // ==================== MAIN APP ====================
@@ -4306,6 +4372,11 @@ const App = () => {
     addMethodSection('contrastive', 'contrastive_learning', p.contrastiveInstructions, p.contrastiveSimple);
     addMethodSection('opro', 'optimized_thinking', p.oproInstructions, p.oproSimple);
     addMethodSection('confidence', 'confidence_calibration', p.confidenceInstructions, p.confidenceSimple);
+    // === 2025 METHODS ===
+    addMethodSection('cod', 'efficient_reasoning', p.codInstructions, p.codSimple);
+    addMethodSection('selfdiscover', 'task_discovery', p.selfdiscoverInstructions, p.selfdiscoverSimple);
+    addMethodSection('rstar', 'search_reasoning', p.rstarInstructions, p.rstarSimple);
+    addMethodSection('slowthink', 'deliberate_thinking', p.slowthinkInstructions, p.slowthinkSimple);
 
     // Constraints/Steps
     if (fields.constraints) {
