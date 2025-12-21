@@ -7637,7 +7637,7 @@ const App = () => {
     className: "fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4",
     onClick: e => e.target === e.currentTarget && setShowMethodsModal(false)
   }, /*#__PURE__*/React.createElement("div", {
-    className: "bg-slate-800 border border-slate-600 rounded-xl shadow-2xl w-[380px] max-h-[60vh] flex flex-col"
+    className: "bg-slate-800 border border-slate-600 rounded-xl shadow-2xl w-[520px] max-h-[70vh] flex flex-col"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center justify-between px-4 py-3 border-b border-slate-700 bg-slate-850 flex-shrink-0"
   }, /*#__PURE__*/React.createElement("div", {
@@ -7695,7 +7695,7 @@ const App = () => {
 
     /* Expanded Methods List */
     isExpanded && /*#__PURE__*/React.createElement("div", {
-      className: "px-4 py-3 bg-slate-800/50 border-t border-slate-700 grid grid-cols-1 sm:grid-cols-2 gap-2"
+      className: "px-3 py-2 bg-slate-800/50 border-t border-slate-700 grid grid-cols-2 gap-1.5"
     }, groupMethods.map(methodKey => {
       const method = t.methods[methodKey];
       if (!method) return null;
