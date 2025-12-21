@@ -7287,7 +7287,7 @@ const App = () => {
     className: "fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4",
     onClick: e => e.target === e.currentTarget && setShowMethodsModal(false)
   }, /*#__PURE__*/React.createElement("div", {
-    className: "bg-slate-800 border border-slate-600 rounded-xl shadow-2xl w-full max-w-md max-h-[70vh] flex flex-col"
+    className: "bg-slate-800 border border-slate-600 rounded-xl shadow-2xl w-[380px] max-h-[60vh] flex flex-col"
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center justify-between px-4 py-3 border-b border-slate-700 bg-slate-850 flex-shrink-0"
   }, /*#__PURE__*/React.createElement("div", {
@@ -7310,8 +7310,8 @@ const App = () => {
 
   /* Modal Content - Categories */
   /*#__PURE__*/React.createElement("div", {
-    className: "overflow-y-auto flex-1 p-4 space-y-3 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-slate-800",
-    style: { scrollbarWidth: 'thin', scrollbarColor: '#475569 #1e293b' }
+    className: "overflow-y-scroll flex-1 p-3 space-y-2",
+    style: { scrollbarWidth: 'auto', scrollbarColor: '#64748b #1e293b' }
   }, Object.entries(METHOD_GROUPS).map(([groupKey, group]) => {
     const groupMethods = group.methods.filter(m => t.methods[m]);
     const selectedInGroup = groupMethods.filter(m => selectedMethods.includes(m)).length;
