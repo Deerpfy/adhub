@@ -30,7 +30,7 @@ Research-backed AI prompt formatting tool with multi-model support
 | Metric | Value |
 |--------|-------|
 | Total Files | 13 |
-| Total Size | 652.0 KB |
+| Total Size | 675.1 KB |
 | Main Entry | `index.html` |
 
 ---
