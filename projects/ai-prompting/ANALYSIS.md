@@ -29,8 +29,8 @@ Research-backed AI prompt formatting tool with multi-model support
 ### Key Metrics
 | Metric | Value |
 |--------|-------|
-| Total Files | 11 |
-| Total Size | 548.7 KB |
+| Total Files | 12 |
+| Total Size | 577.9 KB |
 | Main Entry | `index.html` |
 
 ---
@@ -59,8 +59,8 @@ Research-backed AI prompt formatting tool with multi-model support
 ### File Types
 | Extension | Count |
 |-----------|-------|
+| `.md` | 4 |
 | `.json` | 3 |
-| `.md` | 3 |
 | `.js` | 2 |
 | `.html` | 2 |
 | `.css` | 1 |
@@ -69,6 +69,7 @@ Research-backed AI prompt formatting tool with multi-model support
 ```
 ai-prompting/
 └── AI_PROMPT_FORMATTER_ANALYSIS.md
+├── PROMPTING_METHODS_RESEARCH_2025.md
 ├── app.js
 ├── archive/
 ├── babel.config.json
