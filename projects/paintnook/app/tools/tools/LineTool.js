@@ -1,6 +1,8 @@
 /**
  * LineTool - Draw straight lines
  * Supports pixel-perfect lines in Pixel Art mode using Bresenham's algorithm
+ * Supports Shift constraint for 0°, 45°, 90° angles
+ * Supports snapping to guides, corners, halves
  */
 
 export class LineTool {
@@ -16,19 +18,37 @@ export class LineTool {
     deactivate() {}
 
     onStart(x, y) {
-        this.startX = x;
-        this.startY = y;
+        // Apply snapping to start point
+        const snapped = this.applySnapping(x, y);
+        this.startX = snapped.x;
+        this.startY = snapped.y;
     }
 
     onMove(x, y, pressure) {
         const ctx = this.app.canvas.getPreviewContext();
         ctx.clearRect(0, 0, this.app.canvas.width, this.app.canvas.height);
 
+        // Apply snapping and constraints
+        let endX = x;
+        let endY = y;
+
+        // Apply Shift constraint for angle locking
+        if (this.app.canvas.modifiers?.shift) {
+            const constrained = this.constrainAngle(this.startX, this.startY, x, y);
+            endX = constrained.x;
+            endY = constrained.y;
+        } else {
+            // Apply snapping to end point
+            const snapped = this.applySnapping(x, y);
+            endX = snapped.x;
+            endY = snapped.y;
+        }
+
         // Check if pixel art mode is enabled
         if (this.app.pixelArt?.enabled) {
-            this.drawPixelArtLinePreview(ctx, this.startX, this.startY, x, y);
+            this.drawPixelArtLinePreview(ctx, this.startX, this.startY, endX, endY);
         } else {
-            this.drawNormalLinePreview(ctx, this.startX, this.startY, x, y);
+            this.drawNormalLinePreview(ctx, this.startX, this.startY, endX, endY);
         }
     }
 
@@ -36,18 +56,70 @@ export class LineTool {
         // Clear preview
         this.app.canvas.clearPreview();
 
+        // Apply snapping and constraints
+        let endX = x;
+        let endY = y;
+
+        // Apply Shift constraint for angle locking
+        if (this.app.canvas.modifiers?.shift) {
+            const constrained = this.constrainAngle(this.startX, this.startY, x, y);
+            endX = constrained.x;
+            endY = constrained.y;
+        } else {
+            // Apply snapping to end point
+            const snapped = this.applySnapping(x, y);
+            endX = snapped.x;
+            endY = snapped.y;
+        }
+
         // Draw on active layer
         const ctx = this.app.layers.getActiveContext();
         if (!ctx) return;
 
         // Check if pixel art mode is enabled
         if (this.app.pixelArt?.enabled) {
-            this.drawPixelArtLine(ctx, this.startX, this.startY, x, y);
+            this.drawPixelArtLine(ctx, this.startX, this.startY, endX, endY);
         } else {
-            this.drawNormalLine(ctx, this.startX, this.startY, x, y);
+            this.drawNormalLine(ctx, this.startX, this.startY, endX, endY);
         }
 
         this.app.canvas.render();
+    }
+
+    /**
+     * Apply snapping to coordinates
+     */
+    applySnapping(x, y) {
+        if (this.app.rulerGuide?.snapping?.enabled) {
+            return this.app.rulerGuide.snap(x, y);
+        }
+        return { x, y };
+    }
+
+    /**
+     * Constrain line to specific angles (0°, 45°, 90°, 135°, 180°, etc.)
+     * Used when Shift is held during drawing
+     */
+    constrainAngle(startX, startY, endX, endY) {
+        const dx = endX - startX;
+        const dy = endY - startY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (distance === 0) {
+            return { x: endX, y: endY };
+        }
+
+        // Calculate angle in degrees
+        let angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+        // Snap to nearest 45 degree increment
+        const snapAngle = Math.round(angle / 45) * 45;
+        const snapRad = snapAngle * Math.PI / 180;
+
+        return {
+            x: startX + distance * Math.cos(snapRad),
+            y: startY + distance * Math.sin(snapRad)
+        };
     }
 
     /**

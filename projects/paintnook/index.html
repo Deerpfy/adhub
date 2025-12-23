@@ -347,6 +347,74 @@
 
             <!-- Right Panel - Layers & Properties -->
             <aside class="panel panel-right" id="panelRight">
+                <!-- Rulers & Snapping Section -->
+                <section class="panel-section ruler-guide-section" id="rulerGuideSection">
+                    <div class="panel-header">
+                        <h3 style="display: flex; align-items: center; gap: 8px;">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M20 3H4c-.55 0-1 .45-1 1v16c0 .55.45 1 1 1h16c.55 0 1-.45 1-1V4c0-.55-.45-1-1-1zM6 7h2v2H6V7zm0 4h2v2H6v-2zm0 4h2v2H6v-2zm12 2H10v-2h8v2zm0-4H10v-2h8v2zm0-4H10V7h8v2z" fill="currentColor"/>
+                            </svg>
+                            Pravítka & Snap
+                        </h3>
+                        <button class="btn-icon btn-collapse" data-collapse="rulerGuideSection">
+                            <svg viewBox="0 0 24 24" width="16" height="16">
+                                <path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z" fill="currentColor"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="panel-content ruler-guide-settings">
+                        <div class="setting-row">
+                            <label>Pravítka</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="rulersEnabled">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-row">
+                            <label>Vodítka</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="guidesEnabled">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="setting-row">
+                            <label>Snapování</label>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="snappingEnabled">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="snap-options" id="snapOptions" style="display: none;">
+                            <label class="snap-option">
+                                <input type="checkbox" id="snapToEdges" checked>
+                                <span>Rohy</span>
+                            </label>
+                            <label class="snap-option">
+                                <input type="checkbox" id="snapToCenter" checked>
+                                <span>Střed</span>
+                            </label>
+                            <label class="snap-option">
+                                <input type="checkbox" id="snapToHalves" checked>
+                                <span>Poloviny</span>
+                            </label>
+                            <label class="snap-option">
+                                <input type="checkbox" id="snapToGuides" checked>
+                                <span>Vodítka</span>
+                            </label>
+                        </div>
+                        <button class="clear-guides-btn" id="clearGuidesBtn" style="margin-top: 8px;">
+                            <svg viewBox="0 0 24 24" width="14" height="14">
+                                <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+                            </svg>
+                            Smazat vodítka
+                        </button>
+                        <div class="setting-hint" style="font-size: 11px; color: var(--text-muted); margin-top: 8px;">
+                            <kbd>Shift</kbd> = rovné čáry (0°, 45°, 90°)<br>
+                            <kbd>Shift</kbd> + tvar = čtverec/kruh
+                        </div>
+                    </div>
+                </section>
+
                 <!-- Pixel Art Mode Toggle (compact, at top) -->
                 <section class="panel-section pixel-art-toggle-section" id="pixelArtToggleSection">
                     <div class="panel-header" style="padding: 8px 16px;">

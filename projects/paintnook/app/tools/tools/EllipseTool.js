@@ -1,6 +1,8 @@
 /**
  * EllipseTool - Draw ellipses/circles
  * Supports pixel-perfect ellipses in Pixel Art mode using Midpoint algorithm
+ * Supports Shift constraint for perfect circles
+ * Supports snapping to guides, corners, halves
  */
 
 export class EllipseTool {
@@ -17,19 +19,37 @@ export class EllipseTool {
     deactivate() {}
 
     onStart(x, y) {
-        this.startX = x;
-        this.startY = y;
+        // Apply snapping to start point
+        const snapped = this.applySnapping(x, y);
+        this.startX = snapped.x;
+        this.startY = snapped.y;
     }
 
     onMove(x, y, pressure) {
         const ctx = this.app.canvas.getPreviewContext();
         ctx.clearRect(0, 0, this.app.canvas.width, this.app.canvas.height);
 
+        // Apply snapping and constraints
+        let endX = x;
+        let endY = y;
+
+        // Apply Shift constraint for perfect circle
+        if (this.app.canvas.modifiers?.shift) {
+            const constrained = this.constrainCircle(this.startX, this.startY, x, y);
+            endX = constrained.x;
+            endY = constrained.y;
+        } else {
+            // Apply snapping to end point
+            const snapped = this.applySnapping(x, y);
+            endX = snapped.x;
+            endY = snapped.y;
+        }
+
         // Check if pixel art mode is enabled
         if (this.app.pixelArt?.enabled) {
-            this.drawPixelArtEllipsePreview(ctx, this.startX, this.startY, x, y);
+            this.drawPixelArtEllipsePreview(ctx, this.startX, this.startY, endX, endY);
         } else {
-            this.drawNormalEllipsePreview(ctx, this.startX, this.startY, x, y);
+            this.drawNormalEllipsePreview(ctx, this.startX, this.startY, endX, endY);
         }
     }
 
@@ -37,18 +57,59 @@ export class EllipseTool {
         // Clear preview
         this.app.canvas.clearPreview();
 
+        // Apply snapping and constraints
+        let endX = x;
+        let endY = y;
+
+        // Apply Shift constraint for perfect circle
+        if (this.app.canvas.modifiers?.shift) {
+            const constrained = this.constrainCircle(this.startX, this.startY, x, y);
+            endX = constrained.x;
+            endY = constrained.y;
+        } else {
+            // Apply snapping to end point
+            const snapped = this.applySnapping(x, y);
+            endX = snapped.x;
+            endY = snapped.y;
+        }
+
         // Draw on active layer
         const ctx = this.app.layers.getActiveContext();
         if (!ctx) return;
 
         // Check if pixel art mode is enabled
         if (this.app.pixelArt?.enabled) {
-            this.drawPixelArtEllipse(ctx, this.startX, this.startY, x, y);
+            this.drawPixelArtEllipse(ctx, this.startX, this.startY, endX, endY);
         } else {
-            this.drawNormalEllipse(ctx, this.startX, this.startY, x, y);
+            this.drawNormalEllipse(ctx, this.startX, this.startY, endX, endY);
         }
 
         this.app.canvas.render();
+    }
+
+    /**
+     * Apply snapping to coordinates
+     */
+    applySnapping(x, y) {
+        if (this.app.rulerGuide?.snapping?.enabled) {
+            return this.app.rulerGuide.snap(x, y);
+        }
+        return { x, y };
+    }
+
+    /**
+     * Constrain ellipse to perfect circle
+     * Used when Shift is held during drawing
+     */
+    constrainCircle(startX, startY, endX, endY) {
+        const dx = endX - startX;
+        const dy = endY - startY;
+        const size = Math.max(Math.abs(dx), Math.abs(dy));
+
+        return {
+            x: startX + Math.sign(dx) * size,
+            y: startY + Math.sign(dy) * size
+        };
     }
 
     /**

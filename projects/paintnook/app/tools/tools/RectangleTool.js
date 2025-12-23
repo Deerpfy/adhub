@@ -1,6 +1,8 @@
 /**
  * RectangleTool - Draw rectangles
  * Supports pixel-perfect rectangles in Pixel Art mode
+ * Supports Shift constraint for perfect squares
+ * Supports snapping to guides, corners, halves
  */
 
 export class RectangleTool {
@@ -10,26 +12,44 @@ export class RectangleTool {
         this.displayName = 'Obdélník';
         this.startX = 0;
         this.startY = 0;
-        this.filled = false; // Shift for filled
+        this.filled = false;
     }
 
     activate() {}
     deactivate() {}
 
     onStart(x, y) {
-        this.startX = x;
-        this.startY = y;
+        // Apply snapping to start point
+        const snapped = this.applySnapping(x, y);
+        this.startX = snapped.x;
+        this.startY = snapped.y;
     }
 
     onMove(x, y, pressure) {
         const ctx = this.app.canvas.getPreviewContext();
         ctx.clearRect(0, 0, this.app.canvas.width, this.app.canvas.height);
 
+        // Apply snapping and constraints
+        let endX = x;
+        let endY = y;
+
+        // Apply Shift constraint for perfect square
+        if (this.app.canvas.modifiers?.shift) {
+            const constrained = this.constrainSquare(this.startX, this.startY, x, y);
+            endX = constrained.x;
+            endY = constrained.y;
+        } else {
+            // Apply snapping to end point
+            const snapped = this.applySnapping(x, y);
+            endX = snapped.x;
+            endY = snapped.y;
+        }
+
         // Check if pixel art mode is enabled
         if (this.app.pixelArt?.enabled) {
-            this.drawPixelArtRectPreview(ctx, this.startX, this.startY, x, y);
+            this.drawPixelArtRectPreview(ctx, this.startX, this.startY, endX, endY);
         } else {
-            this.drawNormalRectPreview(ctx, this.startX, this.startY, x, y);
+            this.drawNormalRectPreview(ctx, this.startX, this.startY, endX, endY);
         }
     }
 
@@ -37,18 +57,59 @@ export class RectangleTool {
         // Clear preview
         this.app.canvas.clearPreview();
 
+        // Apply snapping and constraints
+        let endX = x;
+        let endY = y;
+
+        // Apply Shift constraint for perfect square
+        if (this.app.canvas.modifiers?.shift) {
+            const constrained = this.constrainSquare(this.startX, this.startY, x, y);
+            endX = constrained.x;
+            endY = constrained.y;
+        } else {
+            // Apply snapping to end point
+            const snapped = this.applySnapping(x, y);
+            endX = snapped.x;
+            endY = snapped.y;
+        }
+
         // Draw on active layer
         const ctx = this.app.layers.getActiveContext();
         if (!ctx) return;
 
         // Check if pixel art mode is enabled
         if (this.app.pixelArt?.enabled) {
-            this.drawPixelArtRect(ctx, this.startX, this.startY, x, y);
+            this.drawPixelArtRect(ctx, this.startX, this.startY, endX, endY);
         } else {
-            this.drawNormalRect(ctx, this.startX, this.startY, x, y);
+            this.drawNormalRect(ctx, this.startX, this.startY, endX, endY);
         }
 
         this.app.canvas.render();
+    }
+
+    /**
+     * Apply snapping to coordinates
+     */
+    applySnapping(x, y) {
+        if (this.app.rulerGuide?.snapping?.enabled) {
+            return this.app.rulerGuide.snap(x, y);
+        }
+        return { x, y };
+    }
+
+    /**
+     * Constrain rectangle to perfect square
+     * Used when Shift is held during drawing
+     */
+    constrainSquare(startX, startY, endX, endY) {
+        const dx = endX - startX;
+        const dy = endY - startY;
+        const size = Math.max(Math.abs(dx), Math.abs(dy));
+
+        return {
+            x: startX + Math.sign(dx) * size,
+            y: startY + Math.sign(dy) * size
+        };
     }
 
     /**
