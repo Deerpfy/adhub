@@ -1974,8 +1974,143 @@ body {
 .code-output .tag { color: #569cd6; }
 .code-output .attribute { color: #9cdcfe; }
 
-#codeGeneratorModal .modal-large {
-    max-width: 800px;
+#codeGeneratorModal .modal-large,
+.modal-code-generator {
+    max-width: 900px;
+}
+
+/* Code Generator View Tabs */
+.code-view-tabs {
+    display: flex;
+    background: var(--bg-tertiary);
+    border-radius: 6px;
+    padding: 2px;
+    gap: 2px;
+}
+
+.code-view-tab {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.code-view-tab:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.code-view-tab.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.code-view-tab svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Code View Panels */
+.code-view-panel {
+    display: none;
+    height: 100%;
+}
+
+.code-view-panel.active {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Preview Container */
+.preview-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #0d0d14;
+    border-radius: 8px;
+    margin: 16px;
+    overflow: hidden;
+}
+
+.preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.preview-title {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.preview-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.preview-actions .btn-icon {
+    padding: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.preview-actions .btn-icon:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.preview-frame-wrapper {
+    flex: 1;
+    position: relative;
+    min-height: 350px;
+    background: #ffffff;
+}
+
+.preview-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #ffffff;
+}
+
+.preview-unsupported {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-tertiary);
+    color: var(--text-muted);
+    text-align: center;
+    padding: 40px;
+}
+
+.preview-unsupported svg {
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.preview-unsupported p {
+    font-size: 1rem;
+    margin-bottom: 8px;
+}
+
+.preview-hint {
+    font-size: 0.8rem;
+    opacity: 0.7;
 }
 
 /* Form Elements */

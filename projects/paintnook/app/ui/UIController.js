@@ -167,7 +167,6 @@ export class UIController {
         const generateBtn = document.getElementById('generateCodeBtn');
         const formatSelect = document.getElementById('codeFormatSelect');
         const sourceSelect = document.getElementById('codeSourceSelect');
-        const modal = document.getElementById('codeGeneratorModal');
         const modalFormatSelect = document.getElementById('codeModalFormatSelect');
         const codeOutput = document.getElementById('generatedCodeContent');
         const filenameEl = document.getElementById('codeFilename');
@@ -175,26 +174,61 @@ export class UIController {
         const downloadBtn = document.getElementById('downloadCodeBtn');
         const regenerateBtn = document.getElementById('regenerateCodeBtn');
 
+        // View mode elements
+        const viewTabs = document.querySelectorAll('.code-view-tab');
+        const codeViewPanel = document.getElementById('codeViewPanel');
+        const previewViewPanel = document.getElementById('previewViewPanel');
+        const previewFrame = document.getElementById('codePreviewFrame');
+        const previewUnsupported = document.getElementById('previewUnsupported');
+        const previewRefreshBtn = document.getElementById('previewRefreshBtn');
+        const previewNewWindowBtn = document.getElementById('previewNewWindowBtn');
+
         // Store current settings
-        let currentFormat = 'canvas';
-        let currentSource = 'active';
+        this.codeGenState = {
+            format: 'canvas',
+            source: 'active',
+            code: '',
+            currentView: 'code'
+        };
+
+        // View tab switching
+        viewTabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const view = tab.dataset.view;
+                this.codeGenState.currentView = view;
+
+                // Update tab states
+                viewTabs.forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+
+                // Switch panels
+                if (view === 'code') {
+                    codeViewPanel?.classList.add('active');
+                    previewViewPanel?.classList.remove('active');
+                } else {
+                    codeViewPanel?.classList.remove('active');
+                    previewViewPanel?.classList.add('active');
+                    this.updatePreview();
+                }
+            });
+        });
 
         // Generate code button
         generateBtn?.addEventListener('click', () => {
-            currentFormat = formatSelect?.value || 'canvas';
-            currentSource = sourceSelect?.value || 'active';
-            this.generateAndShowCode(currentFormat, currentSource);
+            this.codeGenState.format = formatSelect?.value || 'canvas';
+            this.codeGenState.source = sourceSelect?.value || 'active';
+            this.generateAndShowCode();
         });
 
         // Format change in modal
         modalFormatSelect?.addEventListener('change', (e) => {
-            currentFormat = e.target.value;
-            this.generateAndShowCode(currentFormat, currentSource);
+            this.codeGenState.format = e.target.value;
+            this.generateAndShowCode();
         });
 
         // Sync format selects
         formatSelect?.addEventListener('change', (e) => {
-            currentFormat = e.target.value;
+            this.codeGenState.format = e.target.value;
             if (modalFormatSelect) {
                 modalFormatSelect.value = e.target.value;
             }
@@ -224,17 +258,28 @@ export class UIController {
 
         // Regenerate button
         regenerateBtn?.addEventListener('click', () => {
-            this.generateAndShowCode(currentFormat, currentSource);
+            this.generateAndShowCode();
+        });
+
+        // Preview refresh button
+        previewRefreshBtn?.addEventListener('click', () => {
+            this.updatePreview();
+        });
+
+        // Preview new window button
+        previewNewWindowBtn?.addEventListener('click', () => {
+            this.openPreviewInNewWindow();
         });
     }
 
     /**
      * Generate and display code in modal
      */
-    generateAndShowCode(format, source) {
+    generateAndShowCode() {
         const codeGenerator = this.app.codeGenerator;
         if (!codeGenerator) return;
 
+        const { format, source } = this.codeGenState;
         let code = '';
         const filenameEl = document.getElementById('codeFilename');
         const codeOutput = document.getElementById('generatedCodeContent');
@@ -260,6 +305,8 @@ export class UIController {
                 code = codes.join('\n\n');
             }
 
+            this.codeGenState.code = code;
+
             if (codeOutput) {
                 codeOutput.textContent = code;
             }
@@ -269,12 +316,234 @@ export class UIController {
 
             this.showModal('codeGeneratorModal');
 
+            // Update preview if in preview mode
+            if (this.codeGenState.currentView === 'preview') {
+                this.updatePreview();
+            }
+
         } catch (err) {
             console.error('Code generation error:', err);
+            this.codeGenState.code = `// Chyba při generování kódu:\n// ${err.message}`;
             if (codeOutput) {
-                codeOutput.textContent = `// Chyba při generování kódu:\n// ${err.message}`;
+                codeOutput.textContent = this.codeGenState.code;
             }
             this.showModal('codeGeneratorModal');
+        }
+    }
+
+    /**
+     * Update the preview iframe with rendered code
+     */
+    updatePreview() {
+        const { format, code } = this.codeGenState;
+        const previewFrame = document.getElementById('codePreviewFrame');
+        const previewUnsupported = document.getElementById('previewUnsupported');
+
+        if (!previewFrame) return;
+
+        // C++ is not previewable
+        if (format === 'cpp') {
+            previewFrame.style.display = 'none';
+            if (previewUnsupported) previewUnsupported.style.display = 'flex';
+            return;
+        }
+
+        previewFrame.style.display = 'block';
+        if (previewUnsupported) previewUnsupported.style.display = 'none';
+
+        // Build preview HTML based on format
+        let previewHTML = '';
+
+        if (format === 'html') {
+            // HTML/SVG - render directly
+            previewHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 40px);
+            background: #f5f5f5;
+        }
+        svg {
+            max-width: 100%;
+            height: auto;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+${code}
+</body>
+</html>`;
+        } else if (format === 'css') {
+            // CSS - show a demo element with the styles
+            previewHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 80px);
+            background: #f5f5f5;
+        }
+        .preview-wrapper {
+            background: white;
+            padding: 40px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        ${code}
+    </style>
+</head>
+<body>
+    <div class="preview-wrapper">
+        <div class="layer-vrstva-1" style="width: 200px; height: 200px; background: #ddd; position: relative;">
+            <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #666;">CSS Preview</span>
+        </div>
+    </div>
+</body>
+</html>`;
+        } else if (format === 'canvas') {
+            // JavaScript Canvas - wrap in executable HTML
+            previewHTML = `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: calc(100vh - 40px);
+            background: #f5f5f5;
+        }
+        canvas {
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="myCanvas"></canvas>
+    <script>
+        try {
+            ${code}
+        } catch(e) {
+            console.error('Canvas error:', e);
+            document.body.innerHTML = '<p style="color: red;">Error: ' + e.message + '</p>';
+        }
+    </script>
+</body>
+</html>`;
+        }
+
+        // Write to iframe
+        const frameDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
+        frameDoc.open();
+        frameDoc.write(previewHTML);
+        frameDoc.close();
+    }
+
+    /**
+     * Open preview in a new browser window
+     */
+    openPreviewInNewWindow() {
+        const { format, code } = this.codeGenState;
+
+        if (format === 'cpp') {
+            this.showNotification('C++ kód nelze otevřít v prohlížeči', 'warning');
+            return;
+        }
+
+        // Build the same preview HTML
+        let previewHTML = '';
+
+        if (format === 'html') {
+            previewHTML = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>PaintNook - HTML Export</title>
+    <style>
+        body { margin: 0; padding: 20px; display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 40px); background: #f5f5f5; }
+        svg { max-width: 100%; height: auto; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+${code}
+</body>
+</html>`;
+        } else if (format === 'css') {
+            previewHTML = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>PaintNook - CSS Export</title>
+    <style>
+        body { margin: 0; padding: 40px; display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 80px); background: #f5f5f5; }
+        .preview-wrapper { background: white; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 8px; }
+        ${code}
+    </style>
+</head>
+<body>
+    <div class="preview-wrapper">
+        <div class="layer-vrstva-1" style="width: 200px; height: 200px; background: #ddd; position: relative;">
+            <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #666;">CSS Preview</span>
+        </div>
+    </div>
+</body>
+</html>`;
+        } else if (format === 'canvas') {
+            previewHTML = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>PaintNook - Canvas Export</title>
+    <style>
+        body { margin: 0; padding: 20px; display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 40px); background: #f5f5f5; }
+        canvas { background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 100%; height: auto; }
+    </style>
+</head>
+<body>
+    <canvas id="myCanvas"></canvas>
+    <script>
+        try {
+            ${code}
+        } catch(e) {
+            console.error('Canvas error:', e);
+            document.body.innerHTML = '<p style="color: red;">Error: ' + e.message + '</p>';
+        }
+    </script>
+</body>
+</html>`;
+        }
+
+        // Open in new window
+        const newWindow = window.open('', '_blank');
+        if (newWindow) {
+            newWindow.document.write(previewHTML);
+            newWindow.document.close();
+        } else {
+            this.showNotification('Nepodařilo se otevřít nové okno', 'error');
         }
     }
 
