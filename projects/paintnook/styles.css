@@ -1870,6 +1870,114 @@ body {
     background: var(--bg-tertiary);
 }
 
+.modal-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.modal-header-actions .select-input {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+    min-width: 140px;
+}
+
+/* Code Generator Styles */
+.code-generator-section {
+    border-top: 1px solid var(--border-color);
+}
+
+.code-generator-content {
+    padding: 8px 0;
+}
+
+.code-generator-actions {
+    margin-top: 12px;
+}
+
+.code-modal-body {
+    padding: 0;
+    min-height: 400px;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.code-output-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #0d0d14;
+    border-radius: 8px;
+    margin: 16px;
+    overflow: hidden;
+}
+
+.code-output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.code-filename {
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.code-output-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.code-output-actions .btn-icon {
+    padding: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+.code-output-actions .btn-icon:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.code-output {
+    flex: 1;
+    margin: 0;
+    padding: 16px;
+    overflow: auto;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: #e0e0e0;
+    background: transparent;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    tab-size: 2;
+}
+
+.code-output code {
+    font-family: inherit;
+    font-size: inherit;
+    background: transparent;
+    padding: 0;
+}
+
+/* Syntax highlighting hints */
+.code-output .comment { color: #6a9955; }
+.code-output .keyword { color: #c586c0; }
+.code-output .string { color: #ce9178; }
+.code-output .number { color: #b5cea8; }
+.code-output .function { color: #dcdcaa; }
+.code-output .tag { color: #569cd6; }
+.code-output .attribute { color: #9cdcfe; }
+
+#codeGeneratorModal .modal-large {
+    max-width: 800px;
+}
+
 /* Form Elements */
 .form-group {
     margin-bottom: 20px;

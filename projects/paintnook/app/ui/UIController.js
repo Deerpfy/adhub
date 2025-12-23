@@ -90,6 +90,9 @@ export class UIController {
 
         // Initialize Ruler & Guide UI
         this.setupRulerGuideUI();
+
+        // Initialize Code Generator UI
+        this.setupCodeGenerator();
     }
 
     /**
@@ -155,6 +158,140 @@ export class UIController {
             this.app.rulerGuide?.clearGuides();
             this.showNotification('Vodítka smazána', 'success');
         });
+    }
+
+    /**
+     * Setup Code Generator UI
+     */
+    setupCodeGenerator() {
+        const generateBtn = document.getElementById('generateCodeBtn');
+        const formatSelect = document.getElementById('codeFormatSelect');
+        const sourceSelect = document.getElementById('codeSourceSelect');
+        const modal = document.getElementById('codeGeneratorModal');
+        const modalFormatSelect = document.getElementById('codeModalFormatSelect');
+        const codeOutput = document.getElementById('generatedCodeContent');
+        const filenameEl = document.getElementById('codeFilename');
+        const copyBtn = document.getElementById('copyCodeBtn');
+        const downloadBtn = document.getElementById('downloadCodeBtn');
+        const regenerateBtn = document.getElementById('regenerateCodeBtn');
+
+        // Store current settings
+        let currentFormat = 'canvas';
+        let currentSource = 'active';
+
+        // Generate code button
+        generateBtn?.addEventListener('click', () => {
+            currentFormat = formatSelect?.value || 'canvas';
+            currentSource = sourceSelect?.value || 'active';
+            this.generateAndShowCode(currentFormat, currentSource);
+        });
+
+        // Format change in modal
+        modalFormatSelect?.addEventListener('change', (e) => {
+            currentFormat = e.target.value;
+            this.generateAndShowCode(currentFormat, currentSource);
+        });
+
+        // Sync format selects
+        formatSelect?.addEventListener('change', (e) => {
+            currentFormat = e.target.value;
+            if (modalFormatSelect) {
+                modalFormatSelect.value = e.target.value;
+            }
+        });
+
+        // Copy code button
+        copyBtn?.addEventListener('click', async () => {
+            const code = codeOutput?.textContent;
+            if (code) {
+                try {
+                    await navigator.clipboard.writeText(code);
+                    this.showNotification('Kód zkopírován do schránky', 'success');
+                } catch (err) {
+                    this.showNotification('Nepodařilo se zkopírovat kód', 'error');
+                }
+            }
+        });
+
+        // Download code button
+        downloadBtn?.addEventListener('click', () => {
+            const code = codeOutput?.textContent;
+            const filename = filenameEl?.textContent || 'output.js';
+            if (code) {
+                this.downloadCode(code, filename);
+            }
+        });
+
+        // Regenerate button
+        regenerateBtn?.addEventListener('click', () => {
+            this.generateAndShowCode(currentFormat, currentSource);
+        });
+    }
+
+    /**
+     * Generate and display code in modal
+     */
+    generateAndShowCode(format, source) {
+        const codeGenerator = this.app.codeGenerator;
+        if (!codeGenerator) return;
+
+        let code = '';
+        const filenameEl = document.getElementById('codeFilename');
+        const codeOutput = document.getElementById('generatedCodeContent');
+        const extensions = { html: 'html', css: 'css', canvas: 'js', cpp: 'cpp' };
+
+        try {
+            if (source === 'active') {
+                const activeLayer = this.app.layers.getActiveLayer();
+                if (activeLayer) {
+                    code = codeGenerator.generateCode(activeLayer, format);
+                } else {
+                    code = '// Žádná aktivní vrstva';
+                }
+            } else if (source === 'visible') {
+                code = codeGenerator.generateAllLayers(format);
+            } else {
+                // All layers
+                const allLayers = this.app.layers.getLayers().filter(l => l.type !== 'folder');
+                const codes = allLayers.map(layer => {
+                    const layerCode = codeGenerator.generateCode(layer, format);
+                    return `// Layer: ${layer.name}\n${layerCode}`;
+                });
+                code = codes.join('\n\n');
+            }
+
+            if (codeOutput) {
+                codeOutput.textContent = code;
+            }
+            if (filenameEl) {
+                filenameEl.textContent = `output.${extensions[format] || 'txt'}`;
+            }
+
+            this.showModal('codeGeneratorModal');
+
+        } catch (err) {
+            console.error('Code generation error:', err);
+            if (codeOutput) {
+                codeOutput.textContent = `// Chyba při generování kódu:\n// ${err.message}`;
+            }
+            this.showModal('codeGeneratorModal');
+        }
+    }
+
+    /**
+     * Download code as file
+     */
+    downloadCode(code, filename) {
+        const blob = new Blob([code], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        this.showNotification(`Soubor ${filename} stažen`, 'success');
     }
 
     /**
