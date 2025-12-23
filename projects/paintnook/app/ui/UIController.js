@@ -418,7 +418,7 @@ ${code}
 </body>
 </html>`;
         } else if (format === 'canvas') {
-            // JavaScript Canvas - wrap in executable HTML
+            // JavaScript Canvas - wrap in executable HTML with proper async handling
             previewHTML = `
 <!DOCTYPE html>
 <html>
@@ -440,17 +440,23 @@ ${code}
             max-width: 100%;
             height: auto;
         }
+        .loading {
+            color: #666;
+            font-family: sans-serif;
+        }
     </style>
 </head>
 <body>
     <canvas id="myCanvas"></canvas>
     <script>
-        try {
-            ${code}
-        } catch(e) {
-            console.error('Canvas error:', e);
-            document.body.innerHTML = '<p style="color: red;">Error: ' + e.message + '</p>';
-        }
+        (function() {
+            try {
+                ${code}
+            } catch(e) {
+                console.error('Canvas error:', e);
+                document.body.innerHTML = '<p style="color: red;">Error: ' + e.message + '</p>';
+            }
+        })();
     </script>
 </body>
 </html>`;
@@ -526,12 +532,14 @@ ${code}
 <body>
     <canvas id="myCanvas"></canvas>
     <script>
-        try {
-            ${code}
-        } catch(e) {
-            console.error('Canvas error:', e);
-            document.body.innerHTML = '<p style="color: red;">Error: ' + e.message + '</p>';
-        }
+        (function() {
+            try {
+                ${code}
+            } catch(e) {
+                console.error('Canvas error:', e);
+                document.body.innerHTML = '<p style="color: red;">Error: ' + e.message + '</p>';
+            }
+        })();
     </script>
 </body>
 </html>`;
