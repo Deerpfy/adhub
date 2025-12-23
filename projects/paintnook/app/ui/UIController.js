@@ -101,9 +101,6 @@ export class UIController {
         if (rulersToggle) {
             rulersToggle.addEventListener('change', (e) => {
                 this.app.rulerGuide?.setRulersEnabled(e.target.checked);
-                // Also update canvas container class
-                const container = document.getElementById('canvasContainer');
-                container?.classList.toggle('has-rulers', e.target.checked);
             });
         }
 
