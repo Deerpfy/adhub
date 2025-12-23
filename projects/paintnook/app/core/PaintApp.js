@@ -23,6 +23,7 @@ import { GoogleFontsManager } from '../utils/GoogleFontsManager.js';
 import { VectorManager } from '../vector/VectorManager.js';
 import { VectorUI } from '../vector/VectorUI.js';
 import { RulerGuideManager } from '../utils/RulerGuideManager.js';
+import { CodeGenerator } from '../export/CodeGenerator.js';
 
 export class PaintApp {
     constructor() {
@@ -81,6 +82,9 @@ export class PaintApp {
 
         // Ruler and Guide manager
         this.rulerGuide = null;
+
+        // Code Generator
+        this.codeGenerator = null;
     }
 
     /**
@@ -170,6 +174,9 @@ export class PaintApp {
             this.googleFonts.init().catch(err => {
                 console.warn('Google Fonts initialization failed:', err);
             });
+
+            // Initialize Code Generator
+            this.codeGenerator = new CodeGenerator(this);
 
             // Create default project
             await this.newProject({
