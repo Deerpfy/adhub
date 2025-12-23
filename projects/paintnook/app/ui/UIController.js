@@ -87,6 +87,77 @@ export class UIController {
         this.setupCollaboration();
         this.setupBgRemover();
         this.setupLayerContextMenu();
+
+        // Initialize Ruler & Guide UI
+        this.setupRulerGuideUI();
+    }
+
+    /**
+     * Setup Ruler & Guide UI controls
+     */
+    setupRulerGuideUI() {
+        // Rulers toggle
+        const rulersToggle = document.getElementById('rulersEnabled');
+        if (rulersToggle) {
+            rulersToggle.addEventListener('change', (e) => {
+                this.app.rulerGuide?.setRulersEnabled(e.target.checked);
+                // Also update canvas container class
+                const container = document.getElementById('canvasContainer');
+                container?.classList.toggle('has-rulers', e.target.checked);
+            });
+        }
+
+        // Guides toggle
+        const guidesToggle = document.getElementById('guidesEnabled');
+        if (guidesToggle) {
+            guidesToggle.addEventListener('change', (e) => {
+                this.app.rulerGuide?.setGuidesEnabled(e.target.checked);
+            });
+        }
+
+        // Snapping toggle
+        const snappingToggle = document.getElementById('snappingEnabled');
+        const snapOptions = document.getElementById('snapOptions');
+        if (snappingToggle) {
+            snappingToggle.addEventListener('change', (e) => {
+                this.app.rulerGuide?.setSnappingEnabled(e.target.checked);
+                // Show/hide snap options
+                if (snapOptions) {
+                    snapOptions.style.display = e.target.checked ? 'flex' : 'none';
+                }
+            });
+        }
+
+        // Snap options
+        document.getElementById('snapToEdges')?.addEventListener('change', (e) => {
+            if (this.app.rulerGuide) {
+                this.app.rulerGuide.snapping.toEdges = e.target.checked;
+            }
+        });
+
+        document.getElementById('snapToCenter')?.addEventListener('change', (e) => {
+            if (this.app.rulerGuide) {
+                this.app.rulerGuide.snapping.toCenter = e.target.checked;
+            }
+        });
+
+        document.getElementById('snapToHalves')?.addEventListener('change', (e) => {
+            if (this.app.rulerGuide) {
+                this.app.rulerGuide.snapping.toHalves = e.target.checked;
+            }
+        });
+
+        document.getElementById('snapToGuides')?.addEventListener('change', (e) => {
+            if (this.app.rulerGuide) {
+                this.app.rulerGuide.snapping.toGuides = e.target.checked;
+            }
+        });
+
+        // Clear guides button
+        document.getElementById('clearGuidesBtn')?.addEventListener('click', () => {
+            this.app.rulerGuide?.clearGuides();
+            this.showNotification('Vodítka smazána', 'success');
+        });
     }
 
     /**

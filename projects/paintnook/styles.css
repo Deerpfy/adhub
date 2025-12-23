@@ -6256,3 +6256,261 @@ body.pixel-art-mode .color-picker-section:hover {
 body.has-old-version-banner .main-content {
     margin-top: 44px;
 }
+
+/* =============================================
+   Rulers and Guides
+   ============================================= */
+
+/* CSS variables for rulers */
+:root {
+    --ruler-size: 20px;
+    --ruler-bg: #1e1e2e;
+    --ruler-text: #a0a0b0;
+    --ruler-tick: #505070;
+    --ruler-edge: #8b5cf6;
+    --guide-color: #00bfff;
+}
+
+/* Ruler wrapper - positioned around canvas area */
+.ruler-wrapper {
+    display: none; /* Hidden by default, shown when rulers enabled */
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 50;
+    pointer-events: none;
+}
+
+.ruler-wrapper.visible {
+    display: block;
+}
+
+/* Corner piece */
+.ruler-corner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: var(--ruler-size);
+    height: var(--ruler-size);
+    background: var(--ruler-bg);
+    border-right: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+    pointer-events: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 52;
+}
+
+.ruler-corner svg {
+    width: 16px;
+    height: 16px;
+    opacity: 0.5;
+}
+
+/* Ruler canvases */
+.ruler {
+    position: absolute;
+    background: var(--ruler-bg);
+    pointer-events: auto;
+}
+
+.ruler-top {
+    top: 0;
+    left: var(--ruler-size);
+    right: 0;
+    height: var(--ruler-size);
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+}
+
+.ruler-left {
+    top: var(--ruler-size);
+    left: 0;
+    bottom: 0;
+    width: var(--ruler-size);
+    border-right: 1px solid var(--border-color);
+    cursor: pointer;
+}
+
+/* Ruler hover states */
+.ruler:hover {
+    background: var(--bg-hover);
+}
+
+/* Guide lines */
+.guide-line {
+    position: absolute;
+    pointer-events: auto;
+    z-index: 45;
+}
+
+.guide-line.horizontal {
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--guide-color);
+    cursor: row-resize;
+}
+
+.guide-line.vertical {
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--guide-color);
+    cursor: col-resize;
+}
+
+.guide-line:hover {
+    box-shadow: 0 0 6px var(--guide-color);
+}
+
+/* Snap indicator - shown when snapping is active */
+.snap-indicator {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: var(--danger-color);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    z-index: 60;
+    animation: snap-pulse 0.3s ease-out;
+}
+
+@keyframes snap-pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(2);
+        opacity: 0.5;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Constraint line indicator - shows constrained angle */
+.constraint-indicator {
+    position: absolute;
+    pointer-events: none;
+    z-index: 55;
+    font-size: 11px;
+    color: var(--text-secondary);
+    background: rgba(0, 0, 0, 0.7);
+    padding: 2px 6px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+/* Adjust canvas container when rulers are visible */
+.canvas-container.has-rulers {
+    padding-left: var(--ruler-size);
+    padding-top: var(--ruler-size);
+}
+
+/* Settings for rulers in settings panel */
+.ruler-guide-settings {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ruler-guide-settings .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.ruler-guide-settings .toggle-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.snap-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.snap-option {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.snap-option:hover {
+    background: var(--bg-hover);
+}
+
+.snap-option.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.snap-option input[type="checkbox"] {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--primary-color);
+}
+
+/* Clear guides button */
+.clear-guides-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.clear-guides-btn:hover {
+    background: var(--danger-color);
+    border-color: var(--danger-color);
+    color: white;
+}
+
+/* Keyboard shortcut indicator for shift constraint */
+.shift-constraint-hint {
+    position: fixed;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 6px 12px;
+    background: rgba(0, 0, 0, 0.8);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 12px;
+    pointer-events: none;
+    z-index: 200;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.shift-constraint-hint.visible {
+    opacity: 1;
+}
+
+.shift-constraint-hint kbd {
+    display: inline-block;
+    padding: 2px 6px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    font-family: inherit;
+    font-size: 11px;
+    margin: 0 2px;
+}

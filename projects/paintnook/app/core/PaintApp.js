@@ -22,6 +22,7 @@ import { ColorAdjustments } from '../pixelart/ColorAdjustments.js';
 import { GoogleFontsManager } from '../utils/GoogleFontsManager.js';
 import { VectorManager } from '../vector/VectorManager.js';
 import { VectorUI } from '../vector/VectorUI.js';
+import { RulerGuideManager } from '../utils/RulerGuideManager.js';
 
 export class PaintApp {
     constructor() {
@@ -77,6 +78,9 @@ export class PaintApp {
 
         // Google Fonts manager
         this.googleFonts = null;
+
+        // Ruler and Guide manager
+        this.rulerGuide = null;
     }
 
     /**
@@ -99,6 +103,10 @@ export class PaintApp {
             // Initialize canvas manager
             this.canvas = new CanvasManager(this);
             await this.canvas.init();
+
+            // Initialize ruler and guide manager
+            this.rulerGuide = new RulerGuideManager(this);
+            this.rulerGuide.init();
 
             // Initialize layer manager
             this.layers = new LayerManager(this);

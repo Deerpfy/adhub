@@ -467,18 +467,30 @@ export class PixelArtUI {
         const width = canvas.width;
         const height = canvas.height;
         const zoom = canvas.zoom;
+        const panX = canvas.panX || 0;
+        const panY = canvas.panY || 0;
 
         // Clear overlay
         ctx.clearRect(0, 0, width, height);
 
+        // Render guides (works in all modes)
+        if (this.app.rulerGuide?.guides?.enabled) {
+            this.app.rulerGuide.renderGuides(ctx, width, height, zoom, panX, panY);
+        }
+
+        // Render snap indicators (works in all modes)
+        if (this.app.rulerGuide?.snapping?.enabled) {
+            this.app.rulerGuide.renderSnapIndicators(ctx, width, height, zoom, panX, panY);
+        }
+
         if (!this.isEnabled) return;
 
-        // Render grid
+        // Render grid (pixel art mode only)
         if (this.app.pixelArt.grid.enabled) {
             this.renderGrid(ctx, width, height, zoom);
         }
 
-        // Render symmetry guides
+        // Render symmetry guides (pixel art mode only)
         if (this.app.pixelArt.symmetry.enabled) {
             this.renderSymmetryGuides(ctx, width, height);
         }

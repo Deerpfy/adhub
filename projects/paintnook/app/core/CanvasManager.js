@@ -37,6 +37,13 @@ export class CanvasManager {
         this.initialPinchDistance = 0;
         this.initialZoom = 1;
 
+        // Modifier keys state
+        this.modifiers = {
+            shift: false,
+            ctrl: false,
+            alt: false
+        };
+
         // Stroke data for current drawing operation
         this.currentStroke = [];
 
@@ -578,6 +585,11 @@ export class CanvasManager {
      * Handle keyboard shortcuts
      */
     handleKeyDown(e) {
+        // Track modifier keys state
+        this.modifiers.shift = e.shiftKey;
+        this.modifiers.ctrl = e.ctrlKey || e.metaKey;
+        this.modifiers.alt = e.altKey;
+
         // Check if user is typing in text editor or input field
         const activeElement = document.activeElement;
         const isTypingInInput = activeElement && (
@@ -751,6 +763,11 @@ export class CanvasManager {
      * Handle key up
      */
     handleKeyUp(e) {
+        // Track modifier keys state
+        this.modifiers.shift = e.shiftKey;
+        this.modifiers.ctrl = e.ctrlKey || e.metaKey;
+        this.modifiers.alt = e.altKey;
+
         if (e.code === 'Space') {
             this.spacePressed = false;
             if (!this.isPanning) {
@@ -848,6 +865,25 @@ export class CanvasManager {
             this.mainCtx.drawImage(layer.canvas, 0, 0);
             this.mainCtx.restore();
         });
+
+        // Update overlay (guides, snapping indicators, grid)
+        this.updateOverlay();
+    }
+
+    /**
+     * Update overlay canvas (guides, grid, rulers)
+     */
+    updateOverlay() {
+        // Update rulers if enabled
+        if (this.app.rulerGuide?.rulers?.enabled) {
+            this.app.rulerGuide.updateRulers();
+        }
+
+        // Update grid/guides overlay via PixelArtUI
+        // This handles both pixel art grid and general guides
+        if (this.app.ui?.pixelArtUI) {
+            this.app.ui.pixelArtUI.updateGridOverlay();
+        }
     }
 
     /**
