@@ -58,21 +58,15 @@ export class CodeGenerator {
                 style: { ...layer.textStyle },
                 bounds: { ...layer.textBounds }
             });
-        }
-
-        // Analyze pixel content for shapes
-        if (analysis.bounds) {
-            const shapes = this.detectShapes(imageData, analysis.bounds);
-            analysis.elements.push(...shapes);
-
-            // If no shapes detected, treat as raster
-            if (shapes.length === 0 && this.hasContent(imageData, analysis.bounds)) {
-                analysis.elements.push({
-                    type: 'raster',
-                    bounds: analysis.bounds,
-                    dataURL: this.cropToDataURL(canvas, analysis.bounds)
-                });
-            }
+        } else if (analysis.bounds) {
+            // For all other content, use raster export for accurate 1:1 output
+            // This ensures the preview exactly matches what was drawn
+            analysis.elements.push({
+                type: 'raster',
+                bounds: analysis.bounds,
+                dataURL: this.cropToDataURL(canvas, analysis.bounds),
+                fullDataURL: canvas.toDataURL('image/png')
+            });
         }
 
         this.lastAnalysis = analysis;
@@ -588,7 +582,7 @@ export class CodeGenerator {
                     break;
 
                 case 'raster':
-                    lines.push(`${indent}<image x="${element.bounds.x}" y="${element.bounds.y}" width="${element.bounds.width}" height="${element.bounds.height}" href="${element.dataURL}"/>`);
+                    lines.push(`${indent}<image x="0" y="0" width="${analysis.width}" height="${analysis.height}" href="${element.fullDataURL}"/>`);
                     break;
             }
         }
@@ -651,8 +645,9 @@ export class CodeGenerator {
                     break;
 
                 case 'raster':
-                    lines.push(`  background-image: url('${element.dataURL}');`);
-                    lines.push(`  background-position: ${element.bounds.x}px ${element.bounds.y}px;`);
+                    lines.push(`  background-image: url('${element.fullDataURL}');`);
+                    lines.push(`  background-size: contain;`);
+                    lines.push(`  background-position: center;`);
                     lines.push(`  background-repeat: no-repeat;`);
                     break;
             }
@@ -776,12 +771,12 @@ export class CodeGenerator {
                     break;
 
                 case 'raster':
-                    lines.push(`// Draw image`);
+                    lines.push(`// Draw image (full canvas content)`);
                     lines.push(`const img = new Image();`);
-                    lines.push(`img.onload = () => {`);
-                    lines.push(`  ctx.drawImage(img, ${element.bounds.x}, ${element.bounds.y});`);
+                    lines.push(`img.onload = function() {`);
+                    lines.push(`  ctx.drawImage(img, 0, 0);`);
                     lines.push(`};`);
-                    lines.push(`img.src = '${element.dataURL.substring(0, 50)}...'; // Base64 image data`);
+                    lines.push(`img.src = '${element.fullDataURL}';`);
                     break;
             }
         }
@@ -876,10 +871,11 @@ export class CodeGenerator {
                     break;
 
                 case 'raster':
-                    lines.push('    // Draw image');
+                    lines.push('    // Draw image from base64 data');
+                    lines.push(`    QByteArray base64Data = "..."; // Base64 PNG data (truncated)`);
                     lines.push(`    QImage img;`);
-                    lines.push(`    img.loadFromData(QByteArray::fromBase64("...")); // Base64 data`);
-                    lines.push(`    painter.drawImage(${element.bounds.x}, ${element.bounds.y}, img);`);
+                    lines.push(`    img.loadFromData(QByteArray::fromBase64(base64Data));`);
+                    lines.push(`    painter.drawImage(0, 0, img);`);
                     break;
             }
         }
