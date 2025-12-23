@@ -285,16 +285,32 @@ export class UIController {
         const codeOutput = document.getElementById('generatedCodeContent');
         const extensions = { html: 'html', css: 'css', canvas: 'js', cpp: 'cpp' };
 
+        // Capture preview image directly from canvas
+        this.codeGenState.previewDataURL = null;
+        this.codeGenState.previewWidth = 0;
+        this.codeGenState.previewHeight = 0;
+
         try {
             if (source === 'active') {
                 const activeLayer = this.app.layers.getActiveLayer();
                 if (activeLayer) {
                     code = codeGenerator.generateCode(activeLayer, format);
+                    // Capture direct preview from layer canvas
+                    if (activeLayer.canvas) {
+                        this.codeGenState.previewDataURL = activeLayer.canvas.toDataURL('image/png');
+                        this.codeGenState.previewWidth = activeLayer.canvas.width;
+                        this.codeGenState.previewHeight = activeLayer.canvas.height;
+                    }
                 } else {
                     code = '// Žádná aktivní vrstva';
                 }
             } else if (source === 'visible') {
                 code = codeGenerator.generateAllLayers(format);
+                // For visible layers, use composite canvas
+                const compositeCanvas = this.app.canvas.getCompositeCanvas();
+                this.codeGenState.previewDataURL = compositeCanvas.toDataURL('image/png');
+                this.codeGenState.previewWidth = compositeCanvas.width;
+                this.codeGenState.previewHeight = compositeCanvas.height;
             } else {
                 // All layers
                 const allLayers = this.app.layers.getLayers().filter(l => l.type !== 'folder');
@@ -303,6 +319,11 @@ export class UIController {
                     return `// Layer: ${layer.name}\n${layerCode}`;
                 });
                 code = codes.join('\n\n');
+                // Use composite canvas (all visible)
+                const compositeCanvas = this.app.canvas.getCompositeCanvas();
+                this.codeGenState.previewDataURL = compositeCanvas.toDataURL('image/png');
+                this.codeGenState.previewWidth = compositeCanvas.width;
+                this.codeGenState.previewHeight = compositeCanvas.height;
             }
 
             this.codeGenState.code = code;
@@ -332,10 +353,11 @@ export class UIController {
     }
 
     /**
-     * Update the preview iframe with rendered code
+     * Update the preview iframe with rendered output
+     * Uses direct canvas data for accurate 1:1 preview (like Figma)
      */
     updatePreview() {
-        const { format, code } = this.codeGenState;
+        const { format, previewDataURL, previewWidth, previewHeight } = this.codeGenState;
         const previewFrame = document.getElementById('codePreviewFrame');
         const previewUnsupported = document.getElementById('previewUnsupported');
 
@@ -348,119 +370,76 @@ export class UIController {
             return;
         }
 
+        // No preview data available
+        if (!previewDataURL) {
+            previewFrame.style.display = 'none';
+            if (previewUnsupported) {
+                previewUnsupported.style.display = 'flex';
+                previewUnsupported.querySelector('p').textContent = 'Žádná data k zobrazení';
+            }
+            return;
+        }
+
         previewFrame.style.display = 'block';
         if (previewUnsupported) previewUnsupported.style.display = 'none';
 
-        // Build preview HTML based on format
-        let previewHTML = '';
-
-        if (format === 'html') {
-            // HTML/SVG - render directly
-            previewHTML = `
+        // Build preview HTML - always show actual rendered image for accuracy
+        // This matches Figma's approach: show exactly what will be exported
+        const previewHTML = `
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
     <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #f0f0f0;
+            background-image:
+                linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
+                linear-gradient(-45deg, #e0e0e0 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #e0e0e0 75%),
+                linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
             padding: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: calc(100vh - 40px);
-            background: #f5f5f5;
         }
-        svg {
-            max-width: 100%;
+        .preview-container {
+            max-width: calc(100vw - 40px);
+            max-height: calc(100vh - 40px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            background: white;
+        }
+        img {
+            display: block;
+            max-width: calc(100vw - 40px);
+            max-height: calc(100vh - 40px);
+            width: auto;
             height: auto;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            object-fit: contain;
+        }
+        .info {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font: 11px system-ui, sans-serif;
         }
     </style>
 </head>
 <body>
-${code}
-</body>
-</html>`;
-        } else if (format === 'css') {
-            // CSS - show a demo element with the styles
-            previewHTML = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <style>
-        body {
-            margin: 0;
-            padding: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: calc(100vh - 80px);
-            background: #f5f5f5;
-        }
-        .preview-wrapper {
-            background: white;
-            padding: 40px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            border-radius: 8px;
-        }
-        ${code}
-    </style>
-</head>
-<body>
-    <div class="preview-wrapper">
-        <div class="layer-vrstva-1" style="width: 200px; height: 200px; background: #ddd; position: relative;">
-            <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #666;">CSS Preview</span>
-        </div>
+    <div class="preview-container">
+        <img src="${previewDataURL}" alt="Preview" />
     </div>
+    <div class="info">${previewWidth} × ${previewHeight}px</div>
 </body>
 </html>`;
-        } else if (format === 'canvas') {
-            // JavaScript Canvas - wrap in executable HTML with proper async handling
-            previewHTML = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <style>
-        body {
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: calc(100vh - 40px);
-            background: #f5f5f5;
-        }
-        canvas {
-            background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            max-width: 100%;
-            height: auto;
-        }
-        .loading {
-            color: #666;
-            font-family: sans-serif;
-        }
-    </style>
-</head>
-<body>
-    <canvas id="myCanvas"></canvas>
-    <script>
-        (function() {
-            try {
-                ${code}
-            } catch(e) {
-                console.error('Canvas error:', e);
-                document.body.innerHTML = '<p style="color: red;">Error: ' + e.message + '</p>';
-            }
-        })();
-    </script>
-</body>
-</html>`;
-        }
 
         // Write to iframe
         const frameDoc = previewFrame.contentDocument || previewFrame.contentWindow.document;
@@ -471,81 +450,72 @@ ${code}
 
     /**
      * Open preview in a new browser window
+     * Shows direct image preview (same as iframe preview)
      */
     openPreviewInNewWindow() {
-        const { format, code } = this.codeGenState;
+        const { format, previewDataURL, previewWidth, previewHeight } = this.codeGenState;
 
         if (format === 'cpp') {
             this.showNotification('C++ kód nelze otevřít v prohlížeči', 'warning');
             return;
         }
 
-        // Build the same preview HTML
-        let previewHTML = '';
-
-        if (format === 'html') {
-            previewHTML = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>PaintNook - HTML Export</title>
-    <style>
-        body { margin: 0; padding: 20px; display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 40px); background: #f5f5f5; }
-        svg { max-width: 100%; height: auto; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-    </style>
-</head>
-<body>
-${code}
-</body>
-</html>`;
-        } else if (format === 'css') {
-            previewHTML = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>PaintNook - CSS Export</title>
-    <style>
-        body { margin: 0; padding: 40px; display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 80px); background: #f5f5f5; }
-        .preview-wrapper { background: white; padding: 40px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-radius: 8px; }
-        ${code}
-    </style>
-</head>
-<body>
-    <div class="preview-wrapper">
-        <div class="layer-vrstva-1" style="width: 200px; height: 200px; background: #ddd; position: relative;">
-            <span style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #666;">CSS Preview</span>
-        </div>
-    </div>
-</body>
-</html>`;
-        } else if (format === 'canvas') {
-            previewHTML = `<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>PaintNook - Canvas Export</title>
-    <style>
-        body { margin: 0; padding: 20px; display: flex; align-items: center; justify-content: center; min-height: calc(100vh - 40px); background: #f5f5f5; }
-        canvas { background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 100%; height: auto; }
-    </style>
-</head>
-<body>
-    <canvas id="myCanvas"></canvas>
-    <script>
-        (function() {
-            try {
-                ${code}
-            } catch(e) {
-                console.error('Canvas error:', e);
-                document.body.innerHTML = '<p style="color: red;">Error: ' + e.message + '</p>';
-            }
-        })();
-    </script>
-</body>
-</html>`;
+        if (!previewDataURL) {
+            this.showNotification('Žádná data k zobrazení', 'warning');
+            return;
         }
 
-        // Open in new window
+        const previewHTML = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>PaintNook - Export Preview (${previewWidth}×${previewHeight})</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: #f0f0f0;
+            background-image:
+                linear-gradient(45deg, #e0e0e0 25%, transparent 25%),
+                linear-gradient(-45deg, #e0e0e0 25%, transparent 25%),
+                linear-gradient(45deg, transparent 75%, #e0e0e0 75%),
+                linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
+            background-size: 20px 20px;
+            background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+            padding: 40px;
+        }
+        .preview-container {
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            background: white;
+        }
+        img {
+            display: block;
+            max-width: calc(100vw - 80px);
+            max-height: calc(100vh - 80px);
+        }
+        .info {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font: 12px system-ui, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-container">
+        <img src="${previewDataURL}" alt="Export Preview" />
+    </div>
+    <div class="info">${previewWidth} × ${previewHeight}px</div>
+</body>
+</html>`;
+
         const newWindow = window.open('', '_blank');
         if (newWindow) {
             newWindow.document.write(previewHTML);
