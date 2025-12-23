@@ -10,13 +10,14 @@ export class RulerGuideManager {
         // Ruler settings
         this.rulers = {
             enabled: false,
-            size: 20,                  // Ruler height/width in pixels
-            backgroundColor: '#1e1e2e',
-            textColor: '#a0a0b0',
-            tickColor: '#505070',
+            size: 24,                  // Ruler height/width in pixels
+            backgroundColor: '#12121a',
+            textColor: '#9090a0',
+            tickColor: '#404060',
+            tickColorMajor: '#606080',
             majorTickInterval: 100,    // Major tick every N pixels
             minorTickInterval: 10,     // Minor tick every N pixels
-            font: '9px system-ui, sans-serif'
+            font: '10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
         };
 
         // Guide settings
@@ -66,10 +67,7 @@ export class RulerGuideManager {
      * Create ruler DOM elements
      */
     createRulerElements() {
-        const canvasContainer = document.getElementById('canvasContainer');
-        if (!canvasContainer) return;
-
-        // Create ruler container wrapper
+        // Create ruler container wrapper - append to body for fixed positioning
         const rulerWrapper = document.createElement('div');
         rulerWrapper.className = 'ruler-wrapper';
         rulerWrapper.id = 'rulerWrapper';
@@ -78,9 +76,9 @@ export class RulerGuideManager {
         this.rulerCorner = document.createElement('div');
         this.rulerCorner.className = 'ruler-corner';
         this.rulerCorner.innerHTML = `
-            <svg viewBox="0 0 20 20" width="20" height="20">
-                <path d="M0 0h20v20H0z" fill="var(--ruler-bg, #1e1e2e)"/>
-                <path d="M5 10h10M10 5v10" stroke="var(--ruler-tick, #505070)" stroke-width="1"/>
+            <svg viewBox="0 0 24 24" width="24" height="24">
+                <rect width="24" height="24" fill="var(--ruler-bg, #12121a)"/>
+                <path d="M6 12h12M12 6v12" stroke="var(--ruler-tick, #404060)" stroke-width="1.5"/>
             </svg>
         `;
         rulerWrapper.appendChild(this.rulerCorner);
@@ -97,8 +95,8 @@ export class RulerGuideManager {
         this.rulerLeft.id = 'rulerLeft';
         rulerWrapper.appendChild(this.rulerLeft);
 
-        // Insert as first child of canvas container
-        canvasContainer.insertBefore(rulerWrapper, canvasContainer.firstChild);
+        // Append to body for fixed positioning
+        document.body.appendChild(rulerWrapper);
     }
 
     /**
@@ -291,25 +289,54 @@ export class RulerGuideManager {
         const canvas = this.app.canvas;
         if (!canvas) return;
 
-        const container = canvas.container;
+        const wrapper = document.getElementById('rulerWrapper');
+        if (!wrapper) return;
+
         const zoom = canvas.zoom;
         const panX = canvas.panX;
         const panY = canvas.panY;
         const canvasWidth = canvas.width;
         const canvasHeight = canvas.height;
 
-        // Update ruler sizes
-        const containerRect = container.getBoundingClientRect();
-        this.rulerTop.width = containerRect.width;
+        // Get wrapper size (which respects toolbar and panel)
+        const wrapperRect = wrapper.getBoundingClientRect();
+
+        // Update ruler canvas sizes
+        this.rulerTop.width = wrapperRect.width - this.rulers.size;
         this.rulerTop.height = this.rulers.size;
         this.rulerLeft.width = this.rulers.size;
-        this.rulerLeft.height = containerRect.height;
+        this.rulerLeft.height = wrapperRect.height - this.rulers.size;
 
         // Render horizontal ruler
         this.renderHorizontalRuler(zoom, panX, canvasWidth);
 
         // Render vertical ruler
         this.renderVerticalRuler(zoom, panY, canvasHeight);
+    }
+
+    /**
+     * Get adaptive tick intervals based on zoom level
+     */
+    getTickIntervals(zoom) {
+        // Calculate pixel spacing at current zoom
+        const basePixelSpacing = 100 * zoom;
+
+        // Choose intervals that give reasonable spacing (40-100px between major ticks)
+        if (basePixelSpacing > 400) {
+            return { major: 25, minor: 5 };
+        } else if (basePixelSpacing > 200) {
+            return { major: 50, minor: 10 };
+        } else if (basePixelSpacing > 100) {
+            return { major: 100, minor: 20 };
+        } else if (basePixelSpacing > 50) {
+            return { major: 100, minor: 50 };
+        } else if (basePixelSpacing > 25) {
+            return { major: 200, minor: 50 };
+        } else if (basePixelSpacing > 10) {
+            return { major: 500, minor: 100 };
+        } else {
+            return { major: 1000, minor: 200 };
+        }
     }
 
     /**
@@ -320,84 +347,77 @@ export class RulerGuideManager {
         const width = this.rulerTop.width;
         const height = this.rulerTop.height;
 
-        // Clear
+        // Clear with background
         ctx.fillStyle = this.rulers.backgroundColor;
         ctx.fillRect(0, 0, width, height);
 
-        // Calculate tick interval based on zoom
-        let majorInterval = this.rulers.majorTickInterval;
-        let minorInterval = this.rulers.minorTickInterval;
+        // Get adaptive intervals
+        const { major: majorInterval, minor: minorInterval } = this.getTickIntervals(zoom);
 
-        // Adaptive intervals based on zoom
-        if (zoom < 0.25) {
-            majorInterval = 500;
-            minorInterval = 100;
-        } else if (zoom < 0.5) {
-            majorInterval = 200;
-            minorInterval = 50;
-        } else if (zoom > 2) {
-            majorInterval = 50;
-            minorInterval = 10;
-        } else if (zoom > 4) {
-            majorInterval = 20;
-            minorInterval = 5;
-        }
-
-        ctx.strokeStyle = this.rulers.tickColor;
-        ctx.fillStyle = this.rulers.textColor;
+        // Setup text style
         ctx.font = this.rulers.font;
         ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
 
-        // Calculate visible range
+        // Calculate visible range in canvas coordinates
         const startX = Math.floor(-panX / zoom / minorInterval) * minorInterval;
         const endX = Math.ceil((width - panX) / zoom / minorInterval) * minorInterval;
 
-        // Clamp to canvas bounds
-        const clampedStart = Math.max(0, startX);
-        const clampedEnd = Math.min(canvasWidth, endX);
+        // Clamp to canvas bounds (with padding)
+        const clampedStart = Math.max(-100, startX);
+        const clampedEnd = Math.min(canvasWidth + 100, endX);
 
         // Draw ticks
         for (let x = clampedStart; x <= clampedEnd; x += minorInterval) {
             const screenX = x * zoom + panX;
-            if (screenX < 0 || screenX > width) continue;
+            if (screenX < -10 || screenX > width + 10) continue;
 
             const isMajor = x % majorInterval === 0;
-            const tickHeight = isMajor ? 12 : 6;
+            const isMid = !isMajor && x % (majorInterval / 2) === 0;
 
+            // Determine tick height
+            let tickHeight;
+            if (isMajor) {
+                tickHeight = 14;
+                ctx.strokeStyle = this.rulers.tickColorMajor;
+            } else if (isMid) {
+                tickHeight = 10;
+                ctx.strokeStyle = this.rulers.tickColor;
+            } else {
+                tickHeight = 5;
+                ctx.strokeStyle = this.rulers.tickColor;
+            }
+
+            // Draw tick
             ctx.beginPath();
-            ctx.moveTo(screenX, height);
-            ctx.lineTo(screenX, height - tickHeight);
+            ctx.moveTo(Math.round(screenX) + 0.5, height);
+            ctx.lineTo(Math.round(screenX) + 0.5, height - tickHeight);
             ctx.stroke();
 
             // Draw number for major ticks
-            if (isMajor) {
-                ctx.fillText(x.toString(), screenX, 10);
+            if (isMajor && x >= 0 && x <= canvasWidth) {
+                ctx.fillStyle = this.rulers.textColor;
+                ctx.fillText(x.toString(), screenX, 3);
             }
         }
 
-        // Draw canvas edge markers
-        ctx.strokeStyle = '#8b5cf6';
-        ctx.lineWidth = 2;
+        // Draw canvas boundary markers
+        ctx.strokeStyle = this.rulers.tickColorMajor;
+        ctx.lineWidth = 1;
 
-        // Left edge
+        // Left edge (0)
         let edgeX = panX;
         if (edgeX >= 0 && edgeX <= width) {
-            ctx.beginPath();
-            ctx.moveTo(edgeX, 0);
-            ctx.lineTo(edgeX, height);
-            ctx.stroke();
+            ctx.fillStyle = '#8b5cf6';
+            ctx.fillRect(edgeX - 1, 0, 2, height);
         }
 
-        // Right edge
+        // Right edge (canvasWidth)
         edgeX = canvasWidth * zoom + panX;
         if (edgeX >= 0 && edgeX <= width) {
-            ctx.beginPath();
-            ctx.moveTo(edgeX, 0);
-            ctx.lineTo(edgeX, height);
-            ctx.stroke();
+            ctx.fillStyle = '#8b5cf6';
+            ctx.fillRect(edgeX - 1, 0, 2, height);
         }
-
-        ctx.lineWidth = 1;
     }
 
     /**
@@ -408,88 +428,80 @@ export class RulerGuideManager {
         const width = this.rulerLeft.width;
         const height = this.rulerLeft.height;
 
-        // Clear
+        // Clear with background
         ctx.fillStyle = this.rulers.backgroundColor;
         ctx.fillRect(0, 0, width, height);
 
-        // Calculate tick interval based on zoom
-        let majorInterval = this.rulers.majorTickInterval;
-        let minorInterval = this.rulers.minorTickInterval;
+        // Get adaptive intervals
+        const { major: majorInterval, minor: minorInterval } = this.getTickIntervals(zoom);
 
-        if (zoom < 0.25) {
-            majorInterval = 500;
-            minorInterval = 100;
-        } else if (zoom < 0.5) {
-            majorInterval = 200;
-            minorInterval = 50;
-        } else if (zoom > 2) {
-            majorInterval = 50;
-            minorInterval = 10;
-        } else if (zoom > 4) {
-            majorInterval = 20;
-            minorInterval = 5;
-        }
-
-        ctx.strokeStyle = this.rulers.tickColor;
-        ctx.fillStyle = this.rulers.textColor;
+        // Setup text style
         ctx.font = this.rulers.font;
-        ctx.textAlign = 'left';
 
-        // Calculate visible range
+        // Calculate visible range in canvas coordinates
         const startY = Math.floor(-panY / zoom / minorInterval) * minorInterval;
         const endY = Math.ceil((height - panY) / zoom / minorInterval) * minorInterval;
 
-        // Clamp to canvas bounds
-        const clampedStart = Math.max(0, startY);
-        const clampedEnd = Math.min(canvasHeight, endY);
+        // Clamp to canvas bounds (with padding)
+        const clampedStart = Math.max(-100, startY);
+        const clampedEnd = Math.min(canvasHeight + 100, endY);
 
         // Draw ticks
         for (let y = clampedStart; y <= clampedEnd; y += minorInterval) {
             const screenY = y * zoom + panY;
-            if (screenY < 0 || screenY > height) continue;
+            if (screenY < -10 || screenY > height + 10) continue;
 
             const isMajor = y % majorInterval === 0;
-            const tickWidth = isMajor ? 12 : 6;
+            const isMid = !isMajor && y % (majorInterval / 2) === 0;
 
+            // Determine tick width
+            let tickWidth;
+            if (isMajor) {
+                tickWidth = 14;
+                ctx.strokeStyle = this.rulers.tickColorMajor;
+            } else if (isMid) {
+                tickWidth = 10;
+                ctx.strokeStyle = this.rulers.tickColor;
+            } else {
+                tickWidth = 5;
+                ctx.strokeStyle = this.rulers.tickColor;
+            }
+
+            // Draw tick
             ctx.beginPath();
-            ctx.moveTo(width, screenY);
-            ctx.lineTo(width - tickWidth, screenY);
+            ctx.moveTo(width, Math.round(screenY) + 0.5);
+            ctx.lineTo(width - tickWidth, Math.round(screenY) + 0.5);
             ctx.stroke();
 
             // Draw number for major ticks (rotated)
-            if (isMajor) {
+            if (isMajor && y >= 0 && y <= canvasHeight) {
                 ctx.save();
-                ctx.translate(10, screenY);
+                ctx.fillStyle = this.rulers.textColor;
+                ctx.translate(width - 16, screenY);
                 ctx.rotate(-Math.PI / 2);
                 ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
                 ctx.fillText(y.toString(), 0, 0);
                 ctx.restore();
             }
         }
 
-        // Draw canvas edge markers
-        ctx.strokeStyle = '#8b5cf6';
-        ctx.lineWidth = 2;
+        // Draw canvas boundary markers
+        ctx.lineWidth = 1;
 
-        // Top edge
+        // Top edge (0)
         let edgeY = panY;
         if (edgeY >= 0 && edgeY <= height) {
-            ctx.beginPath();
-            ctx.moveTo(0, edgeY);
-            ctx.lineTo(width, edgeY);
-            ctx.stroke();
+            ctx.fillStyle = '#8b5cf6';
+            ctx.fillRect(0, edgeY - 1, width, 2);
         }
 
-        // Bottom edge
+        // Bottom edge (canvasHeight)
         edgeY = canvasHeight * zoom + panY;
         if (edgeY >= 0 && edgeY <= height) {
-            ctx.beginPath();
-            ctx.moveTo(0, edgeY);
-            ctx.lineTo(width, edgeY);
-            ctx.stroke();
+            ctx.fillStyle = '#8b5cf6';
+            ctx.fillRect(0, edgeY - 1, width, 2);
         }
-
-        ctx.lineWidth = 1;
     }
 
     /**

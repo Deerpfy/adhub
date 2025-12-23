@@ -6263,21 +6263,24 @@ body.has-old-version-banner .main-content {
 
 /* CSS variables for rulers */
 :root {
-    --ruler-size: 20px;
-    --ruler-bg: #1e1e2e;
-    --ruler-text: #a0a0b0;
-    --ruler-tick: #505070;
+    --ruler-size: 24px;
+    --ruler-bg: #12121a;
+    --ruler-text: #9090a0;
+    --ruler-tick: #404060;
+    --ruler-tick-major: #606080;
     --ruler-edge: #8b5cf6;
     --guide-color: #00bfff;
 }
 
-/* Ruler wrapper - positioned around canvas area */
+/* Ruler wrapper - positioned in main-content, respecting toolbar and panel */
 .ruler-wrapper {
     display: none; /* Hidden by default, shown when rulers enabled */
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 50;
+    position: fixed;
+    top: var(--header-height);
+    left: var(--toolbar-width);
+    right: var(--panel-width);
+    bottom: var(--status-bar-height);
+    z-index: 40;
     pointer-events: none;
 }
 
@@ -6303,9 +6306,9 @@ body.has-old-version-banner .main-content {
 }
 
 .ruler-corner svg {
-    width: 16px;
-    height: 16px;
-    opacity: 0.5;
+    width: 14px;
+    height: 14px;
+    opacity: 0.6;
 }
 
 /* Ruler canvases */
@@ -6321,7 +6324,7 @@ body.has-old-version-banner .main-content {
     right: 0;
     height: var(--ruler-size);
     border-bottom: 1px solid var(--border-color);
-    cursor: pointer;
+    cursor: crosshair;
 }
 
 .ruler-left {
@@ -6330,7 +6333,7 @@ body.has-old-version-banner .main-content {
     bottom: 0;
     width: var(--ruler-size);
     border-right: 1px solid var(--border-color);
-    cursor: pointer;
+    cursor: crosshair;
 }
 
 /* Ruler hover states */
