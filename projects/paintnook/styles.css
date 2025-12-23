@@ -395,6 +395,13 @@ body {
         linear-gradient(-45deg, transparent 75%, #1a1a24 75%);
     background-size: 20px 20px;
     background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    transition: padding 0.15s ease;
+}
+
+/* Offset canvas when rulers are visible */
+.canvas-container.has-rulers {
+    padding-top: var(--ruler-size);
+    padding-left: var(--ruler-size);
 }
 
 /* Hide system cursor when brush cursor is active */
@@ -6264,10 +6271,10 @@ body.has-old-version-banner .main-content {
 /* CSS variables for rulers */
 :root {
     --ruler-size: 24px;
-    --ruler-bg: #12121a;
-    --ruler-text: #9090a0;
-    --ruler-tick: #404060;
-    --ruler-tick-major: #606080;
+    --ruler-bg: #0d0d14;
+    --ruler-text: #c0c0d0;
+    --ruler-tick: #454565;
+    --ruler-tick-major: #707090;
     --ruler-edge: #8b5cf6;
     --guide-color: #00bfff;
 }

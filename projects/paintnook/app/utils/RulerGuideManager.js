@@ -11,13 +11,13 @@ export class RulerGuideManager {
         this.rulers = {
             enabled: false,
             size: 24,                  // Ruler height/width in pixels
-            backgroundColor: '#12121a',
-            textColor: '#9090a0',
-            tickColor: '#404060',
-            tickColorMajor: '#606080',
+            backgroundColor: '#0d0d14',
+            textColor: '#c0c0d0',
+            tickColor: '#454565',
+            tickColorMajor: '#707090',
             majorTickInterval: 100,    // Major tick every N pixels
             minorTickInterval: 10,     // Minor tick every N pixels
-            font: '10px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            font: '600 11px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
         };
 
         // Guide settings
@@ -139,10 +139,19 @@ export class RulerGuideManager {
      */
     setRulersEnabled(enabled) {
         this.rulers.enabled = enabled;
+
+        // Toggle ruler wrapper visibility
         const wrapper = document.getElementById('rulerWrapper');
         if (wrapper) {
             wrapper.classList.toggle('visible', enabled);
         }
+
+        // Toggle canvas container padding
+        const canvasContainer = document.getElementById('canvasContainer');
+        if (canvasContainer) {
+            canvasContainer.classList.toggle('has-rulers', enabled);
+        }
+
         if (enabled) {
             this.updateRulers();
         }
@@ -301,16 +310,20 @@ export class RulerGuideManager {
         // Get wrapper size (which respects toolbar and panel)
         const wrapperRect = wrapper.getBoundingClientRect();
 
+        // Calculate available space for rulers (accounting for ruler offset)
+        const availableWidth = wrapperRect.width - this.rulers.size;
+        const availableHeight = wrapperRect.height - this.rulers.size;
+
         // Update ruler canvas sizes
-        this.rulerTop.width = wrapperRect.width - this.rulers.size;
+        this.rulerTop.width = availableWidth;
         this.rulerTop.height = this.rulers.size;
         this.rulerLeft.width = this.rulers.size;
-        this.rulerLeft.height = wrapperRect.height - this.rulers.size;
+        this.rulerLeft.height = availableHeight;
 
-        // Render horizontal ruler
+        // Render horizontal ruler (no additional offset needed, panX is relative to canvas wrapper)
         this.renderHorizontalRuler(zoom, panX, canvasWidth);
 
-        // Render vertical ruler
+        // Render vertical ruler (no additional offset needed, panY is relative to canvas wrapper)
         this.renderVerticalRuler(zoom, panY, canvasHeight);
     }
 
