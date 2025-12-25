@@ -9,6 +9,7 @@ Dokumenty generovane AI asistenty behem prace na projektu.
 | pdf-search-tools.md | compass_artifact_wf-2fcac022... | Open-source nastroje pro PDF vyhledavani |
 | steam-hour-boosting.md | compass_artifact_wf-d2230be6... | Technicka analyza Steam hour boosting |
 | ai-prompt-strategy.md | compass_artifact_wf-7624b0d4... | AI Prompt Formatter strategie |
+| web-analysis-prompt.md | web-analysis-prompt.md | Znovupouzitelny prompt pro analyzu webu |
 
 ## Poznamka
 
