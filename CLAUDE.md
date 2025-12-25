@@ -10,8 +10,13 @@ adhub/
 ├── script.js               # Logika, konfigurace, preklady
 ├── styles.css              # Globalni styly
 ├── CLAUDE.md               # Tento soubor
-├── mcp-example.md          # Priklad MCP konfigurace
 ├── README.md               # Dokumentace projektu
+├── docs/                   # Dokumentace a vyzkum
+│   ├── mcp-example.md      # Priklad MCP konfigurace
+│   ├── research/           # Analyzy a vyzkum
+│   │   ├── external-services/  # Analyzy externich sluzeb
+│   │   └── project-research/   # Vyzkum pro projekty
+│   └── artifacts/          # AI prompty a artefakty
 └── projects/
     ├── youtube-downloader/ # YouTube stahovac (Chrome extension)
     ├── chat-panel/         # Multistream chat

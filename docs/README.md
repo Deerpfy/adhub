@@ -6,11 +6,16 @@ Tato slozka obsahuje dokumentaci, vyzkumne materialy a artefakty pro projekt AdH
 
 ```
 docs/
+├── mcp-example.md          # Priklad MCP konfigurace pro Claude Code
 ├── research/               # Vyzkumne analyzy a dokumentace
 │   ├── external-services/  # Analyzy externich sluzeb a produktu
 │   └── project-research/   # Vyzkum pro konkretni AdHUB projekty
 └── artifacts/              # AI artefakty a generovane dokumenty
 ```
+
+## Hlavni dokumenty
+
+- **mcp-example.md** - Priklad konfigurace MCP (Model Context Protocol) pro Claude Code
 
 ## Slozky
 
@@ -23,6 +28,7 @@ Analyzy externich sluzeb, platform a nastroju ktere mohou byt relevantni pro ins
 - **remobebg-analyza.md** - Analyza sluzby remove.bg pro odstranovani pozadi
 - **NIMT.AI-analyza.md** - Analyza platformy pro AI visibility tracking
 - **API-mega-list-analyza.md** - Analyza repozitare s API sbirkou
+- **xcloud-analyza.md** - Analyza xCloud WordPress hostingu
 
 ### research/project-research/
 
@@ -43,6 +49,7 @@ AI artefakty - dokumenty generovane AI asistenty:
 - **pdf-search-tools.md** - Pruvodce open-source nastroji pro PDF vyhledavani
 - **steam-hour-boosting.md** - Technicka analyza Steam hour boosting nastroju
 - **ai-prompt-strategy.md** - AI Prompt Formatter strategie 2024-2025
+- **web-analysis-prompt.md** - Znovupouzitelny prompt pro analyzu webovych stranek
 
 ## Pojmenovani souboru
 
