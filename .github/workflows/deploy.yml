@@ -17,8 +17,7 @@ concurrency:
 jobs:
   deploy-pages:
     runs-on: ubuntu-latest
-    # Skip deployment for auto-generated commits
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    # Deploy runs on every push (including bot commits for ANALYSIS.md updates)
 
     environment:
       name: github-pages
