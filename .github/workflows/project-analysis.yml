@@ -21,9 +21,16 @@ on:
 permissions:
   contents: write
 
+# Prevent multiple analysis runs from conflicting
+concurrency:
+  group: project-analysis
+  cancel-in-progress: true
+
 jobs:
   analyze:
     runs-on: ubuntu-latest
+    # Skip if triggered by bot commit (prevents infinite loop)
+    if: github.actor != 'github-actions[bot]'
 
     steps:
       - name: Checkout repository
@@ -76,6 +83,6 @@ jobs:
             echo "No changes to commit"
           else
             git add projects/*/ANALYSIS.md
-            git commit -m "docs: auto-update project analysis for ${{ steps.changes.outputs.projects }}" || echo "No changes to commit"
+            git commit -m "docs: auto-update project analysis" || echo "No changes to commit"
             git push
           fi

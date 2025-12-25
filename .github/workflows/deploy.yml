@@ -17,6 +17,7 @@ concurrency:
 jobs:
   deploy-pages:
     runs-on: ubuntu-latest
+    # Deploy runs on every push (including bot commits for ANALYSIS.md updates)
 
     environment:
       name: github-pages
