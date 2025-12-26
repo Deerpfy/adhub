@@ -58,8 +58,9 @@
             border-radius: 8px;
         }
         .skeleton-card {
-            height: 200px;
-            min-height: 200px;
+            height: 180px;
+            min-height: 180px;
+            contain: layout style paint;
         }
         .skeleton-text {
             height: 16px;
@@ -145,19 +146,28 @@
         .filter-tab[data-filter="tools"] { min-width: 95px; }
         .filter-tab[data-filter="links"] { min-width: 95px; }
         .content-section {
-            min-height: 250px;
+            min-height: 220px;
             contain: layout style;
         }
         .tools-grid {
-            min-height: 200px;
-            contain: layout;
+            min-height: 180px;
+            contain: layout style;
         }
         .section-header {
             min-height: 52px;
-            contain: layout;
+            contain: layout style;
         }
         .tool-card {
-            contain: layout style;
+            contain: layout style paint;
+            min-height: 180px;
+        }
+        /* Reserve space for tool icon */
+        .tool-icon {
+            width: 32px;
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
     </style>
 
@@ -193,6 +203,144 @@
     </script>
 </head>
 <body>
+    <!-- SVG Icon Sprite - loaded inline for instant availability -->
+    <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+      <!-- YouTube Downloader -->
+      <symbol id="icon-youtube-downloader" viewBox="0 0 24 24" fill="none">
+        <rect x="2" y="4" width="20" height="14" rx="3" stroke="#8b5cf6" stroke-width="2"/>
+        <polygon points="10,8 10,14 15,11" fill="#ec4899"/>
+        <path d="M12 18v3M8 21h8" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+      <!-- Chat Panel -->
+      <symbol id="icon-chat-panel" viewBox="0 0 24 24" fill="none">
+        <path d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z" stroke="#8b5cf6" stroke-width="2"/>
+        <circle cx="8" cy="12" r="1" fill="#ec4899"/><circle cx="12" cy="12" r="1" fill="#ec4899"/><circle cx="16" cy="12" r="1" fill="#ec4899"/>
+      </symbol>
+      <!-- Chat Moderator -->
+      <symbol id="icon-chat-moderator" viewBox="0 0 24 24" fill="none">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke="#8b5cf6" stroke-width="2"/>
+        <path d="M9 12l2 2 4-4" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <!-- KomoPizza -->
+      <symbol id="icon-komopizza-demo" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" stroke="#8b5cf6" stroke-width="2"/>
+        <path d="M12 3v9l6 3" stroke="#ec4899" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="8" cy="10" r="1.5" fill="#ec4899"/><circle cx="14" cy="8" r="1.5" fill="#ec4899"/><circle cx="10" cy="15" r="1.5" fill="#ec4899"/>
+      </symbol>
+      <!-- Spinning Wheel -->
+      <symbol id="icon-spinning-wheel-giveaway" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" stroke="#8b5cf6" stroke-width="2"/>
+        <path d="M12 3v9M12 12l6.36 3.68M12 12l-6.36 3.68" stroke="#ec4899" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="12" cy="12" r="2" fill="#8b5cf6"/>
+      </symbol>
+      <!-- Resignation Bets -->
+      <symbol id="icon-resignation-bets" viewBox="0 0 24 24" fill="none">
+        <rect x="3" y="3" width="8" height="8" rx="1" stroke="#8b5cf6" stroke-width="2"/>
+        <circle cx="5" cy="5" r="0.5" fill="#ec4899"/><circle cx="9" cy="9" r="0.5" fill="#ec4899"/>
+        <rect x="13" y="13" width="8" height="8" rx="1" stroke="#ec4899" stroke-width="2"/>
+        <circle cx="15" cy="15" r="0.5" fill="#8b5cf6"/><circle cx="17" cy="17" r="0.5" fill="#8b5cf6"/><circle cx="19" cy="19" r="0.5" fill="#8b5cf6"/>
+      </symbol>
+      <!-- AI Prompting -->
+      <symbol id="icon-ai-prompting" viewBox="0 0 24 24" fill="none">
+        <rect x="4" y="4" width="16" height="16" rx="4" stroke="#8b5cf6" stroke-width="2"/>
+        <circle cx="9" cy="10" r="1.5" fill="#ec4899"/><circle cx="15" cy="10" r="1.5" fill="#ec4899"/>
+        <path d="M8 15c0 0 2 2 4 2s4-2 4-2" stroke="#ec4899" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+      <!-- PDF Merge -->
+      <symbol id="icon-pdf-merge" viewBox="0 0 24 24" fill="none">
+        <path d="M4 4h8l4 4v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" stroke="#8b5cf6" stroke-width="2"/>
+        <path d="M12 4v4h4" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round"/>
+        <path d="M18 10h2a2 2 0 012 2v8a2 2 0 01-2 2h-2" stroke="#ec4899" stroke-width="2"/>
+        <path d="M9 14l3 3 3-3" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <!-- PDF Editor -->
+      <symbol id="icon-pdf-editor" viewBox="0 0 24 24" fill="none">
+        <path d="M4 4h8l4 4v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" stroke="#8b5cf6" stroke-width="2"/>
+        <path d="M12 4v4h4" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round"/>
+        <path d="M15 12l4-4 2 2-4 4-3 1 1-3z" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </symbol>
+      <!-- PDF Search -->
+      <symbol id="icon-pdf-search" viewBox="0 0 24 24" fill="none">
+        <path d="M4 4h8l4 4v12a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" stroke="#8b5cf6" stroke-width="2"/>
+        <path d="M12 4v4h4" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="14" cy="14" r="3" stroke="#ec4899" stroke-width="2"/>
+        <path d="M16.5 16.5l2.5 2.5" stroke="#ec4899" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+      <!-- Goalix -->
+      <symbol id="icon-goalix" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" stroke="#8b5cf6" stroke-width="2"/>
+        <path d="M12 6v6l4 2" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="12" cy="12" r="2" fill="#ec4899"/>
+      </symbol>
+      <!-- CardHarvest -->
+      <symbol id="icon-cardharvest" viewBox="0 0 24 24" fill="none">
+        <rect x="4" y="6" width="12" height="16" rx="2" stroke="#8b5cf6" stroke-width="2" transform="rotate(-10 10 14)"/>
+        <rect x="8" y="4" width="12" height="16" rx="2" stroke="#ec4899" stroke-width="2" transform="rotate(5 14 12)"/>
+        <circle cx="14" cy="12" r="2" fill="#8b5cf6"/>
+      </symbol>
+      <!-- Rust Calculator -->
+      <symbol id="icon-rust-calculator" viewBox="0 0 24 24" fill="none">
+        <rect x="4" y="2" width="16" height="20" rx="2" stroke="#8b5cf6" stroke-width="2"/>
+        <rect x="6" y="4" width="12" height="4" rx="1" fill="#ec4899" opacity="0.3"/>
+        <circle cx="8" cy="12" r="1" fill="#ec4899"/><circle cx="12" cy="12" r="1" fill="#ec4899"/><circle cx="16" cy="12" r="1" fill="#ec4899"/>
+        <circle cx="8" cy="16" r="1" fill="#8b5cf6"/><circle cx="12" cy="16" r="1" fill="#8b5cf6"/><circle cx="16" cy="16" r="1" fill="#8b5cf6"/>
+        <rect x="8" y="19" width="8" height="2" rx="1" fill="#ec4899"/>
+      </symbol>
+      <!-- Scribblix -->
+      <symbol id="icon-scribblix" viewBox="0 0 24 24" fill="none">
+        <path d="M4 4h12l4 4v14a2 2 0 01-2 2H6a2 2 0 01-2-2V4z" stroke="#8b5cf6" stroke-width="2"/>
+        <path d="M16 4v4h4" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round"/>
+        <path d="M8 10h8M8 14h6M8 18h4" stroke="#ec4899" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+      <!-- NIMT Tracker -->
+      <symbol id="icon-nimt-tracker" viewBox="0 0 24 24" fill="none">
+        <path d="M3 20h18" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round"/>
+        <path d="M3 20V10l4-4 4 6 4-8 5 8v8" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+        <circle cx="7" cy="6" r="2" fill="#8b5cf6"/><circle cx="11" cy="12" r="2" fill="#8b5cf6"/><circle cx="15" cy="4" r="2" fill="#8b5cf6"/><circle cx="20" cy="12" r="2" fill="#8b5cf6"/>
+      </symbol>
+      <!-- API Catalog -->
+      <symbol id="icon-api-catalog" viewBox="0 0 24 24" fill="none">
+        <rect x="3" y="3" width="18" height="18" rx="3" stroke="#8b5cf6" stroke-width="2"/>
+        <path d="M8 8h2v2H8zM14 8h2v2h-2zM8 14h2v2H8zM14 14h2v2h-2z" fill="#ec4899"/>
+        <path d="M10 9h4M10 15h4M9 10v4M15 10v4" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round"/>
+      </symbol>
+      <!-- Server Hub -->
+      <symbol id="icon-server-hub" viewBox="0 0 24 24" fill="none">
+        <rect x="2" y="3" width="20" height="6" rx="2" stroke="#8b5cf6" stroke-width="2"/>
+        <rect x="2" y="15" width="20" height="6" rx="2" stroke="#8b5cf6" stroke-width="2"/>
+        <circle cx="6" cy="6" r="1" fill="#ec4899"/><circle cx="6" cy="18" r="1" fill="#ec4899"/>
+        <path d="M12 9v6" stroke="#ec4899" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+      <!-- PaintNook -->
+      <symbol id="icon-paintnook" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c1 0 1.8-.8 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17c2.8 0 5-2.2 5-5 0-4.4-4.5-8-10-8z" stroke="#8b5cf6" stroke-width="2"/>
+        <circle cx="6.5" cy="11.5" r="1.5" fill="#ec4899"/><circle cx="9.5" cy="7.5" r="1.5" fill="#8b5cf6"/><circle cx="14.5" cy="7.5" r="1.5" fill="#ec4899"/><circle cx="17" cy="11" r="1.5" fill="#8b5cf6"/>
+      </symbol>
+      <!-- BG Remover -->
+      <symbol id="icon-bg-remover" viewBox="0 0 24 24" fill="none">
+        <rect x="3" y="3" width="18" height="18" rx="2" stroke="#8b5cf6" stroke-width="2"/>
+        <path d="M3 3l18 18M3 21l18-18" stroke="#8b5cf6" stroke-width="1" opacity="0.3"/>
+        <circle cx="12" cy="12" r="5" stroke="#ec4899" stroke-width="2"/>
+        <path d="M12 7v2M12 15v2M7 12h2M15 12h2" stroke="#ec4899" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+      <!-- SliderSnap -->
+      <symbol id="icon-slidersnap" viewBox="0 0 24 24" fill="none">
+        <rect x="2" y="4" width="20" height="16" rx="2" stroke="#8b5cf6" stroke-width="2"/>
+        <path d="M12 4v16" stroke="#ec4899" stroke-width="2"/>
+        <circle cx="12" cy="12" r="3" fill="#ec4899"/>
+        <path d="M5 8h3M5 12h3M5 16h3" stroke="#8b5cf6" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M16 8h3M16 12h3M16 16h3" stroke="#ec4899" stroke-width="1.5" stroke-linecap="round"/>
+      </symbol>
+      <!-- SampleHub -->
+      <symbol id="icon-samplehub" viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="9" stroke="#8b5cf6" stroke-width="2"/>
+        <circle cx="12" cy="12" r="3" fill="#ec4899"/>
+        <path d="M12 3v3M12 18v3" stroke="#ec4899" stroke-width="2" stroke-linecap="round"/>
+        <path d="M4 8l2.5 1.5M17.5 14.5L20 16" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round"/>
+        <path d="M4 16l2.5-1.5M17.5 9.5L20 8" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round"/>
+      </symbol>
+    </svg>
+
     <div class="container">
         <header class="header">
             <div class="header-content">

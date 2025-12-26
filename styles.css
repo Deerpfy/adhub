@@ -580,7 +580,7 @@ body::before {
 /* Content Sections - Oddělení nástrojů a odkazů */
 .content-section {
     margin-bottom: 32px;
-    min-height: 200px; /* CLS prevention - reserve space */
+    min-height: 220px; /* CLS prevention - reserve space */
     contain: layout style;
 }
 
@@ -591,11 +591,13 @@ body::before {
     gap: 16px;
     margin-bottom: 20px;
     padding: 16px 20px;
-    min-height: 48px; /* CLS prevention */
+    min-height: 52px; /* CLS prevention */
+    height: auto;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: 14px;
     flex-wrap: wrap;
+    contain: layout style;
 }
 
 .section-title {
@@ -656,9 +658,7 @@ body::before {
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
     gap: 16px;
     min-height: 180px; /* CLS prevention */
-    contain: layout;
-    content-visibility: auto; /* Lazy rendering for off-screen content */
-    contain-intrinsic-size: auto 400px;
+    contain: layout style;
 }
 
 .tool-card {
@@ -674,8 +674,9 @@ body::before {
     backdrop-filter: blur(10px);
     touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
-    contain: layout style; /* CLS prevention */
-    min-height: 200px; /* Match skeleton card height */
+    contain: layout style paint; /* CLS prevention - strict containment */
+    min-height: 180px; /* Match skeleton card height */
+    height: auto;
     box-sizing: border-box;
 }
 
@@ -732,6 +733,23 @@ body::before {
     font-size: 1.6rem;
     line-height: 1;
     flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* SVG Icon styling for local tools */
+.tool-icon svg {
+    width: 28px;
+    height: 28px;
+    flex-shrink: 0;
+}
+
+.tool-icon .svg-icon {
+    width: 28px;
+    height: 28px;
 }
 
 .tool-name {
@@ -769,6 +787,7 @@ body::before {
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
+    min-height: 22px; /* CLS prevention - reserve space for badges */
 }
 
 .tool-badge {
