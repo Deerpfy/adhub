@@ -3370,6 +3370,17 @@ function loadMoreLinks() {
     }, 150);
 }
 
+// Helper function to get SVG icon for local tools
+function getToolIcon(toolId, fallbackEmoji) {
+    // Check if SVG symbol exists for this tool
+    const svgSymbol = document.getElementById(`icon-${toolId}`);
+    if (svgSymbol) {
+        return `<svg class="svg-icon"><use href="#icon-${toolId}"></use></svg>`;
+    }
+    // Fallback to emoji
+    return fallbackEmoji || '🔧';
+}
+
 // Create tool card
 function createToolCard(tool, top3Ids = []) {
     const isLocalFile = tool.type === 'local' || !tool.url.startsWith('http');
@@ -3378,11 +3389,14 @@ function createToolCard(tool, top3Ids = []) {
     const isTop3 = top3Ids.includes(tool.id);
     const topRank = top3Ids.indexOf(tool.id) + 1; // 1, 2, nebo 3
 
+    // Use SVG icon for local tools, emoji for others
+    const iconHtml = isLocalFile ? getToolIcon(tool.id, tool.icon) : (tool.icon || '🔧');
+
     return `
         <div class="tool-card${isTop3 ? ' top-clicked' : ''}" data-id="${tool.id}" data-type="tool">
             <div class="tool-header">
                 <div class="tool-title">
-                    <span class="tool-icon">${tool.icon || '🔧'}</span>
+                    <span class="tool-icon">${iconHtml}</span>
                     <span class="tool-name">${escapeHtml(tool.name)}</span>
                 </div>
                 <div class="tool-badges">
