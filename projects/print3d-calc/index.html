@@ -62,14 +62,14 @@
                         <line x1="8" y1="14" x2="12" y2="14"/>
                         <line x1="8" y1="18" x2="12" y2="18"/>
                     </svg>
-                    <span data-i18n="tab_calculator">Kalkulacka</span>
+                    <span data-i18n="tab_calculator">Kalkulačka</span>
                 </button>
                 <button class="tab-btn" data-tab="settings">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="3"/>
                         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                     </svg>
-                    <span data-i18n="tab_settings">Nastaveni</span>
+                    <span data-i18n="tab_settings">Nastavení</span>
                 </button>
                 <button class="tab-btn" data-tab="history">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -85,7 +85,7 @@
                 <div class="calculator-layout">
                     <!-- Left Panel: Upload & 3D Preview -->
                     <div class="panel upload-panel">
-                        <h3 class="panel-title" data-i18n="upload_title">Nahrat model</h3>
+                        <h3 class="panel-title" data-i18n="upload_title">Nahrát model</h3>
 
                         <!-- Drop Zone -->
                         <div class="drop-zone" id="dropZone">
@@ -95,10 +95,10 @@
                                 <line x1="12" y1="3" x2="12" y2="15"/>
                             </svg>
                             <div class="drop-text">
-                                <span data-i18n="drop_title">Kliknete pro nahrani STL</span>
-                                <span data-i18n="drop_subtitle">nebo pretahnete soubor</span>
+                                <span data-i18n="drop_title">Klikněte pro nahrání STL</span>
+                                <span data-i18n="drop_subtitle">nebo přetáhněte soubor</span>
                             </div>
-                            <p class="drop-hint" data-i18n="drop_hint">Podporovane formaty: .stl (ASCII/Binary)</p>
+                            <p class="drop-hint" data-i18n="drop_hint">Podporované formáty: .stl (ASCII/Binary)</p>
                         </div>
                         <input type="file" id="fileInput" accept=".stl" hidden>
 
@@ -121,7 +121,7 @@
                                         <path d="M3 3v5h5"/>
                                     </svg>
                                 </button>
-                                <span class="preview-hint" data-i18n="preview_hint">Otacejte mysi, scroll = zoom</span>
+                                <span class="preview-hint" data-i18n="preview_hint">Otáčejte myší, scroll = zoom</span>
                             </div>
                         </div>
 
@@ -133,15 +133,15 @@
                                     <span class="info-value" id="infoVolume">0 cm³</span>
                                 </div>
                                 <div class="info-item">
-                                    <span class="info-label" data-i18n="info_weight">Vaha</span>
+                                    <span class="info-label" data-i18n="info_weight">Váha</span>
                                     <span class="info-value" id="infoWeight">0 g</span>
                                 </div>
                                 <div class="info-item">
-                                    <span class="info-label" data-i18n="info_dimensions">Rozmery</span>
+                                    <span class="info-label" data-i18n="info_dimensions">Rozměry</span>
                                     <span class="info-value" id="infoDimensions">0 x 0 x 0 mm</span>
                                 </div>
                                 <div class="info-item">
-                                    <span class="info-label" data-i18n="info_triangles">Trojuhelniky</span>
+                                    <span class="info-label" data-i18n="info_triangles">Trojúhelníky</span>
                                     <span class="info-value" id="infoTriangles">0</span>
                                 </div>
                             </div>
@@ -154,16 +154,16 @@
 
                         <!-- Printer Selection -->
                         <div class="form-section">
-                            <label class="form-label" data-i18n="label_printer">Tiskarna</label>
+                            <label class="form-label" data-i18n="label_printer">Tiskárna</label>
                             <select class="form-select" id="printerSelect">
-                                <option value="default" data-i18n="printer_default">Vychozi tiskarna</option>
+                                <option value="default" data-i18n="printer_default">Výchozí tiskárna</option>
                             </select>
-                            <button class="btn btn-small btn-secondary" id="managePrintersBtn" data-i18n="manage_printers">Spravovat tiskarny</button>
+                            <button class="btn btn-small btn-secondary" id="managePrintersBtn" data-i18n="manage_printers">Spravovat tiskárny</button>
                         </div>
 
                         <!-- Material Selection -->
                         <div class="form-section">
-                            <label class="form-label" data-i18n="label_material">Material</label>
+                            <label class="form-label" data-i18n="label_material">Materiál</label>
                             <select class="form-select" id="materialSelect">
                                 <option value="pla">PLA</option>
                                 <option value="petg">PETG</option>
@@ -171,15 +171,15 @@
                                 <option value="tpu">TPU</option>
                                 <option value="asa">ASA</option>
                                 <option value="nylon">Nylon</option>
-                                <option value="pc">Polykarbonat</option>
-                                <option value="custom" data-i18n="material_custom">Vlastni...</option>
+                                <option value="pc">Polykarbonát</option>
+                                <option value="custom" data-i18n="material_custom">Vlastní...</option>
                             </select>
                         </div>
 
                         <!-- Infill -->
                         <div class="form-section">
                             <label class="form-label">
-                                <span data-i18n="label_infill">Vyplnen</span>
+                                <span data-i18n="label_infill">Výplň</span>
                                 <span class="value-display" id="infillValue">20%</span>
                             </label>
                             <input type="range" class="form-range" id="infillSlider" min="5" max="100" value="20" step="5">
@@ -191,7 +191,7 @@
 
                         <!-- Quantity -->
                         <div class="form-section">
-                            <label class="form-label" data-i18n="label_quantity">Pocet kusu</label>
+                            <label class="form-label" data-i18n="label_quantity">Počet kusů</label>
                             <div class="quantity-input">
                                 <button class="btn-icon" id="qtyMinus">-</button>
                                 <input type="number" class="form-input qty-input" id="quantityInput" value="1" min="1" max="999">
@@ -201,33 +201,34 @@
 
                         <!-- Print Time (manual or estimated) -->
                         <div class="form-section">
-                            <label class="form-label" data-i18n="label_print_time">Cas tisku (hodiny)</label>
+                            <label class="form-label" data-i18n="label_print_time">Čas tisku (hodiny)</label>
                             <div class="time-input-group">
                                 <input type="number" class="form-input" id="printTimeHours" value="0" min="0" placeholder="hod">
                                 <span>:</span>
                                 <input type="number" class="form-input" id="printTimeMinutes" value="0" min="0" max="59" placeholder="min">
                             </div>
-                            <button class="btn btn-small btn-secondary" id="estimateTimeBtn" data-i18n="estimate_time">Odhadnout cas</button>
+                            <button class="btn btn-small btn-secondary" id="estimateTimeBtn" data-i18n="estimate_time">Odhadnout čas</button>
                         </div>
 
                         <!-- Labor Time -->
                         <div class="form-section">
-                            <label class="form-label" data-i18n="label_labor">Prace (priprava + post-processing)</label>
+                            <label class="form-label" data-i18n="label_labor">Práce (příprava + post-processing)</label>
                             <input type="number" class="form-input" id="laborTime" value="0.5" min="0" step="0.25" placeholder="hodiny">
                         </div>
 
                         <!-- Urgency -->
                         <div class="form-section">
-                            <label class="form-label" data-i18n="label_urgency">Priorita</label>
+                            <label class="form-label" data-i18n="label_urgency">Naléhavost</label>
                             <select class="form-select" id="urgencySelect">
-                                <option value="1" data-i18n="urgency_normal">Normalni</option>
-                                <option value="1.25" data-i18n="urgency_fast">Rychle (+25%)</option>
-                                <option value="1.5" data-i18n="urgency_express">Expresni (+50%)</option>
+                                <option value="1" data-i18n="urgency_normal">Normální</option>
+                                <option value="1.25" data-i18n="urgency_fast">Rychlé (+25%)</option>
+                                <option value="1.5" data-i18n="urgency_express">Expresní (+50%)</option>
                             </select>
+                            <p class="drop-hint" data-i18n="urgency_hint">Příplatek za rychlejší dodání</p>
                         </div>
 
                         <!-- Calculate Button -->
-                        <button class="btn btn-primary btn-large" id="calculateBtn" data-i18n="calculate">Vypocitat cenu</button>
+                        <button class="btn btn-primary btn-large" id="calculateBtn" data-i18n="calculate">Vypočítat cenu</button>
                     </div>
                 </div>
 
@@ -271,70 +272,70 @@
                 <div class="settings-grid">
                     <!-- Printer Profiles -->
                     <div class="settings-section">
-                        <h3 class="section-title" data-i18n="settings_printers">Profily tiskaren</h3>
+                        <h3 class="section-title" data-i18n="settings_printers">Profily tiskáren</h3>
                         <div class="printer-list" id="printerList">
                             <!-- Dynamically filled -->
                         </div>
-                        <button class="btn btn-primary" id="addPrinterBtn" data-i18n="add_printer">Pridat tiskarnu</button>
+                        <button class="btn btn-primary" id="addPrinterBtn" data-i18n="add_printer">Přidat tiskárnu</button>
                     </div>
 
                     <!-- Material Database -->
                     <div class="settings-section">
-                        <h3 class="section-title" data-i18n="settings_materials">Databaze materialu</h3>
+                        <h3 class="section-title" data-i18n="settings_materials">Databáze materiálů</h3>
                         <div class="material-list" id="materialList">
                             <!-- Dynamically filled -->
                         </div>
-                        <button class="btn btn-primary" id="addMaterialBtn" data-i18n="add_material">Pridat material</button>
+                        <button class="btn btn-primary" id="addMaterialBtn" data-i18n="add_material">Přidat materiál</button>
                     </div>
 
                     <!-- Pricing Settings -->
                     <div class="settings-section">
-                        <h3 class="section-title" data-i18n="settings_pricing">Nastaveni cen</h3>
+                        <h3 class="section-title" data-i18n="settings_pricing">Nastavení cen</h3>
 
                         <div class="form-section">
-                            <label class="form-label" data-i18n="setting_electricity">Cena elektriny (Kc/kWh)</label>
+                            <label class="form-label" data-i18n="setting_electricity">Cena elektřiny (Kč/kWh)</label>
                             <input type="number" class="form-input" id="electricityPrice" value="7" min="0" step="0.1">
                         </div>
 
                         <div class="form-section">
-                            <label class="form-label" data-i18n="setting_labor_rate">Hodinova sazba (Kc/h)</label>
+                            <label class="form-label" data-i18n="setting_labor_rate">Hodinová sazba (Kč/h)</label>
                             <input type="number" class="form-input" id="laborRate" value="300" min="0" step="10">
                         </div>
 
                         <div class="form-section">
-                            <label class="form-label" data-i18n="setting_maintenance">Udrzba za hodinu tisku (Kc/h)</label>
+                            <label class="form-label" data-i18n="setting_maintenance">Údržba za hodinu tisku (Kč/h)</label>
                             <input type="number" class="form-input" id="maintenanceRate" value="2" min="0" step="0.5">
                         </div>
 
                         <div class="form-section">
-                            <label class="form-label" data-i18n="setting_failure_rate">Mira selhani (%)</label>
+                            <label class="form-label" data-i18n="setting_failure_rate">Míra selhání (%)</label>
                             <input type="number" class="form-input" id="failureRate" value="5" min="0" max="50" step="1">
                         </div>
 
                         <div class="form-section">
-                            <label class="form-label" data-i18n="setting_markup">Marze (%)</label>
+                            <label class="form-label" data-i18n="setting_markup">Marže (%)</label>
                             <input type="number" class="form-input" id="markupRate" value="30" min="0" max="200" step="5">
                         </div>
 
                         <div class="form-section">
-                            <label class="form-label" data-i18n="setting_currency">Mena</label>
+                            <label class="form-label" data-i18n="setting_currency">Měna</label>
                             <select class="form-select" id="currencySelect">
-                                <option value="CZK">CZK (Kc)</option>
+                                <option value="CZK">CZK (Kč)</option>
                                 <option value="EUR">EUR</option>
                                 <option value="USD">USD ($)</option>
-                                <option value="PLN">PLN (zl)</option>
+                                <option value="PLN">PLN (zł)</option>
                             </select>
                         </div>
                     </div>
 
                     <!-- Data Management -->
                     <div class="settings-section">
-                        <h3 class="section-title" data-i18n="settings_data">Sprava dat</h3>
+                        <h3 class="section-title" data-i18n="settings_data">Správa dat</h3>
                         <div class="data-actions">
                             <button class="btn btn-secondary" id="exportDataBtn" data-i18n="export_data">Exportovat data</button>
                             <button class="btn btn-secondary" id="importDataBtn" data-i18n="import_data">Importovat data</button>
                             <input type="file" id="importFileInput" accept=".json" hidden>
-                            <button class="btn btn-danger" id="resetDataBtn" data-i18n="reset_data">Resetovat vse</button>
+                            <button class="btn btn-danger" id="resetDataBtn" data-i18n="reset_data">Resetovat vše</button>
                         </div>
                     </div>
                 </div>
@@ -343,8 +344,8 @@
             <!-- History Tab -->
             <div class="tab-content" id="tab-history">
                 <div class="history-header">
-                    <h3 class="section-title" data-i18n="history_title">Historie kalkulaci</h3>
-                    <button class="btn btn-danger btn-small" id="clearHistoryBtn" data-i18n="clear_history">Smazat vse</button>
+                    <h3 class="section-title" data-i18n="history_title">Historie kalkulací</h3>
+                    <button class="btn btn-danger btn-small" id="clearHistoryBtn" data-i18n="clear_history">Smazat vše</button>
                 </div>
                 <div class="history-list" id="historyList">
                     <div class="empty-state" id="emptyHistory">
@@ -352,7 +353,7 @@
                             <circle cx="12" cy="12" r="10"/>
                             <polyline points="12 6 12 12 16 14"/>
                         </svg>
-                        <p data-i18n="history_empty">Zadna historie kalkulaci</p>
+                        <p data-i18n="history_empty">Žádná historie kalkulací</p>
                     </div>
                 </div>
             </div>
@@ -360,7 +361,7 @@
 
         <footer>
             <p><a href="../../index.html">AdHUB</a> — 3D Print Calculator</p>
-            <p class="footer-hint" data-i18n="footer_hint">100% offline. Data se ukladaji pouze v prohlizeci.</p>
+            <p class="footer-hint" data-i18n="footer_hint">100% offline. Data se ukládají pouze v prohlížeči.</p>
         </footer>
     </div>
 
@@ -369,7 +370,7 @@
     <div class="modal-overlay" id="printerModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="printerModalTitle" data-i18n="modal_add_printer">Pridat tiskarnu</h3>
+                <h3 id="printerModalTitle" data-i18n="modal_add_printer">Přidat tiskárnu</h3>
                 <button class="btn-icon modal-close" data-close-modal="printerModal">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"/>
@@ -380,23 +381,23 @@
             <div class="modal-body">
                 <input type="hidden" id="printerEditId">
                 <div class="form-section">
-                    <label class="form-label" data-i18n="printer_name">Nazev tiskarny</label>
+                    <label class="form-label" data-i18n="printer_name">Název tiskárny</label>
                     <input type="text" class="form-input" id="printerName" placeholder="Prusa MK4">
                 </div>
                 <div class="form-section">
-                    <label class="form-label" data-i18n="printer_power">Prikon (W)</label>
+                    <label class="form-label" data-i18n="printer_power">Příkon (W)</label>
                     <input type="number" class="form-input" id="printerPower" value="120" min="50" max="1000">
                 </div>
                 <div class="form-section">
-                    <label class="form-label" data-i18n="printer_cost">Porizovaci cena</label>
+                    <label class="form-label" data-i18n="printer_cost">Pořizovací cena</label>
                     <input type="number" class="form-input" id="printerCost" value="20000" min="0">
                 </div>
                 <div class="form-section">
-                    <label class="form-label" data-i18n="printer_lifetime">Zivotnost (hodiny)</label>
+                    <label class="form-label" data-i18n="printer_lifetime">Životnost (hodiny)</label>
                     <input type="number" class="form-input" id="printerLifetime" value="5000" min="100">
                 </div>
                 <div class="form-section">
-                    <label class="form-label" data-i18n="printer_bed_size">Velikost podlozky (mm)</label>
+                    <label class="form-label" data-i18n="printer_bed_size">Velikost podložky (mm)</label>
                     <div class="bed-size-inputs">
                         <input type="number" class="form-input" id="printerBedX" value="250" min="50" placeholder="X">
                         <span>x</span>
@@ -407,8 +408,8 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" data-close-modal="printerModal" data-i18n="cancel">Zrusit</button>
-                <button class="btn btn-primary" id="savePrinterBtn" data-i18n="save">Ulozit</button>
+                <button class="btn btn-secondary" data-close-modal="printerModal" data-i18n="cancel">Zrušit</button>
+                <button class="btn btn-primary" id="savePrinterBtn" data-i18n="save">Uložit</button>
             </div>
         </div>
     </div>
@@ -417,7 +418,7 @@
     <div class="modal-overlay" id="materialModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="materialModalTitle" data-i18n="modal_add_material">Pridat material</h3>
+                <h3 id="materialModalTitle" data-i18n="modal_add_material">Přidat materiál</h3>
                 <button class="btn-icon modal-close" data-close-modal="materialModal">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"/>
@@ -428,7 +429,7 @@
             <div class="modal-body">
                 <input type="hidden" id="materialEditId">
                 <div class="form-section">
-                    <label class="form-label" data-i18n="material_name">Nazev materialu</label>
+                    <label class="form-label" data-i18n="material_name">Název materiálu</label>
                     <input type="text" class="form-input" id="materialName" placeholder="PLA Premium">
                 </div>
                 <div class="form-section">
@@ -440,13 +441,25 @@
                     <input type="number" class="form-input" id="materialPrice" value="500" min="0">
                 </div>
                 <div class="form-section">
-                    <label class="form-label" data-i18n="material_color">Barva (volitelne)</label>
+                    <label class="form-label" data-i18n="material_color">Barva (volitelně)</label>
                     <input type="color" class="form-input form-color" id="materialColor" value="#808080">
+                </div>
+                <div class="form-section">
+                    <label class="form-label" data-i18n="material_temp_nozzle">Teplota trysky (°C)</label>
+                    <input type="number" class="form-input" id="materialTempNozzle" value="200" min="150" max="350" step="5">
+                </div>
+                <div class="form-section">
+                    <label class="form-label" data-i18n="material_temp_bed">Teplota podložky (°C)</label>
+                    <input type="number" class="form-input" id="materialTempBed" value="60" min="0" max="150" step="5">
+                </div>
+                <div class="form-section">
+                    <label class="form-label" data-i18n="material_speed">Rychlost tisku (mm/s)</label>
+                    <input type="number" class="form-input" id="materialSpeed" value="50" min="10" max="300" step="5">
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" data-close-modal="materialModal" data-i18n="cancel">Zrusit</button>
-                <button class="btn btn-primary" id="saveMaterialBtn" data-i18n="save">Ulozit</button>
+                <button class="btn btn-secondary" data-close-modal="materialModal" data-i18n="cancel">Zrušit</button>
+                <button class="btn btn-primary" id="saveMaterialBtn" data-i18n="save">Uložit</button>
             </div>
         </div>
     </div>
