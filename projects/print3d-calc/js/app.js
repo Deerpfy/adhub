@@ -180,12 +180,20 @@ const App = {
             });
         });
 
-        // Close modal on overlay click
+        // Close modal on overlay click - but only if mousedown started on overlay
+        // This prevents closing when dragging from input to outside
         document.querySelectorAll('.modal-overlay').forEach(overlay => {
-            overlay.addEventListener('click', (e) => {
-                if (e.target === overlay) {
+            let mouseDownOnOverlay = false;
+
+            overlay.addEventListener('mousedown', (e) => {
+                mouseDownOnOverlay = (e.target === overlay);
+            });
+
+            overlay.addEventListener('mouseup', (e) => {
+                if (mouseDownOnOverlay && e.target === overlay) {
                     overlay.classList.remove('active');
                 }
+                mouseDownOnOverlay = false;
             });
         });
 
