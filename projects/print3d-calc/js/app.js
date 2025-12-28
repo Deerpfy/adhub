@@ -223,6 +223,9 @@ const App = {
             document.getElementById('modelInfo').style.display = 'block';
             document.getElementById('fileName').textContent = file.name;
 
+            // Refresh viewer now that container is visible
+            STLParser.refreshViewer();
+
             // Load and parse STL
             await STLParser.loadSTL(file);
 
