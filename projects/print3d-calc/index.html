@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#8b5cf6">
+    <meta name="description" content="3D Print Calculator - Calculate 3D printing costs offline. Upload STL files, configure materials and pricing. 100% offline, no server needed.">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>3D Print Calculator - AdHUB</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Three.js for STL parsing and 3D preview -->
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.160.0/examples/js/loaders/STLLoader.js"></script>
+    <script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header>
+            <div class="header-content">
+                <a href="../../index.html" class="back-to-hub">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    <span>Hub</span>
+                </a>
+
+                <div class="lang-selector">
+                    <button class="lang-btn active" data-lang="cs">CZ</button>
+                    <button class="lang-btn" data-lang="en">EN</button>
+                </div>
+
+                <div class="page-title">
+                    <h1 data-i18n="title">3D Print Calculator</h1>
+                    <p class="subtitle" data-i18n="subtitle">Kalkulace ceny 3D tisku - 100% offline</p>
+                </div>
+
+                <div class="offline-indicator" id="offlineIndicator">
+                    <span class="offline-dot"></span>
+                    <span data-i18n="offline_ready">Offline ready</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <!-- Tab Navigation -->
+            <div class="tab-nav">
+                <button class="tab-btn active" data-tab="calculator">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="4" y="2" width="16" height="20" rx="2"/>
+                        <line x1="8" y1="6" x2="16" y2="6"/>
+                        <line x1="8" y1="10" x2="16" y2="10"/>
+                        <line x1="8" y1="14" x2="12" y2="14"/>
+                        <line x1="8" y1="18" x2="12" y2="18"/>
+                    </svg>
+                    <span data-i18n="tab_calculator">Kalkulacka</span>
+                </button>
+                <button class="tab-btn" data-tab="settings">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"/>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+                    </svg>
+                    <span data-i18n="tab_settings">Nastaveni</span>
+                </button>
+                <button class="tab-btn" data-tab="history">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    <span data-i18n="tab_history">Historie</span>
+                </button>
+            </div>
+
+            <!-- Calculator Tab -->
+            <div class="tab-content active" id="tab-calculator">
+                <div class="calculator-layout">
+                    <!-- Left Panel: Upload & 3D Preview -->
+                    <div class="panel upload-panel">
+                        <h3 class="panel-title" data-i18n="upload_title">Nahrat model</h3>
+
+                        <!-- Drop Zone -->
+                        <div class="drop-zone" id="dropZone">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                            <div class="drop-text">
+                                <span data-i18n="drop_title">Kliknete pro nahrani STL</span>
+                                <span data-i18n="drop_subtitle">nebo pretahnete soubor</span>
+                            </div>
+                            <p class="drop-hint" data-i18n="drop_hint">Podporovane formaty: .stl (ASCII/Binary)</p>
+                        </div>
+                        <input type="file" id="fileInput" accept=".stl" hidden>
+
+                        <!-- 3D Preview -->
+                        <div class="preview-container" id="previewContainer" style="display: none;">
+                            <div class="preview-header">
+                                <span class="file-name" id="fileName">model.stl</span>
+                                <button class="btn-icon" id="removeFileBtn" title="Odebrat soubor">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <line x1="18" y1="6" x2="6" y2="18"/>
+                                        <line x1="6" y1="6" x2="18" y2="18"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="preview-3d" id="preview3d"></div>
+                            <div class="preview-controls">
+                                <button class="btn-icon" id="resetViewBtn" title="Reset pohledu">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                                        <path d="M3 3v5h5"/>
+                                    </svg>
+                                </button>
+                                <span class="preview-hint" data-i18n="preview_hint">Otacejte mysi, scroll = zoom</span>
+                            </div>
+                        </div>
+
+                        <!-- Model Info -->
+                        <div class="model-info" id="modelInfo" style="display: none;">
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <span class="info-label" data-i18n="info_volume">Objem</span>
+                                    <span class="info-value" id="infoVolume">0 cm³</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label" data-i18n="info_weight">Vaha</span>
+                                    <span class="info-value" id="infoWeight">0 g</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label" data-i18n="info_dimensions">Rozmery</span>
+                                    <span class="info-value" id="infoDimensions">0 x 0 x 0 mm</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label" data-i18n="info_triangles">Trojuhelniky</span>
+                                    <span class="info-value" id="infoTriangles">0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Panel: Pricing Form -->
+                    <div class="panel pricing-panel">
+                        <h3 class="panel-title" data-i18n="pricing_title">Parametry tisku</h3>
+
+                        <!-- Printer Selection -->
+                        <div class="form-section">
+                            <label class="form-label" data-i18n="label_printer">Tiskarna</label>
+                            <select class="form-select" id="printerSelect">
+                                <option value="default" data-i18n="printer_default">Vychozi tiskarna</option>
+                            </select>
+                            <button class="btn btn-small btn-secondary" id="managePrintersBtn" data-i18n="manage_printers">Spravovat tiskarny</button>
+                        </div>
+
+                        <!-- Material Selection -->
+                        <div class="form-section">
+                            <label class="form-label" data-i18n="label_material">Material</label>
+                            <select class="form-select" id="materialSelect">
+                                <option value="pla">PLA</option>
+                                <option value="petg">PETG</option>
+                                <option value="abs">ABS</option>
+                                <option value="tpu">TPU</option>
+                                <option value="asa">ASA</option>
+                                <option value="nylon">Nylon</option>
+                                <option value="pc">Polykarbonat</option>
+                                <option value="custom" data-i18n="material_custom">Vlastni...</option>
+                            </select>
+                        </div>
+
+                        <!-- Infill -->
+                        <div class="form-section">
+                            <label class="form-label">
+                                <span data-i18n="label_infill">Vyplnen</span>
+                                <span class="value-display" id="infillValue">20%</span>
+                            </label>
+                            <input type="range" class="form-range" id="infillSlider" min="5" max="100" value="20" step="5">
+                            <div class="range-labels">
+                                <span>5%</span>
+                                <span>100%</span>
+                            </div>
+                        </div>
+
+                        <!-- Quantity -->
+                        <div class="form-section">
+                            <label class="form-label" data-i18n="label_quantity">Pocet kusu</label>
+                            <div class="quantity-input">
+                                <button class="btn-icon" id="qtyMinus">-</button>
+                                <input type="number" class="form-input qty-input" id="quantityInput" value="1" min="1" max="999">
+                                <button class="btn-icon" id="qtyPlus">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Print Time (manual or estimated) -->
+                        <div class="form-section">
+                            <label class="form-label" data-i18n="label_print_time">Cas tisku (hodiny)</label>
+                            <div class="time-input-group">
+                                <input type="number" class="form-input" id="printTimeHours" value="0" min="0" placeholder="hod">
+                                <span>:</span>
+                                <input type="number" class="form-input" id="printTimeMinutes" value="0" min="0" max="59" placeholder="min">
+                            </div>
+                            <button class="btn btn-small btn-secondary" id="estimateTimeBtn" data-i18n="estimate_time">Odhadnout cas</button>
+                        </div>
+
+                        <!-- Labor Time -->
+                        <div class="form-section">
+                            <label class="form-label" data-i18n="label_labor">Prace (priprava + post-processing)</label>
+                            <input type="number" class="form-input" id="laborTime" value="0.5" min="0" step="0.25" placeholder="hodiny">
+                        </div>
+
+                        <!-- Urgency -->
+                        <div class="form-section">
+                            <label class="form-label" data-i18n="label_urgency">Priorita</label>
+                            <select class="form-select" id="urgencySelect">
+                                <option value="1" data-i18n="urgency_normal">Normalni</option>
+                                <option value="1.25" data-i18n="urgency_fast">Rychle (+25%)</option>
+                                <option value="1.5" data-i18n="urgency_express">Expresni (+50%)</option>
+                            </select>
+                        </div>
+
+                        <!-- Calculate Button -->
+                        <button class="btn btn-primary btn-large" id="calculateBtn" data-i18n="calculate">Vypocitat cenu</button>
+                    </div>
+                </div>
+
+                <!-- Results Panel -->
+                <div class="results-panel" id="resultsPanel" style="display: none;">
+                    <h3 class="panel-title" data-i18n="results_title">Vysledek kalkulace</h3>
+
+                    <div class="results-grid">
+                        <!-- Cost Breakdown -->
+                        <div class="result-card">
+                            <h4 data-i18n="breakdown_title">Rozpis nakladu</h4>
+                            <div class="breakdown-list" id="breakdownList">
+                                <!-- Dynamically filled -->
+                            </div>
+                        </div>
+
+                        <!-- Final Price -->
+                        <div class="result-card result-total">
+                            <div class="total-label" data-i18n="total_per_piece">Cena za kus</div>
+                            <div class="total-value" id="pricePerPiece">0 Kc</div>
+                            <div class="total-quantity">
+                                <span data-i18n="total_quantity">Celkem za</span>
+                                <span id="totalQuantity">1</span>
+                                <span data-i18n="total_pieces">ks:</span>
+                            </div>
+                            <div class="grand-total" id="grandTotal">0 Kc</div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="result-actions">
+                            <button class="btn btn-secondary" id="saveQuoteBtn" data-i18n="save_quote">Ulozit nabidku</button>
+                            <button class="btn btn-secondary" id="exportPdfBtn" data-i18n="export_pdf">Export PDF</button>
+                            <button class="btn btn-secondary" id="copyResultBtn" data-i18n="copy_result">Kopirovat</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Tab -->
+            <div class="tab-content" id="tab-settings">
+                <div class="settings-grid">
+                    <!-- Printer Profiles -->
+                    <div class="settings-section">
+                        <h3 class="section-title" data-i18n="settings_printers">Profily tiskaren</h3>
+                        <div class="printer-list" id="printerList">
+                            <!-- Dynamically filled -->
+                        </div>
+                        <button class="btn btn-primary" id="addPrinterBtn" data-i18n="add_printer">Pridat tiskarnu</button>
+                    </div>
+
+                    <!-- Material Database -->
+                    <div class="settings-section">
+                        <h3 class="section-title" data-i18n="settings_materials">Databaze materialu</h3>
+                        <div class="material-list" id="materialList">
+                            <!-- Dynamically filled -->
+                        </div>
+                        <button class="btn btn-primary" id="addMaterialBtn" data-i18n="add_material">Pridat material</button>
+                    </div>
+
+                    <!-- Pricing Settings -->
+                    <div class="settings-section">
+                        <h3 class="section-title" data-i18n="settings_pricing">Nastaveni cen</h3>
+
+                        <div class="form-section">
+                            <label class="form-label" data-i18n="setting_electricity">Cena elektriny (Kc/kWh)</label>
+                            <input type="number" class="form-input" id="electricityPrice" value="7" min="0" step="0.1">
+                        </div>
+
+                        <div class="form-section">
+                            <label class="form-label" data-i18n="setting_labor_rate">Hodinova sazba (Kc/h)</label>
+                            <input type="number" class="form-input" id="laborRate" value="300" min="0" step="10">
+                        </div>
+
+                        <div class="form-section">
+                            <label class="form-label" data-i18n="setting_maintenance">Udrzba za hodinu tisku (Kc/h)</label>
+                            <input type="number" class="form-input" id="maintenanceRate" value="2" min="0" step="0.5">
+                        </div>
+
+                        <div class="form-section">
+                            <label class="form-label" data-i18n="setting_failure_rate">Mira selhani (%)</label>
+                            <input type="number" class="form-input" id="failureRate" value="5" min="0" max="50" step="1">
+                        </div>
+
+                        <div class="form-section">
+                            <label class="form-label" data-i18n="setting_markup">Marze (%)</label>
+                            <input type="number" class="form-input" id="markupRate" value="30" min="0" max="200" step="5">
+                        </div>
+
+                        <div class="form-section">
+                            <label class="form-label" data-i18n="setting_currency">Mena</label>
+                            <select class="form-select" id="currencySelect">
+                                <option value="CZK">CZK (Kc)</option>
+                                <option value="EUR">EUR</option>
+                                <option value="USD">USD ($)</option>
+                                <option value="PLN">PLN (zl)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Data Management -->
+                    <div class="settings-section">
+                        <h3 class="section-title" data-i18n="settings_data">Sprava dat</h3>
+                        <div class="data-actions">
+                            <button class="btn btn-secondary" id="exportDataBtn" data-i18n="export_data">Exportovat data</button>
+                            <button class="btn btn-secondary" id="importDataBtn" data-i18n="import_data">Importovat data</button>
+                            <input type="file" id="importFileInput" accept=".json" hidden>
+                            <button class="btn btn-danger" id="resetDataBtn" data-i18n="reset_data">Resetovat vse</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div class="tab-content" id="tab-history">
+                <div class="history-header">
+                    <h3 class="section-title" data-i18n="history_title">Historie kalkulaci</h3>
+                    <button class="btn btn-danger btn-small" id="clearHistoryBtn" data-i18n="clear_history">Smazat vse</button>
+                </div>
+                <div class="history-list" id="historyList">
+                    <div class="empty-state" id="emptyHistory">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="empty-icon">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12 6 12 12 16 14"/>
+                        </svg>
+                        <p data-i18n="history_empty">Zadna historie kalkulaci</p>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p><a href="../../index.html">AdHUB</a> — 3D Print Calculator</p>
+            <p class="footer-hint" data-i18n="footer_hint">100% offline. Data se ukladaji pouze v prohlizeci.</p>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <!-- Printer Modal -->
+    <div class="modal-overlay" id="printerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="printerModalTitle" data-i18n="modal_add_printer">Pridat tiskarnu</h3>
+                <button class="btn-icon modal-close" data-close-modal="printerModal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="printerEditId">
+                <div class="form-section">
+                    <label class="form-label" data-i18n="printer_name">Nazev tiskarny</label>
+                    <input type="text" class="form-input" id="printerName" placeholder="Prusa MK4">
+                </div>
+                <div class="form-section">
+                    <label class="form-label" data-i18n="printer_power">Prikon (W)</label>
+                    <input type="number" class="form-input" id="printerPower" value="120" min="50" max="1000">
+                </div>
+                <div class="form-section">
+                    <label class="form-label" data-i18n="printer_cost">Porizovaci cena</label>
+                    <input type="number" class="form-input" id="printerCost" value="20000" min="0">
+                </div>
+                <div class="form-section">
+                    <label class="form-label" data-i18n="printer_lifetime">Zivotnost (hodiny)</label>
+                    <input type="number" class="form-input" id="printerLifetime" value="5000" min="100">
+                </div>
+                <div class="form-section">
+                    <label class="form-label" data-i18n="printer_bed_size">Velikost podlozky (mm)</label>
+                    <div class="bed-size-inputs">
+                        <input type="number" class="form-input" id="printerBedX" value="250" min="50" placeholder="X">
+                        <span>x</span>
+                        <input type="number" class="form-input" id="printerBedY" value="210" min="50" placeholder="Y">
+                        <span>x</span>
+                        <input type="number" class="form-input" id="printerBedZ" value="210" min="50" placeholder="Z">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close-modal="printerModal" data-i18n="cancel">Zrusit</button>
+                <button class="btn btn-primary" id="savePrinterBtn" data-i18n="save">Ulozit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Material Modal -->
+    <div class="modal-overlay" id="materialModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="materialModalTitle" data-i18n="modal_add_material">Pridat material</h3>
+                <button class="btn-icon modal-close" data-close-modal="materialModal">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"/>
+                        <line x1="6" y1="6" x2="18" y2="18"/>
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="materialEditId">
+                <div class="form-section">
+                    <label class="form-label" data-i18n="material_name">Nazev materialu</label>
+                    <input type="text" class="form-input" id="materialName" placeholder="PLA Premium">
+                </div>
+                <div class="form-section">
+                    <label class="form-label" data-i18n="material_density">Hustota (g/cm³)</label>
+                    <input type="number" class="form-input" id="materialDensity" value="1.24" min="0.5" max="10" step="0.01">
+                </div>
+                <div class="form-section">
+                    <label class="form-label" data-i18n="material_price">Cena za kg</label>
+                    <input type="number" class="form-input" id="materialPrice" value="500" min="0">
+                </div>
+                <div class="form-section">
+                    <label class="form-label" data-i18n="material_color">Barva (volitelne)</label>
+                    <input type="color" class="form-input form-color" id="materialColor" value="#808080">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close-modal="materialModal" data-i18n="cancel">Zrusit</button>
+                <button class="btn btn-primary" id="saveMaterialBtn" data-i18n="save">Ulozit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Scripts -->
+    <script src="js/i18n.js"></script>
+    <script src="js/db.js"></script>
+    <script src="js/stl-parser.js"></script>
+    <script src="js/pricing-engine.js"></script>
+    <script src="js/app.js"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(reg => console.log('SW registered:', reg.scope))
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>

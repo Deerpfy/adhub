@@ -1,0 +1,31 @@
+{
+    "name": "3D Print Calculator",
+    "short_name": "Print3D Calc",
+    "description": "Offline 3D printing cost calculator with STL analysis",
+    "start_url": "./index.html",
+    "display": "standalone",
+    "background_color": "#0a0a0f",
+    "theme_color": "#8b5cf6",
+    "orientation": "any",
+    "icons": [
+        {
+            "src": "assets/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "assets/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "assets/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "categories": ["utilities", "productivity"],
+    "lang": "cs",
+    "dir": "ltr"
+}
