@@ -261,6 +261,10 @@ const STLParser = {
             this.mesh.material.dispose();
         }
 
+        // Rotate geometry to match 3D printing convention (Z-up to Y-up)
+        // Three.js uses Y-up, but slicers (Bambu Studio, PrusaSlicer) use Z-up
+        geometry.rotateX(-Math.PI / 2);
+
         // Create material
         const material = new THREE.MeshPhongMaterial({
             color: 0x8b5cf6,
@@ -278,7 +282,8 @@ const STLParser = {
         geometry.boundingBox.getCenter(center);
         geometry.translate(-center.x, -center.y, -center.z);
 
-        // Position on grid
+        // Position on grid (model sits on Y=0 plane)
+        geometry.computeBoundingBox();
         const minY = geometry.boundingBox.min.y;
         this.mesh.position.y = -minY;
 
