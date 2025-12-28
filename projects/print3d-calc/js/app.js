@@ -47,24 +47,45 @@ const App = {
             btn.addEventListener('click', () => this.switchTab(btn.dataset.tab));
         });
 
-        // File upload
+        // File upload with improved drag & drop
         const dropZone = document.getElementById('dropZone');
         const fileInput = document.getElementById('fileInput');
 
         dropZone.addEventListener('click', () => fileInput.click());
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
+
+        // Prevent default drag behaviors on document to enable drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            document.body.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
         });
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('dragover');
+
+        // Highlight drop zone when dragging over
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.add('dragover');
+            }, false);
         });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                dropZone.classList.remove('dragover');
+            }, false);
+        });
+
+        // Handle file drop
         dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file) this.handleFileUpload(file);
-        });
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                this.handleFileUpload(files[0]);
+            }
+        }, false);
+
         fileInput.addEventListener('change', (e) => {
             const file = e.target.files[0];
             if (file) this.handleFileUpload(file);
@@ -84,13 +105,23 @@ const App = {
         });
 
         // Quantity controls
+        const qtyInput = document.getElementById('quantityInput');
         document.getElementById('qtyMinus').addEventListener('click', () => {
-            const input = document.getElementById('quantityInput');
-            if (input.value > 1) input.value = parseInt(input.value) - 1;
+            const currentValue = parseInt(qtyInput.value) || 1;
+            if (currentValue > 1) {
+                qtyInput.value = currentValue - 1;
+            }
         });
         document.getElementById('qtyPlus').addEventListener('click', () => {
-            const input = document.getElementById('quantityInput');
-            input.value = parseInt(input.value) + 1;
+            const currentValue = parseInt(qtyInput.value) || 1;
+            qtyInput.value = currentValue + 1;
+        });
+        // Ensure quantity is always valid on change
+        qtyInput.addEventListener('change', () => {
+            let val = parseInt(qtyInput.value) || 1;
+            if (val < 1) val = 1;
+            if (val > 999) val = 999;
+            qtyInput.value = val;
         });
 
         // Estimate time button
@@ -107,7 +138,16 @@ const App = {
         // Settings - Printers
         document.getElementById('addPrinterBtn').addEventListener('click', () => this.openPrinterModal());
         document.getElementById('savePrinterBtn').addEventListener('click', () => this.savePrinter());
-        document.getElementById('managePrintersBtn').addEventListener('click', () => this.switchTab('settings'));
+        document.getElementById('managePrintersBtn').addEventListener('click', () => {
+            this.switchTab('settings');
+            // Scroll to printer section
+            setTimeout(() => {
+                const printerSection = document.getElementById('printerList');
+                if (printerSection) {
+                    printerSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            }, 100);
+        });
 
         // Settings - Materials
         document.getElementById('addMaterialBtn').addEventListener('click', () => this.openMaterialModal());
@@ -404,17 +444,17 @@ const App = {
         list.innerHTML = printers.map(p => `
             <div class="list-item">
                 <div class="list-item-info">
-                    <span class="list-item-name">${p.name}</span>
+                    <span class="list-item-name">${this.escapeHtml(p.name)}</span>
                     <span class="list-item-meta">${p.power}W | ${p.bedX}x${p.bedY}x${p.bedZ}mm</span>
                 </div>
                 <div class="list-item-actions">
-                    <button class="btn-icon" onclick="App.editPrinter('${p.id}')">
+                    <button class="btn-icon" onclick="App.editPrinter('${this.escapeHtml(p.id)}')">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                         </svg>
                     </button>
-                    <button class="btn-icon" onclick="App.deletePrinter('${p.id}')">
+                    <button class="btn-icon" onclick="App.deletePrinter('${this.escapeHtml(p.id)}')">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="3 6 5 6 21 6"/>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -442,20 +482,20 @@ const App = {
         list.innerHTML = materials.map(m => `
             <div class="list-item">
                 <div class="list-item-info" style="display: flex; align-items: center; gap: 10px;">
-                    <span style="width: 20px; height: 20px; background: ${m.color || '#808080'}; border-radius: 4px;"></span>
+                    <span style="width: 20px; height: 20px; background: ${this.escapeHtml(m.color || '#808080')}; border-radius: 4px;"></span>
                     <div>
-                        <span class="list-item-name">${m.name}</span>
-                        <span class="list-item-meta">${m.density} g/cm³ | ${m.pricePerKg} Kc/kg</span>
+                        <span class="list-item-name">${this.escapeHtml(m.name)}</span>
+                        <span class="list-item-meta">${m.density} g/cm³ | ${m.pricePerKg} Kč/kg | ${m.tempNozzle || 200}°C</span>
                     </div>
                 </div>
                 <div class="list-item-actions">
-                    <button class="btn-icon" onclick="App.editMaterial('${m.id}')">
+                    <button class="btn-icon" onclick="App.editMaterial('${this.escapeHtml(m.id)}')">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                             <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                         </svg>
                     </button>
-                    <button class="btn-icon" onclick="App.deleteMaterial('${m.id}')">
+                    <button class="btn-icon" onclick="App.deleteMaterial('${this.escapeHtml(m.id)}')">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <polyline points="3 6 5 6 21 6"/>
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
@@ -605,6 +645,9 @@ const App = {
             document.getElementById('materialDensity').value = material.density;
             document.getElementById('materialPrice').value = material.pricePerKg;
             document.getElementById('materialColor').value = material.color || '#808080';
+            document.getElementById('materialTempNozzle').value = material.tempNozzle || 200;
+            document.getElementById('materialTempBed').value = material.tempBed || 60;
+            document.getElementById('materialSpeed').value = material.printSpeed || 50;
         } else {
             title.textContent = I18N.t('modal_add_material');
             document.getElementById('materialEditId').value = '';
@@ -612,6 +655,9 @@ const App = {
             document.getElementById('materialDensity').value = 1.24;
             document.getElementById('materialPrice').value = 500;
             document.getElementById('materialColor').value = '#808080';
+            document.getElementById('materialTempNozzle').value = 200;
+            document.getElementById('materialTempBed').value = 60;
+            document.getElementById('materialSpeed').value = 50;
         }
 
         modal.classList.add('active');
@@ -624,12 +670,22 @@ const App = {
 
     async saveMaterial() {
         const id = document.getElementById('materialEditId').value;
+        const name = document.getElementById('materialName').value.trim();
+
+        if (!name) {
+            this.showToast(I18N.t('msg_error'), 'error');
+            return;
+        }
+
         const material = {
             id: id || 'material_' + Date.now(),
-            name: document.getElementById('materialName').value,
-            density: parseFloat(document.getElementById('materialDensity').value),
-            pricePerKg: parseInt(document.getElementById('materialPrice').value),
-            color: document.getElementById('materialColor').value
+            name: name,
+            density: parseFloat(document.getElementById('materialDensity').value) || 1.24,
+            pricePerKg: parseInt(document.getElementById('materialPrice').value) || 500,
+            color: document.getElementById('materialColor').value || '#808080',
+            tempNozzle: parseInt(document.getElementById('materialTempNozzle').value) || 200,
+            tempBed: parseInt(document.getElementById('materialTempBed').value) || 60,
+            printSpeed: parseInt(document.getElementById('materialSpeed').value) || 50
         };
 
         await DB.saveMaterial(material);
@@ -702,7 +758,7 @@ const App = {
         const container = document.getElementById('toastContainer');
         const toast = document.createElement('div');
         toast.className = `toast ${type}`;
-        toast.innerHTML = `<span class="toast-message">${message}</span>`;
+        toast.innerHTML = `<span class="toast-message">${this.escapeHtml(message)}</span>`;
 
         container.appendChild(toast);
 
@@ -710,6 +766,16 @@ const App = {
             toast.style.opacity = '0';
             setTimeout(() => toast.remove(), 300);
         }, 3000);
+    },
+
+    /**
+     * Escape HTML to prevent XSS
+     */
+    escapeHtml(str) {
+        if (typeof str !== 'string') return str;
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
     }
 };
 

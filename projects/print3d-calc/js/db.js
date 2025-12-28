@@ -8,22 +8,22 @@ const DB = {
     dbVersion: 1,
     db: null,
 
-    // Default materials based on analysis
+    // Default materials based on analysis with extended properties
     defaultMaterials: [
-        { id: 'pla', name: 'PLA', density: 1.24, pricePerKg: 500, color: '#4ade80' },
-        { id: 'petg', name: 'PETG', density: 1.27, pricePerKg: 600, color: '#60a5fa' },
-        { id: 'abs', name: 'ABS', density: 1.04, pricePerKg: 550, color: '#fbbf24' },
-        { id: 'tpu', name: 'TPU', density: 1.21, pricePerKg: 1000, color: '#f472b6' },
-        { id: 'asa', name: 'ASA', density: 1.07, pricePerKg: 750, color: '#a78bfa' },
-        { id: 'nylon', name: 'Nylon', density: 1.14, pricePerKg: 1500, color: '#94a3b8' },
-        { id: 'pc', name: 'Polykarbonat', density: 1.20, pricePerKg: 1200, color: '#e2e8f0' }
+        { id: 'pla', name: 'PLA', density: 1.24, pricePerKg: 500, color: '#4ade80', tempNozzle: 200, tempBed: 60, printSpeed: 60 },
+        { id: 'petg', name: 'PETG', density: 1.27, pricePerKg: 600, color: '#60a5fa', tempNozzle: 230, tempBed: 80, printSpeed: 50 },
+        { id: 'abs', name: 'ABS', density: 1.04, pricePerKg: 550, color: '#fbbf24', tempNozzle: 240, tempBed: 100, printSpeed: 50 },
+        { id: 'tpu', name: 'TPU', density: 1.21, pricePerKg: 1000, color: '#f472b6', tempNozzle: 220, tempBed: 50, printSpeed: 25 },
+        { id: 'asa', name: 'ASA', density: 1.07, pricePerKg: 750, color: '#a78bfa', tempNozzle: 250, tempBed: 100, printSpeed: 50 },
+        { id: 'nylon', name: 'Nylon', density: 1.14, pricePerKg: 1500, color: '#94a3b8', tempNozzle: 250, tempBed: 80, printSpeed: 40 },
+        { id: 'pc', name: 'Polykarbonát', density: 1.20, pricePerKg: 1200, color: '#e2e8f0', tempNozzle: 270, tempBed: 110, printSpeed: 40 }
     ],
 
     // Default printer
     defaultPrinters: [
         {
             id: 'default',
-            name: 'Vychozi tiskarna',
+            name: 'Výchozí tiskárna',
             power: 120,
             cost: 20000,
             lifetime: 5000,
