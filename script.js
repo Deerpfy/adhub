@@ -299,6 +299,8 @@ const BASE_TRANSLATIONS = {
         tool_pdf_editor_desc: 'Editujte, podepisujte, komprimujte a reorganizujte PDF soubory. 100% client-side zpracování.',
         tool_pdf_search_name: 'PDF Search',
         tool_pdf_search_desc: 'Fulltextové vyhledávání v PDF souborech. Nahrajte více PDF a hledejte v nich pomocí MiniSearch. 100% client-side.',
+        tool_print3d_calc_name: '3D Print Calculator',
+        tool_print3d_calc_desc: 'Kalkulačka ceny 3D tisku. Nahrajte STL, nastavte materiál a získejte detailní cenovou nabídku. 100% offline PWA.',
         tool_goalix_name: 'Goalix',
         tool_goalix_desc: 'Osobní koordinační platforma pro správu myšlenek, úkolů a myšlenkových map. Organizujte své nápady vizuálně.',
         tool_cardharvest_name: 'CardHarvest',
@@ -693,6 +695,8 @@ const BASE_TRANSLATIONS = {
         tool_pdf_editor_desc: 'Edit, sign, compress and reorganize PDF files. 100% client-side processing.',
         tool_pdf_search_name: 'PDF Search',
         tool_pdf_search_desc: 'Full-text search in PDF files. Upload multiple PDFs and search with MiniSearch. 100% client-side.',
+        tool_print3d_calc_name: '3D Print Calculator',
+        tool_print3d_calc_desc: '3D printing cost calculator. Upload STL, configure material and get detailed price quote. 100% offline PWA.',
         tool_goalix_name: 'Goalix',
         tool_goalix_desc: 'Personal coordination platform for managing thoughts, tasks and mind maps. Organize your ideas visually.',
         tool_cardharvest_name: 'CardHarvest',
@@ -1555,6 +1559,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["pdf", "search", "documents", "fulltext"]
+            },
+            {
+                "id": "print3d-calc",
+                "name": t('tool_print3d_calc_name'),
+                "description": t('tool_print3d_calc_desc'),
+                "category": "tools",
+                "icon": "🖨️",
+                "url": "projects/print3d-calc/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["3d-printing", "calculator", "offline", "pwa", "stl"]
             },
             {
                 "id": "goalix",

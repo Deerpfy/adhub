@@ -107,6 +107,24 @@ PROJECT_CONFIGS = {
             "100% client-side processing"
         ]
     },
+    "print3d-calc": {
+        "name": "3D Print Calculator",
+        "type": "PWA (Offline-First)",
+        "version": "1.0",
+        "status": "Active",
+        "technologies": ["Three.js", "IndexedDB", "Service Worker", "HTML/CSS/JS"],
+        "category": "Tools",
+        "description": "Offline 3D printing cost calculator with STL analysis",
+        "main_file": "index.html",
+        "features": [
+            "STL file upload and 3D preview",
+            "Volume and weight calculation",
+            "Configurable pricing engine",
+            "Printer and material profiles",
+            "100% offline PWA",
+            "Export quotes to PDF/JSON"
+        ]
+    },
     "goalix": {
         "name": "Goalix",
         "type": "Web App (SPA)",
