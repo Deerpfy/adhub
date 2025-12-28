@@ -3,7 +3,7 @@
  * Enables offline functionality by caching all assets
  */
 
-const CACHE_NAME = 'print3d-calc-v1';
+const CACHE_NAME = 'print3d-calc-v2';
 const ASSETS_TO_CACHE = [
     './',
     './index.html',
@@ -15,10 +15,10 @@ const ASSETS_TO_CACHE = [
     './js/app.js',
     './manifest.json',
     './assets/icon.svg',
-    // External libraries (cache on first use)
-    'https://unpkg.com/three@0.160.0/build/three.min.js',
-    'https://unpkg.com/three@0.160.0/examples/js/loaders/STLLoader.js',
-    'https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js'
+    // External libraries (Three.js 0.137.0 - compatible with script tag loading)
+    'https://unpkg.com/three@0.137.0/build/three.min.js',
+    'https://unpkg.com/three@0.137.0/examples/js/loaders/STLLoader.js',
+    'https://unpkg.com/three@0.137.0/examples/js/controls/OrbitControls.js'
 ];
 
 /**
