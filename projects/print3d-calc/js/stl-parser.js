@@ -28,7 +28,12 @@ const STLParser = {
         const container = document.getElementById(containerId);
         if (!container) return;
 
-        const width = container.clientWidth;
+        // Store container reference for later resize
+        this.container = container;
+        this.containerId = containerId;
+
+        // Use sensible defaults if container is hidden (display: none)
+        const width = container.clientWidth || 400;
         const height = container.clientHeight || 300;
 
         // Scene
@@ -92,14 +97,33 @@ const STLParser = {
      * Handle window resize
      */
     handleResize(container) {
-        if (!container || !this.camera || !this.renderer) return;
+        if (!this.camera || !this.renderer) return;
 
-        const width = container.clientWidth;
+        // Use stored container if not provided
+        container = container || this.container;
+        if (!container) return;
+
+        const width = container.clientWidth || 400;
         const height = container.clientHeight || 300;
 
         this.camera.aspect = width / height;
         this.camera.updateProjectionMatrix();
         this.renderer.setSize(width, height);
+    },
+
+    /**
+     * Force refresh when container becomes visible
+     */
+    refreshViewer() {
+        if (!this.container || !this.renderer) return;
+
+        // Small delay to ensure container has dimensions
+        setTimeout(() => {
+            this.handleResize(this.container);
+            if (this.mesh) {
+                this.fitCameraToModel();
+            }
+        }, 50);
     },
 
     /**

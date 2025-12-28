@@ -19,17 +19,144 @@ const DB = {
         { id: 'pc', name: 'Polykarbonát', density: 1.20, pricePerKg: 1200, color: '#e2e8f0', tempNozzle: 270, tempBed: 110, printSpeed: 40 }
     ],
 
-    // Default printer
+    // Default printers - popular models from major manufacturers
     defaultPrinters: [
+        // Bambu Lab
         {
-            id: 'default',
-            name: 'Výchozí tiskárna',
-            power: 120,
-            cost: 20000,
+            id: 'bambu_x1c',
+            name: 'Bambu Lab X1 Carbon',
+            power: 350,
+            cost: 35000,
+            lifetime: 8000,
+            bedX: 256,
+            bedY: 256,
+            bedZ: 256
+        },
+        {
+            id: 'bambu_p1s',
+            name: 'Bambu Lab P1S',
+            power: 350,
+            cost: 22000,
+            lifetime: 6000,
+            bedX: 256,
+            bedY: 256,
+            bedZ: 256
+        },
+        {
+            id: 'bambu_a1',
+            name: 'Bambu Lab A1',
+            power: 150,
+            cost: 10000,
             lifetime: 5000,
+            bedX: 256,
+            bedY: 256,
+            bedZ: 256
+        },
+        // Prusa Research
+        {
+            id: 'prusa_mk4',
+            name: 'Prusa MK4',
+            power: 120,
+            cost: 23000,
+            lifetime: 8000,
             bedX: 250,
             bedY: 210,
-            bedZ: 210
+            bedZ: 220
+        },
+        {
+            id: 'prusa_mini',
+            name: 'Prusa MINI+',
+            power: 80,
+            cost: 12000,
+            lifetime: 6000,
+            bedX: 180,
+            bedY: 180,
+            bedZ: 180
+        },
+        {
+            id: 'prusa_xl',
+            name: 'Prusa XL (5 nástrojů)',
+            power: 350,
+            cost: 90000,
+            lifetime: 10000,
+            bedX: 360,
+            bedY: 360,
+            bedZ: 360
+        },
+        // Creality
+        {
+            id: 'creality_ender3_v3',
+            name: 'Creality Ender-3 V3',
+            power: 350,
+            cost: 8000,
+            lifetime: 4000,
+            bedX: 220,
+            bedY: 220,
+            bedZ: 250
+        },
+        {
+            id: 'creality_k1_max',
+            name: 'Creality K1 Max',
+            power: 350,
+            cost: 22000,
+            lifetime: 5000,
+            bedX: 300,
+            bedY: 300,
+            bedZ: 300
+        },
+        {
+            id: 'creality_ender5_s1',
+            name: 'Creality Ender-5 S1',
+            power: 350,
+            cost: 14000,
+            lifetime: 5000,
+            bedX: 220,
+            bedY: 220,
+            bedZ: 280
+        },
+        // Anycubic
+        {
+            id: 'anycubic_kobra2_pro',
+            name: 'Anycubic Kobra 2 Pro',
+            power: 400,
+            cost: 9000,
+            lifetime: 4000,
+            bedX: 220,
+            bedY: 220,
+            bedZ: 250
+        },
+        // Elegoo
+        {
+            id: 'elegoo_neptune4_pro',
+            name: 'Elegoo Neptune 4 Pro',
+            power: 310,
+            cost: 8500,
+            lifetime: 4000,
+            bedX: 225,
+            bedY: 225,
+            bedZ: 265
+        },
+        // Voron (DIY)
+        {
+            id: 'voron_2_4',
+            name: 'Voron 2.4 (350mm)',
+            power: 500,
+            cost: 50000,
+            lifetime: 10000,
+            bedX: 350,
+            bedY: 350,
+            bedZ: 350
+        },
+        // Generic / Custom
+        {
+            id: 'custom',
+            name: 'Vlastní tiskárna',
+            power: 120,
+            cost: 15000,
+            lifetime: 5000,
+            bedX: 220,
+            bedY: 220,
+            bedZ: 250
         }
     ],
 
