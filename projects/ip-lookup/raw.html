@@ -76,7 +76,14 @@ function output(ip,source,params){
     console.log('[IP] Output:',result);
 }
 
-function extractIP(candidate,preferIPv6){
+function extractIP(candidate,preferIPv6,mdnsCallback){
+    // Skip mDNS obfuscated candidates (.local)
+    if(candidate.includes('.local')){
+        console.log('[IP] Skipping mDNS obfuscated candidate');
+        if(mdnsCallback)mdnsCallback();
+        return null;
+    }
+
     // Try IPv6 first if preferred
     if(preferIPv6){
         let m=candidate.match(R6);
@@ -104,12 +111,18 @@ async function getIPviaWebRTC(preferIPv6){
 
         const pc=new RTCPeerConnection({iceServers:STUN_SERVERS.map(u=>({urls:u}))});
         let resolved=false;
-        const timeout=setTimeout(()=>{if(!resolved){pc.close();reject(new Error('timeout'));}},5000);
+        let gotMdns=false;
+        const timeout=setTimeout(()=>{
+            if(!resolved){
+                pc.close();
+                reject(new Error(gotMdns?'mDNS obfuscation active (browser privacy)':'timeout - no candidates'));
+            }
+        },5000);
 
         pc.onicecandidate=e=>{
             if(e.candidate&&!resolved){
                 console.log('[IP] ICE candidate:',e.candidate.candidate);
-                const ip=extractIP(e.candidate.candidate,preferIPv6);
+                const ip=extractIP(e.candidate.candidate,preferIPv6,()=>{gotMdns=true;});
                 if(ip){
                     resolved=true;
                     clearTimeout(timeout);
@@ -155,6 +168,7 @@ try{
     console.log('[IP] Source:',source);
     console.log('[IP] Address:',ip,'('+ipType+')');
     output(ip,source,params);
+    return; // Success - don't fall through to API
 }catch(e){
     console.warn('[IP] WebRTC failed:',e.message);
     console.log('[IP] Trying fallback API...');
