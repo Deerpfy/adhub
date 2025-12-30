@@ -1,26 +1,108 @@
 <!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;font-family:monospace"><script>
+/**
+ * IP Detection - WebRTC STUN + ipify fallback
+ *
+ * URL Parameters:
+ *   ?format=text   - Raw IP (default): 203.0.113.45
+ *   ?format=json   - JSON: {"ip":"203.0.113.45"}
+ *   ?format=jsonp&callback=fn - JSONP: fn({"ip":"203.0.113.45"});
+ *   ?format=full   - Full info: {"ip":"...","type":"IPv4","source":"WebRTC STUN"}
+ */
+
 const S=['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun.services.mozilla.com'];
-const R=/([0-9]{1,3}(\.[0-9]{1,3}){3})/g;
-function ok(i){return i&&!/^(10\.|172\.(1[6-9]|2|3[01])\.|192\.168\.|127\.|169\.254\.)/.test(i)}
+const R4=/([0-9]{1,3}(\.[0-9]{1,3}){3})/g;
+const R6=/([a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/gi;
+
+function isPrivate(ip){
+    if(!ip)return true;
+    if(/^(10\.|172\.(1[6-9]|2[0-9]|3[01])\.|192\.168\.|127\.|169\.254\.|0\.)/.test(ip))return true;
+    if(/\.local$/i.test(ip))return true;
+    if(/^(::1|fe80:|fc00:|fd00:)/i.test(ip))return true;
+    return false;
+}
+
+function getIPType(ip){
+    if(!ip)return'unknown';
+    if(R4.test(ip))return'IPv4';
+    if(R6.test(ip))return'IPv6';
+    return'unknown';
+}
+
+function getParams(){
+    const p=new URLSearchParams(window.location.search);
+    return{
+        format:p.get('format')||'text',
+        callback:p.get('callback')||'callback'
+    };
+}
+
+function output(ip,source,params){
+    const type=getIPType(ip);
+    let result;
+
+    switch(params.format.toLowerCase()){
+        case'json':
+            result=JSON.stringify({ip});
+            document.body.textContent=result;
+            break;
+        case'jsonp':
+            const cb=params.callback.replace(/[^a-zA-Z0-9_$]/g,'');
+            result=cb+'('+JSON.stringify({ip})+');';
+            document.body.textContent=result;
+            break;
+        case'full':
+            result=JSON.stringify({ip,type,source,timestamp:new Date().toISOString()});
+            document.body.textContent=result;
+            break;
+        default:
+            document.body.textContent=ip;
+    }
+
+    console.log('[IP] Format:',params.format);
+    console.log('[IP] Output:',result||ip);
+}
+
 (async()=>{
+const params=getParams();
+let source='';
+
 try{
-console.log('[IP] Trying WebRTC STUN...');
-const p=new RTCPeerConnection({iceServers:S.map(u=>({urls:u}))});
-const d=await new Promise((y,n)=>{
-let t=setTimeout(()=>n('timeout'),5000);
-p.onicecandidate=e=>{if(e.candidate){console.log('[IP] ICE candidate:',e.candidate.candidate);let m=e.candidate.candidate.match(R);if(m)for(let i of m)if(ok(i)){clearTimeout(t);p.close();y(i);return;}}};
-p.createDataChannel('');p.createOffer().then(o=>p.setLocalDescription(o));
-});
-console.log('[IP] Source: WebRTC STUN (local, no external API)');
-console.log('[IP] Address:', d);
-document.body.textContent=d;
+    console.log('[IP] Trying WebRTC STUN...');
+    const p=new RTCPeerConnection({iceServers:S.map(u=>({urls:u}))});
+    const ip=await new Promise((y,n)=>{
+        let t=setTimeout(()=>n('timeout'),5000);
+        p.onicecandidate=e=>{
+            if(e.candidate){
+                console.log('[IP] ICE candidate:',e.candidate.candidate);
+                // Try IPv4 first
+                let m=e.candidate.candidate.match(R4);
+                if(m)for(let i of m)if(!isPrivate(i)){clearTimeout(t);p.close();y(i);return;}
+                // Then IPv6
+                m=e.candidate.candidate.match(R6);
+                if(m)for(let i of m)if(!isPrivate(i)){clearTimeout(t);p.close();y(i);return;}
+            }
+        };
+        p.createDataChannel('');
+        p.createOffer().then(o=>p.setLocalDescription(o));
+    });
+    source='WebRTC STUN (local)';
+    console.log('[IP] Source:',source);
+    console.log('[IP] Address:',ip);
+    output(ip,source,params);
 }catch(e){
-console.warn('[IP] WebRTC failed:', e);
-console.log('[IP] Trying fallback API...');
-try{const r=await fetch('https://api.ipify.org');const ip=await r.text();
-console.log('[IP] Source: api.ipify.org (external API fallback)');
-console.log('[IP] Address:', ip);
-document.body.textContent=ip;}
-catch(x){console.error('[IP] All methods failed:', x);document.body.textContent='error';}
-}})();
+    console.warn('[IP] WebRTC failed:',e);
+    console.log('[IP] Trying fallback API...');
+    try{
+        const r=await fetch('https://api.ipify.org');
+        const ip=(await r.text()).trim();
+        source='api.ipify.org (fallback)';
+        console.log('[IP] Source:',source);
+        console.log('[IP] Address:',ip);
+        output(ip,source,params);
+    }catch(x){
+        console.error('[IP] All methods failed:',x);
+        document.body.textContent=params.format==='json'?'{"error":"detection failed"}':'error';
+    }
+}
+})();
 </script></body></html>
