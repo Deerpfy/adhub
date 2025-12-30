@@ -6,12 +6,23 @@
  *   ?format=text   - Raw IP (default): 203.0.113.45
  *   ?format=json   - JSON: {"ip":"203.0.113.45"}
  *   ?format=jsonp&callback=fn - JSONP: fn({"ip":"203.0.113.45"});
- *   ?format=full   - Full info: {"ip":"...","type":"IPv4","source":"WebRTC STUN"}
+ *   ?format=full   - Full info: {"ip":"...","type":"IPv4","source":"..."}
+ *
+ *   ?type=4        - IPv4 only (default)
+ *   ?type=6        - IPv6 only
+ *   ?type=64       - IPv6 preferred, IPv4 fallback (like api64.ipify.org)
  */
 
-const S=['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun.services.mozilla.com'];
+const STUN_SERVERS=['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun.services.mozilla.com'];
+const API_ENDPOINTS={
+    '4':'https://api.ipify.org',
+    '6':'https://api6.ipify.org',
+    '64':'https://api64.ipify.org'
+};
+
 const R4=/([0-9]{1,3}(\.[0-9]{1,3}){3})/g;
 const R6=/([a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/gi;
+const R6_COMPRESSED=/([a-f0-9:]+:+[a-f0-9:]+)/gi;
 
 function isPrivate(ip){
     if(!ip)return true;
@@ -23,8 +34,8 @@ function isPrivate(ip){
 
 function getIPType(ip){
     if(!ip)return'unknown';
-    if(R4.test(ip))return'IPv4';
-    if(R6.test(ip))return'IPv6';
+    if(/^[0-9]{1,3}(\.[0-9]{1,3}){3}$/.test(ip))return'IPv4';
+    if(/:/i.test(ip))return'IPv6';
     return'unknown';
 }
 
@@ -32,7 +43,8 @@ function getParams(){
     const p=new URLSearchParams(window.location.search);
     return{
         format:p.get('format')||'text',
-        callback:p.get('callback')||'callback'
+        callback:p.get('callback')||'callback',
+        type:p.get('type')||'4'
     };
 }
 
@@ -55,53 +67,107 @@ function output(ip,source,params){
             document.body.textContent=result;
             break;
         default:
+            result=ip;
             document.body.textContent=ip;
     }
 
     console.log('[IP] Format:',params.format);
-    console.log('[IP] Output:',result||ip);
+    console.log('[IP] Type filter:',params.type);
+    console.log('[IP] Output:',result);
+}
+
+function extractIP(candidate,preferIPv6){
+    // Try IPv6 first if preferred
+    if(preferIPv6){
+        let m=candidate.match(R6);
+        if(m)for(let i of m)if(!isPrivate(i))return i;
+        m=candidate.match(R6_COMPRESSED);
+        if(m)for(let i of m)if(!isPrivate(i)&&i.includes(':'))return i;
+    }
+    // Try IPv4
+    let m=candidate.match(R4);
+    if(m)for(let i of m)if(!isPrivate(i))return i;
+    // Try IPv6 as fallback
+    if(!preferIPv6){
+        m=candidate.match(R6);
+        if(m)for(let i of m)if(!isPrivate(i))return i;
+        m=candidate.match(R6_COMPRESSED);
+        if(m)for(let i of m)if(!isPrivate(i)&&i.includes(':'))return i;
+    }
+    return null;
+}
+
+async function getIPviaWebRTC(preferIPv6){
+    return new Promise((resolve,reject)=>{
+        const RTCPeerConnection=window.RTCPeerConnection||window.webkitRTCPeerConnection||window.mozRTCPeerConnection;
+        if(!RTCPeerConnection){reject(new Error('WebRTC not supported'));return;}
+
+        const pc=new RTCPeerConnection({iceServers:STUN_SERVERS.map(u=>({urls:u}))});
+        let resolved=false;
+        const timeout=setTimeout(()=>{if(!resolved){pc.close();reject(new Error('timeout'));}},5000);
+
+        pc.onicecandidate=e=>{
+            if(e.candidate&&!resolved){
+                console.log('[IP] ICE candidate:',e.candidate.candidate);
+                const ip=extractIP(e.candidate.candidate,preferIPv6);
+                if(ip){
+                    resolved=true;
+                    clearTimeout(timeout);
+                    pc.close();
+                    resolve(ip);
+                }
+            }
+        };
+        pc.createDataChannel('');
+        pc.createOffer().then(o=>pc.setLocalDescription(o)).catch(reject);
+    });
+}
+
+async function getIPviaAPI(typeParam){
+    const endpoint=API_ENDPOINTS[typeParam]||API_ENDPOINTS['4'];
+    console.log('[IP] API endpoint:',endpoint);
+    const r=await fetch(endpoint);
+    if(!r.ok)throw new Error('HTTP '+r.status);
+    return(await r.text()).trim();
 }
 
 (async()=>{
 const params=getParams();
+const preferIPv6=params.type==='6'||params.type==='64';
 let source='';
+
+console.log('[IP] Requested type:',params.type,'(preferIPv6:',preferIPv6,')');
 
 try{
     console.log('[IP] Trying WebRTC STUN...');
-    const p=new RTCPeerConnection({iceServers:S.map(u=>({urls:u}))});
-    const ip=await new Promise((y,n)=>{
-        let t=setTimeout(()=>n('timeout'),5000);
-        p.onicecandidate=e=>{
-            if(e.candidate){
-                console.log('[IP] ICE candidate:',e.candidate.candidate);
-                // Try IPv4 first
-                let m=e.candidate.candidate.match(R4);
-                if(m)for(let i of m)if(!isPrivate(i)){clearTimeout(t);p.close();y(i);return;}
-                // Then IPv6
-                m=e.candidate.candidate.match(R6);
-                if(m)for(let i of m)if(!isPrivate(i)){clearTimeout(t);p.close();y(i);return;}
-            }
-        };
-        p.createDataChannel('');
-        p.createOffer().then(o=>p.setLocalDescription(o));
-    });
+    const ip=await getIPviaWebRTC(preferIPv6);
+    const ipType=getIPType(ip);
+
+    // Check if we got the right type
+    if(params.type==='6'&&ipType!=='IPv6'){
+        throw new Error('IPv6 required but got '+ipType);
+    }
+    if(params.type==='4'&&ipType!=='IPv4'){
+        throw new Error('IPv4 required but got '+ipType);
+    }
+
     source='WebRTC STUN (local)';
     console.log('[IP] Source:',source);
-    console.log('[IP] Address:',ip);
+    console.log('[IP] Address:',ip,'('+ipType+')');
     output(ip,source,params);
 }catch(e){
-    console.warn('[IP] WebRTC failed:',e);
+    console.warn('[IP] WebRTC failed:',e.message);
     console.log('[IP] Trying fallback API...');
     try{
-        const r=await fetch('https://api.ipify.org');
-        const ip=(await r.text()).trim();
-        source='api.ipify.org (fallback)';
+        const ip=await getIPviaAPI(params.type);
+        source='ipify.org (fallback)';
         console.log('[IP] Source:',source);
         console.log('[IP] Address:',ip);
         output(ip,source,params);
     }catch(x){
         console.error('[IP] All methods failed:',x);
-        document.body.textContent=params.format==='json'?'{"error":"detection failed"}':'error';
+        const errMsg=params.format==='json'?'{"error":"detection failed"}':'error';
+        document.body.textContent=errMsg;
     }
 }
 })();
