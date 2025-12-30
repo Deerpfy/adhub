@@ -1,0 +1,18 @@
+<!DOCTYPE html><html><head><meta charset="UTF-8"></head><body style="margin:0;font-family:monospace"><script>
+const S=['stun:stun.l.google.com:19302','stun:stun1.l.google.com:19302','stun:stun.services.mozilla.com'];
+const R=/([0-9]{1,3}(\.[0-9]{1,3}){3})/g;
+function ok(i){return i&&!/^(10\.|172\.(1[6-9]|2|3[01])\.|192\.168\.|127\.|169\.254\.)/.test(i)}
+(async()=>{
+try{
+const p=new RTCPeerConnection({iceServers:S.map(u=>({urls:u}))});
+const d=await new Promise((y,n)=>{
+let t=setTimeout(()=>n('timeout'),5000);
+p.onicecandidate=e=>{if(e.candidate){let m=e.candidate.candidate.match(R);if(m)for(let i of m)if(ok(i)){clearTimeout(t);p.close();y(i);return;}}};
+p.createDataChannel('');p.createOffer().then(o=>p.setLocalDescription(o));
+});
+document.body.textContent=d;
+}catch(e){
+try{const r=await fetch('https://api.ipify.org');document.body.textContent=await r.text();}
+catch(x){document.body.textContent='error';}
+}})();
+</script></body></html>
