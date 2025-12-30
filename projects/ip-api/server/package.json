@@ -1,0 +1,27 @@
+{
+  "name": "ip-api-server",
+  "version": "1.0.0",
+  "description": "Self-hosted IP API server - ipify alternative",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "ip",
+    "api",
+    "ipify",
+    "public-ip",
+    "self-hosted"
+  ],
+  "author": "Deerpfy",
+  "license": "MIT"
+}
