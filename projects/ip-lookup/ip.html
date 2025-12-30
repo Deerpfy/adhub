@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your IP</title>
+    <meta name="description" content="Your public IP address">
+    <meta name="theme-color" content="#0a0a0f">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{
+            font-family:'SF Mono','Fira Code','Consolas',monospace;
+            background:#0a0a0f;
+            color:#fff;
+            min-height:100vh;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            flex-direction:column;
+            gap:16px;
+        }
+        .ip{
+            font-size:clamp(1.5rem,10vw,4rem);
+            font-weight:600;
+            letter-spacing:2px;
+            user-select:all;
+            cursor:pointer;
+            transition:opacity 0.2s;
+        }
+        .ip:hover{opacity:0.8}
+        .ip.loading{color:#6b6b7d;font-size:1rem}
+        .ip.error{color:#ef4444;font-size:1rem}
+        .hint{color:#6b6b7d;font-size:0.75rem}
+        .toast{
+            position:fixed;
+            bottom:24px;
+            background:#161620;
+            border:1px solid #2a2a3a;
+            padding:10px 20px;
+            border-radius:8px;
+            font-size:0.8rem;
+            opacity:0;
+            transition:opacity 0.3s;
+        }
+        .toast.show{opacity:1}
+    </style>
+</head>
+<body>
+    <div class="ip loading" id="ip">Loading...</div>
+    <div class="hint" id="hint"></div>
+    <div class="toast" id="toast">Copied!</div>
+    <script>
+    (async()=>{
+        const el=document.getElementById('ip');
+        const hint=document.getElementById('hint');
+        const toast=document.getElementById('toast');
+        const endpoints=[
+            'https://api.ipify.org?format=json',
+            'https://api4.ipify.org?format=json',
+            'https://api64.ipify.org?format=json'
+        ];
+
+        async function fetchIP(){
+            for(const url of endpoints){
+                try{
+                    const ctrl=new AbortController();
+                    const tid=setTimeout(()=>ctrl.abort(),5000);
+                    const res=await fetch(url,{signal:ctrl.signal});
+                    clearTimeout(tid);
+                    if(res.ok){
+                        const data=await res.json();
+                        return data.ip;
+                    }
+                }catch(e){console.warn(url,e.message)}
+            }
+            throw new Error('All endpoints failed');
+        }
+
+        try{
+            const ip=await fetchIP();
+            el.textContent=ip;
+            el.classList.remove('loading');
+            hint.textContent='Click to copy';
+            el.onclick=()=>{
+                navigator.clipboard.writeText(ip);
+                toast.classList.add('show');
+                setTimeout(()=>toast.classList.remove('show'),1500);
+            };
+        }catch(e){
+            el.textContent='Offline';
+            el.classList.add('error');
+            hint.textContent='Could not detect IP';
+        }
+    })();
+    </script>
+</body>
+</html>
