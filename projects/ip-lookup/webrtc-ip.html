@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP</title>
+    <style>
+        *{margin:0;padding:0}
+        body{background:#000;color:#fff;font-family:'SF Mono','Consolas',monospace;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column}
+        #ip{font-size:clamp(1.5rem,10vw,4rem);font-weight:600;letter-spacing:2px;cursor:pointer;user-select:all}
+        #ip.loading{color:#666;font-size:1rem}
+        #ip.error{color:#f44;font-size:1rem}
+        #status{color:#666;font-size:0.75rem;margin-top:16px}
+        #method{color:#444;font-size:0.6rem;margin-top:8px}
+    </style>
+</head>
+<body>
+    <div id="ip" class="loading">Detecting...</div>
+    <div id="status"></div>
+    <div id="method"></div>
+
+<script>
+/**
+ * IP Detection - WebRTC STUN method (no external API)
+ * Falls back to ipify if WebRTC fails
+ */
+
+const STUN_SERVERS = [
+    'stun:stun.l.google.com:19302',
+    'stun:stun1.l.google.com:19302',
+    'stun:stun2.l.google.com:19302',
+    'stun:stun.services.mozilla.com',
+    'stun:stun.stunprotocol.org:3478'
+];
+
+const ipEl = document.getElementById('ip');
+const statusEl = document.getElementById('status');
+const methodEl = document.getElementById('method');
+
+// Regex for IPv4 and IPv6
+const IP_REGEX = /([0-9]{1,3}(\.[0-9]{1,3}){3})|([a-f0-9]{1,4}(:[a-f0-9]{1,4}){7})/gi;
+
+// Filter out local/private IPs
+function isPublicIP(ip) {
+    if (!ip) return false;
+    // IPv4 private ranges
+    if (/^10\./.test(ip)) return false;
+    if (/^172\.(1[6-9]|2[0-9]|3[01])\./.test(ip)) return false;
+    if (/^192\.168\./.test(ip)) return false;
+    if (/^127\./.test(ip)) return false;
+    if (/^169\.254\./.test(ip)) return false;
+    // mDNS .local addresses
+    if (/\.local$/i.test(ip)) return false;
+    // IPv6 link-local
+    if (/^fe80:/i.test(ip)) return false;
+    if (/^::1$/.test(ip)) return false;
+    return true;
+}
+
+// Extract IP from ICE candidate string
+function extractIP(candidate) {
+    const matches = candidate.match(IP_REGEX);
+    if (matches) {
+        for (const ip of matches) {
+            if (isPublicIP(ip)) return ip;
+        }
+    }
+    return null;
+}
+
+// WebRTC STUN method
+function getIPviaWebRTC() {
+    return new Promise((resolve, reject) => {
+        const RTCPeerConnection = window.RTCPeerConnection ||
+                                   window.webkitRTCPeerConnection ||
+                                   window.mozRTCPeerConnection;
+
+        if (!RTCPeerConnection) {
+            reject(new Error('WebRTC not supported'));
+            return;
+        }
+
+        const foundIPs = new Set();
+        let resolved = false;
+
+        const pc = new RTCPeerConnection({
+            iceServers: STUN_SERVERS.map(url => ({ urls: url }))
+        });
+
+        // Timeout after 5 seconds
+        const timeout = setTimeout(() => {
+            if (!resolved) {
+                pc.close();
+                if (foundIPs.size > 0) {
+                    resolve([...foundIPs][0]);
+                } else {
+                    reject(new Error('Timeout - no public IP found'));
+                }
+            }
+        }, 5000);
+
+        pc.onicecandidate = (event) => {
+            if (event.candidate) {
+                const ip = extractIP(event.candidate.candidate);
+                if (ip && !foundIPs.has(ip)) {
+                    foundIPs.add(ip);
+                    // First public IP found - resolve immediately
+                    if (!resolved) {
+                        resolved = true;
+                        clearTimeout(timeout);
+                        pc.close();
+                        resolve(ip);
+                    }
+                }
+            }
+        };
+
+        pc.onicegatheringstatechange = () => {
+            if (pc.iceGatheringState === 'complete' && !resolved) {
+                clearTimeout(timeout);
+                pc.close();
+                if (foundIPs.size > 0) {
+                    resolved = true;
+                    resolve([...foundIPs][0]);
+                } else {
+                    reject(new Error('No public IP in candidates'));
+                }
+            }
+        };
+
+        // Create data channel and offer to trigger ICE gathering
+        pc.createDataChannel('ip');
+        pc.createOffer()
+            .then(offer => pc.setLocalDescription(offer))
+            .catch(err => {
+                if (!resolved) {
+                    clearTimeout(timeout);
+                    reject(err);
+                }
+            });
+    });
+}
+
+// Fallback: ipify API
+async function getIPviaAPI() {
+    const endpoints = [
+        'https://api.ipify.org',
+        'https://api4.ipify.org',
+        'https://icanhazip.com',
+        'https://ifconfig.me/ip'
+    ];
+
+    for (const url of endpoints) {
+        try {
+            const res = await fetch(url, {
+                signal: AbortSignal.timeout(3000)
+            });
+            if (res.ok) {
+                return (await res.text()).trim();
+            }
+        } catch (e) { continue; }
+    }
+    throw new Error('All API endpoints failed');
+}
+
+// Main detection logic
+async function detectIP() {
+    statusEl.textContent = 'Trying WebRTC STUN...';
+
+    try {
+        // Try WebRTC first (no external API)
+        const ip = await getIPviaWebRTC();
+        ipEl.textContent = ip;
+        ipEl.classList.remove('loading');
+        statusEl.textContent = 'Click to copy';
+        methodEl.textContent = 'Method: WebRTC STUN (local)';
+
+        ipEl.onclick = () => {
+            navigator.clipboard.writeText(ip);
+            statusEl.textContent = 'Copied!';
+            setTimeout(() => statusEl.textContent = 'Click to copy', 1500);
+        };
+        return;
+    } catch (e) {
+        console.warn('WebRTC failed:', e.message);
+        statusEl.textContent = 'WebRTC failed, trying API...';
+    }
+
+    try {
+        // Fallback to API
+        const ip = await getIPviaAPI();
+        ipEl.textContent = ip;
+        ipEl.classList.remove('loading');
+        statusEl.textContent = 'Click to copy';
+        methodEl.textContent = 'Method: External API (fallback)';
+
+        ipEl.onclick = () => {
+            navigator.clipboard.writeText(ip);
+            statusEl.textContent = 'Copied!';
+            setTimeout(() => statusEl.textContent = 'Click to copy', 1500);
+        };
+    } catch (e) {
+        ipEl.textContent = 'Detection failed';
+        ipEl.classList.add('error');
+        statusEl.textContent = e.message;
+        methodEl.textContent = '';
+    }
+}
+
+detectIP();
+</script>
+</body>
+</html>
