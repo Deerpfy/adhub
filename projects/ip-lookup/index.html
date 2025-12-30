@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <!-- SEO Meta Tags -->
+    <title>IP Lookup - Offline-First IP Address Tool</title>
+    <meta name="description" content="Offline-first IP address lookup tool. Get your public IP, track history, and work offline. Uses ipify API with local caching.">
+    <meta name="keywords" content="ip address, ip lookup, ipify, offline, pwa, public ip, network tools">
+    <meta name="author" content="Deerpfy">
+
+    <!-- PWA -->
+    <meta name="theme-color" content="#8b5cf6">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="IP Lookup">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <link rel="apple-touch-icon" href="icons/icon.svg">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="app" class="app">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <a href="../../index.html" class="back-btn" title="Zpet na Hub">
+                    <svg viewBox="0 0 24 24" width="20" height="20">
+                        <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                    </svg>
+                    <span>Hub</span>
+                </a>
+            </div>
+
+            <div class="header-center">
+                <h1 class="logo">
+                    <svg class="logo-icon" viewBox="0 0 24 24" width="28" height="28">
+                        <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                        <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                        <path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                    <span>IP Lookup</span>
+                </h1>
+                <span class="status-badge" id="statusBadge">
+                    <svg viewBox="0 0 24 24" width="14" height="14">
+                        <circle cx="12" cy="12" r="5" fill="currentColor"/>
+                    </svg>
+                    <span id="statusText">Connecting...</span>
+                </span>
+            </div>
+
+            <div class="header-right">
+                <!-- Language Selector -->
+                <div class="lang-selector">
+                    <button class="lang-btn active" data-lang="cs">CZ</button>
+                    <button class="lang-btn" data-lang="en">EN</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Current IP Section -->
+            <section class="ip-section">
+                <div class="ip-card">
+                    <div class="ip-header">
+                        <h2 data-i18n="your_ip">Vase verejna IP adresa</h2>
+                        <button class="refresh-btn" id="refreshBtn" title="Obnovit IP">
+                            <svg viewBox="0 0 24 24" width="20" height="20">
+                                <path d="M23 4v6h-6M1 20v-6h6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="ip-display" id="ipDisplay">
+                        <div class="ip-loading" id="ipLoading">
+                            <div class="spinner"></div>
+                            <span data-i18n="loading">Nacitam...</span>
+                        </div>
+                        <div class="ip-result" id="ipResult" style="display: none;">
+                            <div class="ip-value-container">
+                                <span class="ip-value" id="ipValue">---</span>
+                                <button class="copy-btn" id="copyBtn" title="Kopirovat">
+                                    <svg viewBox="0 0 24 24" width="20" height="20">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/>
+                                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" fill="none" stroke="currentColor" stroke-width="2"/>
+                                    </svg>
+                                    <svg class="copy-success" viewBox="0 0 24 24" width="20" height="20" style="display: none;">
+                                        <polyline points="20 6 9 17 4 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="ip-meta">
+                                <span class="ip-type" id="ipType">IPv4</span>
+                                <span class="ip-timestamp" id="ipTimestamp"></span>
+                            </div>
+                        </div>
+                        <div class="ip-error" id="ipError" style="display: none;">
+                            <svg viewBox="0 0 24 24" width="48" height="48">
+                                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                                <line x1="15" y1="9" x2="9" y2="15" stroke="currentColor" stroke-width="2"/>
+                                <line x1="9" y1="9" x2="15" y2="15" stroke="currentColor" stroke-width="2"/>
+                            </svg>
+                            <span id="errorMessage" data-i18n="error_offline">Offline - zobrazuji posledni znamou IP</span>
+                        </div>
+                    </div>
+
+                    <!-- Offline Notice -->
+                    <div class="offline-notice" id="offlineNotice" style="display: none;">
+                        <svg viewBox="0 0 24 24" width="16" height="16">
+                            <path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0 1 19 12.55M5 12.55a10.94 10.94 0 0 1 5.17-2.39M10.71 5.05A16 16 0 0 1 22.58 9M1.42 9a15.91 15.91 0 0 1 4.7-2.88M8.53 16.11a6 6 0 0 1 6.95 0M12 20h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                        </svg>
+                        <span data-i18n="offline_notice">Jste offline. Zobrazena cached IP.</span>
+                    </div>
+                </div>
+
+                <!-- API Info -->
+                <div class="api-info">
+                    <span data-i18n="powered_by">Powered by</span>
+                    <a href="https://www.ipify.org" target="_blank" rel="noopener noreferrer">ipify API</a>
+                    <span class="api-stats">30B+ req/month | 1-10ms latency</span>
+                </div>
+            </section>
+
+            <!-- Features Grid -->
+            <section class="features-section">
+                <div class="features-grid">
+                    <!-- IP History -->
+                    <div class="feature-card">
+                        <div class="feature-header">
+                            <svg viewBox="0 0 24 24" width="24" height="24">
+                                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/>
+                                <polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                            </svg>
+                            <h3 data-i18n="ip_history">Historie IP</h3>
+                            <button class="clear-btn" id="clearHistoryBtn" title="Vymazat historii">
+                                <svg viewBox="0 0 24 24" width="16" height="16">
+                                    <polyline points="3 6 5 6 21 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="history-list" id="historyList">
+                            <p class="empty-state" data-i18n="no_history">Zatim zadna historie</p>
+                        </div>
+                    </div>
+
+                    <!-- IP Validator -->
+                    <div class="feature-card">
+                        <div class="feature-header">
+                            <svg viewBox="0 0 24 24" width="24" height="24">
+                                <path d="M9 11l3 3L22 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            <h3 data-i18n="ip_validator">Validator IP</h3>
+                        </div>
+                        <div class="validator-form">
+                            <div class="input-group">
+                                <input type="text" id="validateInput" placeholder="192.168.1.1 nebo 2001:db8::1" class="text-input">
+                                <button class="validate-btn" id="validateBtn">
+                                    <span data-i18n="validate">Overit</span>
+                                </button>
+                            </div>
+                            <div class="validation-result" id="validationResult"></div>
+                        </div>
+                    </div>
+
+                    <!-- Endpoints -->
+                    <div class="feature-card">
+                        <div class="feature-header">
+                            <svg viewBox="0 0 24 24" width="24" height="24">
+                                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                            </svg>
+                            <h3 data-i18n="api_endpoints">API Endpointy</h3>
+                        </div>
+                        <div class="endpoints-list">
+                            <div class="endpoint-item" data-endpoint="https://api.ipify.org?format=json">
+                                <code>api.ipify.org</code>
+                                <span class="endpoint-desc" data-i18n="dual_stack">Dual-stack</span>
+                                <button class="test-btn" data-i18n="test">Test</button>
+                            </div>
+                            <div class="endpoint-item" data-endpoint="https://api4.ipify.org?format=json">
+                                <code>api4.ipify.org</code>
+                                <span class="endpoint-desc">IPv4 only</span>
+                                <button class="test-btn" data-i18n="test">Test</button>
+                            </div>
+                            <div class="endpoint-item" data-endpoint="https://api6.ipify.org?format=json">
+                                <code>api6.ipify.org</code>
+                                <span class="endpoint-desc">IPv6 only</span>
+                                <button class="test-btn" data-i18n="test">Test</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Code Examples -->
+                    <div class="feature-card code-examples-card">
+                        <div class="feature-header">
+                            <svg viewBox="0 0 24 24" width="24" height="24">
+                                <polyline points="16 18 22 12 16 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                <polyline points="8 6 2 12 8 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <h3 data-i18n="code_examples">Priklady kodu</h3>
+                        </div>
+                        <div class="code-tabs">
+                            <button class="code-tab active" data-lang="js">JavaScript</button>
+                            <button class="code-tab" data-lang="python">Python</button>
+                            <button class="code-tab" data-lang="bash">Bash</button>
+                        </div>
+                        <div class="code-content">
+                            <pre id="codeBlock"><code id="codeContent"></code></pre>
+                            <button class="copy-code-btn" id="copyCodeBtn">
+                                <svg viewBox="0 0 24 24" width="16" height="16">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/>
+                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" fill="none" stroke="currentColor" stroke-width="2"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Toast Notification -->
+        <div class="toast" id="toast">
+            <span id="toastMessage"></span>
+        </div>
+    </div>
+
+    <!-- Service Worker Registration -->
+    <script src="script.js"></script>
+</body>
+</html>

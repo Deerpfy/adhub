@@ -323,6 +323,8 @@ const BASE_TRANSLATIONS = {
         tool_slidersnap_desc: 'Offline before/after porovnávač obrázků. Interaktivní slider, GIF export, IndexedDB ukládání. 100% offline PWA.',
         tool_samplehub_name: 'SampleHub',
         tool_samplehub_desc: 'Offline sample pack manager pro hudební produkci. Organizace, přehrávání a správa audio samplů s waveform vizualizací, BPM detekcí a PWA podporou.',
+        tool_ip_lookup_name: 'IP Lookup',
+        tool_ip_lookup_desc: 'Offline-first nástroj pro zjištění veřejné IP adresy. Historie IP, validátor, API příklady. Cachování pro offline režim, využívá ipify API.',
         category_gaming: 'gaming',
         category_documentation: 'dokumentace',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
@@ -719,6 +721,8 @@ const BASE_TRANSLATIONS = {
         tool_slidersnap_desc: 'Offline before/after image comparison tool. Interactive slider, GIF export, IndexedDB storage. 100% offline PWA.',
         tool_samplehub_name: 'SampleHub',
         tool_samplehub_desc: 'Offline sample pack manager for music production. Organization, playback and management of audio samples with waveform visualization, BPM detection and PWA support.',
+        tool_ip_lookup_name: 'IP Lookup',
+        tool_ip_lookup_desc: 'Offline-first tool for getting your public IP address. IP history, validator, API examples. Caching for offline mode, powered by ipify API.',
         category_gaming: 'gaming',
         category_documentation: 'documentation',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
@@ -1691,6 +1695,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["audio", "samples", "music", "production", "offline", "pwa", "waveform", "bpm"]
+            },
+            {
+                "id": "ip-lookup",
+                "name": t('tool_ip_lookup_name'),
+                "description": t('tool_ip_lookup_desc'),
+                "category": "tools",
+                "icon": "🌐",
+                "url": "projects/ip-lookup/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["network", "ip", "api", "offline", "pwa", "ipify"]
             }
         ],
         "links": [
