@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IP API - Self-hosted Public IP Service</title>
+    <meta name="description" content="Self-hosted IP API service. Get your public IP address via simple API. Alternative to ipify.">
+    <meta name="keywords" content="ip api, public ip, self-hosted, ipify alternative">
+    <meta name="author" content="Deerpfy">
+    <meta name="theme-color" content="#8b5cf6">
+    <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #8b5cf6;
+            --primary-dark: #7c3aed;
+            --accent: #06b6d4;
+            --success: #10b981;
+            --bg: #0a0a0f;
+            --bg-card: #161620;
+            --bg-tertiary: #1a1a24;
+            --text: #ffffff;
+            --text-secondary: #a0a0b0;
+            --text-muted: #6b6b7d;
+            --border: #2a2a3a;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0a0a0f 0%, #121218 50%, #0a0a0f 100%);
+            background-attachment: fixed;
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .logo svg {
+            width: 48px;
+            height: 48px;
+            color: var(--primary);
+        }
+
+        .tagline {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            margin-bottom: 32px;
+        }
+
+        /* IP Display */
+        .ip-display {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .ip-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+        }
+
+        .ip-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .ip-value:hover {
+            transform: scale(1.02);
+        }
+
+        .ip-value.loading {
+            opacity: 0.5;
+        }
+
+        .copy-hint {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            margin-top: 8px;
+        }
+
+        /* Features */
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 48px;
+        }
+
+        .feature {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .feature-icon {
+            font-size: 2rem;
+            margin-bottom: 8px;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .feature-desc {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Section */
+        section {
+            margin-bottom: 48px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h2 svg {
+            width: 24px;
+            height: 24px;
+            color: var(--primary);
+        }
+
+        /* Endpoints */
+        .endpoints {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .endpoint {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .endpoint-method {
+            background: var(--success);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .endpoint-path {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            color: var(--accent);
+            font-size: 0.9rem;
+        }
+
+        .endpoint-desc {
+            flex: 1;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        .try-btn {
+            padding: 6px 14px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .try-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* Code Examples */
+        .code-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .code-tab {
+            padding: 8px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .code-tab:hover {
+            border-color: var(--primary);
+        }
+
+        .code-tab.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        .code-block {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block pre {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            margin: 0;
+            white-space: pre;
+        }
+
+        .code-block code {
+            color: var(--text);
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+        }
+
+        /* Response Format */
+        .format-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .format-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 16px;
+        }
+
+        .format-card h4 {
+            color: var(--primary);
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+        }
+
+        .format-card code {
+            display: block;
+            background: var(--bg-tertiary);
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            font-size: 0.8rem;
+            color: var(--accent);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 32px 0;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Back button */
+        .back-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 14px;
+            background: rgba(22, 22, 32, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+            z-index: 100;
+        }
+
+        .back-btn:hover {
+            color: var(--text);
+            border-color: var(--primary);
+        }
+
+        .back-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        @media (max-width: 600px) {
+            .ip-value {
+                font-size: 1.5rem;
+            }
+
+            .logo {
+                font-size: 1.75rem;
+            }
+
+            .endpoint {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="../../index.html" class="back-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        Hub
+    </a>
+
+    <div class="container">
+        <header>
+            <h1 class="logo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                    <path d="M12 2v4M12 18v4M2 12h4M18 12h4" stroke-linecap="round"/>
+                </svg>
+                IP API
+            </h1>
+            <p class="tagline">Self-hosted public IP address API service</p>
+        </header>
+
+        <!-- Live IP Display -->
+        <div class="ip-display">
+            <div class="ip-label">Your Public IP Address</div>
+            <div class="ip-value loading" id="myIP" onclick="copyIP()">Loading...</div>
+            <div class="copy-hint">Click to copy</div>
+        </div>
+
+        <!-- Features -->
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🏠</div>
+                <div class="feature-title">Self-hosted</div>
+                <div class="feature-desc">Run on your own server</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-title">Private</div>
+                <div class="feature-desc">No logging, no tracking</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">⚡</div>
+                <div class="feature-title">Fast</div>
+                <div class="feature-desc">Minimal latency</div>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🌐</div>
+                <div class="feature-title">CORS enabled</div>
+                <div class="feature-desc">Use from any domain</div>
+            </div>
+        </div>
+
+        <!-- API Endpoints -->
+        <section>
+            <h2>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                </svg>
+                API Endpoints
+            </h2>
+            <div class="endpoints">
+                <div class="endpoint">
+                    <span class="endpoint-method">GET</span>
+                    <code class="endpoint-path">/api</code>
+                    <span class="endpoint-desc">Returns IP as plain text</span>
+                    <button class="try-btn" onclick="tryEndpoint('/api')">Try</button>
+                </div>
+                <div class="endpoint">
+                    <span class="endpoint-method">GET</span>
+                    <code class="endpoint-path">/api?format=json</code>
+                    <span class="endpoint-desc">Returns {"ip": "x.x.x.x"}</span>
+                    <button class="try-btn" onclick="tryEndpoint('/api?format=json')">Try</button>
+                </div>
+                <div class="endpoint">
+                    <span class="endpoint-method">GET</span>
+                    <code class="endpoint-path">/api/json</code>
+                    <span class="endpoint-desc">JSON format (alias)</span>
+                    <button class="try-btn" onclick="tryEndpoint('/api/json')">Try</button>
+                </div>
+                <div class="endpoint">
+                    <span class="endpoint-method">GET</span>
+                    <code class="endpoint-path">/api/info</code>
+                    <span class="endpoint-desc">Full request info (headers, connection)</span>
+                    <button class="try-btn" onclick="tryEndpoint('/api/info')">Try</button>
+                </div>
+                <div class="endpoint">
+                    <span class="endpoint-method">GET</span>
+                    <code class="endpoint-path">/api/health</code>
+                    <span class="endpoint-desc">Health check endpoint</span>
+                    <button class="try-btn" onclick="tryEndpoint('/api/health')">Try</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Response Formats -->
+        <section>
+            <h2>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                Response Formats
+            </h2>
+            <div class="format-grid">
+                <div class="format-card">
+                    <h4>Plain Text (default)</h4>
+                    <code>203.0.113.45</code>
+                </div>
+                <div class="format-card">
+                    <h4>JSON (?format=json)</h4>
+                    <code>{"ip":"203.0.113.45"}</code>
+                </div>
+                <div class="format-card">
+                    <h4>JSONP (?format=jsonp&callback=fn)</h4>
+                    <code>fn({"ip":"203.0.113.45"});</code>
+                </div>
+            </div>
+        </section>
+
+        <!-- Code Examples -->
+        <section>
+            <h2>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="16 18 22 12 16 6"/>
+                    <polyline points="8 6 2 12 8 18"/>
+                </svg>
+                Code Examples
+            </h2>
+            <div class="code-tabs">
+                <button class="code-tab active" data-lang="js">JavaScript</button>
+                <button class="code-tab" data-lang="python">Python</button>
+                <button class="code-tab" data-lang="bash">Bash</button>
+                <button class="code-tab" data-lang="go">Go</button>
+                <button class="code-tab" data-lang="php">PHP</button>
+            </div>
+            <div class="code-block">
+                <pre><code id="codeContent"></code></pre>
+                <button class="copy-btn" onclick="copyCode()" title="Copy">
+                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                    </svg>
+                </button>
+            </div>
+        </section>
+
+        <!-- Installation -->
+        <section>
+            <h2>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/>
+                    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
+                </svg>
+                Self-hosting
+            </h2>
+            <div class="code-block">
+                <pre><code># Clone and install
+cd projects/ip-api/server
+npm install
+
+# Start server
+npm start
+
+# Server runs on http://localhost:3080</code></pre>
+            </div>
+        </section>
+
+        <footer>
+            <p>IP API - Self-hosted ipify alternative</p>
+            <p><a href="../../index.html">AdHUB</a> | <a href="https://github.com/Deerpfy/adhub">GitHub</a></p>
+        </footer>
+    </div>
+
+    <script>
+        // Code examples
+        const CODE_EXAMPLES = {
+            js: `// JavaScript (Fetch API)
+const response = await fetch('http://localhost:3080/api?format=json');
+const data = await response.json();
+console.log('My IP:', data.ip);
+
+// Or plain text
+const ip = await fetch('http://localhost:3080/api').then(r => r.text());`,
+
+            python: `# Python
+import requests
+
+# Plain text
+ip = requests.get('http://localhost:3080/api').text
+print(f"My IP: {ip}")
+
+# JSON format
+data = requests.get('http://localhost:3080/api?format=json').json()
+print(f"My IP: {data['ip']}")`,
+
+            bash: `# Bash / cURL
+
+# Plain text
+curl http://localhost:3080/api
+
+# JSON format
+curl http://localhost:3080/api?format=json
+
+# Pretty print with jq
+curl -s http://localhost:3080/api?format=json | jq .`,
+
+            go: `// Go
+package main
+
+import (
+    "fmt"
+    "io"
+    "net/http"
+)
+
+func main() {
+    resp, _ := http.Get("http://localhost:3080/api")
+    defer resp.Body.Close()
+    body, _ := io.ReadAll(resp.Body)
+    fmt.Println("IP:", string(body))
+}`,
+
+            php: `<?php
+// PHP
+
+// Plain text
+$ip = file_get_contents('http://localhost:3080/api');
+echo "My IP: $ip";
+
+// JSON format
+$data = json_decode(file_get_contents('http://localhost:3080/api?format=json'));
+echo "My IP: " . $data->ip;`
+        };
+
+        let currentLang = 'js';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            loadIP();
+            showCode('js');
+
+            // Tab click handlers
+            document.querySelectorAll('.code-tab').forEach(tab => {
+                tab.addEventListener('click', () => showCode(tab.dataset.lang));
+            });
+        });
+
+        // Load current IP
+        async function loadIP() {
+            const el = document.getElementById('myIP');
+            try {
+                const res = await fetch('/api?format=json');
+                const data = await res.json();
+                el.textContent = data.ip;
+                el.classList.remove('loading');
+            } catch (e) {
+                el.textContent = 'Error';
+                el.classList.remove('loading');
+            }
+        }
+
+        // Copy IP
+        function copyIP() {
+            const ip = document.getElementById('myIP').textContent;
+            if (ip && ip !== 'Loading...' && ip !== 'Error') {
+                navigator.clipboard.writeText(ip);
+                showToast('IP copied!');
+            }
+        }
+
+        // Show code example
+        function showCode(lang) {
+            currentLang = lang;
+            document.getElementById('codeContent').textContent = CODE_EXAMPLES[lang];
+            document.querySelectorAll('.code-tab').forEach(tab => {
+                tab.classList.toggle('active', tab.dataset.lang === lang);
+            });
+        }
+
+        // Copy code
+        function copyCode() {
+            navigator.clipboard.writeText(CODE_EXAMPLES[currentLang]);
+            showToast('Code copied!');
+        }
+
+        // Try endpoint
+        async function tryEndpoint(path) {
+            try {
+                const res = await fetch(path);
+                const contentType = res.headers.get('content-type');
+                let text;
+                if (contentType?.includes('application/json')) {
+                    text = JSON.stringify(await res.json(), null, 2);
+                } else {
+                    text = await res.text();
+                }
+                alert(`Response from ${path}:\n\n${text}`);
+            } catch (e) {
+                alert(`Error: ${e.message}`);
+            }
+        }
+
+        // Toast notification
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.style.cssText = `
+                position: fixed;
+                bottom: 24px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: var(--bg-card);
+                border: 1px solid var(--border);
+                padding: 12px 24px;
+                border-radius: 8px;
+                color: white;
+                z-index: 1000;
+            `;
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2000);
+        }
+    </script>
+</body>
+</html>

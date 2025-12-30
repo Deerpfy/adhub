@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your IP Address</title>
+    <meta name="description" content="Your public IP address">
+    <meta name="robots" content="noindex">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', 'Monaco', monospace;
+            background: #0a0a0f;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .ip {
+            font-size: clamp(1.5rem, 8vw, 4rem);
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-align: center;
+            padding: 20px;
+            user-select: all;
+            cursor: pointer;
+        }
+        .ip.loading {
+            color: #6b6b7d;
+        }
+        .ip.error {
+            color: #ef4444;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="ip loading" id="ip">Loading...</div>
+    <script>
+        (async function() {
+            const el = document.getElementById('ip');
+            try {
+                const res = await fetch('/api?format=json');
+                if (!res.ok) throw new Error('Failed to fetch');
+                const data = await res.json();
+                el.textContent = data.ip;
+                el.classList.remove('loading');
+                el.title = 'Click to copy';
+                el.addEventListener('click', () => {
+                    navigator.clipboard.writeText(data.ip);
+                });
+            } catch (e) {
+                el.textContent = 'Error loading IP';
+                el.classList.add('error');
+            }
+        })();
+    </script>
+</body>
+</html>
