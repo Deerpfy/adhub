@@ -28,8 +28,20 @@ enum class EIPSource : uint8
 {
 	UPnP        UMETA(DisplayName = "UPnP (Router)"),
 	NATPMP      UMETA(DisplayName = "NAT-PMP (Router)"),
+	PCP         UMETA(DisplayName = "PCP (Router)"),
 	IPv6Local   UMETA(DisplayName = "Local IPv6"),
+	STUN        UMETA(DisplayName = "STUN (External)"),
+	API         UMETA(DisplayName = "HTTP API (External)"),
 	Failed      UMETA(DisplayName = "Detection Failed")
+};
+
+// Strategie detekce
+UENUM(BlueprintType)
+enum class EDetectionStrategy : uint8
+{
+	LocalOnly       UMETA(DisplayName = "Local Only (60-70% success)"),
+	LocalWithSTUN   UMETA(DisplayName = "Local + STUN (95% success, recommended)"),
+	Full            UMETA(DisplayName = "Full (99.9% success, uses API fallback)")
 };
 
 // Výsledek detekce IP

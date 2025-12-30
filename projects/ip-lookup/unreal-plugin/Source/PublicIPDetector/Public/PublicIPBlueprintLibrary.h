@@ -10,7 +10,7 @@ DECLARE_DYNAMIC_DELEGATE_OneParam(FOnIPDetected, const FIPResult&, Result);
 
 /**
  * Blueprint Function Library pro detekci veřejné IP adresy
- * Používá lokální metody (UPnP/NAT-PMP) - žádné externí servery
+ * Podporuje lokální metody (UPnP/NAT-PMP/PCP), STUN a API fallback
  */
 UCLASS()
 class PUBLICIPDETECTOR_API UPublicIPBlueprintLibrary : public UBlueprintFunctionLibrary
@@ -19,26 +19,33 @@ class PUBLICIPDETECTOR_API UPublicIPBlueprintLibrary : public UBlueprintFunction
 
 public:
 	/**
-	 * Detekuje veřejnou IP adresu lokálně (přes router)
+	 * Detekuje veřejnou IP adresu
 	 * BLOKUJÍCÍ - použij pro jednoduché případy nebo v loading screen
 	 *
 	 * @param Type - IPv4, IPv6, nebo IPv64 (preferuje IPv6)
+	 * @param Strategy - LocalOnly (70%), LocalWithSTUN (95%), Full (99.9%)
 	 * @return Výsledek detekce s IP adresou
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Public IP|Local Detection",
+	UFUNCTION(BlueprintCallable, Category = "Public IP|Detection",
 		meta = (DisplayName = "Get Public IP (Blocking)"))
-	static FIPResult GetPublicIP(EIPType Type = EIPType::IPv4);
+	static FIPResult GetPublicIP(
+		EIPType Type = EIPType::IPv4,
+		EDetectionStrategy Strategy = EDetectionStrategy::LocalWithSTUN);
 
 	/**
 	 * Detekuje veřejnou IP adresu asynchronně
 	 * NEBLOKUJÍCÍ - doporučeno pro použití během hry
 	 *
 	 * @param Type - IPv4, IPv6, nebo IPv64
+	 * @param Strategy - LocalOnly, LocalWithSTUN, nebo Full
 	 * @param OnComplete - Callback když je detekce dokončena
 	 */
-	UFUNCTION(BlueprintCallable, Category = "Public IP|Local Detection",
+	UFUNCTION(BlueprintCallable, Category = "Public IP|Detection",
 		meta = (DisplayName = "Get Public IP (Async)"))
-	static void GetPublicIPAsync(EIPType Type, FOnIPDetected OnComplete);
+	static void GetPublicIPAsync(
+		EIPType Type,
+		EDetectionStrategy Strategy,
+		FOnIPDetected OnComplete);
 
 	/**
 	 * Formátuje IP výsledek do zvoleného formátu
@@ -54,16 +61,32 @@ public:
 		const FString& Callback = TEXT("callback"));
 
 	/**
-	 * Zkontroluje, zda je UPnP/NAT-PMP dostupné na síti
-	 * Rychlá kontrola bez plné detekce IP
+	 * Zkontroluje, zda je lokální detekce (UPnP/NAT-PMP) dostupná
 	 */
 	UFUNCTION(BlueprintCallable, Category = "Public IP|Utilities",
 		meta = (DisplayName = "Is Local Detection Available"))
 	static bool IsLocalDetectionAvailable();
 
+	/**
+	 * Vrátí název zdroje detekce jako string
+	 */
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Public IP|Utilities",
+		meta = (DisplayName = "Get Source Name"))
+	static FString GetSourceName(EIPSource Source);
+
 private:
-	// Interní detekční metody
-	static FIPResult TryUPnP();
-	static FIPResult TryNATPMP();
+	// Tier 1: Lokální metody (žádný internet)
 	static FIPResult TryLocalIPv6();
+	static FIPResult TryNATPMP();
+	static FIPResult TryPCP();
+	static FIPResult TryUPnP();
+
+	// Tier 2: STUN (1 UDP packet)
+	static FIPResult TrySTUN();
+
+	// Tier 3: HTTP API
+	static FIPResult TryAPI(const FString& URL);
+
+	// Pomocné funkce
+	static FString GetDefaultGateway();
 };
