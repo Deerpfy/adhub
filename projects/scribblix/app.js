@@ -28,6 +28,11 @@ class ScribblixApp {
         // Setup event listeners
         this.setupEventListeners();
 
+        // Initialize theme manager
+        if (window.ScribblixTheme) {
+            await window.ScribblixTheme.init();
+        }
+
         // Initialize search (optional - may fail if FlexSearch didn't load)
         if (window.ScribblixSearch && typeof window.ScribblixSearch.init === 'function') {
             await window.ScribblixSearch.init();
@@ -188,6 +193,12 @@ class ScribblixApp {
             if (textarea) textarea.style.fontSize = `${size}px`;
         });
 
+        document.getElementById('settingTheme')?.addEventListener('change', (e) => {
+            if (window.ScribblixTheme) {
+                window.ScribblixTheme.setTheme(e.target.value);
+            }
+        });
+
         document.getElementById('clearAllDataBtn')?.addEventListener('click', () => {
             this.confirmClearAllData();
         });
@@ -195,6 +206,11 @@ class ScribblixApp {
         // TOC toggle
         document.getElementById('tocToggle')?.addEventListener('click', () => {
             document.getElementById('editorToc')?.classList.toggle('collapsed');
+        });
+
+        // History button
+        document.getElementById('historyBtn')?.addEventListener('click', () => {
+            this.openHistory();
         });
 
         // Keyboard shortcuts
@@ -721,6 +737,7 @@ class ScribblixApp {
         document.getElementById('settingAutoSave').checked = settings.autoSave;
         document.getElementById('settingSpellcheck').checked = settings.spellcheck;
         document.getElementById('settingFontSize').value = settings.fontSize;
+        document.getElementById('settingTheme').value = settings.theme || 'dark';
 
         // Populate stats
         document.getElementById('storageSpaces').textContent = stats.spaces;
@@ -828,6 +845,89 @@ class ScribblixApp {
         setTimeout(() => {
             document.getElementById('modalSearchInput')?.focus();
         }, 100);
+    }
+
+    /**
+     * Open history modal
+     */
+    async openHistory() {
+        if (!this.currentPage) {
+            this.showToast('Nejprve otevřete stránku', 'warning');
+            return;
+        }
+
+        this.openModal('historyModal');
+
+        const versionList = document.getElementById('versionList');
+        versionList.innerHTML = '<div class="search-empty">Načítání historie...</div>';
+
+        try {
+            const history = await window.ScribblixDB.HistoryDB.getByPage(this.currentPage.id);
+
+            if (history.length === 0) {
+                versionList.innerHTML = '<div class="search-empty">Žádná historie verzí</div>';
+                return;
+            }
+
+            versionList.innerHTML = history.map((h, index) => `
+                <div class="version-item ${index === 0 ? 'current' : ''}" data-history-id="${h.id}">
+                    <span class="version-icon">${index === 0 ? '📍' : '📄'}</span>
+                    <div class="version-info">
+                        <div class="version-title">${this.escapeHtml(h.title || 'Bez názvu')}</div>
+                        <div class="version-meta">${new Date(h.timestamp).toLocaleString()}</div>
+                    </div>
+                    <div class="version-actions">
+                        ${index !== 0 ? `
+                            <button class="btn btn-icon" data-action="restore" title="Obnovit tuto verzi">
+                                ↩️
+                            </button>
+                        ` : '<span style="color: var(--primary-color); font-size: 0.8rem;">Aktuální</span>'}
+                    </div>
+                </div>
+            `).join('');
+
+            // Add restore handlers
+            versionList.querySelectorAll('[data-action="restore"]').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    const historyId = parseInt(btn.closest('.version-item').dataset.historyId);
+                    await this.restoreVersion(historyId);
+                });
+            });
+        } catch (error) {
+            console.error('[Scribblix] Load history error:', error);
+            versionList.innerHTML = '<div class="search-empty">Chyba při načítání historie</div>';
+        }
+    }
+
+    /**
+     * Restore version from history
+     */
+    async restoreVersion(historyId) {
+        try {
+            const version = await window.ScribblixDB.HistoryDB.getVersion(historyId);
+            if (!version) {
+                this.showToast('Verze nenalezena', 'error');
+                return;
+            }
+
+            // Save current state first
+            await window.ScribblixEditor.save();
+
+            // Update page content
+            await window.ScribblixDB.PageDB.update(this.currentPage.id, {
+                content: version.content
+            });
+
+            // Reload page
+            await this.openPage(this.currentPage.id);
+
+            this.closeModal('historyModal');
+            this.showToast('Verze obnovena', 'success');
+        } catch (error) {
+            console.error('[Scribblix] Restore version error:', error);
+            this.showToast('Chyba při obnově verze', 'error');
+        }
     }
 
     /**

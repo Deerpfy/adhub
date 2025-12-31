@@ -174,13 +174,27 @@ class ScribblixEditor {
         const content = this.textarea.value;
 
         // Parse markdown and sanitize
-        const html = marked.parse(content);
+        let html = marked.parse(content);
+
+        // Process custom blocks (GitBook-inspired hints, tabs, expandables)
+        if (window.ScribblixBlocks) {
+            html = window.ScribblixBlocks.process(html);
+        }
+
         const sanitized = DOMPurify.sanitize(html, {
-            ADD_TAGS: ['input'],
-            ADD_ATTR: ['type', 'checked', 'disabled']
+            ADD_TAGS: ['input', 'button', 'details', 'summary'],
+            ADD_ATTR: ['type', 'checked', 'disabled', 'role', 'tabindex', 'aria-expanded',
+                       'aria-controls', 'aria-selected', 'aria-label', 'aria-hidden',
+                       'onclick', 'data-expandable-id', 'data-tabs-id', 'data-code-id']
         });
 
         this.preview.innerHTML = sanitized;
+
+        // Initialize interactive blocks
+        if (window.ScribblixBlocks) {
+            window.ScribblixBlocks.initExpandables();
+            window.ScribblixBlocks.initTabs();
+        }
 
         // Add checkboxes functionality
         this.preview.querySelectorAll('input[type="checkbox"]').forEach(cb => {
@@ -405,7 +419,52 @@ class ScribblixEditor {
             case 'hr':
                 this.insertText('\n\n---\n\n');
                 break;
+
+            // GitBook-inspired content blocks
+            case 'hint-info':
+                this.insertHintBlock('info');
+                break;
+            case 'hint-warning':
+                this.insertHintBlock('warning');
+                break;
+            case 'hint-danger':
+                this.insertHintBlock('danger');
+                break;
+            case 'hint-success':
+                this.insertHintBlock('success');
+                break;
+            case 'expandable':
+                this.insertExpandable();
+                break;
+            case 'tabs':
+                this.insertTabs();
+                break;
         }
+    }
+
+    /**
+     * Insert hint block
+     * @param {string} type - info, warning, danger, success
+     */
+    insertHintBlock(type) {
+        const { text } = this.getSelection();
+        const content = text || 'Your hint content here';
+
+        this.insertText(`\n:::${type}\n${content}\n:::\n\n`);
+    }
+
+    /**
+     * Insert expandable/accordion
+     */
+    insertExpandable() {
+        this.insertText(`\n<details>\n<summary>Click to expand</summary>\n\nHidden content here...\n\n</details>\n\n`);
+    }
+
+    /**
+     * Insert tabs
+     */
+    insertTabs() {
+        this.insertText(`\n:::tabs\n:::tab Tab 1\nContent for tab 1\n:::\n:::tab Tab 2\nContent for tab 2\n:::\n:::endtabs\n\n`);
     }
 
     /**

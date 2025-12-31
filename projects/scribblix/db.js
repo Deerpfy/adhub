@@ -22,6 +22,24 @@ db.version(1).stores({
     settings: 'key'
 });
 
+// Database schema version 2 - Enhanced for GitBook features
+db.version(2).stores({
+    // Spaces (collections/projects)
+    spaces: '++id, name, slug, icon, description, theme, createdAt, updatedAt, order',
+
+    // Pages (documents)
+    pages: '++id, spaceId, parentId, title, slug, content, order, createdAt, updatedAt',
+
+    // History/Versions (enhanced)
+    history: '++id, pageId, content, title, timestamp, [pageId+timestamp]',
+
+    // Settings
+    settings: 'key',
+
+    // Favorites (quick access pages)
+    favorites: '++id, pageId, order'
+});
+
 /**
  * Database Operations - Spaces
  */
@@ -400,6 +418,30 @@ const HistoryDB = {
      */
     async clearByPage(pageId) {
         await db.history.where('pageId').equals(pageId).delete();
+    },
+
+    /**
+     * Get specific version
+     */
+    async getVersion(historyId) {
+        return await db.history.get(historyId);
+    },
+
+    /**
+     * Count versions for a page
+     */
+    async countByPage(pageId) {
+        return await db.history.where('pageId').equals(pageId).count();
+    },
+
+    /**
+     * Get latest version for a page
+     */
+    async getLatest(pageId) {
+        return await db.history
+            .where('pageId').equals(pageId)
+            .reverse()
+            .first();
     }
 };
 
@@ -416,7 +458,12 @@ const SettingsDB = {
         sidebarCollapsed: false,
         tocCollapsed: false,
         lastOpenedSpace: null,
-        lastOpenedPage: null
+        lastOpenedPage: null,
+        // GitBook-inspired settings
+        theme: 'dark', // 'dark', 'light', 'system'
+        codeTheme: 'github-dark', // Code syntax highlighting theme
+        lineNumbers: true, // Show line numbers in code blocks
+        sidebarStyle: 'default' // 'default', 'filled'
     },
 
     /**
