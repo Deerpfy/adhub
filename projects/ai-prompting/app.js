@@ -6932,114 +6932,137 @@ const App = () => {
   })))))))), /*#__PURE__*/React.createElement("div", {
     className: "w-full px-4"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3 mb-4"
+    className: "flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-3 flex-shrink-0"
+    className: "flex items-center gap-4 flex-shrink-0"
   }, /*#__PURE__*/React.createElement("a", {
     href: "../../index.html",
-    className: "flex items-center gap-2 px-2.5 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors whitespace-nowrap flex-shrink-0"
+    className: "flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors whitespace-nowrap flex-shrink-0"
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "ArrowLeft",
-    size: 16
+    size: 18
   }), /*#__PURE__*/React.createElement("span", {
-    className: "text-sm"
-  }, t.backToHub)), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-3"
+    className: "sm:inline"
+  }, t.backToHub)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2"
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "Sparkles",
-    size: 22,
+    size: 24,
     className: "text-amber-400"
-  }), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("h1", {
-    className: "text-xl font-bold text-white"
-  }, t.title), /*#__PURE__*/React.createElement("p", {
-    className: "text-slate-400 text-xs"
-  }, t.subtitle)))), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-1.5 flex-wrap"
+  }), /*#__PURE__*/React.createElement("h1", {
+    className: "text-2xl font-bold text-white"
+  }, t.title)), /*#__PURE__*/React.createElement("p", {
+    className: "text-slate-400 text-sm"
+  }, t.subtitle))), /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 flex-wrap"
   }, /*#__PURE__*/React.createElement("button", {
     onClick: resetForm,
-    className: "flex items-center gap-1.5 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 text-xs"
+    className: "flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 text-sm"
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "Plus",
-    size: 14,
+    size: 16,
     className: "text-slate-400"
   }), /*#__PURE__*/React.createElement("span", {
     className: "hidden sm:inline"
   }, t.newPrompt)), /*#__PURE__*/React.createElement("button", {
+    onClick: () => {
+      setEditingId(null);
+      setPromptName('');
+      setSaveModalOpen(true);
+    },
+    disabled: !formattedPrompt,
+    className: "flex items-center gap-2 px-3 py-2 bg-green-600 border border-green-500 rounded-lg text-white hover:bg-green-500 disabled:opacity-50 text-sm"
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "Save",
+    size: 16
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "hidden sm:inline"
+  }, t.database.save)), /*#__PURE__*/React.createElement("button", {
     onClick: () => setShowTutorialConfirm(true),
-    className: "flex items-center gap-1.5 px-2 py-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/50 rounded-lg text-white hover:from-amber-500/30 hover:to-orange-500/30 transition-all text-xs",
+    className: "flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/50 rounded-lg text-white hover:from-amber-500/30 hover:to-orange-500/30 transition-all",
     title: t.tutorial?.buttonTooltip || 'Tutorial'
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "GraduationCap",
-    size: 14,
+    size: 16,
     className: "text-amber-400"
-  })), /*#__PURE__*/React.createElement("button", {
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "hidden sm:inline text-sm text-amber-300"
+  }, t.tutorial?.button || 'Tutorial')), /*#__PURE__*/React.createElement("button", {
     onClick: openShareModal,
     disabled: !formattedPrompt,
-    className: "flex items-center gap-1.5 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 disabled:opacity-50 text-xs",
+    className: "flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 disabled:opacity-50",
     title: t.share.title
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "Share2",
-    size: 14,
+    size: 16,
     className: "text-green-400"
   })), /*#__PURE__*/React.createElement("button", {
     onClick: () => setShowImportModal(true),
-    className: "flex items-center gap-1.5 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 text-xs",
+    className: "flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700",
     title: t.share.importTitle
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "Download",
-    size: 14,
+    size: 16,
     className: "text-blue-400"
   })), /*#__PURE__*/React.createElement("button", {
     onClick: () => setShowQuickStart(true),
-    className: "flex items-center gap-1.5 px-2 py-1.5 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-lg text-white hover:from-amber-500/30 hover:to-orange-500/30 text-xs",
+    className: "flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-amber-500/20 to-orange-500/20 border border-amber-500/30 rounded-lg text-white hover:from-amber-500/30 hover:to-orange-500/30",
     title: t.quickStart?.title || 'Quick-Start Templates'
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "Zap",
-    size: 14,
+    size: 16,
     className: "text-amber-400"
   }), /*#__PURE__*/React.createElement("span", {
-    className: "hidden md:inline text-amber-300"
+    className: "hidden sm:inline text-sm text-amber-300"
   }, lang === 'cs' ? 'Šablony' : 'Templates')), /*#__PURE__*/React.createElement("button", {
     onClick: () => setShowDraftHistory(true),
-    className: "flex items-center gap-1.5 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 text-xs",
+    className: "flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700",
     title: t.autoSave?.history?.title || 'Draft History'
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "History",
-    size: 14,
+    size: 16,
     className: "text-purple-400"
   }), draftHistory.length > 0 && /*#__PURE__*/React.createElement("span", {
-    className: "text-purple-400"
+    className: "text-xs text-purple-400"
   }, draftHistory.length)), /*#__PURE__*/React.createElement("button", {
     onClick: () => setShowShortcuts(true),
-    className: "hidden md:flex items-center gap-1.5 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 text-xs",
+    className: "hidden md:flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700",
     title: t.shortcuts?.title || 'Keyboard Shortcuts (Ctrl+/)'
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "Keyboard",
-    size: 14,
+    size: 16,
     className: "text-slate-400"
   })), /*#__PURE__*/React.createElement("button", {
     onClick: () => setShowDatabase(true),
-    className: "flex items-center gap-1.5 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 text-xs"
+    className: "flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700"
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "Database",
-    size: 14,
+    size: 16,
     className: "text-amber-400"
-  }), /*#__PURE__*/React.createElement("span", null, savedPrompts.length)), autoSaveStatus !== 'idle' && /*#__PURE__*/React.createElement("div", {
-    className: `flex items-center gap-1 px-1.5 py-1 rounded text-xs ${autoSaveStatus === 'saving' ? 'text-amber-400' : autoSaveStatus === 'saved' ? 'text-green-400' : 'text-red-400'}`
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-sm"
+  }, savedPrompts.length)), autoSaveStatus !== 'idle' && /*#__PURE__*/React.createElement("div", {
+    className: `flex items-center gap-1.5 px-2 py-1 rounded text-xs ${autoSaveStatus === 'saving' ? 'text-amber-400' : autoSaveStatus === 'saved' ? 'text-green-400' : 'text-red-400'}`
   }, /*#__PURE__*/React.createElement(Icon, {
     name: autoSaveStatus === 'saving' ? 'Loader2' : autoSaveStatus === 'saved' ? 'Check' : 'AlertCircle',
-    size: 10,
+    size: 12,
     className: autoSaveStatus === 'saving' ? 'animate-spin' : ''
-  })), /*#__PURE__*/React.createElement("div", {
+  }), /*#__PURE__*/React.createElement("span", null, t.autoSave?.status?.[autoSaveStatus] || autoSaveStatus)), /*#__PURE__*/React.createElement("div", {
     className: "relative"
   }, /*#__PURE__*/React.createElement("button", {
     onClick: () => setShowLangDropdown(!showLangDropdown),
-    className: "flex items-center gap-1.5 px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 text-xs"
-  }, /*#__PURE__*/React.createElement("span", {
-    className: "text-base"
-  }, selectedLang?.flag), /*#__PURE__*/React.createElement(Icon, {
+    className: "flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700"
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "Globe",
+    size: 16,
+    className: "text-slate-400"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-lg"
+  }, selectedLang?.flag), /*#__PURE__*/React.createElement("span", {
+    className: "hidden sm:inline text-sm text-slate-300"
+  }, selectedLang?.native), /*#__PURE__*/React.createElement(Icon, {
     name: "ChevronDown",
-    size: 12,
+    size: 14,
     className: `transition-transform ${showLangDropdown ? 'rotate-180' : ''}`
   })), showLangDropdown && /*#__PURE__*/React.createElement("div", {
     className: "absolute top-full right-0 mt-1 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-30 overflow-hidden"
@@ -7055,20 +7078,7 @@ const App = () => {
     className: "text-sm text-white truncate"
   }, l.native), /*#__PURE__*/React.createElement("div", {
     className: "text-xs text-slate-400 truncate"
-  }, l.name)))))), /*#__PURE__*/React.createElement("button", {
-    onClick: () => {
-      setEditingId(null);
-      setPromptName('');
-      setSaveModalOpen(true);
-    },
-    disabled: !formattedPrompt,
-    className: "flex items-center gap-1.5 px-3 py-1.5 bg-green-600 border border-green-500 rounded-lg text-white hover:bg-green-500 disabled:opacity-50 text-xs font-medium"
-  }, /*#__PURE__*/React.createElement(Icon, {
-    name: "Save",
-    size: 14
-  }), /*#__PURE__*/React.createElement("span", {
-    className: "hidden sm:inline"
-  }, t.database.save)))), t.checklist && /*#__PURE__*/React.createElement("div", {
+  }, l.name)))))))), t.checklist && /*#__PURE__*/React.createElement("div", {
     className: `hidden lg:block fixed bottom-0 left-1/2 -translate-x-1/2 z-40 transition-all duration-300 ${checklistExpanded ? 'translate-y-0' : 'translate-y-[calc(100%-52px)]'}`
   }, /*#__PURE__*/React.createElement("div", {
     className: "bg-slate-800/98 backdrop-blur-sm border border-slate-700 border-b-0 rounded-t-xl shadow-2xl w-[800px] max-w-[95vw]"
@@ -7271,11 +7281,11 @@ const App = () => {
     value: fields.task,
     onChange: e => updateField('task', e.target.value),
     placeholder: t.fields.task.placeholder,
-    minRows: 3,
-    maxRows: 10,
-    className: "w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm"
+    minRows: 2,
+    maxRows: 6,
+    className: "w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm"
   })), /*#__PURE__*/React.createElement("div", {
-    className: "grid grid-cols-2 gap-3"
+    className: "grid grid-cols-2 gap-2"
   }, /*#__PURE__*/React.createElement("div", {
     id: "field-context",
     className: `${tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-context' ? 'tutorial-highlight' : ''} ${highlightedField === 'field-context' ? 'checklist-highlight' : ''}`
@@ -7285,9 +7295,9 @@ const App = () => {
     value: fields.context,
     onChange: e => updateField('context', e.target.value),
     placeholder: t.fields.context.placeholder,
-    minRows: 3,
-    maxRows: 8,
-    className: "w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm"
+    minRows: 2,
+    maxRows: 4,
+    className: "w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm"
   })), /*#__PURE__*/React.createElement("div", {
     id: "field-constraints",
     className: `${tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-constraints' ? 'tutorial-highlight' : ''} ${highlightedField === 'field-constraints' ? 'checklist-highlight' : ''}`
@@ -7297,9 +7307,9 @@ const App = () => {
     value: fields.constraints,
     onChange: e => updateField('constraints', e.target.value),
     placeholder: (selectedMethods.includes('risen') ? t.fields.steps : t.fields.constraints).placeholder,
-    minRows: 3,
-    maxRows: 8,
-    className: "w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm"
+    minRows: 2,
+    maxRows: 4,
+    className: "w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm"
   }))), /*#__PURE__*/React.createElement("div", {
     id: "field-outputFormat",
     className: `${tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-outputFormat' ? 'tutorial-highlight' : ''} ${highlightedField === 'field-outputFormat' ? 'checklist-highlight' : ''}`
@@ -7564,7 +7574,7 @@ const App = () => {
       name: "X",
       size: 10
     })))))));
-  })())), /*#__PURE__*/React.createElement("div", {
+  })()), /*#__PURE__*/React.createElement("div", {
     id: "methods-section",
     className: `bg-slate-800/30 border border-slate-700 rounded-lg p-4 ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'methods-section' ? 'tutorial-highlight' : ''} ${highlightedField === 'methods-section' ? 'checklist-highlight' : ''}`
   }, /*#__PURE__*/React.createElement("div", {
@@ -7717,7 +7727,7 @@ const App = () => {
         className: "text-xs text-slate-500 truncate"
       }, method.citation)));
     })));
-  }))))), /*#__PURE__*/React.createElement("div", {
+  }))))))), /*#__PURE__*/React.createElement("div", {
     id: "preview-section",
     className: `flex flex-col ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'preview-section' ? 'tutorial-highlight' : ''}`
   }, /*#__PURE__*/React.createElement("div", {
