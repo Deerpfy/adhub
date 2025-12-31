@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="cs" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <meta name="theme-color" content="#14b8a6">
+    <meta name="theme-color" content="#0a0a0f">
     <meta name="description" content="Scribblix - 100% offline dokumentační platforma. Vytvářejte, organizujte a exportujte dokumentaci bez internetu.">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -16,7 +16,7 @@
     <link rel="icon" type="image/svg+xml" href="icons/icon-192.svg">
     <link rel="apple-touch-icon" href="icons/icon-192.svg">
 
-    <link rel="stylesheet" href="styles.css?v=1.0.2">
+    <link rel="stylesheet" href="styles.css?v=2.0.0">
 
     <!-- Dexie.js - IndexedDB wrapper (MIT license) -->
     <script src="https://unpkg.com/dexie@3.2.4/dist/dexie.min.js"></script>
@@ -28,6 +28,9 @@
     <script src="https://cdn.jsdelivr.net/gh/nextapps-de/flexsearch@0.7.31/dist/flexsearch.bundle.min.js"></script>
 </head>
 <body>
+    <!-- Skip to content link for accessibility -->
+    <a href="#mainContent" class="skip-link">Přeskočit na obsah</a>
+
     <div class="app-container">
         <!-- Offline Indicator -->
         <div class="offline-banner" id="offlineBanner">
@@ -78,10 +81,14 @@
 
             <div class="sidebar-footer">
                 <button class="footer-btn" id="importBtn" title="Import">
-                    <span>📥</span> Import
+                    <span>📥</span> <span>Import</span>
                 </button>
                 <button class="footer-btn" id="exportBtn" title="Export">
-                    <span>📤</span> Export
+                    <span>📤</span> <span>Export</span>
+                </button>
+                <button class="theme-toggle" id="themeToggle" title="Přepnout téma" aria-label="Přepnout světlý/tmavý režim">
+                    <span class="icon-sun" aria-hidden="true">☀️</span>
+                    <span class="icon-moon" aria-hidden="true">🌙</span>
                 </button>
                 <button class="footer-btn" id="settingsBtn" title="Nastavení">
                     <span>⚙️</span>
@@ -182,6 +189,9 @@
                         <button class="btn btn-icon" id="pageSettingsBtn" title="Nastavení stránky">
                             <span>⚙️</span>
                         </button>
+                        <button class="btn btn-icon" id="historyBtn" title="Historie verzí">
+                            <span>🕐</span>
+                        </button>
                         <button class="btn btn-icon btn-danger" id="deletePageBtn" title="Smazat stránku">
                             <span>🗑️</span>
                         </button>
@@ -216,6 +226,15 @@
                             <button class="toolbar-btn" data-action="table" title="Tabulka">📊</button>
                             <button class="toolbar-btn" data-action="codeblock" title="Blok kódu">📝</button>
                             <button class="toolbar-btn" data-action="hr" title="Horizontální linka">―</button>
+                        </div>
+                        <div class="toolbar-separator"></div>
+                        <div class="toolbar-group" title="GitBook-style bloky">
+                            <button class="toolbar-btn" data-action="hint-info" title="Info blok">ℹ️</button>
+                            <button class="toolbar-btn" data-action="hint-warning" title="Warning blok">⚠️</button>
+                            <button class="toolbar-btn" data-action="hint-danger" title="Danger blok">🚫</button>
+                            <button class="toolbar-btn" data-action="hint-success" title="Success blok">✅</button>
+                            <button class="toolbar-btn" data-action="expandable" title="Rozbalovací sekce">📂</button>
+                            <button class="toolbar-btn" data-action="tabs" title="Záložky">📑</button>
                         </div>
                     </div>
 
@@ -376,6 +395,17 @@
             </div>
             <div class="modal-body">
                 <div class="settings-section">
+                    <h3>Vzhled</h3>
+                    <div class="form-group">
+                        <label for="settingTheme">Barevné téma</label>
+                        <select id="settingTheme" class="form-select">
+                            <option value="dark">Tmavé</option>
+                            <option value="light">Světlé</option>
+                            <option value="system">Podle systému</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="settings-section">
                     <h3>Editor</h3>
                     <div class="form-group">
                         <label class="checkbox-label">
@@ -418,9 +448,9 @@
                 <div class="settings-section">
                     <h3>O aplikaci</h3>
                     <div class="about-info">
-                        <p><strong>Scribblix</strong> v1.0.0</p>
-                        <p>100% offline dokumentační platforma</p>
-                        <p>Inspirováno: GitBook</p>
+                        <p><strong>Scribblix</strong> v2.0.0</p>
+                        <p>100% offline dokumentační platforma inspirovaná GitBook</p>
+                        <p><strong>Nové v 2.0:</strong> Content Blocks, Dark/Light mode, Historie verzí, Vylepšená přístupnost</p>
                         <p class="about-license">
                             Knihovny: Dexie.js (Apache 2.0), Marked.js (MIT),
                             DOMPurify (Apache 2.0/MIT), FlexSearch (Apache 2.0)
@@ -533,15 +563,35 @@
         </div>
     </div>
 
+    <!-- Version History Modal -->
+    <div class="modal-overlay" id="historyModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🕐 Historie verzí</h2>
+                <button class="modal-close" data-close="historyModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="version-list" id="versionList">
+                    <div class="search-empty">Načítání historie...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-close="historyModal">Zavřít</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notifications -->
     <div class="toast-container" id="toastContainer"></div>
 
     <!-- Scripts -->
-    <script src="db.js?v=1.0.2"></script>
-    <script src="search.js?v=1.0.2"></script>
-    <script src="editor.js?v=1.0.2"></script>
-    <script src="export.js?v=1.0.2"></script>
-    <script src="app.js?v=1.0.2"></script>
+    <script src="db.js?v=2.0.0"></script>
+    <script src="search.js?v=2.0.0"></script>
+    <script src="blocks.js?v=2.0.0"></script>
+    <script src="theme.js?v=2.0.0"></script>
+    <script src="editor.js?v=2.0.0"></script>
+    <script src="export.js?v=2.0.0"></script>
+    <script src="app.js?v=2.0.0"></script>
 
     <!-- Service Worker Registration -->
     <script>
