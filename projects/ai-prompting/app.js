@@ -7127,9 +7127,9 @@ const App = () => {
   }), /*#__PURE__*/React.createElement("p", {
     className: "text-[10px] text-amber-200"
   }, t.checklist.tip))))), /*#__PURE__*/React.createElement("div", {
-    className: "grid lg:grid-cols-9 gap-4"
+    className: "grid lg:grid-cols-2 gap-6"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "lg:col-span-4 space-y-3"
+    className: "space-y-4"
   }, /*#__PURE__*/React.createElement("div", {
     id: "template-selector",
     className: `relative ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'template-selector' ? 'tutorial-highlight' : ''}`
@@ -7271,11 +7271,11 @@ const App = () => {
     value: fields.task,
     onChange: e => updateField('task', e.target.value),
     placeholder: t.fields.task.placeholder,
-    minRows: 2,
-    maxRows: 6,
-    className: "w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm"
+    minRows: 3,
+    maxRows: 10,
+    className: "w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm"
   })), /*#__PURE__*/React.createElement("div", {
-    className: "grid grid-cols-2 gap-2"
+    className: "grid grid-cols-2 gap-3"
   }, /*#__PURE__*/React.createElement("div", {
     id: "field-context",
     className: `${tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-context' ? 'tutorial-highlight' : ''} ${highlightedField === 'field-context' ? 'checklist-highlight' : ''}`
@@ -7285,9 +7285,9 @@ const App = () => {
     value: fields.context,
     onChange: e => updateField('context', e.target.value),
     placeholder: t.fields.context.placeholder,
-    minRows: 2,
-    maxRows: 4,
-    className: "w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm"
+    minRows: 3,
+    maxRows: 8,
+    className: "w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm"
   })), /*#__PURE__*/React.createElement("div", {
     id: "field-constraints",
     className: `${tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-constraints' ? 'tutorial-highlight' : ''} ${highlightedField === 'field-constraints' ? 'checklist-highlight' : ''}`
@@ -7297,9 +7297,9 @@ const App = () => {
     value: fields.constraints,
     onChange: e => updateField('constraints', e.target.value),
     placeholder: (selectedMethods.includes('risen') ? t.fields.steps : t.fields.constraints).placeholder,
-    minRows: 2,
-    maxRows: 4,
-    className: "w-full px-2 py-1.5 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm"
+    minRows: 3,
+    maxRows: 8,
+    className: "w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 text-sm"
   }))), /*#__PURE__*/React.createElement("div", {
     id: "field-outputFormat",
     className: `${tutorialActive && tutorialSteps[tutorialStep]?.target === 'field-outputFormat' ? 'tutorial-highlight' : ''} ${highlightedField === 'field-outputFormat' ? 'checklist-highlight' : ''}`
@@ -7564,9 +7564,9 @@ const App = () => {
       name: "X",
       size: 10
     })))))));
-  })()))), /*#__PURE__*/React.createElement("div", {
+  })()), /*#__PURE__*/React.createElement("div", {
     id: "methods-section",
-    className: `lg:col-span-1 ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'methods-section' ? 'tutorial-highlight' : ''} ${highlightedField === 'methods-section' ? 'checklist-highlight' : ''}`
+    className: `bg-slate-800/30 border border-slate-700 rounded-lg p-4 ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'methods-section' ? 'tutorial-highlight' : ''} ${highlightedField === 'methods-section' ? 'checklist-highlight' : ''}`
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center justify-between mb-3"
   }, /*#__PURE__*/React.createElement("h3", {
@@ -7717,9 +7717,9 @@ const App = () => {
         className: "text-xs text-slate-500 truncate"
       }, method.citation)));
     })));
-  }))))), /*#__PURE__*/React.createElement("div", {
+  })))))), /*#__PURE__*/React.createElement("div", {
     id: "preview-section",
-    className: `lg:col-span-2 flex flex-col ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'preview-section' ? 'tutorial-highlight' : ''}`
+    className: `flex flex-col ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'preview-section' ? 'tutorial-highlight' : ''}`
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center justify-between mb-3"
   }, /*#__PURE__*/React.createElement("div", {
