@@ -7564,7 +7564,7 @@ const App = () => {
       name: "X",
       size: 10
     })))))));
-  })()), /*#__PURE__*/React.createElement("div", {
+  })())), /*#__PURE__*/React.createElement("div", {
     id: "methods-section",
     className: `bg-slate-800/30 border border-slate-700 rounded-lg p-4 ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'methods-section' ? 'tutorial-highlight' : ''} ${highlightedField === 'methods-section' ? 'checklist-highlight' : ''}`
   }, /*#__PURE__*/React.createElement("div", {
@@ -7717,7 +7717,7 @@ const App = () => {
         className: "text-xs text-slate-500 truncate"
       }, method.citation)));
     })));
-  })))))), /*#__PURE__*/React.createElement("div", {
+  }))))), /*#__PURE__*/React.createElement("div", {
     id: "preview-section",
     className: `flex flex-col ${tutorialActive && tutorialSteps[tutorialStep]?.target === 'preview-section' ? 'tutorial-highlight' : ''}`
   }, /*#__PURE__*/React.createElement("div", {
