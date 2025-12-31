@@ -66,8 +66,22 @@
             min-height: 60px;
             max-height: 200px;
             overflow-y: auto;
+            overflow-x: hidden;
             transition: height 0.1s ease-out;
             resize: vertical;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
+        }
+
+        /* Prevent grid items from expanding */
+        .grid > * {
+            min-width: 0;
+        }
+
+        textarea, input[type="text"] {
+            word-break: break-word;
+            overflow-wrap: break-word;
         }
         .auto-resize-textarea:focus {
             max-height: 300px;
