@@ -6934,15 +6934,15 @@ const App = () => {
   }, /*#__PURE__*/React.createElement("div", {
     className: "flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6"
   }, /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-4"
+    className: "flex items-center gap-4 flex-shrink-0"
   }, /*#__PURE__*/React.createElement("a", {
     href: "../../index.html",
-    className: "flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors"
+    className: "flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-slate-300 hover:text-white hover:bg-slate-700 transition-colors whitespace-nowrap flex-shrink-0"
   }, /*#__PURE__*/React.createElement(Icon, {
     name: "ArrowLeft",
     size: 18
   }), /*#__PURE__*/React.createElement("span", {
-    className: "hidden sm:inline"
+    className: "sm:inline"
   }, t.backToHub)), /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     className: "flex items-center gap-2"
   }, /*#__PURE__*/React.createElement(Icon, {
@@ -6954,7 +6954,7 @@ const App = () => {
   }, t.title)), /*#__PURE__*/React.createElement("p", {
     className: "text-slate-400 text-sm"
   }, t.subtitle))), /*#__PURE__*/React.createElement("div", {
-    className: "flex items-center gap-2"
+    className: "flex items-center gap-2 flex-wrap"
   }, /*#__PURE__*/React.createElement("button", {
     onClick: resetForm,
     className: "flex items-center gap-2 px-3 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white hover:bg-slate-700 text-sm"
