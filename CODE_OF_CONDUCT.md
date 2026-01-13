@@ -13,6 +13,17 @@ We are committed to providing a friendly, safe, and welcoming environment for al
 - **Be patient** - Remember that everyone was a beginner once
 - **Be professional** - Focus on what is best for the community and project
 
+## Unacceptable Behavior
+
+The following behaviors are not tolerated in our community:
+
+- **Personal attacks** - Insulting, demeaning, or derogatory comments
+- **Trolling** - Deliberately inflammatory or off-topic messages
+- **Unwelcome conduct** - Continued interaction after being asked to stop
+- **Privacy violations** - Sharing others' private information without consent
+- **Spam** - Excessive self-promotion or irrelevant content
+- **Inappropriate content** - Content unsuitable for a professional environment
+
 ## Community Guidelines
 
 1. **Use welcoming language** - Be kind and courteous in all interactions
