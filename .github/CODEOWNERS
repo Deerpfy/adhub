@@ -1,0 +1,34 @@
+# CODEOWNERS - Define code owners for automatic review requests
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything
+* @Deerpfy
+
+# Main hub files
+/index.html @Deerpfy
+/script.js @Deerpfy
+/styles.css @Deerpfy
+
+# Documentation
+/README.md @Deerpfy
+/CONTRIBUTING.md @Deerpfy
+/CLAUDE.md @Deerpfy
+/docs/ @Deerpfy
+
+# GitHub configuration
+/.github/ @Deerpfy
+
+# Individual projects
+/projects/youtube-downloader/ @Deerpfy
+/projects/chat-panel/ @Deerpfy
+/projects/pdf-editor/ @Deerpfy
+/projects/pdf-merge/ @Deerpfy
+/projects/goalix/ @Deerpfy
+/projects/cardharvest/ @Deerpfy
+/projects/scribblix/ @Deerpfy
+/projects/paintnook/ @Deerpfy
+/projects/slidersnap/ @Deerpfy
+/projects/spinning-wheel-giveaway/ @Deerpfy
+/projects/resignation-bets/ @Deerpfy
+/projects/ai-prompting/ @Deerpfy
+/projects/komopizza/ @Deerpfy

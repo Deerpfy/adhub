@@ -1,0 +1,110 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '**.js'
+      - '**.html'
+      - '**.css'
+      - '**.json'
+  pull_request:
+    branches: [main]
+    paths:
+      - '**.js'
+      - '**.html'
+      - '**.css'
+      - '**.json'
+
+jobs:
+  lint-js:
+    name: Lint JavaScript
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install ESLint
+        run: npm install eslint@8 --save-dev
+
+      - name: Create ESLint config
+        run: |
+          cat > .eslintrc.json << 'EOF'
+          {
+            "env": {
+              "browser": true,
+              "es2021": true,
+              "node": true
+            },
+            "extends": "eslint:recommended",
+            "parserOptions": {
+              "ecmaVersion": "latest",
+              "sourceType": "module"
+            },
+            "globals": {
+              "chrome": "readonly",
+              "pdfjsLib": "readonly",
+              "PDFLib": "readonly"
+            },
+            "rules": {
+              "no-unused-vars": "warn",
+              "no-undef": "error",
+              "semi": ["warn", "always"],
+              "quotes": ["warn", "single", { "avoidEscape": true }]
+            }
+          }
+          EOF
+
+      - name: Run ESLint
+        run: npx eslint . --ext .js --ignore-pattern 'node_modules/' --ignore-pattern '*.min.js' || true
+
+  validate-json:
+    name: Validate JSON
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Validate manifest.json files
+        run: |
+          echo "Validating JSON files..."
+          find . -name "*.json" -not -path "./node_modules/*" | while read file; do
+            echo "Checking: $file"
+            python3 -m json.tool "$file" > /dev/null || echo "Invalid JSON: $file"
+          done
+
+  validate-html:
+    name: Validate HTML
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install html-validate
+        run: npm install html-validate --save-dev
+
+      - name: Create html-validate config
+        run: |
+          cat > .htmlvalidate.json << 'EOF'
+          {
+            "extends": ["html-validate:recommended"],
+            "rules": {
+              "no-trailing-whitespace": "off",
+              "void-style": "off",
+              "attribute-boolean-style": "off"
+            }
+          }
+          EOF
+
+      - name: Run HTML validation
+        run: npx html-validate "**/*.html" --ignore "node_modules/**" || true
