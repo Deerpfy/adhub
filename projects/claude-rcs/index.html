@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#8b5cf6">
+    <meta name="description" content="Claude RCS Workspace - Kolaborativni P2P workspace pro praci s AI">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <title>Claude RCS Workspace</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="assets/icon-192.png">
+    <link rel="apple-touch-icon" href="assets/icon-192.png">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Offline Banner -->
+    <div id="offlineBanner" class="offline-banner hidden">
+        <span class="offline-icon">📡</span>
+        <span class="offline-text">Offline rezim - data jsou ulozena lokalne</span>
+    </div>
+
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <span class="logo-icon">🔗</span>
+                <h1 class="app-title">Claude RCS</h1>
+                <span class="version-badge">v1.0</span>
+            </div>
+            <div class="header-right">
+                <div id="connectionStatus" class="connection-status disconnected">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Odpojeno</span>
+                </div>
+                <button id="settingsBtn" class="icon-btn" title="Nastaveni">
+                    <span>⚙️</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Setup View (Initial) -->
+            <section id="setupView" class="view active">
+                <div class="setup-card">
+                    <div class="setup-header">
+                        <span class="setup-icon">👤</span>
+                        <h2>Nastaveni profilu</h2>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="userName">Tvoje jmeno</label>
+                        <input type="text" id="userName" placeholder="Zadej prezdivku..." maxlength="20">
+                    </div>
+
+                    <div class="role-selector">
+                        <button id="btnCreateSession" class="role-btn host">
+                            <span class="role-icon">👑</span>
+                            <span class="role-name">Vytvorit session</span>
+                            <span class="role-desc">Budes ridit schvalovani promptu</span>
+                        </button>
+
+                        <button id="btnJoinSession" class="role-btn client">
+                            <span class="role-icon">🤝</span>
+                            <span class="role-name">Pripojit se</span>
+                            <span class="role-desc">Posles prompty ke schvaleni</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Session History -->
+                <div id="sessionHistory" class="session-history hidden">
+                    <h3>Nedavne sessions</h3>
+                    <div id="sessionList" class="session-list"></div>
+                </div>
+            </section>
+
+            <!-- Host Setup View -->
+            <section id="hostSetupView" class="view">
+                <div class="setup-card">
+                    <div class="setup-header">
+                        <span class="setup-icon">👑</span>
+                        <h2>Host Session</h2>
+                    </div>
+
+                    <div class="invite-section">
+                        <p class="info-text">Tvuj invite kod pro sdileni:</p>
+                        <div class="code-wrapper">
+                            <textarea id="inviteCode" readonly class="code-area"></textarea>
+                            <button id="btnCopyInvite" class="copy-btn" title="Kopirovat">
+                                <span>📋</span>
+                            </button>
+                        </div>
+                        <p class="hint-text">Posli tento kod klientovi</p>
+                    </div>
+
+                    <div class="divider"></div>
+
+                    <div class="answer-section">
+                        <p class="info-text">Vloz answer kod od klienta:</p>
+                        <textarea id="answerCodeInput" class="code-area" placeholder="Vloz answer kod..."></textarea>
+                        <button id="btnCompleteConnection" class="btn btn-primary full-width">
+                            <span>🔗</span> Dokoncit spojeni
+                        </button>
+                    </div>
+
+                    <button id="btnCancelHost" class="btn btn-secondary full-width mt-16">
+                        Zrusit
+                    </button>
+                </div>
+            </section>
+
+            <!-- Client Setup View -->
+            <section id="clientSetupView" class="view">
+                <div class="setup-card">
+                    <div class="setup-header">
+                        <span class="setup-icon">🤝</span>
+                        <h2>Pripojit k session</h2>
+                    </div>
+
+                    <div class="invite-section">
+                        <p class="info-text">Vloz invite kod od hosta:</p>
+                        <textarea id="inviteCodeInput" class="code-area" placeholder="Vloz invite kod..."></textarea>
+                        <button id="btnConnectToHost" class="btn btn-primary full-width">
+                            <span>🔌</span> Pripojit
+                        </button>
+                    </div>
+
+                    <div id="clientAnswerSection" class="answer-section hidden">
+                        <div class="divider"></div>
+                        <p class="info-text">Tvuj answer kod (posli hostovi):</p>
+                        <div class="code-wrapper">
+                            <textarea id="clientAnswerCode" readonly class="code-area"></textarea>
+                            <button id="btnCopyAnswer" class="copy-btn" title="Kopirovat">
+                                <span>📋</span>
+                            </button>
+                        </div>
+                        <p class="hint-text">Cekam na potvrzeni od hosta...</p>
+                    </div>
+
+                    <button id="btnCancelClient" class="btn btn-secondary full-width mt-16">
+                        Zrusit
+                    </button>
+                </div>
+            </section>
+
+            <!-- Connected View -->
+            <section id="connectedView" class="view">
+                <div class="connected-layout">
+                    <!-- Sidebar - Peers -->
+                    <aside class="peers-sidebar">
+                        <div class="sidebar-header">
+                            <h3>Pripojeni</h3>
+                            <span id="peerCount" class="peer-count">0</span>
+                        </div>
+                        <div id="peersList" class="peers-list"></div>
+
+                        <div class="session-info">
+                            <div id="roleBadge" class="role-badge"></div>
+                            <span id="sessionId" class="session-id"></span>
+                        </div>
+
+                        <button id="btnDisconnect" class="btn btn-danger full-width mt-auto">
+                            <span>🔌</span> Odpojit
+                        </button>
+                    </aside>
+
+                    <!-- Main Area -->
+                    <div class="main-area">
+                        <!-- Host: Approval Queue -->
+                        <div id="hostApprovalArea" class="approval-area hidden">
+                            <div class="area-header">
+                                <h3><span>📨</span> Fronta ke schvaleni</h3>
+                                <span id="queueCount" class="queue-badge">0</span>
+                            </div>
+                            <div id="approvalQueue" class="approval-queue">
+                                <div class="empty-queue">
+                                    <span>✨</span>
+                                    <p>Zadne prompty ke schvaleni</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Client: Prompt Input -->
+                        <div id="clientPromptArea" class="prompt-area hidden">
+                            <div class="area-header">
+                                <h3><span>✏️</span> Novy prompt</h3>
+                            </div>
+                            <div class="prompt-input-wrapper">
+                                <textarea id="promptInput" class="prompt-textarea" placeholder="Napis prompt pro Claude..."></textarea>
+                                <div class="prompt-actions">
+                                    <span id="charCount" class="char-count">0 znaku</span>
+                                    <button id="btnSendPrompt" class="btn btn-primary">
+                                        <span>📤</span> Odeslat ke schvaleni
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Prompt Status -->
+                            <div id="promptStatus" class="prompt-status hidden">
+                                <div class="status-content">
+                                    <span class="status-icon">⏳</span>
+                                    <span class="status-message">Cekam na schvaleni...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Output Display -->
+                        <div id="outputArea" class="output-area">
+                            <div class="area-header">
+                                <h3><span>💬</span> Odpovedi</h3>
+                                <button id="btnClearOutput" class="icon-btn small" title="Vymazat">
+                                    <span>🗑️</span>
+                                </button>
+                            </div>
+                            <div id="outputDisplay" class="output-display">
+                                <div class="empty-output">
+                                    <span>💭</span>
+                                    <p>Zatim zadne odpovedi</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Workspace Editor -->
+                        <div id="workspaceArea" class="workspace-area">
+                            <div class="area-header">
+                                <h3><span>📝</span> Sdileny workspace</h3>
+                                <div class="workspace-tabs">
+                                    <button class="tab-btn active" data-tab="editor">Editor</button>
+                                    <button class="tab-btn" data-tab="preview">Preview</button>
+                                </div>
+                            </div>
+                            <div class="workspace-content">
+                                <div id="editorTab" class="tab-content active">
+                                    <textarea id="workspaceEditor" class="workspace-textarea" placeholder="Sdileny obsah - zmeny se synchronizuji..."></textarea>
+                                </div>
+                                <div id="previewTab" class="tab-content">
+                                    <div id="workspacePreview" class="workspace-preview"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Approval Modal (Host) -->
+        <div id="approvalModal" class="modal hidden">
+            <div class="modal-backdrop"></div>
+            <div class="modal-dialog">
+                <div class="modal-header">
+                    <span class="modal-badge">NOVY PROMPT</span>
+                    <span id="modalSender" class="modal-sender"></span>
+                    <span id="modalTime" class="modal-time"></span>
+                </div>
+                <div class="modal-content">
+                    <pre id="modalPromptText" class="modal-prompt-text"></pre>
+                </div>
+                <div id="modalEditSection" class="modal-edit-section hidden">
+                    <textarea id="modalEditText" class="modal-edit-textarea"></textarea>
+                    <p class="edit-hint">Ctrl+Enter = odeslat | Esc = zrusit</p>
+                </div>
+                <div class="modal-actions">
+                    <button id="btnReject" class="btn btn-danger">
+                        <span>❌</span> Odmitnout (Esc)
+                    </button>
+                    <button id="btnEdit" class="btn btn-secondary">
+                        <span>✏️</span> Upravit (E)
+                    </button>
+                    <button id="btnApprove" class="btn btn-success">
+                        <span>✅</span> Schvalit (Enter)
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settingsModal" class="modal hidden">
+            <div class="modal-backdrop"></div>
+            <div class="modal-dialog settings-dialog">
+                <div class="modal-header">
+                    <h2>Nastaveni</h2>
+                    <button id="btnCloseSettings" class="modal-close">&times;</button>
+                </div>
+                <div class="modal-content settings-content">
+                    <div class="settings-group">
+                        <h3>Zvuky</h3>
+                        <label class="toggle-setting">
+                            <input type="checkbox" id="soundEnabled" checked>
+                            <span class="toggle-label">Notifikacni zvuky</span>
+                        </label>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Debug</h3>
+                        <label class="toggle-setting">
+                            <input type="checkbox" id="debugAutoApprove">
+                            <span class="toggle-label">Auto-approve (testovani)</span>
+                        </label>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>Data</h3>
+                        <button id="btnClearData" class="btn btn-danger">
+                            <span>🗑️</span> Vymazat vsechna data
+                        </button>
+                        <button id="btnExportData" class="btn btn-secondary mt-8">
+                            <span>📥</span> Exportovat data
+                        </button>
+                    </div>
+
+                    <div class="settings-group">
+                        <h3>O aplikaci</h3>
+                        <p class="about-text">
+                            Claude RCS Workspace v1.0<br>
+                            Offline-first P2P kolaborace<br>
+                            <a href="https://deerpfy.github.io/adhub/" target="_blank">AdHUB Project</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Scripts -->
+    <script type="module" src="js/app.js"></script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('[SW] Registered:', reg.scope))
+                    .catch(err => console.error('[SW] Registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>
