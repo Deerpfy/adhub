@@ -242,6 +242,26 @@ PROJECT_CONFIGS = {
             "Menu display",
             "Order management"
         ]
+    },
+    "claude-rcs": {
+        "name": "Claude RCS Workspace",
+        "type": "PWA (Offline-First)",
+        "version": "1.0.0",
+        "status": "Active",
+        "technologies": ["WebRTC", "IndexedDB", "Service Worker", "HTML/CSS/JS"],
+        "category": "Collaboration Tools",
+        "description": "Offline-first P2P collaboration workspace for AI prompt sharing",
+        "main_file": "index.html",
+        "features": [
+            "Peer-to-peer WebRTC communication",
+            "Host/Client role system",
+            "Prompt relay with approval workflow",
+            "Real-time output streaming",
+            "Shared workspace editor",
+            "100% offline PWA with IndexedDB storage",
+            "Session history and persistence",
+            "Manual invite code signaling"
+        ]
     }
 }
 

@@ -315,6 +315,8 @@ const BASE_TRANSLATIONS = {
         tool_api_catalog_desc: 'Offline-first katalog 10,000+ API. Procházejte, vyhledávejte a spravujte API podle kategorií. PWA s IndexedDB, import/export dat. Založeno na analýze API-mega-list.',
         tool_server_hub_name: 'Server Hub',
         tool_server_hub_desc: 'Offline-first PWA pro správu serverů, webů a záloh. Inspirováno xCloud control panelem. IndexedDB databáze, export/import dat.',
+        tool_claude_rcs_name: 'Claude RCS',
+        tool_claude_rcs_desc: 'Offline-first P2P workspace pro kolaborativní práci s AI. WebRTC peer-to-peer spojení, schvalování promptů, sdílený editor. 100% offline PWA.',
         tool_paintnook_name: 'PaintNook',
         tool_paintnook_desc: 'Offline digitální malba inspirovaná Procreate. Vrstvy s blend modes, štětce s citlivostí na tlak, QuickShape, StreamLine vyhlazování. 100% offline PWA.',
         tool_bg_remover_name: 'BG Remover',
@@ -713,6 +715,8 @@ const BASE_TRANSLATIONS = {
         tool_api_catalog_desc: 'Offline-first catalog of 10,000+ APIs. Browse, search and manage APIs by category. PWA with IndexedDB, data import/export. Based on API-mega-list analysis.',
         tool_server_hub_name: 'Server Hub',
         tool_server_hub_desc: 'Offline-first PWA for managing servers, sites, and backups. Inspired by xCloud control panel. IndexedDB database, data export/import.',
+        tool_claude_rcs_name: 'Claude RCS',
+        tool_claude_rcs_desc: 'Offline-first P2P workspace for collaborative AI work. WebRTC peer-to-peer connection, prompt approval workflow, shared editor. 100% offline PWA.',
         tool_paintnook_name: 'PaintNook',
         tool_paintnook_desc: 'Offline digital painting inspired by Procreate. Layers with blend modes, pressure-sensitive brushes, QuickShape, StreamLine smoothing. 100% offline PWA.',
         tool_bg_remover_name: 'BG Remover',
@@ -1651,6 +1655,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["server", "hosting", "management", "offline", "pwa"]
+            },
+            {
+                "id": "claude-rcs",
+                "name": t('tool_claude_rcs_name'),
+                "description": t('tool_claude_rcs_desc'),
+                "category": "tools",
+                "icon": "🔗",
+                "url": "projects/claude-rcs/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["collaboration", "p2p", "webrtc", "ai", "offline", "pwa", "workspace"]
             },
             {
                 "id": "paintnook",
