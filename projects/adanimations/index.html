@@ -36,6 +36,9 @@
                 <div class="panel-header">
                     <h2>Elementy</h2>
                     <div class="panel-actions">
+                        <button id="btnAddTemplate" class="btn btn-small btn-primary" title="Sablony" onclick="showTemplatesModal()">
+                            <span>📋</span>
+                        </button>
                         <button id="btnAddText" class="btn btn-small btn-accent" title="Pridat text">
                             <span>T</span>
                         </button>
@@ -237,7 +240,7 @@
                 <!-- Animation Tab -->
                 <div class="tab-content" id="tab-animation">
                     <div class="property-group">
-                        <h3>Typ animace</h3>
+                        <h3>Zakladni animace</h3>
                         <div class="animation-grid">
                             <button class="animation-btn" data-animation="slideLeft" title="Zleva">
                                 <span>⬅</span>
@@ -270,6 +273,43 @@
                             <button class="animation-btn" data-animation="rotate" title="Rotate">
                                 <span>🔄</span>
                                 <small>Rotace</small>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="property-group">
+                        <h3>Specialni efekty</h3>
+                        <div class="animation-grid">
+                            <button class="animation-btn" data-animation="glitch" title="Glitch">
+                                <span>📺</span>
+                                <small>Glitch</small>
+                            </button>
+                            <button class="animation-btn" data-animation="pulse" title="Pulse">
+                                <span>💓</span>
+                                <small>Pulse</small>
+                            </button>
+                            <button class="animation-btn" data-animation="glow" title="Neon Glow">
+                                <span>✨</span>
+                                <small>Glow</small>
+                            </button>
+                            <button class="animation-btn" data-animation="shake" title="Shake">
+                                <span>📳</span>
+                                <small>Shake</small>
+                            </button>
+                            <button class="animation-btn" data-animation="elasticIn" title="Elastic">
+                                <span>🎯</span>
+                                <small>Elastic</small>
+                            </button>
+                            <button class="animation-btn" data-animation="flipIn" title="Flip">
+                                <span>🔃</span>
+                                <small>Flip</small>
+                            </button>
+                            <button class="animation-btn" data-animation="wobble" title="Wobble">
+                                <span>〰️</span>
+                                <small>Wobble</small>
+                            </button>
+                            <button class="animation-btn" data-animation="float" title="Float">
+                                <span>🎈</span>
+                                <small>Float</small>
                             </button>
                         </div>
                     </div>

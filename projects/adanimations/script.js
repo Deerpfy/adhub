@@ -1,6 +1,6 @@
 /**
  * AdAnimations - OBS Animation Creator
- * Version 1.0
+ * Version 1.1 - Enhanced with templates, context menu, inline editing
  *
  * Editor pro tvorbu animovanych banneru a overlays pro OBS
  */
@@ -9,6 +9,7 @@
 const AppState = {
     elements: [],
     selectedElement: null,
+    editingElement: null,
     canvas: {
         width: 1920,
         height: 1080,
@@ -32,20 +33,220 @@ const AppState = {
     isResizing: false,
     dragStart: { x: 0, y: 0 },
     elementIdCounter: 0,
-    previewWindow: null
+    previewWindow: null,
+    contextMenu: null
 };
 
-// Animation mappings
+// Extended Animation mappings with new effects
 const ANIMATION_MAP = {
-    slideLeft: { enter: 'slideInLeft', exit: 'slideOutLeft' },
-    slideRight: { enter: 'slideInRight', exit: 'slideOutRight' },
-    slideUp: { enter: 'slideInUp', exit: 'slideOutUp' },
-    slideDown: { enter: 'slideInDown', exit: 'slideOutDown' },
-    fadeIn: { enter: 'fadeIn', exit: 'fadeOut' },
-    zoomIn: { enter: 'zoomIn', exit: 'zoomOut' },
-    bounce: { enter: 'bounce', exit: 'zoomOut' },
-    rotate: { enter: 'rotateIn', exit: 'zoomOut' }
+    // Slide animations
+    slideLeft: { enter: 'slideInLeft', exit: 'slideOutLeft', category: 'slide' },
+    slideRight: { enter: 'slideInRight', exit: 'slideOutRight', category: 'slide' },
+    slideUp: { enter: 'slideInUp', exit: 'slideOutUp', category: 'slide' },
+    slideDown: { enter: 'slideInDown', exit: 'slideOutDown', category: 'slide' },
+    // Fade/Zoom
+    fadeIn: { enter: 'fadeIn', exit: 'fadeOut', category: 'fade' },
+    zoomIn: { enter: 'zoomIn', exit: 'zoomOut', category: 'fade' },
+    // Bounce/Elastic
+    bounce: { enter: 'bounce', exit: 'zoomOut', category: 'bounce' },
+    elasticIn: { enter: 'elasticIn', exit: 'zoomOut', category: 'bounce' },
+    // Rotate/Flip
+    rotate: { enter: 'rotateIn', exit: 'zoomOut', category: 'rotate' },
+    flipIn: { enter: 'flipIn', exit: 'flipOut', category: 'rotate' },
+    swingIn: { enter: 'swingIn', exit: 'fadeOut', category: 'rotate' },
+    // Special effects
+    glitch: { enter: 'glitchIn', exit: 'fadeOut', category: 'special' },
+    pulse: { enter: 'pulse', exit: 'fadeOut', category: 'special', continuous: true },
+    glow: { enter: 'neonPulse', exit: 'fadeOut', category: 'special', continuous: true },
+    shake: { enter: 'shake', exit: 'fadeOut', category: 'special' },
+    wobble: { enter: 'wobble', exit: 'fadeOut', category: 'special' },
+    float: { enter: 'float', exit: 'fadeOut', category: 'special', continuous: true }
 };
+
+// Preset Templates
+const TEMPLATES = {
+    neonBox: {
+        name: 'Neon Box',
+        category: 'neon',
+        width: 300,
+        height: 80,
+        bgType: 'solid',
+        bgColor: '#1a1a2e',
+        bgOpacity: 90,
+        borderWidth: 2,
+        borderColor: '#8b5cf6',
+        borderRadius: 12,
+        shadowEnabled: true,
+        shadowX: 0,
+        shadowY: 0,
+        shadowBlur: 20,
+        shadowColor: '#8b5cf6',
+        glowEnabled: true,
+        text: 'LIVE',
+        textColor: '#8b5cf6',
+        fontSize: 28,
+        fontWeight: 'bold',
+        animationType: 'pulse'
+    },
+    gradientBanner: {
+        name: 'Gradient Banner',
+        category: 'gradient',
+        width: 400,
+        height: 100,
+        bgType: 'gradient',
+        gradient1: '#8b5cf6',
+        gradient2: '#ec4899',
+        borderWidth: 0,
+        borderRadius: 16,
+        shadowEnabled: true,
+        shadowX: 0,
+        shadowY: 8,
+        shadowBlur: 24,
+        shadowColor: 'rgba(139, 92, 246, 0.5)',
+        text: 'FOLLOW',
+        textColor: '#ffffff',
+        fontSize: 32,
+        fontWeight: 'bold',
+        animationType: 'bounce'
+    },
+    minimalAlert: {
+        name: 'Minimal Alert',
+        category: 'minimal',
+        width: 350,
+        height: 60,
+        bgType: 'solid',
+        bgColor: '#10b981',
+        bgOpacity: 15,
+        borderWidth: 1,
+        borderColor: '#10b981',
+        borderRadius: 8,
+        shadowEnabled: false,
+        text: '+ New Follower',
+        textColor: '#10b981',
+        fontSize: 18,
+        fontWeight: '500',
+        animationType: 'slideRight'
+    },
+    cyberPanel: {
+        name: 'Cyber Panel',
+        category: 'cyber',
+        width: 320,
+        height: 90,
+        bgType: 'gradient',
+        gradient1: '#0f0f23',
+        gradient2: '#1a1a3e',
+        borderWidth: 1,
+        borderColor: '#06b6d4',
+        borderRadius: 4,
+        shadowEnabled: true,
+        shadowX: 0,
+        shadowY: 0,
+        shadowBlur: 15,
+        shadowColor: '#06b6d4',
+        glowEnabled: true,
+        text: 'STREAM',
+        textColor: '#06b6d4',
+        fontSize: 24,
+        fontWeight: 'bold',
+        animationType: 'glitch'
+    },
+    cozyFrame: {
+        name: 'Cozy Frame',
+        category: 'cozy',
+        width: 280,
+        height: 70,
+        bgType: 'solid',
+        bgColor: '#2d2416',
+        bgOpacity: 100,
+        borderWidth: 3,
+        borderColor: '#5c4d3a',
+        borderRadius: 0,
+        shadowEnabled: true,
+        shadowX: 4,
+        shadowY: 4,
+        shadowBlur: 0,
+        shadowColor: '#1a1408',
+        text: 'Welcome!',
+        textColor: '#d4c4a8',
+        fontSize: 22,
+        fontFamily: 'Georgia',
+        animationType: 'fadeIn'
+    },
+    glassCard: {
+        name: 'Glass Card',
+        category: 'glass',
+        width: 300,
+        height: 80,
+        bgType: 'solid',
+        bgColor: '#ffffff',
+        bgOpacity: 10,
+        borderWidth: 1,
+        borderColor: 'rgba(255, 255, 255, 0.2)',
+        borderRadius: 16,
+        shadowEnabled: true,
+        shadowX: 0,
+        shadowY: 8,
+        shadowBlur: 32,
+        shadowColor: 'rgba(0, 0, 0, 0.3)',
+        text: 'Subscribe',
+        textColor: '#ffffff',
+        fontSize: 24,
+        fontWeight: '500',
+        animationType: 'zoomIn'
+    },
+    alertBox: {
+        name: 'Alert Box',
+        category: 'alert',
+        width: 400,
+        height: 120,
+        bgType: 'solid',
+        bgColor: '#1e1e2e',
+        bgOpacity: 95,
+        borderWidth: 0,
+        borderRadius: 20,
+        shadowEnabled: true,
+        shadowX: 0,
+        shadowY: 12,
+        shadowBlur: 40,
+        shadowColor: 'rgba(0, 0, 0, 0.5)',
+        text: 'New Subscriber!',
+        textColor: '#ffffff',
+        fontSize: 28,
+        fontWeight: 'bold',
+        animationType: 'elasticIn'
+    },
+    streamLabel: {
+        name: 'Stream Label',
+        category: 'minimal',
+        width: 200,
+        height: 50,
+        bgType: 'none',
+        borderWidth: 0,
+        borderRadius: 0,
+        shadowEnabled: true,
+        shadowX: 2,
+        shadowY: 2,
+        shadowBlur: 4,
+        shadowColor: 'rgba(0, 0, 0, 0.8)',
+        text: 'Playing: Game',
+        textColor: '#ffffff',
+        fontSize: 20,
+        fontWeight: 'normal',
+        animationType: 'fadeIn'
+    }
+};
+
+// Neon color presets
+const COLOR_PRESETS = [
+    { name: 'Neon Purple', color: '#8b5cf6', gradient: ['#8b5cf6', '#7c3aed'] },
+    { name: 'Neon Pink', color: '#ec4899', gradient: ['#ec4899', '#db2777'] },
+    { name: 'Neon Blue', color: '#3b82f6', gradient: ['#3b82f6', '#2563eb'] },
+    { name: 'Neon Cyan', color: '#06b6d4', gradient: ['#06b6d4', '#0891b2'] },
+    { name: 'Neon Green', color: '#10b981', gradient: ['#10b981', '#059669'] },
+    { name: 'Neon Orange', color: '#f59e0b', gradient: ['#f59e0b', '#d97706'] },
+    { name: 'Neon Red', color: '#ef4444', gradient: ['#ef4444', '#dc2626'] },
+    { name: 'Mocha', color: '#a67c52', gradient: ['#a67c52', '#8b6f47'] }
+];
 
 // DOM Elements cache
 const DOM = {};
@@ -1393,6 +1594,467 @@ function showToast(message, type = 'info') {
     }, 3000);
 }
 
+// ========================================
+// CONTEXT MENU
+// ========================================
+function createContextMenu(x, y, elementId) {
+    removeContextMenu();
+
+    const element = AppState.elements.find(e => e.id === elementId);
+    if (!element) return;
+
+    const menu = document.createElement('div');
+    menu.className = 'context-menu';
+    menu.id = 'contextMenu';
+    menu.style.left = `${x}px`;
+    menu.style.top = `${y}px`;
+
+    menu.innerHTML = `
+        <div class="context-menu-item" data-action="edit">
+            <span class="menu-icon">✏️</span>
+            <span>Upravit text</span>
+            <span class="menu-shortcut">Dbl-Click</span>
+        </div>
+        <div class="context-menu-item" data-action="duplicate">
+            <span class="menu-icon">📋</span>
+            <span>Duplikovat</span>
+            <span class="menu-shortcut">Ctrl+D</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item context-menu-submenu" data-action="animation">
+            <span class="menu-icon">🎬</span>
+            <span>Animace</span>
+            <div class="context-submenu context-menu">
+                <div class="context-menu-item" data-action="anim-slideLeft">Slide zleva</div>
+                <div class="context-menu-item" data-action="anim-slideRight">Slide zprava</div>
+                <div class="context-menu-item" data-action="anim-fadeIn">Fade In</div>
+                <div class="context-menu-item" data-action="anim-bounce">Bounce</div>
+                <div class="context-menu-item" data-action="anim-glitch">Glitch</div>
+                <div class="context-menu-item" data-action="anim-pulse">Pulse</div>
+            </div>
+        </div>
+        <div class="context-menu-item context-menu-submenu" data-action="style">
+            <span class="menu-icon">🎨</span>
+            <span>Rychly styl</span>
+            <div class="context-submenu context-menu">
+                <div class="context-menu-item" data-action="style-neon">Neon Glow</div>
+                <div class="context-menu-item" data-action="style-glass">Glass Effect</div>
+                <div class="context-menu-item" data-action="style-minimal">Minimal</div>
+                <div class="context-menu-item" data-action="style-cyber">Cyber</div>
+            </div>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item" data-action="bringFront">
+            <span class="menu-icon">⬆️</span>
+            <span>Do popredi</span>
+        </div>
+        <div class="context-menu-item" data-action="sendBack">
+            <span class="menu-icon">⬇️</span>
+            <span>Do pozadi</span>
+        </div>
+        <div class="context-menu-divider"></div>
+        <div class="context-menu-item danger" data-action="delete">
+            <span class="menu-icon">🗑️</span>
+            <span>Smazat</span>
+            <span class="menu-shortcut">Del</span>
+        </div>
+    `;
+
+    document.body.appendChild(menu);
+    AppState.contextMenu = menu;
+
+    // Adjust position if menu goes off screen
+    const rect = menu.getBoundingClientRect();
+    if (rect.right > window.innerWidth) {
+        menu.style.left = `${x - rect.width}px`;
+    }
+    if (rect.bottom > window.innerHeight) {
+        menu.style.top = `${y - rect.height}px`;
+    }
+
+    // Handle menu item clicks
+    menu.querySelectorAll('.context-menu-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const action = item.dataset.action;
+            handleContextMenuAction(action, elementId);
+        });
+    });
+
+    // Close on outside click
+    setTimeout(() => {
+        document.addEventListener('click', removeContextMenu, { once: true });
+    }, 10);
+}
+
+function removeContextMenu() {
+    if (AppState.contextMenu) {
+        AppState.contextMenu.remove();
+        AppState.contextMenu = null;
+    }
+}
+
+function handleContextMenuAction(action, elementId) {
+    removeContextMenu();
+
+    const element = AppState.elements.find(e => e.id === elementId);
+    if (!element) return;
+
+    switch (action) {
+        case 'edit':
+            if (element.type === 'text') {
+                startInlineEdit(elementId);
+            }
+            break;
+        case 'duplicate':
+            duplicateElement(elementId);
+            break;
+        case 'delete':
+            removeElement(elementId);
+            break;
+        case 'bringFront':
+            bringToFront(elementId);
+            break;
+        case 'sendBack':
+            sendToBack(elementId);
+            break;
+        // Animation shortcuts
+        case 'anim-slideLeft':
+        case 'anim-slideRight':
+        case 'anim-fadeIn':
+        case 'anim-bounce':
+        case 'anim-glitch':
+        case 'anim-pulse':
+            const animType = action.replace('anim-', '');
+            element.animationType = animType;
+            renderCanvasElement(element);
+            updatePropertiesPanel();
+            saveToLocalStorage();
+            showToast(`Animace: ${animType}`, 'success');
+            break;
+        // Style shortcuts
+        case 'style-neon':
+            applyQuickStyle(element, 'neon');
+            break;
+        case 'style-glass':
+            applyQuickStyle(element, 'glass');
+            break;
+        case 'style-minimal':
+            applyQuickStyle(element, 'minimal');
+            break;
+        case 'style-cyber':
+            applyQuickStyle(element, 'cyber');
+            break;
+    }
+}
+
+function applyQuickStyle(element, style) {
+    switch (style) {
+        case 'neon':
+            element.borderWidth = 2;
+            element.borderColor = '#8b5cf6';
+            element.shadowEnabled = true;
+            element.shadowX = 0;
+            element.shadowY = 0;
+            element.shadowBlur = 20;
+            element.shadowColor = '#8b5cf6';
+            element.bgType = 'solid';
+            element.bgColor = '#1a1a2e';
+            element.bgOpacity = 90;
+            if (element.type === 'text') {
+                element.textColor = '#8b5cf6';
+            }
+            break;
+        case 'glass':
+            element.bgType = 'solid';
+            element.bgColor = '#ffffff';
+            element.bgOpacity = 10;
+            element.borderWidth = 1;
+            element.borderColor = 'rgba(255, 255, 255, 0.2)';
+            element.borderRadius = 16;
+            element.shadowEnabled = true;
+            element.shadowX = 0;
+            element.shadowY = 8;
+            element.shadowBlur = 32;
+            element.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            break;
+        case 'minimal':
+            element.bgType = 'none';
+            element.borderWidth = 0;
+            element.shadowEnabled = true;
+            element.shadowX = 2;
+            element.shadowY = 2;
+            element.shadowBlur = 4;
+            element.shadowColor = 'rgba(0, 0, 0, 0.8)';
+            if (element.type === 'text') {
+                element.textColor = '#ffffff';
+            }
+            break;
+        case 'cyber':
+            element.bgType = 'gradient';
+            element.gradient1 = '#0f0f23';
+            element.gradient2 = '#1a1a3e';
+            element.borderWidth = 1;
+            element.borderColor = '#06b6d4';
+            element.borderRadius = 4;
+            element.shadowEnabled = true;
+            element.shadowX = 0;
+            element.shadowY = 0;
+            element.shadowBlur = 15;
+            element.shadowColor = '#06b6d4';
+            if (element.type === 'text') {
+                element.textColor = '#06b6d4';
+            }
+            break;
+    }
+
+    renderCanvasElement(element);
+    updatePropertiesPanel();
+    saveToLocalStorage();
+    showToast(`Styl: ${style}`, 'success');
+}
+
+function bringToFront(elementId) {
+    const index = AppState.elements.findIndex(e => e.id === elementId);
+    if (index !== -1 && index < AppState.elements.length - 1) {
+        const element = AppState.elements.splice(index, 1)[0];
+        AppState.elements.push(element);
+        reorderCanvasElements();
+        saveToLocalStorage();
+    }
+}
+
+function sendToBack(elementId) {
+    const index = AppState.elements.findIndex(e => e.id === elementId);
+    if (index > 0) {
+        const element = AppState.elements.splice(index, 1)[0];
+        AppState.elements.unshift(element);
+        reorderCanvasElements();
+        saveToLocalStorage();
+    }
+}
+
+function reorderCanvasElements() {
+    AppState.elements.forEach((element, index) => {
+        const domElement = DOM.canvas.querySelector(`[data-id="${element.id}"]`);
+        if (domElement) {
+            domElement.style.zIndex = index + 1;
+        }
+    });
+    renderElementList();
+}
+
+// ========================================
+// INLINE TEXT EDITING
+// ========================================
+function startInlineEdit(elementId) {
+    const element = AppState.elements.find(e => e.id === elementId);
+    if (!element || element.type !== 'text') return;
+
+    const domElement = DOM.canvas.querySelector(`[data-id="${elementId}"]`);
+    if (!domElement) return;
+
+    // Mark as editing
+    AppState.editingElement = elementId;
+    domElement.classList.add('editing');
+
+    // Create textarea for editing
+    const contentEl = domElement.querySelector('.element-content');
+    const originalText = element.text;
+
+    const editor = document.createElement('div');
+    editor.className = 'inline-editor';
+    editor.innerHTML = `<textarea spellcheck="false">${escapeHtml(originalText)}</textarea>`;
+
+    const textarea = editor.querySelector('textarea');
+    textarea.style.fontFamily = element.fontFamily;
+    textarea.style.fontSize = `${element.fontSize}px`;
+    textarea.style.color = element.textColor;
+    textarea.style.textAlign = element.textAlign;
+    textarea.style.fontWeight = element.fontWeight;
+    textarea.style.fontStyle = element.fontStyle;
+
+    contentEl.innerHTML = '';
+    contentEl.appendChild(editor);
+
+    // Focus and select all
+    textarea.focus();
+    textarea.select();
+
+    // Handle save on blur or Enter
+    const saveEdit = () => {
+        const newText = textarea.value;
+        element.text = newText;
+        AppState.editingElement = null;
+        domElement.classList.remove('editing');
+        renderCanvasElement(element);
+        updatePropertiesPanel();
+        saveToLocalStorage();
+    };
+
+    textarea.addEventListener('blur', saveEdit);
+    textarea.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            textarea.blur();
+        }
+        if (e.key === 'Escape') {
+            element.text = originalText;
+            AppState.editingElement = null;
+            domElement.classList.remove('editing');
+            renderCanvasElement(element);
+        }
+        e.stopPropagation();
+    });
+}
+
+// ========================================
+// TEMPLATES
+// ========================================
+function addFromTemplate(templateKey) {
+    const template = TEMPLATES[templateKey];
+    if (!template) return;
+
+    const options = {
+        name: template.name,
+        width: template.width,
+        height: template.height,
+        bgType: template.bgType,
+        bgColor: template.bgColor || '#333333',
+        bgOpacity: template.bgOpacity !== undefined ? template.bgOpacity : 100,
+        gradient1: template.gradient1 || '#8b5cf6',
+        gradient2: template.gradient2 || '#ec4899',
+        borderWidth: template.borderWidth,
+        borderColor: template.borderColor,
+        borderRadius: template.borderRadius,
+        shadowEnabled: template.shadowEnabled,
+        shadowX: template.shadowX || 0,
+        shadowY: template.shadowY || 0,
+        shadowBlur: template.shadowBlur || 0,
+        shadowColor: template.shadowColor || '#000000',
+        text: template.text,
+        textColor: template.textColor,
+        fontSize: template.fontSize,
+        fontFamily: template.fontFamily || 'Arial',
+        fontWeight: template.fontWeight || 'normal',
+        animationType: template.animationType,
+        glowEnabled: template.glowEnabled || false
+    };
+
+    addElement('text', options);
+    showToast(`Sablona: ${template.name}`, 'success');
+}
+
+function showTemplatesModal() {
+    // Create modal dynamically
+    let modal = document.getElementById('templatesModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.id = 'templatesModal';
+        modal.innerHTML = `
+            <div class="modal-content modal-templates">
+                <div class="modal-header">
+                    <h3>Vybrat sablonu</h3>
+                    <button class="modal-close" onclick="hideModal('templatesModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="templates-categories">
+                        <button class="template-category-btn active" data-cat="all">Vse</button>
+                        <button class="template-category-btn" data-cat="neon">Neon</button>
+                        <button class="template-category-btn" data-cat="minimal">Minimal</button>
+                        <button class="template-category-btn" data-cat="gradient">Gradient</button>
+                        <button class="template-category-btn" data-cat="cyber">Cyber</button>
+                    </div>
+                    <div class="templates-grid" id="templatesGrid"></div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        // Category filter
+        modal.querySelectorAll('.template-category-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                modal.querySelectorAll('.template-category-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderTemplatesGrid(btn.dataset.cat);
+            });
+        });
+    }
+
+    renderTemplatesGrid('all');
+    showModal('templatesModal');
+}
+
+function renderTemplatesGrid(category) {
+    const grid = document.getElementById('templatesGrid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    Object.entries(TEMPLATES).forEach(([key, template]) => {
+        if (category !== 'all' && template.category !== category) return;
+
+        const card = document.createElement('div');
+        card.className = 'template-card';
+        card.innerHTML = `
+            <div class="template-preview ${key.replace(/([A-Z])/g, '-$1').toLowerCase()}">
+            </div>
+            <div class="template-name">${template.name}</div>
+        `;
+        card.addEventListener('click', () => {
+            addFromTemplate(key);
+            hideModal('templatesModal');
+        });
+        grid.appendChild(card);
+    });
+}
+
+// ========================================
+// ENHANCED SETUP - Add new event listeners
+// ========================================
+function setupEnhancedEventListeners() {
+    // Context menu on canvas elements
+    DOM.canvas.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        const element = e.target.closest('.canvas-element');
+        if (element) {
+            selectElement(element.dataset.id);
+            createContextMenu(e.clientX, e.clientY, element.dataset.id);
+        }
+    });
+
+    // Double-click for inline edit
+    DOM.canvas.addEventListener('dblclick', (e) => {
+        const element = e.target.closest('.canvas-element');
+        if (element) {
+            const el = AppState.elements.find(el => el.id === element.dataset.id);
+            if (el && el.type === 'text') {
+                startInlineEdit(element.dataset.id);
+            }
+        }
+    });
+
+    // Add template button if exists
+    const btnAddTemplate = document.getElementById('btnAddTemplate');
+    if (btnAddTemplate) {
+        btnAddTemplate.addEventListener('click', showTemplatesModal);
+    }
+
+    // Close context menu on scroll
+    DOM.canvasContainer.addEventListener('scroll', removeContextMenu);
+}
+
+// Call enhanced setup after main init
+const originalInit = init;
+init = function() {
+    originalInit();
+    setupEnhancedEventListeners();
+};
+
 // Make functions available globally for onclick handlers
 window.removeElement = removeElement;
 window.duplicateElement = duplicateElement;
+window.addFromTemplate = addFromTemplate;
+window.showTemplatesModal = showTemplatesModal;
+window.hideModal = hideModal;
