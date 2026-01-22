@@ -1,5 +1,5 @@
 /* AdAnimations - OBS Animation Creator Styles */
-/* Version 1.0 */
+/* Version 1.1 - Enhanced with templates, context menu, inline editing */
 
 * {
     margin: 0;
@@ -1141,4 +1141,641 @@ body {
         transform: scale(0);
         opacity: 0;
     }
+}
+
+/* ========================================
+   NEW ANIMATIONS - v1.1
+   ======================================== */
+
+/* Pulse/Glow Animation */
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.05);
+        opacity: 0.9;
+    }
+}
+
+@keyframes glow {
+    0%, 100% {
+        box-shadow: 0 0 5px currentColor, 0 0 10px currentColor;
+    }
+    50% {
+        box-shadow: 0 0 20px currentColor, 0 0 40px currentColor, 0 0 60px currentColor;
+    }
+}
+
+@keyframes neonPulse {
+    0%, 100% {
+        box-shadow: 0 0 5px #8b5cf6, 0 0 10px #8b5cf6, 0 0 20px #8b5cf6;
+        opacity: 1;
+    }
+    50% {
+        box-shadow: 0 0 10px #8b5cf6, 0 0 20px #8b5cf6, 0 0 40px #8b5cf6, 0 0 80px #8b5cf6;
+        opacity: 0.95;
+    }
+}
+
+/* Shake Animation */
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+    20%, 40%, 60%, 80% { transform: translateX(5px); }
+}
+
+@keyframes wobble {
+    0%, 100% { transform: translateX(0) rotate(0); }
+    15% { transform: translateX(-10px) rotate(-5deg); }
+    30% { transform: translateX(8px) rotate(3deg); }
+    45% { transform: translateX(-6px) rotate(-3deg); }
+    60% { transform: translateX(4px) rotate(2deg); }
+    75% { transform: translateX(-2px) rotate(-1deg); }
+}
+
+/* Glitch Animation */
+@keyframes glitch {
+    0%, 100% {
+        transform: translate(0);
+        filter: none;
+    }
+    20% {
+        transform: translate(-2px, 2px);
+        filter: hue-rotate(90deg);
+    }
+    40% {
+        transform: translate(-2px, -2px);
+        filter: hue-rotate(180deg);
+    }
+    60% {
+        transform: translate(2px, 2px);
+        filter: hue-rotate(270deg);
+    }
+    80% {
+        transform: translate(2px, -2px);
+        filter: hue-rotate(360deg);
+    }
+}
+
+@keyframes glitchIn {
+    0% {
+        opacity: 0;
+        transform: translate(-20px, 0);
+        filter: blur(10px);
+    }
+    20% {
+        transform: translate(15px, 0);
+        filter: blur(5px) hue-rotate(90deg);
+    }
+    40% {
+        transform: translate(-10px, 0);
+        filter: blur(3px) hue-rotate(180deg);
+    }
+    60% {
+        transform: translate(5px, 0);
+        filter: blur(1px) hue-rotate(270deg);
+    }
+    80% {
+        transform: translate(-2px, 0);
+        filter: none;
+    }
+    100% {
+        opacity: 1;
+        transform: translate(0);
+        filter: none;
+    }
+}
+
+/* Typewriter Animation */
+@keyframes typewriter {
+    from { width: 0; }
+    to { width: 100%; }
+}
+
+@keyframes blinkCursor {
+    0%, 100% { border-right-color: transparent; }
+    50% { border-right-color: currentColor; }
+}
+
+/* Flip Animation */
+@keyframes flipIn {
+    from {
+        transform: perspective(400px) rotateY(90deg);
+        opacity: 0;
+    }
+    to {
+        transform: perspective(400px) rotateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes flipOut {
+    from {
+        transform: perspective(400px) rotateY(0);
+        opacity: 1;
+    }
+    to {
+        transform: perspective(400px) rotateY(90deg);
+        opacity: 0;
+    }
+}
+
+/* Elastic Animation */
+@keyframes elasticIn {
+    0% {
+        transform: scale(0);
+        opacity: 0;
+    }
+    55% {
+        transform: scale(1.1);
+    }
+    70% {
+        transform: scale(0.95);
+    }
+    85% {
+        transform: scale(1.02);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Swing Animation */
+@keyframes swingIn {
+    0% {
+        transform: rotateX(-90deg);
+        transform-origin: top;
+        opacity: 0;
+    }
+    100% {
+        transform: rotateX(0);
+        transform-origin: top;
+        opacity: 1;
+    }
+}
+
+/* Float Animation (continuous) */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* ========================================
+   CONTEXT MENU
+   ======================================== */
+.context-menu {
+    position: fixed;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: var(--shadow-lg), 0 0 20px rgba(0, 0, 0, 0.3);
+    min-width: 180px;
+    z-index: 3000;
+    padding: 6px 0;
+    animation: contextMenuIn 0.15s ease;
+    backdrop-filter: blur(10px);
+}
+
+@keyframes contextMenuIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.context-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.context-menu-item:hover {
+    background: var(--bg-hover);
+}
+
+.context-menu-item.danger {
+    color: var(--danger-color);
+}
+
+.context-menu-item.danger:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.context-menu-item .menu-icon {
+    font-size: 1rem;
+    width: 20px;
+    text-align: center;
+}
+
+.context-menu-item .menu-shortcut {
+    margin-left: auto;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    padding: 2px 6px;
+    background: var(--bg-tertiary);
+    border-radius: 4px;
+}
+
+.context-menu-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 6px 0;
+}
+
+.context-menu-submenu {
+    position: relative;
+}
+
+.context-menu-submenu::after {
+    content: '▶';
+    position: absolute;
+    right: 12px;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+}
+
+.context-submenu {
+    position: absolute;
+    left: 100%;
+    top: -6px;
+    display: none;
+}
+
+.context-menu-submenu:hover .context-submenu {
+    display: block;
+}
+
+/* ========================================
+   INLINE TEXT EDITING
+   ======================================== */
+.canvas-element.editing {
+    cursor: text;
+}
+
+.canvas-element.editing .element-content {
+    pointer-events: auto;
+}
+
+.inline-editor {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+
+.inline-editor textarea {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    color: inherit;
+    font: inherit;
+    text-align: inherit;
+    resize: none;
+    padding: 0;
+}
+
+.inline-editor textarea::selection {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* ========================================
+   TEMPLATES PANEL
+   ======================================== */
+.templates-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    padding: 10px;
+}
+
+.template-card {
+    position: relative;
+    aspect-ratio: 16/9;
+    background: var(--bg-tertiary);
+    border: 2px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.template-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow);
+}
+
+.template-card.active {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
+}
+
+.template-preview {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+}
+
+.template-name {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 6px 8px;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+    font-size: 0.7rem;
+    color: white;
+    text-align: center;
+}
+
+/* Template Preview Styles */
+.template-preview.neon-box {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+}
+
+.template-preview.neon-box::before {
+    content: 'LIVE';
+    padding: 8px 20px;
+    background: transparent;
+    border: 2px solid #8b5cf6;
+    border-radius: 8px;
+    color: #8b5cf6;
+    font-weight: bold;
+    font-size: 0.9rem;
+    box-shadow: 0 0 10px #8b5cf6, inset 0 0 10px rgba(139, 92, 246, 0.2);
+    text-shadow: 0 0 10px #8b5cf6;
+}
+
+.template-preview.gradient-banner {
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+}
+
+.template-preview.gradient-banner::before {
+    content: 'FOLLOW';
+    padding: 10px 25px;
+    color: white;
+    font-weight: bold;
+    font-size: 1rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.template-preview.minimal-alert {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.template-preview.minimal-alert::before {
+    content: '+ New Follower';
+    color: #10b981;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.template-preview.cyber-panel {
+    background: linear-gradient(135deg, #0f0f23, #1a1a3e);
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+
+.template-preview.cyber-panel::before {
+    content: 'STREAM';
+    color: #06b6d4;
+    font-weight: bold;
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    text-shadow: 0 0 10px #06b6d4;
+}
+
+.template-preview.cozy-frame {
+    background: linear-gradient(135deg, #2d2416, #3d3426);
+    border: 3px solid #5c4d3a;
+    border-radius: 0;
+}
+
+.template-preview.cozy-frame::before {
+    content: 'Welcome!';
+    color: #d4c4a8;
+    font-family: Georgia, serif;
+    font-size: 0.9rem;
+}
+
+.template-preview.glass-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.template-preview.glass-card::before {
+    content: 'Subscribe';
+    color: white;
+    font-weight: 500;
+}
+
+/* ========================================
+   ENHANCED ANIMATION GRID
+   ======================================== */
+.animation-grid-extended {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.animation-category {
+    margin-bottom: 16px;
+}
+
+.animation-category-title {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    padding-left: 4px;
+}
+
+/* ========================================
+   PRESET COLORS (Neon Palette)
+   ======================================== */
+.color-presets {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.color-preset {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.color-preset:hover {
+    transform: scale(1.1);
+}
+
+.color-preset.active {
+    border-color: white;
+    box-shadow: 0 0 0 2px var(--primary-color);
+}
+
+/* Neon color presets */
+.color-preset.neon-purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.color-preset.neon-pink { background: linear-gradient(135deg, #ec4899, #db2777); }
+.color-preset.neon-blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+.color-preset.neon-cyan { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+.color-preset.neon-green { background: linear-gradient(135deg, #10b981, #059669); }
+.color-preset.neon-orange { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.color-preset.neon-red { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.color-preset.mocha { background: linear-gradient(135deg, #a67c52, #8b6f47); }
+
+/* ========================================
+   QUICK STYLE BUTTONS
+   ======================================== */
+.quick-styles {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.quick-style-btn {
+    padding: 6px 12px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.quick-style-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--primary-color);
+    color: var(--text-primary);
+}
+
+.quick-style-btn.neon {
+    border-color: var(--primary-color);
+    color: var(--primary-light);
+    box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+}
+
+.quick-style-btn.glass {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(5px);
+}
+
+/* ========================================
+   GLOW EFFECT TOGGLE
+   ======================================== */
+.glow-settings {
+    padding: 12px;
+    background: var(--bg-tertiary);
+    border-radius: 8px;
+    margin-top: 8px;
+}
+
+.glow-settings .property-row {
+    margin-bottom: 8px;
+}
+
+/* ========================================
+   MODAL FOR TEMPLATES
+   ======================================== */
+.modal-templates {
+    max-width: 600px;
+}
+
+.templates-categories {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.template-category-btn {
+    padding: 8px 16px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.template-category-btn:hover {
+    background: var(--bg-hover);
+}
+
+.template-category-btn.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+/* ========================================
+   ELEMENT HOVER EFFECTS IN CANVAS
+   ======================================== */
+.canvas-element:not(.selected):hover {
+    outline: 1px dashed var(--text-muted);
+    outline-offset: 2px;
+}
+
+/* Double-click hint */
+.canvas-element[data-type="text"]::before {
+    content: 'Dvojklik pro editaci';
+    position: absolute;
+    top: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 4px 8px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity 0.2s;
+    pointer-events: none;
+    z-index: 10;
+}
+
+.canvas-element[data-type="text"]:hover::before {
+    opacity: 1;
+}
+
+.canvas-element[data-type="text"].selected::before,
+.canvas-element[data-type="text"].editing::before {
+    display: none;
 }
