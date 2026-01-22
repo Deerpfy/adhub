@@ -125,7 +125,9 @@ body {
 
 .panel-right {
     width: 320px;
+    min-width: 280px;
     border-left: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .panel-center {
@@ -305,9 +307,10 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    /* Lighter checkered pattern for better visibility */
     background: repeating-conic-gradient(
-        var(--bg-tertiary) 0% 25%,
-        var(--bg-secondary) 0% 50%
+        #2a2a3a 0% 25%,
+        #1e1e2e 0% 50%
     ) 50% / 20px 20px;
     padding: 20px;
 }
@@ -318,8 +321,9 @@ body {
 
 .canvas {
     position: relative;
-    background: transparent;
-    box-shadow: var(--shadow-lg);
+    /* Semi-transparent dark background for the actual canvas area */
+    background: rgba(10, 10, 15, 0.95);
+    box-shadow: var(--shadow-lg), 0 0 0 1px rgba(139, 92, 246, 0.3);
     overflow: hidden;
 }
 
@@ -958,9 +962,19 @@ body {
 }
 
 /* Responsive */
+@media (max-width: 1400px) {
+    .panel-left {
+        width: 200px;
+    }
+
+    .panel-right {
+        width: 300px;
+    }
+}
+
 @media (max-width: 1200px) {
     .panel-left {
-        width: 240px;
+        width: 180px;
     }
 
     .panel-right {
@@ -983,6 +997,14 @@ body {
         flex: 1;
         min-height: 400px;
     }
+}
+
+/* Ensure panels are always visible */
+.main-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    min-width: 0;
 }
 
 /* Animation Keyframes for Preview */

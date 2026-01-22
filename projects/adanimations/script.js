@@ -1,6 +1,6 @@
 /**
  * AdAnimations - OBS Animation Creator
- * Version 1.1 - Enhanced with templates, context menu, inline editing
+ * Version 1.2 - Added Sequencer for timeline-based animation control
  *
  * Editor pro tvorbu animovanych banneru a overlays pro OBS
  */
@@ -29,10 +29,21 @@ const AppState = {
         interval: 300000,
         randomize: false
     },
+    // Sequencer state
+    sequencer: {
+        enabled: false,
+        groups: [],           // Array of groups: { id, name, elements: [], delay, stagger }
+        timeline: [],         // Ordered sequence: { elementId, groupId, startTime, endTime }
+        totalDuration: 10000, // Total sequence duration in ms
+        currentTime: 0,
+        isPlaying: false,
+        loop: false
+    },
     isDragging: false,
     isResizing: false,
     dragStart: { x: 0, y: 0 },
     elementIdCounter: 0,
+    groupIdCounter: 0,
     previewWindow: null,
     contextMenu: null
 };
@@ -595,7 +606,11 @@ function addElement(type, options = {}) {
         animationEasing: options.animationEasing || 'ease',
         exitAnimationEnabled: options.exitAnimationEnabled || false,
         exitAnimationType: options.exitAnimationType || 'same',
-        displayDuration: options.displayDuration || 5000
+        displayDuration: options.displayDuration || 5000,
+        // Sequencer properties
+        sequenceOrder: options.sequenceOrder || AppState.elements.length,
+        sequenceDelay: options.sequenceDelay || 0,
+        groupId: options.groupId || null
     };
 
     AppState.elements.push(element);
@@ -1181,6 +1196,7 @@ function generatePreviewHTML() {
     elements.forEach((el, index) => {
         const animInfo = ANIMATION_MAP[el.animationType];
         const enterAnim = animInfo ? animInfo.enter : 'fadeIn';
+        const isContinuous = animInfo && animInfo.continuous;
         const exitAnim = el.exitAnimationType === 'same'
             ? (animInfo ? animInfo.exit : 'fadeOut')
             : (ANIMATION_MAP[el.exitAnimationType.replace('slide', 'slide')]?.exit || 'fadeOut');
@@ -1207,6 +1223,11 @@ function generatePreviewHTML() {
             ? `${el.borderWidth}px solid ${el.borderColor}`
             : 'none';
 
+        // Animation string - continuous animations loop infinitely
+        const animationStr = isContinuous
+            ? `${enterAnim} ${el.animationDuration}ms ${el.animationEasing} ${el.animationDelay}ms infinite`
+            : `${enterAnim} ${el.animationDuration}ms ${el.animationEasing} ${el.animationDelay}ms forwards`;
+
         elementsCSS += `
             .element-${index} {
                 position: absolute;
@@ -1221,8 +1242,8 @@ function generatePreviewHTML() {
                 display: flex;
                 align-items: center;
                 justify-content: center;
-                opacity: 0;
-                animation: ${enterAnim} ${el.animationDuration}ms ${el.animationEasing} ${el.animationDelay}ms forwards;
+                opacity: ${isContinuous ? '1' : '0'};
+                animation: ${animationStr};
             }
             ${el.exitAnimationEnabled ? `
             .element-${index}.exit {
@@ -1250,8 +1271,9 @@ function generatePreviewHTML() {
         elementsHTML += `<div class="element-${index}" data-exit="${el.exitAnimationEnabled}" data-display="${el.displayDuration}">${contentHTML}</div>\n`;
     });
 
-    // Animation keyframes
+    // Animation keyframes - ALL animations including special effects
     const keyframes = `
+        /* Basic animations */
         @keyframes slideInLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @keyframes slideInUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -1260,12 +1282,84 @@ function generatePreviewHTML() {
         @keyframes zoomIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         @keyframes bounce { 0% { transform: scale(0); opacity: 0; } 50% { transform: scale(1.1); } 70% { transform: scale(0.95); } 100% { transform: scale(1); opacity: 1; } }
         @keyframes rotateIn { from { transform: rotate(-180deg) scale(0); opacity: 0; } to { transform: rotate(0) scale(1); opacity: 1; } }
+
+        /* Exit animations */
         @keyframes slideOutLeft { from { transform: translateX(0); opacity: 1; } to { transform: translateX(-100%); opacity: 0; } }
         @keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
         @keyframes slideOutUp { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-100%); opacity: 0; } }
         @keyframes slideOutDown { from { transform: translateY(0); opacity: 1; } to { transform: translateY(100%); opacity: 0; } }
         @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
         @keyframes zoomOut { from { transform: scale(1); opacity: 1; } to { transform: scale(0); opacity: 0; } }
+
+        /* Special effects - Pulse */
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+
+        /* Neon glow pulse */
+        @keyframes neonPulse {
+            0%, 100% { box-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 20px currentColor; opacity: 1; }
+            50% { box-shadow: 0 0 10px currentColor, 0 0 20px currentColor, 0 0 40px currentColor, 0 0 80px currentColor; opacity: 0.95; }
+        }
+
+        /* Shake */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); opacity: 1; }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        /* Wobble */
+        @keyframes wobble {
+            0%, 100% { transform: translateX(0) rotate(0); opacity: 1; }
+            15% { transform: translateX(-10px) rotate(-5deg); }
+            30% { transform: translateX(8px) rotate(3deg); }
+            45% { transform: translateX(-6px) rotate(-3deg); }
+            60% { transform: translateX(4px) rotate(2deg); }
+            75% { transform: translateX(-2px) rotate(-1deg); }
+        }
+
+        /* Glitch */
+        @keyframes glitchIn {
+            0% { opacity: 0; transform: translate(-20px, 0); filter: blur(10px); }
+            20% { transform: translate(15px, 0); filter: blur(5px) hue-rotate(90deg); }
+            40% { transform: translate(-10px, 0); filter: blur(3px) hue-rotate(180deg); }
+            60% { transform: translate(5px, 0); filter: blur(1px) hue-rotate(270deg); }
+            80% { transform: translate(-2px, 0); filter: none; }
+            100% { opacity: 1; transform: translate(0); filter: none; }
+        }
+
+        /* Flip */
+        @keyframes flipIn {
+            from { transform: perspective(400px) rotateY(90deg); opacity: 0; }
+            to { transform: perspective(400px) rotateY(0); opacity: 1; }
+        }
+        @keyframes flipOut {
+            from { transform: perspective(400px) rotateY(0); opacity: 1; }
+            to { transform: perspective(400px) rotateY(90deg); opacity: 0; }
+        }
+
+        /* Elastic */
+        @keyframes elasticIn {
+            0% { transform: scale(0); opacity: 0; }
+            55% { transform: scale(1.1); }
+            70% { transform: scale(0.95); }
+            85% { transform: scale(1.02); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* Swing */
+        @keyframes swingIn {
+            0% { transform: rotateX(-90deg); transform-origin: top; opacity: 0; }
+            100% { transform: rotateX(0); transform-origin: top; opacity: 1; }
+        }
+
+        /* Float (continuous) */
+        @keyframes float {
+            0%, 100% { transform: translateY(0); opacity: 1; }
+            50% { transform: translateY(-10px); }
+        }
     `;
 
     // Timer script
@@ -1305,11 +1399,14 @@ function generatePreviewHTML() {
     <title>AdAnimations Preview</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
+        html, body {
             width: ${width}px;
             height: ${height}px;
             overflow: hidden;
             background: transparent;
+        }
+        body {
+            position: relative;
         }
         ${keyframes}
         ${elementsCSS}
@@ -1318,6 +1415,10 @@ function generatePreviewHTML() {
 <body>
 ${elementsHTML}
 <script>
+// Debug: log canvas size
+console.log('Preview size: ${width}x${height}');
+console.log('Elements: ${elements.length}');
+
 ${timerScript}
 </script>
 </body>
