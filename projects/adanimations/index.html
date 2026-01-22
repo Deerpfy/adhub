@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdAnimations - OBS Animation Creator</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎬</text></svg>">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <span class="logo-icon">🎬</span>
+                <h1 class="logo">AdAnimations</h1>
+                <span class="version-badge">v1.0</span>
+            </div>
+            <div class="header-right">
+                <button id="btnNewProject" class="btn btn-secondary" title="Novy projekt">
+                    <span>📄</span> Novy
+                </button>
+                <button id="btnLoadProject" class="btn btn-secondary" title="Nacist projekt">
+                    <span>📂</span> Nacist
+                </button>
+                <button id="btnSaveProject" class="btn btn-primary" title="Ulozit projekt">
+                    <span>💾</span> Ulozit
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Left Panel - Element List -->
+            <aside class="panel panel-left">
+                <div class="panel-header">
+                    <h2>Elementy</h2>
+                    <div class="panel-actions">
+                        <button id="btnAddText" class="btn btn-small btn-accent" title="Pridat text">
+                            <span>T</span>
+                        </button>
+                        <button id="btnAddImage" class="btn btn-small btn-accent" title="Pridat obrazek">
+                            <span>🖼️</span>
+                        </button>
+                        <button id="btnAddShape" class="btn btn-small btn-accent" title="Pridat tvar">
+                            <span>⬜</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="element-list" id="elementList">
+                    <div class="empty-state">
+                        <span class="empty-icon">📦</span>
+                        <p>Zadne elementy</p>
+                        <small>Klikni + pro pridani</small>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Center - Canvas Preview -->
+            <section class="panel panel-center">
+                <div class="canvas-toolbar">
+                    <div class="canvas-size-controls">
+                        <label>Rozliseni:</label>
+                        <select id="canvasPreset">
+                            <option value="1920x1080">1920x1080 (Full HD)</option>
+                            <option value="1280x720">1280x720 (HD)</option>
+                            <option value="2560x1440">2560x1440 (2K)</option>
+                            <option value="3840x2160">3840x2160 (4K)</option>
+                            <option value="custom">Vlastni...</option>
+                        </select>
+                        <input type="number" id="canvasWidth" value="1920" min="100" max="7680" class="size-input hidden">
+                        <span class="size-separator hidden">x</span>
+                        <input type="number" id="canvasHeight" value="1080" min="100" max="4320" class="size-input hidden">
+                    </div>
+                    <div class="canvas-zoom">
+                        <button id="btnZoomOut" class="btn btn-icon" title="Oddalit">-</button>
+                        <span id="zoomLevel">50%</span>
+                        <button id="btnZoomIn" class="btn btn-icon" title="Priblizit">+</button>
+                        <button id="btnZoomFit" class="btn btn-icon" title="Prizpusobit">⊡</button>
+                    </div>
+                </div>
+                <div class="canvas-container" id="canvasContainer">
+                    <div class="canvas-wrapper" id="canvasWrapper">
+                        <div class="canvas" id="canvas">
+                            <div class="canvas-grid"></div>
+                            <!-- Elements will be rendered here -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Panel - Properties -->
+            <aside class="panel panel-right">
+                <div class="panel-tabs">
+                    <button class="tab-btn active" data-tab="properties">Vlastnosti</button>
+                    <button class="tab-btn" data-tab="animation">Animace</button>
+                    <button class="tab-btn" data-tab="timer">Casovac</button>
+                </div>
+
+                <!-- Properties Tab -->
+                <div class="tab-content active" id="tab-properties">
+                    <div class="no-selection">
+                        <span class="empty-icon">👆</span>
+                        <p>Vyber element</p>
+                    </div>
+                    <div class="property-groups hidden" id="propertyGroups">
+                        <!-- Position & Size -->
+                        <div class="property-group">
+                            <h3>Pozice a velikost</h3>
+                            <div class="property-row">
+                                <label>X:</label>
+                                <input type="number" id="propX" value="0">
+                                <label>Y:</label>
+                                <input type="number" id="propY" value="0">
+                            </div>
+                            <div class="property-row">
+                                <label>Sirka:</label>
+                                <input type="number" id="propWidth" value="200">
+                                <label>Vyska:</label>
+                                <input type="number" id="propHeight" value="100">
+                            </div>
+                        </div>
+
+                        <!-- Text Properties -->
+                        <div class="property-group" id="textProperties">
+                            <h3>Text</h3>
+                            <div class="property-row full">
+                                <textarea id="propText" rows="3" placeholder="Zadej text..."></textarea>
+                            </div>
+                            <div class="property-row">
+                                <label>Font:</label>
+                                <select id="propFontFamily">
+                                    <option value="Arial">Arial</option>
+                                    <option value="Helvetica">Helvetica</option>
+                                    <option value="Georgia">Georgia</option>
+                                    <option value="Times New Roman">Times New Roman</option>
+                                    <option value="Verdana">Verdana</option>
+                                    <option value="Courier New">Courier New</option>
+                                    <option value="Impact">Impact</option>
+                                    <option value="Comic Sans MS">Comic Sans MS</option>
+                                </select>
+                            </div>
+                            <div class="property-row">
+                                <label>Velikost:</label>
+                                <input type="number" id="propFontSize" value="24" min="8" max="200">
+                                <span>px</span>
+                            </div>
+                            <div class="property-row">
+                                <label>Barva:</label>
+                                <input type="color" id="propTextColor" value="#ffffff">
+                            </div>
+                            <div class="property-row">
+                                <label>Zarovnani:</label>
+                                <div class="btn-group">
+                                    <button class="btn btn-icon" data-align="left" title="Vlevo">⬅</button>
+                                    <button class="btn btn-icon active" data-align="center" title="Na stred">⬌</button>
+                                    <button class="btn btn-icon" data-align="right" title="Vpravo">➡</button>
+                                </div>
+                            </div>
+                            <div class="property-row">
+                                <label>Styl:</label>
+                                <div class="btn-group">
+                                    <button class="btn btn-icon" id="propBold" title="Tucne">B</button>
+                                    <button class="btn btn-icon" id="propItalic" title="Kurziva">I</button>
+                                    <button class="btn btn-icon" id="propUnderline" title="Podtrzeni">U</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Background -->
+                        <div class="property-group">
+                            <h3>Pozadi</h3>
+                            <div class="property-row">
+                                <label>Typ:</label>
+                                <select id="propBgType">
+                                    <option value="none">Zadne</option>
+                                    <option value="solid">Barva</option>
+                                    <option value="gradient">Gradient</option>
+                                    <option value="image">Obrazek</option>
+                                </select>
+                            </div>
+                            <div class="property-row" id="bgColorRow">
+                                <label>Barva:</label>
+                                <input type="color" id="propBgColor" value="#333333">
+                                <label>Pruhlednost:</label>
+                                <input type="range" id="propBgOpacity" min="0" max="100" value="100">
+                            </div>
+                            <div class="property-row hidden" id="bgGradientRow">
+                                <label>Barva 1:</label>
+                                <input type="color" id="propGradient1" value="#8b5cf6">
+                                <label>Barva 2:</label>
+                                <input type="color" id="propGradient2" value="#ec4899">
+                            </div>
+                        </div>
+
+                        <!-- Border -->
+                        <div class="property-group">
+                            <h3>Ohraniceni</h3>
+                            <div class="property-row">
+                                <label>Sirka:</label>
+                                <input type="number" id="propBorderWidth" value="0" min="0" max="50">
+                                <label>Barva:</label>
+                                <input type="color" id="propBorderColor" value="#ffffff">
+                            </div>
+                            <div class="property-row">
+                                <label>Zaobleni:</label>
+                                <input type="number" id="propBorderRadius" value="0" min="0" max="200">
+                                <span>px</span>
+                            </div>
+                        </div>
+
+                        <!-- Shadow -->
+                        <div class="property-group">
+                            <h3>Stin</h3>
+                            <div class="property-row">
+                                <label>
+                                    <input type="checkbox" id="propShadowEnabled">
+                                    Aktivni
+                                </label>
+                            </div>
+                            <div class="property-row" id="shadowOptions">
+                                <label>X:</label>
+                                <input type="number" id="propShadowX" value="4" min="-50" max="50">
+                                <label>Y:</label>
+                                <input type="number" id="propShadowY" value="4" min="-50" max="50">
+                            </div>
+                            <div class="property-row" id="shadowOptions2">
+                                <label>Rozmazani:</label>
+                                <input type="number" id="propShadowBlur" value="8" min="0" max="100">
+                                <label>Barva:</label>
+                                <input type="color" id="propShadowColor" value="#000000">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Animation Tab -->
+                <div class="tab-content" id="tab-animation">
+                    <div class="property-group">
+                        <h3>Typ animace</h3>
+                        <div class="animation-grid">
+                            <button class="animation-btn" data-animation="slideLeft" title="Zleva">
+                                <span>⬅</span>
+                                <small>Zleva</small>
+                            </button>
+                            <button class="animation-btn" data-animation="slideRight" title="Zprava">
+                                <span>➡</span>
+                                <small>Zprava</small>
+                            </button>
+                            <button class="animation-btn" data-animation="slideUp" title="Zespoda">
+                                <span>⬆</span>
+                                <small>Zespoda</small>
+                            </button>
+                            <button class="animation-btn" data-animation="slideDown" title="Shora">
+                                <span>⬇</span>
+                                <small>Shora</small>
+                            </button>
+                            <button class="animation-btn" data-animation="fadeIn" title="Fade In">
+                                <span>◐</span>
+                                <small>Fade In</small>
+                            </button>
+                            <button class="animation-btn" data-animation="zoomIn" title="Zoom In">
+                                <span>🔍</span>
+                                <small>Zoom In</small>
+                            </button>
+                            <button class="animation-btn" data-animation="bounce" title="Bounce">
+                                <span>⚡</span>
+                                <small>Bounce</small>
+                            </button>
+                            <button class="animation-btn" data-animation="rotate" title="Rotate">
+                                <span>🔄</span>
+                                <small>Rotace</small>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="property-group">
+                        <h3>Nastaveni animace</h3>
+                        <div class="property-row">
+                            <label>Doba trvani:</label>
+                            <input type="number" id="animDuration" value="500" min="100" max="5000" step="100">
+                            <span>ms</span>
+                        </div>
+                        <div class="property-row">
+                            <label>Zpozdeni:</label>
+                            <input type="number" id="animDelay" value="0" min="0" max="10000" step="100">
+                            <span>ms</span>
+                        </div>
+                        <div class="property-row">
+                            <label>Easing:</label>
+                            <select id="animEasing">
+                                <option value="ease">Ease</option>
+                                <option value="linear">Linear</option>
+                                <option value="ease-in">Ease In</option>
+                                <option value="ease-out">Ease Out</option>
+                                <option value="ease-in-out">Ease In Out</option>
+                                <option value="cubic-bezier(0.68,-0.55,0.265,1.55)">Elastic</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="property-group">
+                        <h3>Odchod (Exit)</h3>
+                        <div class="property-row">
+                            <label>
+                                <input type="checkbox" id="animExitEnabled">
+                                Animace odchodu
+                            </label>
+                        </div>
+                        <div class="property-row" id="exitAnimOptions">
+                            <label>Typ:</label>
+                            <select id="animExitType">
+                                <option value="same">Stejny jako prichod</option>
+                                <option value="slideLeft">Doleva</option>
+                                <option value="slideRight">Doprava</option>
+                                <option value="slideUp">Nahoru</option>
+                                <option value="slideDown">Dolu</option>
+                                <option value="fadeOut">Fade Out</option>
+                                <option value="zoomOut">Zoom Out</option>
+                            </select>
+                        </div>
+                        <div class="property-row" id="exitAnimDuration">
+                            <label>Doba zobrazeni:</label>
+                            <input type="number" id="animDisplayDuration" value="5000" min="1000" max="60000" step="500">
+                            <span>ms</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timer Tab -->
+                <div class="tab-content" id="tab-timer">
+                    <div class="property-group">
+                        <h3>Opakovani</h3>
+                        <div class="property-row">
+                            <label>
+                                <input type="checkbox" id="timerEnabled">
+                                Automaticke opakovani
+                            </label>
+                        </div>
+                        <div class="timer-options" id="timerOptions">
+                            <div class="property-row">
+                                <label>Interval:</label>
+                                <select id="timerPreset">
+                                    <option value="60000">1 minuta</option>
+                                    <option value="300000" selected>5 minut</option>
+                                    <option value="600000">10 minut</option>
+                                    <option value="900000">15 minut</option>
+                                    <option value="1800000">30 minut</option>
+                                    <option value="custom">Vlastni...</option>
+                                </select>
+                            </div>
+                            <div class="property-row hidden" id="customIntervalRow">
+                                <label>Vlastni (sekundy):</label>
+                                <input type="number" id="timerCustom" value="300" min="10" max="86400">
+                            </div>
+                            <div class="property-row">
+                                <label>
+                                    <input type="checkbox" id="timerRandomize">
+                                    Nahodne +/- 30s
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+        </main>
+
+        <!-- Bottom Action Bar -->
+        <footer class="action-bar">
+            <div class="action-left">
+                <button id="btnTest" class="btn btn-success btn-large">
+                    <span>▶</span> TEST
+                </button>
+                <button id="btnPreview" class="btn btn-primary btn-large">
+                    <span>👁</span> Preview (nove okno)
+                </button>
+            </div>
+            <div class="action-right">
+                <button id="btnExportHTML" class="btn btn-accent btn-large">
+                    <span>📥</span> Export HTML
+                </button>
+                <button id="btnCopyOBS" class="btn btn-secondary" title="Kopirovat URL pro OBS Browser Source">
+                    <span>📋</span> OBS URL
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Image Upload Modal -->
+    <div class="modal" id="imageModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Pridat obrazek</h3>
+                <button class="modal-close" id="closeImageModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="upload-zone" id="uploadZone">
+                    <span class="upload-icon">🖼️</span>
+                    <p>Pretahni obrazek sem</p>
+                    <p>nebo</p>
+                    <input type="file" id="imageInput" accept="image/*" hidden>
+                    <button class="btn btn-primary" id="btnSelectImage">Vyber soubor</button>
+                    <small>Podporovane formaty: PNG, JPG, GIF, SVG, WebP</small>
+                </div>
+                <div class="url-input">
+                    <label>Nebo zadej URL:</label>
+                    <input type="url" id="imageUrl" placeholder="https://example.com/image.png">
+                    <button class="btn btn-secondary" id="btnLoadUrl">Nacist</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Modal -->
+    <div class="modal" id="exportModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3>Export HTML pro OBS</h3>
+                <button class="modal-close" id="closeExportModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="export-info">
+                    <p>Tento HTML soubor lze pouzit jako Browser Source v OBS Studio.</p>
+                    <ol>
+                        <li>Stahni HTML soubor</li>
+                        <li>V OBS pridej novy zdroj: <strong>Browser</strong></li>
+                        <li>Zatrhni "Local file" a vyber stazeny soubor</li>
+                        <li>Nastav rozliseni podle tvych hodnot</li>
+                    </ol>
+                </div>
+                <div class="export-options">
+                    <div class="property-row">
+                        <label>
+                            <input type="checkbox" id="exportWithTimer" checked>
+                            Zahrnout casovac opakovani
+                        </label>
+                    </div>
+                    <div class="property-row">
+                        <label>
+                            <input type="checkbox" id="exportMinified">
+                            Minifikovat kod
+                        </label>
+                    </div>
+                </div>
+                <textarea id="exportCode" rows="15" readonly></textarea>
+                <div class="export-actions">
+                    <button class="btn btn-secondary" id="btnCopyCode">
+                        <span>📋</span> Kopirovat kod
+                    </button>
+                    <button class="btn btn-primary" id="btnDownloadHTML">
+                        <span>💾</span> Stahnout HTML
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="script.js"></script>
+</body>
+</html>

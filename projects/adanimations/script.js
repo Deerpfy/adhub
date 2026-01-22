@@ -1,0 +1,1398 @@
+/**
+ * AdAnimations - OBS Animation Creator
+ * Version 1.0
+ *
+ * Editor pro tvorbu animovanych banneru a overlays pro OBS
+ */
+
+// Application State
+const AppState = {
+    elements: [],
+    selectedElement: null,
+    canvas: {
+        width: 1920,
+        height: 1080,
+        zoom: 0.5
+    },
+    animation: {
+        type: 'slideLeft',
+        duration: 500,
+        delay: 0,
+        easing: 'ease',
+        exitEnabled: false,
+        exitType: 'same',
+        displayDuration: 5000
+    },
+    timer: {
+        enabled: false,
+        interval: 300000,
+        randomize: false
+    },
+    isDragging: false,
+    isResizing: false,
+    dragStart: { x: 0, y: 0 },
+    elementIdCounter: 0,
+    previewWindow: null
+};
+
+// Animation mappings
+const ANIMATION_MAP = {
+    slideLeft: { enter: 'slideInLeft', exit: 'slideOutLeft' },
+    slideRight: { enter: 'slideInRight', exit: 'slideOutRight' },
+    slideUp: { enter: 'slideInUp', exit: 'slideOutUp' },
+    slideDown: { enter: 'slideInDown', exit: 'slideOutDown' },
+    fadeIn: { enter: 'fadeIn', exit: 'fadeOut' },
+    zoomIn: { enter: 'zoomIn', exit: 'zoomOut' },
+    bounce: { enter: 'bounce', exit: 'zoomOut' },
+    rotate: { enter: 'rotateIn', exit: 'zoomOut' }
+};
+
+// DOM Elements cache
+const DOM = {};
+
+// Initialize application
+document.addEventListener('DOMContentLoaded', init);
+
+function init() {
+    cacheDOM();
+    setupEventListeners();
+    updateCanvasSize();
+    updateZoomDisplay();
+    loadFromLocalStorage();
+}
+
+function cacheDOM() {
+    // Header buttons
+    DOM.btnNewProject = document.getElementById('btnNewProject');
+    DOM.btnLoadProject = document.getElementById('btnLoadProject');
+    DOM.btnSaveProject = document.getElementById('btnSaveProject');
+
+    // Element buttons
+    DOM.btnAddText = document.getElementById('btnAddText');
+    DOM.btnAddImage = document.getElementById('btnAddImage');
+    DOM.btnAddShape = document.getElementById('btnAddShape');
+    DOM.elementList = document.getElementById('elementList');
+
+    // Canvas
+    DOM.canvas = document.getElementById('canvas');
+    DOM.canvasContainer = document.getElementById('canvasContainer');
+    DOM.canvasWrapper = document.getElementById('canvasWrapper');
+    DOM.canvasPreset = document.getElementById('canvasPreset');
+    DOM.canvasWidth = document.getElementById('canvasWidth');
+    DOM.canvasHeight = document.getElementById('canvasHeight');
+    DOM.btnZoomIn = document.getElementById('btnZoomIn');
+    DOM.btnZoomOut = document.getElementById('btnZoomOut');
+    DOM.btnZoomFit = document.getElementById('btnZoomFit');
+    DOM.zoomLevel = document.getElementById('zoomLevel');
+
+    // Tabs
+    DOM.tabBtns = document.querySelectorAll('.tab-btn');
+    DOM.tabContents = document.querySelectorAll('.tab-content');
+
+    // Properties
+    DOM.propertyGroups = document.getElementById('propertyGroups');
+    DOM.propX = document.getElementById('propX');
+    DOM.propY = document.getElementById('propY');
+    DOM.propWidth = document.getElementById('propWidth');
+    DOM.propHeight = document.getElementById('propHeight');
+    DOM.propText = document.getElementById('propText');
+    DOM.propFontFamily = document.getElementById('propFontFamily');
+    DOM.propFontSize = document.getElementById('propFontSize');
+    DOM.propTextColor = document.getElementById('propTextColor');
+    DOM.textProperties = document.getElementById('textProperties');
+    DOM.propBgType = document.getElementById('propBgType');
+    DOM.propBgColor = document.getElementById('propBgColor');
+    DOM.propBgOpacity = document.getElementById('propBgOpacity');
+    DOM.propGradient1 = document.getElementById('propGradient1');
+    DOM.propGradient2 = document.getElementById('propGradient2');
+    DOM.bgColorRow = document.getElementById('bgColorRow');
+    DOM.bgGradientRow = document.getElementById('bgGradientRow');
+    DOM.propBorderWidth = document.getElementById('propBorderWidth');
+    DOM.propBorderColor = document.getElementById('propBorderColor');
+    DOM.propBorderRadius = document.getElementById('propBorderRadius');
+    DOM.propShadowEnabled = document.getElementById('propShadowEnabled');
+    DOM.propShadowX = document.getElementById('propShadowX');
+    DOM.propShadowY = document.getElementById('propShadowY');
+    DOM.propShadowBlur = document.getElementById('propShadowBlur');
+    DOM.propShadowColor = document.getElementById('propShadowColor');
+    DOM.shadowOptions = document.getElementById('shadowOptions');
+    DOM.shadowOptions2 = document.getElementById('shadowOptions2');
+
+    // Animation
+    DOM.animationBtns = document.querySelectorAll('.animation-btn');
+    DOM.animDuration = document.getElementById('animDuration');
+    DOM.animDelay = document.getElementById('animDelay');
+    DOM.animEasing = document.getElementById('animEasing');
+    DOM.animExitEnabled = document.getElementById('animExitEnabled');
+    DOM.animExitType = document.getElementById('animExitType');
+    DOM.animDisplayDuration = document.getElementById('animDisplayDuration');
+    DOM.exitAnimOptions = document.getElementById('exitAnimOptions');
+    DOM.exitAnimDuration = document.getElementById('exitAnimDuration');
+
+    // Timer
+    DOM.timerEnabled = document.getElementById('timerEnabled');
+    DOM.timerOptions = document.getElementById('timerOptions');
+    DOM.timerPreset = document.getElementById('timerPreset');
+    DOM.timerCustom = document.getElementById('timerCustom');
+    DOM.customIntervalRow = document.getElementById('customIntervalRow');
+    DOM.timerRandomize = document.getElementById('timerRandomize');
+
+    // Actions
+    DOM.btnTest = document.getElementById('btnTest');
+    DOM.btnPreview = document.getElementById('btnPreview');
+    DOM.btnExportHTML = document.getElementById('btnExportHTML');
+    DOM.btnCopyOBS = document.getElementById('btnCopyOBS');
+
+    // Image Modal
+    DOM.imageModal = document.getElementById('imageModal');
+    DOM.closeImageModal = document.getElementById('closeImageModal');
+    DOM.uploadZone = document.getElementById('uploadZone');
+    DOM.imageInput = document.getElementById('imageInput');
+    DOM.btnSelectImage = document.getElementById('btnSelectImage');
+    DOM.imageUrl = document.getElementById('imageUrl');
+    DOM.btnLoadUrl = document.getElementById('btnLoadUrl');
+
+    // Export Modal
+    DOM.exportModal = document.getElementById('exportModal');
+    DOM.closeExportModal = document.getElementById('closeExportModal');
+    DOM.exportCode = document.getElementById('exportCode');
+    DOM.exportWithTimer = document.getElementById('exportWithTimer');
+    DOM.exportMinified = document.getElementById('exportMinified');
+    DOM.btnCopyCode = document.getElementById('btnCopyCode');
+    DOM.btnDownloadHTML = document.getElementById('btnDownloadHTML');
+
+    // Toast
+    DOM.toastContainer = document.getElementById('toastContainer');
+}
+
+function setupEventListeners() {
+    // Header buttons
+    DOM.btnNewProject.addEventListener('click', newProject);
+    DOM.btnLoadProject.addEventListener('click', loadProject);
+    DOM.btnSaveProject.addEventListener('click', saveProject);
+
+    // Element buttons
+    DOM.btnAddText.addEventListener('click', () => addElement('text'));
+    DOM.btnAddImage.addEventListener('click', () => showModal('imageModal'));
+    DOM.btnAddShape.addEventListener('click', () => addElement('shape'));
+
+    // Canvas preset
+    DOM.canvasPreset.addEventListener('change', handleCanvasPresetChange);
+    DOM.canvasWidth.addEventListener('change', updateCanvasSize);
+    DOM.canvasHeight.addEventListener('change', updateCanvasSize);
+
+    // Zoom
+    DOM.btnZoomIn.addEventListener('click', () => setZoom(AppState.canvas.zoom + 0.1));
+    DOM.btnZoomOut.addEventListener('click', () => setZoom(AppState.canvas.zoom - 0.1));
+    DOM.btnZoomFit.addEventListener('click', zoomToFit);
+
+    // Tabs
+    DOM.tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+    });
+
+    // Properties - Position & Size
+    DOM.propX.addEventListener('change', () => updateElementProperty('x', parseInt(DOM.propX.value)));
+    DOM.propY.addEventListener('change', () => updateElementProperty('y', parseInt(DOM.propY.value)));
+    DOM.propWidth.addEventListener('change', () => updateElementProperty('width', parseInt(DOM.propWidth.value)));
+    DOM.propHeight.addEventListener('change', () => updateElementProperty('height', parseInt(DOM.propHeight.value)));
+
+    // Properties - Text
+    DOM.propText.addEventListener('input', () => updateElementProperty('text', DOM.propText.value));
+    DOM.propFontFamily.addEventListener('change', () => updateElementProperty('fontFamily', DOM.propFontFamily.value));
+    DOM.propFontSize.addEventListener('change', () => updateElementProperty('fontSize', parseInt(DOM.propFontSize.value)));
+    DOM.propTextColor.addEventListener('input', () => updateElementProperty('textColor', DOM.propTextColor.value));
+
+    // Text alignment buttons
+    document.querySelectorAll('[data-align]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('[data-align]').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            updateElementProperty('textAlign', btn.dataset.align);
+        });
+    });
+
+    // Text style buttons
+    DOM.propBold = document.getElementById('propBold');
+    DOM.propItalic = document.getElementById('propItalic');
+    DOM.propUnderline = document.getElementById('propUnderline');
+
+    DOM.propBold.addEventListener('click', () => {
+        DOM.propBold.classList.toggle('active');
+        updateElementProperty('fontWeight', DOM.propBold.classList.contains('active') ? 'bold' : 'normal');
+    });
+    DOM.propItalic.addEventListener('click', () => {
+        DOM.propItalic.classList.toggle('active');
+        updateElementProperty('fontStyle', DOM.propItalic.classList.contains('active') ? 'italic' : 'normal');
+    });
+    DOM.propUnderline.addEventListener('click', () => {
+        DOM.propUnderline.classList.toggle('active');
+        updateElementProperty('textDecoration', DOM.propUnderline.classList.contains('active') ? 'underline' : 'none');
+    });
+
+    // Properties - Background
+    DOM.propBgType.addEventListener('change', handleBgTypeChange);
+    DOM.propBgColor.addEventListener('input', () => updateElementProperty('bgColor', DOM.propBgColor.value));
+    DOM.propBgOpacity.addEventListener('input', () => updateElementProperty('bgOpacity', parseInt(DOM.propBgOpacity.value)));
+    DOM.propGradient1.addEventListener('input', updateGradient);
+    DOM.propGradient2.addEventListener('input', updateGradient);
+
+    // Properties - Border
+    DOM.propBorderWidth.addEventListener('change', () => updateElementProperty('borderWidth', parseInt(DOM.propBorderWidth.value)));
+    DOM.propBorderColor.addEventListener('input', () => updateElementProperty('borderColor', DOM.propBorderColor.value));
+    DOM.propBorderRadius.addEventListener('change', () => updateElementProperty('borderRadius', parseInt(DOM.propBorderRadius.value)));
+
+    // Properties - Shadow
+    DOM.propShadowEnabled.addEventListener('change', handleShadowToggle);
+    DOM.propShadowX.addEventListener('change', updateShadow);
+    DOM.propShadowY.addEventListener('change', updateShadow);
+    DOM.propShadowBlur.addEventListener('change', updateShadow);
+    DOM.propShadowColor.addEventListener('input', updateShadow);
+
+    // Animation buttons
+    DOM.animationBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            DOM.animationBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            AppState.animation.type = btn.dataset.animation;
+            updateElementProperty('animationType', btn.dataset.animation);
+        });
+    });
+
+    // Animation settings
+    DOM.animDuration.addEventListener('change', () => {
+        AppState.animation.duration = parseInt(DOM.animDuration.value);
+        updateElementProperty('animationDuration', AppState.animation.duration);
+    });
+    DOM.animDelay.addEventListener('change', () => {
+        AppState.animation.delay = parseInt(DOM.animDelay.value);
+        updateElementProperty('animationDelay', AppState.animation.delay);
+    });
+    DOM.animEasing.addEventListener('change', () => {
+        AppState.animation.easing = DOM.animEasing.value;
+        updateElementProperty('animationEasing', AppState.animation.easing);
+    });
+
+    // Exit animation
+    DOM.animExitEnabled.addEventListener('change', () => {
+        AppState.animation.exitEnabled = DOM.animExitEnabled.checked;
+        DOM.exitAnimOptions.classList.toggle('hidden', !DOM.animExitEnabled.checked);
+        DOM.exitAnimDuration.classList.toggle('hidden', !DOM.animExitEnabled.checked);
+        updateElementProperty('exitAnimationEnabled', DOM.animExitEnabled.checked);
+    });
+    DOM.animExitType.addEventListener('change', () => {
+        AppState.animation.exitType = DOM.animExitType.value;
+        updateElementProperty('exitAnimationType', DOM.animExitType.value);
+    });
+    DOM.animDisplayDuration.addEventListener('change', () => {
+        AppState.animation.displayDuration = parseInt(DOM.animDisplayDuration.value);
+        updateElementProperty('displayDuration', AppState.animation.displayDuration);
+    });
+
+    // Timer
+    DOM.timerEnabled.addEventListener('change', handleTimerToggle);
+    DOM.timerPreset.addEventListener('change', handleTimerPresetChange);
+    DOM.timerCustom.addEventListener('change', () => {
+        AppState.timer.interval = parseInt(DOM.timerCustom.value) * 1000;
+    });
+    DOM.timerRandomize.addEventListener('change', () => {
+        AppState.timer.randomize = DOM.timerRandomize.checked;
+    });
+
+    // Action buttons
+    DOM.btnTest.addEventListener('click', runTest);
+    DOM.btnPreview.addEventListener('click', openPreview);
+    DOM.btnExportHTML.addEventListener('click', showExportModal);
+    DOM.btnCopyOBS.addEventListener('click', copyOBSUrl);
+
+    // Image Modal
+    DOM.closeImageModal.addEventListener('click', () => hideModal('imageModal'));
+    DOM.btnSelectImage.addEventListener('click', () => DOM.imageInput.click());
+    DOM.imageInput.addEventListener('change', handleImageSelect);
+    DOM.btnLoadUrl.addEventListener('click', handleImageUrl);
+
+    // Drag and drop for images
+    DOM.uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        DOM.uploadZone.classList.add('dragover');
+    });
+    DOM.uploadZone.addEventListener('dragleave', () => {
+        DOM.uploadZone.classList.remove('dragover');
+    });
+    DOM.uploadZone.addEventListener('drop', handleImageDrop);
+
+    // Export Modal
+    DOM.closeExportModal.addEventListener('click', () => hideModal('exportModal'));
+    DOM.btnCopyCode.addEventListener('click', copyExportCode);
+    DOM.btnDownloadHTML.addEventListener('click', downloadHTML);
+    DOM.exportWithTimer.addEventListener('change', generateExportCode);
+    DOM.exportMinified.addEventListener('change', generateExportCode);
+
+    // Canvas click to deselect
+    DOM.canvas.addEventListener('click', (e) => {
+        if (e.target === DOM.canvas || e.target.classList.contains('canvas-grid')) {
+            selectElement(null);
+        }
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', handleKeyboard);
+
+    // Close modals on outside click
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                hideModal(modal.id);
+            }
+        });
+    });
+}
+
+// Element Management
+function addElement(type, options = {}) {
+    const id = `element-${++AppState.elementIdCounter}`;
+
+    const element = {
+        id,
+        type,
+        name: options.name || `${type.charAt(0).toUpperCase() + type.slice(1)} ${AppState.elementIdCounter}`,
+        x: options.x || 100,
+        y: options.y || 100,
+        width: options.width || (type === 'text' ? 400 : 200),
+        height: options.height || (type === 'text' ? 80 : 150),
+        // Text properties
+        text: options.text || 'Vas text zde',
+        fontFamily: options.fontFamily || 'Arial',
+        fontSize: options.fontSize || 32,
+        textColor: options.textColor || '#ffffff',
+        textAlign: options.textAlign || 'center',
+        fontWeight: options.fontWeight || 'normal',
+        fontStyle: options.fontStyle || 'normal',
+        textDecoration: options.textDecoration || 'none',
+        // Background
+        bgType: options.bgType || (type === 'text' ? 'solid' : 'solid'),
+        bgColor: options.bgColor || '#333333',
+        bgOpacity: options.bgOpacity !== undefined ? options.bgOpacity : 100,
+        gradient1: options.gradient1 || '#8b5cf6',
+        gradient2: options.gradient2 || '#ec4899',
+        // Image
+        imageSrc: options.imageSrc || '',
+        // Border
+        borderWidth: options.borderWidth || 0,
+        borderColor: options.borderColor || '#ffffff',
+        borderRadius: options.borderRadius || 8,
+        // Shadow
+        shadowEnabled: options.shadowEnabled || false,
+        shadowX: options.shadowX || 4,
+        shadowY: options.shadowY || 4,
+        shadowBlur: options.shadowBlur || 8,
+        shadowColor: options.shadowColor || '#000000',
+        // Animation
+        animationType: options.animationType || 'slideLeft',
+        animationDuration: options.animationDuration || 500,
+        animationDelay: options.animationDelay || 0,
+        animationEasing: options.animationEasing || 'ease',
+        exitAnimationEnabled: options.exitAnimationEnabled || false,
+        exitAnimationType: options.exitAnimationType || 'same',
+        displayDuration: options.displayDuration || 5000
+    };
+
+    AppState.elements.push(element);
+    renderElementList();
+    renderCanvasElement(element);
+    selectElement(id);
+    saveToLocalStorage();
+
+    return element;
+}
+
+function removeElement(id) {
+    const index = AppState.elements.findIndex(e => e.id === id);
+    if (index !== -1) {
+        AppState.elements.splice(index, 1);
+        const domElement = DOM.canvas.querySelector(`[data-id="${id}"]`);
+        if (domElement) domElement.remove();
+        if (AppState.selectedElement === id) {
+            selectElement(null);
+        }
+        renderElementList();
+        saveToLocalStorage();
+    }
+}
+
+function duplicateElement(id) {
+    const element = AppState.elements.find(e => e.id === id);
+    if (element) {
+        const newElement = { ...element };
+        newElement.x += 20;
+        newElement.y += 20;
+        newElement.name = element.name + ' (kopie)';
+        addElement(element.type, newElement);
+    }
+}
+
+function selectElement(id) {
+    AppState.selectedElement = id;
+
+    // Update canvas selection
+    DOM.canvas.querySelectorAll('.canvas-element').forEach(el => {
+        el.classList.toggle('selected', el.dataset.id === id);
+    });
+
+    // Update list selection
+    DOM.elementList.querySelectorAll('.element-item').forEach(el => {
+        el.classList.toggle('selected', el.dataset.id === id);
+    });
+
+    // Show/hide properties panel
+    const noSelection = document.querySelector('.no-selection');
+    if (id) {
+        noSelection.classList.add('hidden');
+        DOM.propertyGroups.classList.remove('hidden');
+        updatePropertiesPanel();
+    } else {
+        noSelection.classList.remove('hidden');
+        DOM.propertyGroups.classList.add('hidden');
+    }
+}
+
+function updateElementProperty(property, value) {
+    if (!AppState.selectedElement) return;
+
+    const element = AppState.elements.find(e => e.id === AppState.selectedElement);
+    if (!element) return;
+
+    element[property] = value;
+    renderCanvasElement(element);
+    saveToLocalStorage();
+}
+
+function updatePropertiesPanel() {
+    const element = AppState.elements.find(e => e.id === AppState.selectedElement);
+    if (!element) return;
+
+    // Position & Size
+    DOM.propX.value = element.x;
+    DOM.propY.value = element.y;
+    DOM.propWidth.value = element.width;
+    DOM.propHeight.value = element.height;
+
+    // Text properties
+    DOM.textProperties.classList.toggle('hidden', element.type !== 'text');
+    if (element.type === 'text') {
+        DOM.propText.value = element.text;
+        DOM.propFontFamily.value = element.fontFamily;
+        DOM.propFontSize.value = element.fontSize;
+        DOM.propTextColor.value = element.textColor;
+
+        // Text align
+        document.querySelectorAll('[data-align]').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.align === element.textAlign);
+        });
+
+        // Text style
+        DOM.propBold.classList.toggle('active', element.fontWeight === 'bold');
+        DOM.propItalic.classList.toggle('active', element.fontStyle === 'italic');
+        DOM.propUnderline.classList.toggle('active', element.textDecoration === 'underline');
+    }
+
+    // Background
+    DOM.propBgType.value = element.bgType;
+    DOM.propBgColor.value = element.bgColor;
+    DOM.propBgOpacity.value = element.bgOpacity;
+    DOM.propGradient1.value = element.gradient1;
+    DOM.propGradient2.value = element.gradient2;
+    handleBgTypeChange();
+
+    // Border
+    DOM.propBorderWidth.value = element.borderWidth;
+    DOM.propBorderColor.value = element.borderColor;
+    DOM.propBorderRadius.value = element.borderRadius;
+
+    // Shadow
+    DOM.propShadowEnabled.checked = element.shadowEnabled;
+    DOM.propShadowX.value = element.shadowX;
+    DOM.propShadowY.value = element.shadowY;
+    DOM.propShadowBlur.value = element.shadowBlur;
+    DOM.propShadowColor.value = element.shadowColor;
+    handleShadowToggle();
+
+    // Animation
+    DOM.animationBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.animation === element.animationType);
+    });
+    DOM.animDuration.value = element.animationDuration;
+    DOM.animDelay.value = element.animationDelay;
+    DOM.animEasing.value = element.animationEasing;
+    DOM.animExitEnabled.checked = element.exitAnimationEnabled;
+    DOM.animExitType.value = element.exitAnimationType;
+    DOM.animDisplayDuration.value = element.displayDuration;
+    DOM.exitAnimOptions.classList.toggle('hidden', !element.exitAnimationEnabled);
+    DOM.exitAnimDuration.classList.toggle('hidden', !element.exitAnimationEnabled);
+}
+
+// Rendering
+function renderElementList() {
+    if (AppState.elements.length === 0) {
+        DOM.elementList.innerHTML = `
+            <div class="empty-state">
+                <span class="empty-icon">📦</span>
+                <p>Zadne elementy</p>
+                <small>Klikni + pro pridani</small>
+            </div>
+        `;
+        return;
+    }
+
+    DOM.elementList.innerHTML = AppState.elements.map(el => `
+        <div class="element-item ${AppState.selectedElement === el.id ? 'selected' : ''}"
+             data-id="${el.id}"
+             draggable="true">
+            <span class="element-icon">${el.type === 'text' ? 'T' : el.type === 'image' ? '🖼️' : '⬜'}</span>
+            <span class="element-name">${escapeHtml(el.name)}</span>
+            <div class="element-actions">
+                <button class="btn btn-icon" onclick="event.stopPropagation(); duplicateElement('${el.id}')" title="Duplikovat">📋</button>
+                <button class="btn btn-icon btn-danger" onclick="event.stopPropagation(); removeElement('${el.id}')" title="Smazat">🗑</button>
+            </div>
+        </div>
+    `).join('');
+
+    // Add click listeners
+    DOM.elementList.querySelectorAll('.element-item').forEach(item => {
+        item.addEventListener('click', () => selectElement(item.dataset.id));
+    });
+}
+
+function renderCanvasElement(element) {
+    let domElement = DOM.canvas.querySelector(`[data-id="${element.id}"]`);
+
+    if (!domElement) {
+        domElement = document.createElement('div');
+        domElement.className = 'canvas-element';
+        domElement.dataset.id = element.id;
+        domElement.innerHTML = `
+            <div class="resize-handle nw"></div>
+            <div class="resize-handle ne"></div>
+            <div class="resize-handle sw"></div>
+            <div class="resize-handle se"></div>
+        `;
+        DOM.canvas.appendChild(domElement);
+        setupElementDrag(domElement);
+    }
+
+    // Position & Size
+    domElement.style.left = `${element.x}px`;
+    domElement.style.top = `${element.y}px`;
+    domElement.style.width = `${element.width}px`;
+    domElement.style.height = `${element.height}px`;
+
+    // Background
+    if (element.bgType === 'none') {
+        domElement.style.background = 'transparent';
+    } else if (element.bgType === 'solid') {
+        const opacity = element.bgOpacity / 100;
+        domElement.style.background = hexToRgba(element.bgColor, opacity);
+    } else if (element.bgType === 'gradient') {
+        domElement.style.background = `linear-gradient(135deg, ${element.gradient1}, ${element.gradient2})`;
+    } else if (element.bgType === 'image' && element.imageSrc) {
+        domElement.style.background = `url(${element.imageSrc}) center/cover no-repeat`;
+    }
+
+    // Border
+    domElement.style.border = element.borderWidth > 0
+        ? `${element.borderWidth}px solid ${element.borderColor}`
+        : 'none';
+    domElement.style.borderRadius = `${element.borderRadius}px`;
+
+    // Shadow
+    if (element.shadowEnabled) {
+        domElement.style.boxShadow = `${element.shadowX}px ${element.shadowY}px ${element.shadowBlur}px ${element.shadowColor}`;
+    } else {
+        domElement.style.boxShadow = 'none';
+    }
+
+    // Text content
+    let contentEl = domElement.querySelector('.element-content');
+    if (!contentEl) {
+        contentEl = document.createElement('div');
+        contentEl.className = 'element-content';
+        contentEl.style.cssText = 'width:100%;height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;';
+        domElement.insertBefore(contentEl, domElement.firstChild);
+    }
+
+    if (element.type === 'text') {
+        contentEl.innerHTML = `<span style="
+            font-family: ${element.fontFamily};
+            font-size: ${element.fontSize}px;
+            color: ${element.textColor};
+            text-align: ${element.textAlign};
+            font-weight: ${element.fontWeight};
+            font-style: ${element.fontStyle};
+            text-decoration: ${element.textDecoration};
+            word-wrap: break-word;
+            padding: 10px;
+            width: 100%;
+        ">${escapeHtml(element.text)}</span>`;
+    } else if (element.type === 'image' && element.imageSrc) {
+        contentEl.innerHTML = `<img src="${element.imageSrc}" style="max-width:100%;max-height:100%;object-fit:contain;">`;
+    } else {
+        contentEl.innerHTML = '';
+    }
+
+    // Selection state
+    domElement.classList.toggle('selected', AppState.selectedElement === element.id);
+}
+
+function setupElementDrag(domElement) {
+    let startX, startY, startElX, startElY;
+    let resizeHandle = null;
+    let startWidth, startHeight;
+
+    const onMouseDown = (e) => {
+        if (e.target.classList.contains('resize-handle')) {
+            resizeHandle = e.target;
+            AppState.isResizing = true;
+            const element = AppState.elements.find(el => el.id === domElement.dataset.id);
+            startWidth = element.width;
+            startHeight = element.height;
+            startElX = element.x;
+            startElY = element.y;
+        } else {
+            AppState.isDragging = true;
+            const element = AppState.elements.find(el => el.id === domElement.dataset.id);
+            startElX = element.x;
+            startElY = element.y;
+        }
+
+        startX = e.clientX / AppState.canvas.zoom;
+        startY = e.clientY / AppState.canvas.zoom;
+        selectElement(domElement.dataset.id);
+
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+        e.preventDefault();
+    };
+
+    const onMouseMove = (e) => {
+        const element = AppState.elements.find(el => el.id === domElement.dataset.id);
+        if (!element) return;
+
+        const currentX = e.clientX / AppState.canvas.zoom;
+        const currentY = e.clientY / AppState.canvas.zoom;
+        const deltaX = currentX - startX;
+        const deltaY = currentY - startY;
+
+        if (AppState.isResizing && resizeHandle) {
+            const handleClass = resizeHandle.className;
+
+            if (handleClass.includes('se')) {
+                element.width = Math.max(50, startWidth + deltaX);
+                element.height = Math.max(50, startHeight + deltaY);
+            } else if (handleClass.includes('sw')) {
+                element.width = Math.max(50, startWidth - deltaX);
+                element.height = Math.max(50, startHeight + deltaY);
+                element.x = startElX + (startWidth - element.width);
+            } else if (handleClass.includes('ne')) {
+                element.width = Math.max(50, startWidth + deltaX);
+                element.height = Math.max(50, startHeight - deltaY);
+                element.y = startElY + (startHeight - element.height);
+            } else if (handleClass.includes('nw')) {
+                element.width = Math.max(50, startWidth - deltaX);
+                element.height = Math.max(50, startHeight - deltaY);
+                element.x = startElX + (startWidth - element.width);
+                element.y = startElY + (startHeight - element.height);
+            }
+        } else if (AppState.isDragging) {
+            element.x = Math.max(0, startElX + deltaX);
+            element.y = Math.max(0, startElY + deltaY);
+        }
+
+        renderCanvasElement(element);
+        updatePropertiesPanel();
+    };
+
+    const onMouseUp = () => {
+        AppState.isDragging = false;
+        AppState.isResizing = false;
+        resizeHandle = null;
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        saveToLocalStorage();
+    };
+
+    domElement.addEventListener('mousedown', onMouseDown);
+}
+
+// Canvas Management
+function handleCanvasPresetChange() {
+    const value = DOM.canvasPreset.value;
+
+    if (value === 'custom') {
+        DOM.canvasWidth.classList.remove('hidden');
+        DOM.canvasHeight.classList.remove('hidden');
+        document.querySelector('.size-separator').classList.remove('hidden');
+    } else {
+        DOM.canvasWidth.classList.add('hidden');
+        DOM.canvasHeight.classList.add('hidden');
+        document.querySelector('.size-separator').classList.add('hidden');
+
+        const [width, height] = value.split('x').map(Number);
+        DOM.canvasWidth.value = width;
+        DOM.canvasHeight.value = height;
+        updateCanvasSize();
+    }
+}
+
+function updateCanvasSize() {
+    AppState.canvas.width = parseInt(DOM.canvasWidth.value) || 1920;
+    AppState.canvas.height = parseInt(DOM.canvasHeight.value) || 1080;
+
+    DOM.canvas.style.width = `${AppState.canvas.width}px`;
+    DOM.canvas.style.height = `${AppState.canvas.height}px`;
+
+    applyZoom();
+    saveToLocalStorage();
+}
+
+function setZoom(zoom) {
+    AppState.canvas.zoom = Math.max(0.1, Math.min(2, zoom));
+    applyZoom();
+}
+
+function applyZoom() {
+    DOM.canvasWrapper.style.transform = `scale(${AppState.canvas.zoom})`;
+    DOM.canvasWrapper.style.transformOrigin = 'center center';
+    updateZoomDisplay();
+}
+
+function updateZoomDisplay() {
+    DOM.zoomLevel.textContent = `${Math.round(AppState.canvas.zoom * 100)}%`;
+}
+
+function zoomToFit() {
+    const containerWidth = DOM.canvasContainer.clientWidth - 40;
+    const containerHeight = DOM.canvasContainer.clientHeight - 40;
+
+    const scaleX = containerWidth / AppState.canvas.width;
+    const scaleY = containerHeight / AppState.canvas.height;
+
+    setZoom(Math.min(scaleX, scaleY, 1));
+}
+
+// Property Handlers
+function handleBgTypeChange() {
+    const type = DOM.propBgType.value;
+
+    DOM.bgColorRow.classList.toggle('hidden', type === 'none' || type === 'gradient' || type === 'image');
+    DOM.bgGradientRow.classList.toggle('hidden', type !== 'gradient');
+
+    if (AppState.selectedElement) {
+        updateElementProperty('bgType', type);
+    }
+}
+
+function updateGradient() {
+    updateElementProperty('gradient1', DOM.propGradient1.value);
+    updateElementProperty('gradient2', DOM.propGradient2.value);
+}
+
+function handleShadowToggle() {
+    const enabled = DOM.propShadowEnabled.checked;
+    DOM.shadowOptions.style.opacity = enabled ? '1' : '0.5';
+    DOM.shadowOptions2.style.opacity = enabled ? '1' : '0.5';
+
+    if (AppState.selectedElement) {
+        updateElementProperty('shadowEnabled', enabled);
+    }
+}
+
+function updateShadow() {
+    if (!AppState.selectedElement || !DOM.propShadowEnabled.checked) return;
+
+    const element = AppState.elements.find(e => e.id === AppState.selectedElement);
+    if (!element) return;
+
+    element.shadowX = parseInt(DOM.propShadowX.value);
+    element.shadowY = parseInt(DOM.propShadowY.value);
+    element.shadowBlur = parseInt(DOM.propShadowBlur.value);
+    element.shadowColor = DOM.propShadowColor.value;
+
+    renderCanvasElement(element);
+    saveToLocalStorage();
+}
+
+function handleTimerToggle() {
+    const enabled = DOM.timerEnabled.checked;
+    AppState.timer.enabled = enabled;
+    DOM.timerOptions.classList.toggle('enabled', enabled);
+}
+
+function handleTimerPresetChange() {
+    const value = DOM.timerPreset.value;
+
+    if (value === 'custom') {
+        DOM.customIntervalRow.classList.remove('hidden');
+    } else {
+        DOM.customIntervalRow.classList.add('hidden');
+        AppState.timer.interval = parseInt(value);
+    }
+}
+
+// Image Handling
+function handleImageSelect(e) {
+    const file = e.target.files[0];
+    if (file) {
+        processImageFile(file);
+    }
+}
+
+function handleImageDrop(e) {
+    e.preventDefault();
+    DOM.uploadZone.classList.remove('dragover');
+
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+        processImageFile(file);
+    }
+}
+
+function processImageFile(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        addElement('image', {
+            imageSrc: e.target.result,
+            bgType: 'none',
+            name: file.name.split('.')[0]
+        });
+        hideModal('imageModal');
+    };
+    reader.readAsDataURL(file);
+}
+
+function handleImageUrl() {
+    const url = DOM.imageUrl.value.trim();
+    if (url) {
+        addElement('image', {
+            imageSrc: url,
+            bgType: 'none',
+            name: 'Image'
+        });
+        hideModal('imageModal');
+        DOM.imageUrl.value = '';
+    }
+}
+
+// Tab Management
+function switchTab(tabId) {
+    DOM.tabBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tab === tabId);
+    });
+
+    DOM.tabContents.forEach(content => {
+        content.classList.toggle('active', content.id === `tab-${tabId}`);
+    });
+}
+
+// Modal Management
+function showModal(modalId) {
+    document.getElementById(modalId).classList.add('active');
+}
+
+function hideModal(modalId) {
+    document.getElementById(modalId).classList.remove('active');
+}
+
+// Test & Preview
+function runTest() {
+    // Play animation on all elements in sequence
+    const canvasElements = DOM.canvas.querySelectorAll('.canvas-element');
+
+    canvasElements.forEach((domEl, index) => {
+        const element = AppState.elements.find(e => e.id === domEl.dataset.id);
+        if (!element) return;
+
+        const animInfo = ANIMATION_MAP[element.animationType];
+        if (!animInfo) return;
+
+        // Reset and play animation
+        domEl.style.animation = 'none';
+        domEl.offsetHeight; // Trigger reflow
+
+        const enterAnim = `${animInfo.enter} ${element.animationDuration}ms ${element.animationEasing} ${element.animationDelay + (index * 100)}ms forwards`;
+        domEl.style.animation = enterAnim;
+
+        // Exit animation if enabled
+        if (element.exitAnimationEnabled) {
+            const exitAnim = element.exitAnimationType === 'same'
+                ? animInfo.exit
+                : ANIMATION_MAP[element.exitAnimationType.replace('Out', 'In')]?.exit || 'fadeOut';
+
+            setTimeout(() => {
+                domEl.style.animation = `${exitAnim} ${element.animationDuration}ms ${element.animationEasing} forwards`;
+
+                // Reset after exit
+                setTimeout(() => {
+                    domEl.style.animation = '';
+                }, element.animationDuration);
+            }, element.animationDelay + element.displayDuration);
+        } else {
+            // Just reset animation state
+            setTimeout(() => {
+                domEl.style.animation = '';
+            }, element.animationDuration + element.animationDelay + 100);
+        }
+    });
+
+    showToast('Test spusten', 'info');
+}
+
+function openPreview() {
+    const html = generatePreviewHTML();
+
+    // Close existing preview window if open
+    if (AppState.previewWindow && !AppState.previewWindow.closed) {
+        AppState.previewWindow.close();
+    }
+
+    // Open new window with exact canvas size
+    AppState.previewWindow = window.open('', 'AdAnimations Preview',
+        `width=${AppState.canvas.width},height=${AppState.canvas.height},menubar=no,toolbar=no,location=no,status=no`
+    );
+
+    if (AppState.previewWindow) {
+        AppState.previewWindow.document.write(html);
+        AppState.previewWindow.document.close();
+        showToast('Preview otevreno v novem okne', 'success');
+    } else {
+        showToast('Nepodarilo se otevrit preview okno. Povolte pop-up okna.', 'error');
+    }
+}
+
+function generatePreviewHTML() {
+    const elements = AppState.elements;
+    const width = AppState.canvas.width;
+    const height = AppState.canvas.height;
+
+    // Generate element styles and HTML
+    let elementsHTML = '';
+    let elementsCSS = '';
+
+    elements.forEach((el, index) => {
+        const animInfo = ANIMATION_MAP[el.animationType];
+        const enterAnim = animInfo ? animInfo.enter : 'fadeIn';
+        const exitAnim = el.exitAnimationType === 'same'
+            ? (animInfo ? animInfo.exit : 'fadeOut')
+            : (ANIMATION_MAP[el.exitAnimationType.replace('slide', 'slide')]?.exit || 'fadeOut');
+
+        // Background style
+        let bgStyle = '';
+        if (el.bgType === 'none') {
+            bgStyle = 'transparent';
+        } else if (el.bgType === 'solid') {
+            bgStyle = hexToRgba(el.bgColor, el.bgOpacity / 100);
+        } else if (el.bgType === 'gradient') {
+            bgStyle = `linear-gradient(135deg, ${el.gradient1}, ${el.gradient2})`;
+        } else if (el.bgType === 'image' && el.imageSrc) {
+            bgStyle = `url(${el.imageSrc}) center/cover no-repeat`;
+        }
+
+        // Shadow style
+        const shadowStyle = el.shadowEnabled
+            ? `${el.shadowX}px ${el.shadowY}px ${el.shadowBlur}px ${el.shadowColor}`
+            : 'none';
+
+        // Border style
+        const borderStyle = el.borderWidth > 0
+            ? `${el.borderWidth}px solid ${el.borderColor}`
+            : 'none';
+
+        elementsCSS += `
+            .element-${index} {
+                position: absolute;
+                left: ${el.x}px;
+                top: ${el.y}px;
+                width: ${el.width}px;
+                height: ${el.height}px;
+                background: ${bgStyle};
+                border: ${borderStyle};
+                border-radius: ${el.borderRadius}px;
+                box-shadow: ${shadowStyle};
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                opacity: 0;
+                animation: ${enterAnim} ${el.animationDuration}ms ${el.animationEasing} ${el.animationDelay}ms forwards;
+            }
+            ${el.exitAnimationEnabled ? `
+            .element-${index}.exit {
+                animation: ${exitAnim} ${el.animationDuration}ms ${el.animationEasing} forwards;
+            }` : ''}
+        `;
+
+        let contentHTML = '';
+        if (el.type === 'text') {
+            contentHTML = `<span style="
+                font-family: ${el.fontFamily};
+                font-size: ${el.fontSize}px;
+                color: ${el.textColor};
+                text-align: ${el.textAlign};
+                font-weight: ${el.fontWeight};
+                font-style: ${el.fontStyle};
+                text-decoration: ${el.textDecoration};
+                padding: 10px;
+                width: 100%;
+            ">${escapeHtml(el.text)}</span>`;
+        } else if (el.type === 'image' && el.imageSrc) {
+            contentHTML = `<img src="${el.imageSrc}" style="max-width:100%;max-height:100%;object-fit:contain;">`;
+        }
+
+        elementsHTML += `<div class="element-${index}" data-exit="${el.exitAnimationEnabled}" data-display="${el.displayDuration}">${contentHTML}</div>\n`;
+    });
+
+    // Animation keyframes
+    const keyframes = `
+        @keyframes slideInLeft { from { transform: translateX(-100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes slideInUp { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideInDown { from { transform: translateY(-100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes zoomIn { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        @keyframes bounce { 0% { transform: scale(0); opacity: 0; } 50% { transform: scale(1.1); } 70% { transform: scale(0.95); } 100% { transform: scale(1); opacity: 1; } }
+        @keyframes rotateIn { from { transform: rotate(-180deg) scale(0); opacity: 0; } to { transform: rotate(0) scale(1); opacity: 1; } }
+        @keyframes slideOutLeft { from { transform: translateX(0); opacity: 1; } to { transform: translateX(-100%); opacity: 0; } }
+        @keyframes slideOutRight { from { transform: translateX(0); opacity: 1; } to { transform: translateX(100%); opacity: 0; } }
+        @keyframes slideOutUp { from { transform: translateY(0); opacity: 1; } to { transform: translateY(-100%); opacity: 0; } }
+        @keyframes slideOutDown { from { transform: translateY(0); opacity: 1; } to { transform: translateY(100%); opacity: 0; } }
+        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+        @keyframes zoomOut { from { transform: scale(1); opacity: 1; } to { transform: scale(0); opacity: 0; } }
+    `;
+
+    // Timer script
+    const timerScript = AppState.timer.enabled ? `
+        function runAnimation() {
+            document.querySelectorAll('[data-exit]').forEach(el => {
+                el.classList.remove('exit');
+                el.style.animation = 'none';
+                el.offsetHeight;
+                el.style.animation = '';
+
+                if (el.dataset.exit === 'true') {
+                    const displayTime = parseInt(el.dataset.display) || 5000;
+                    setTimeout(() => {
+                        el.classList.add('exit');
+                    }, displayTime);
+                }
+            });
+        }
+
+        runAnimation();
+        const interval = ${AppState.timer.interval}${AppState.timer.randomize ? ' + (Math.random() - 0.5) * 60000' : ''};
+        setInterval(runAnimation, interval);
+    ` : `
+        document.querySelectorAll('[data-exit="true"]').forEach(el => {
+            const displayTime = parseInt(el.dataset.display) || 5000;
+            setTimeout(() => {
+                el.classList.add('exit');
+            }, displayTime);
+        });
+    `;
+
+    return `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>AdAnimations Preview</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            width: ${width}px;
+            height: ${height}px;
+            overflow: hidden;
+            background: transparent;
+        }
+        ${keyframes}
+        ${elementsCSS}
+    </style>
+</head>
+<body>
+${elementsHTML}
+<script>
+${timerScript}
+</script>
+</body>
+</html>`;
+}
+
+// Export
+function showExportModal() {
+    showModal('exportModal');
+    generateExportCode();
+}
+
+function generateExportCode() {
+    const includeTimer = DOM.exportWithTimer.checked;
+    const minify = DOM.exportMinified.checked;
+
+    // Temporarily override timer setting for export
+    const originalTimerEnabled = AppState.timer.enabled;
+    AppState.timer.enabled = includeTimer && originalTimerEnabled;
+
+    let html = generatePreviewHTML();
+
+    AppState.timer.enabled = originalTimerEnabled;
+
+    if (minify) {
+        html = html
+            .replace(/\n\s+/g, ' ')
+            .replace(/\s{2,}/g, ' ')
+            .replace(/>\s+</g, '><')
+            .trim();
+    }
+
+    DOM.exportCode.value = html;
+}
+
+function copyExportCode() {
+    DOM.exportCode.select();
+    document.execCommand('copy');
+    showToast('Kod zkopirovan do schranky', 'success');
+}
+
+function downloadHTML() {
+    const html = DOM.exportCode.value;
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'adanimations-export.html';
+    a.click();
+
+    URL.revokeObjectURL(url);
+    showToast('HTML soubor stazen', 'success');
+}
+
+function copyOBSUrl() {
+    // For local file, we can't provide a URL
+    // Show instructions instead
+    showToast('Pouzijte Export HTML a vyberte "Local file" v OBS Browser Source', 'info');
+}
+
+// Project Management
+function newProject() {
+    if (AppState.elements.length > 0) {
+        if (!confirm('Opravdu chcete vytvorit novy projekt? Neulozene zmeny budou ztraceny.')) {
+            return;
+        }
+    }
+
+    AppState.elements = [];
+    AppState.selectedElement = null;
+    AppState.elementIdCounter = 0;
+
+    DOM.canvas.querySelectorAll('.canvas-element').forEach(el => el.remove());
+    renderElementList();
+    selectElement(null);
+    localStorage.removeItem('adanimations_project');
+
+    showToast('Novy projekt vytvoren', 'success');
+}
+
+function saveProject() {
+    const project = {
+        version: '1.0',
+        canvas: AppState.canvas,
+        elements: AppState.elements,
+        animation: AppState.animation,
+        timer: AppState.timer,
+        elementIdCounter: AppState.elementIdCounter
+    };
+
+    const json = JSON.stringify(project, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'adanimations-project.json';
+    a.click();
+
+    URL.revokeObjectURL(url);
+    showToast('Projekt ulozen', 'success');
+}
+
+function loadProject() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+
+    input.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const project = JSON.parse(e.target.result);
+
+                if (project.version && project.elements) {
+                    // Clear current project
+                    DOM.canvas.querySelectorAll('.canvas-element').forEach(el => el.remove());
+
+                    // Load project data
+                    AppState.canvas = project.canvas || AppState.canvas;
+                    AppState.elements = project.elements || [];
+                    AppState.animation = project.animation || AppState.animation;
+                    AppState.timer = project.timer || AppState.timer;
+                    AppState.elementIdCounter = project.elementIdCounter || 0;
+
+                    // Update UI
+                    DOM.canvasWidth.value = AppState.canvas.width;
+                    DOM.canvasHeight.value = AppState.canvas.height;
+                    updateCanvasSize();
+                    setZoom(AppState.canvas.zoom);
+
+                    // Render elements
+                    renderElementList();
+                    AppState.elements.forEach(el => renderCanvasElement(el));
+
+                    // Update timer UI
+                    DOM.timerEnabled.checked = AppState.timer.enabled;
+                    handleTimerToggle();
+
+                    selectElement(null);
+                    saveToLocalStorage();
+
+                    showToast('Projekt nacten', 'success');
+                } else {
+                    throw new Error('Invalid project format');
+                }
+            } catch (err) {
+                showToast('Chyba pri nacitani projektu: ' + err.message, 'error');
+            }
+        };
+        reader.readAsText(file);
+    };
+
+    input.click();
+}
+
+// Local Storage
+function saveToLocalStorage() {
+    const project = {
+        canvas: AppState.canvas,
+        elements: AppState.elements,
+        animation: AppState.animation,
+        timer: AppState.timer,
+        elementIdCounter: AppState.elementIdCounter
+    };
+    localStorage.setItem('adanimations_project', JSON.stringify(project));
+}
+
+function loadFromLocalStorage() {
+    const saved = localStorage.getItem('adanimations_project');
+    if (saved) {
+        try {
+            const project = JSON.parse(saved);
+
+            AppState.canvas = project.canvas || AppState.canvas;
+            AppState.elements = project.elements || [];
+            AppState.animation = project.animation || AppState.animation;
+            AppState.timer = project.timer || AppState.timer;
+            AppState.elementIdCounter = project.elementIdCounter || 0;
+
+            DOM.canvasWidth.value = AppState.canvas.width;
+            DOM.canvasHeight.value = AppState.canvas.height;
+            updateCanvasSize();
+            setZoom(AppState.canvas.zoom);
+
+            renderElementList();
+            AppState.elements.forEach(el => renderCanvasElement(el));
+
+            DOM.timerEnabled.checked = AppState.timer.enabled;
+            handleTimerToggle();
+        } catch (err) {
+            console.error('Failed to load from localStorage:', err);
+        }
+    }
+}
+
+// Keyboard Shortcuts
+function handleKeyboard(e) {
+    // Delete selected element
+    if (e.key === 'Delete' && AppState.selectedElement) {
+        removeElement(AppState.selectedElement);
+    }
+
+    // Escape to deselect
+    if (e.key === 'Escape') {
+        selectElement(null);
+        hideModal('imageModal');
+        hideModal('exportModal');
+    }
+
+    // Ctrl+S to save
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        saveProject();
+    }
+
+    // Ctrl+D to duplicate
+    if (e.ctrlKey && e.key === 'd' && AppState.selectedElement) {
+        e.preventDefault();
+        duplicateElement(AppState.selectedElement);
+    }
+
+    // Arrow keys to move element
+    if (AppState.selectedElement && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        const element = AppState.elements.find(el => el.id === AppState.selectedElement);
+        if (element) {
+            const step = e.shiftKey ? 10 : 1;
+            switch (e.key) {
+                case 'ArrowUp': element.y -= step; break;
+                case 'ArrowDown': element.y += step; break;
+                case 'ArrowLeft': element.x -= step; break;
+                case 'ArrowRight': element.x += step; break;
+            }
+            renderCanvasElement(element);
+            updatePropertiesPanel();
+            saveToLocalStorage();
+        }
+    }
+}
+
+// Utility Functions
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function hexToRgba(hex, alpha) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    toast.innerHTML = `
+        <span>${type === 'success' ? '✓' : type === 'error' ? '✗' : 'ℹ'}</span>
+        <span>${escapeHtml(message)}</span>
+    `;
+
+    DOM.toastContainer.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(20px)';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+// Make functions available globally for onclick handlers
+window.removeElement = removeElement;
+window.duplicateElement = duplicateElement;

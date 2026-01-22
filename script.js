@@ -327,6 +327,8 @@ const BASE_TRANSLATIONS = {
         tool_samplehub_desc: 'Offline sample pack manager pro hudební produkci. Organizace, přehrávání a správa audio samplů s waveform vizualizací, BPM detekcí a PWA podporou.',
         tool_ip_lookup_name: 'IP Lookup',
         tool_ip_lookup_desc: 'Offline-first nástroj pro zjištění veřejné IP adresy. Historie IP, validátor, API příklady. Cachování pro offline režim, využívá ipify API.',
+        tool_adanimations_name: 'AdAnimations',
+        tool_adanimations_desc: 'Editor animovaných bannerů a overlays pro OBS. Vytvářejte texty, obrázky s animacemi (slide, fade, zoom). Časovač pro opakování, 1:1 preview, export HTML.',
         category_gaming: 'gaming',
         category_documentation: 'dokumentace',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
@@ -727,6 +729,8 @@ const BASE_TRANSLATIONS = {
         tool_samplehub_desc: 'Offline sample pack manager for music production. Organization, playback and management of audio samples with waveform visualization, BPM detection and PWA support.',
         tool_ip_lookup_name: 'IP Lookup',
         tool_ip_lookup_desc: 'Offline-first tool for getting your public IP address. IP history, validator, API examples. Caching for offline mode, powered by ipify API.',
+        tool_adanimations_name: 'AdAnimations',
+        tool_adanimations_desc: 'Animated banner and overlay editor for OBS. Create texts, images with animations (slide, fade, zoom). Timer for repetition, 1:1 preview, HTML export.',
         category_gaming: 'gaming',
         category_documentation: 'documentation',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
@@ -1721,6 +1725,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["network", "ip", "api", "offline", "pwa", "ipify"]
+            },
+            {
+                "id": "adanimations",
+                "name": t('tool_adanimations_name'),
+                "description": t('tool_adanimations_desc'),
+                "category": "streaming",
+                "icon": "🎬",
+                "url": "projects/adanimations/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["streaming", "obs", "animation", "banner", "overlay", "editor"]
             }
         ],
         "links": [

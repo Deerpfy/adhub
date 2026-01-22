@@ -262,6 +262,28 @@ PROJECT_CONFIGS = {
             "Session history and persistence",
             "Manual invite code signaling"
         ]
+    },
+    "adanimations": {
+        "name": "AdAnimations",
+        "type": "Web App (SPA)",
+        "version": "1.0",
+        "status": "Active",
+        "technologies": ["HTML/CSS/JS", "localStorage", "CSS Animations"],
+        "category": "Streaming Tools",
+        "description": "OBS animation editor for creating animated banners and overlays",
+        "main_file": "index.html",
+        "features": [
+            "Visual element editor (text, images, shapes)",
+            "8 animation types (slide, fade, zoom, bounce, rotate)",
+            "Customizable animation timing and easing",
+            "Exit animations with display duration",
+            "Timer for automatic repetition (1-30 min intervals)",
+            "1:1 preview window for exact OBS sizing",
+            "HTML export for OBS Browser Source",
+            "Project save/load functionality",
+            "Real-time canvas editing with drag & resize",
+            "Full styling options (colors, gradients, shadows, borders)"
+        ]
     }
 }
 
