@@ -2159,3 +2159,493 @@ window.duplicateElement = duplicateElement;
 window.addFromTemplate = addFromTemplate;
 window.showTemplatesModal = showTemplatesModal;
 window.hideModal = hideModal;
+
+// ========================================
+// SEQUENCER
+// ========================================
+function setupSequencerListeners() {
+    const seqEnabled = document.getElementById('sequencerEnabled');
+    const seqOptions = document.getElementById('sequencerOptions');
+    const timelineContainer = document.getElementById('timelineContainer');
+    const btnCreateGroup = document.getElementById('btnCreateGroup');
+    const seqTotalDuration = document.getElementById('seqTotalDuration');
+    const seqStagger = document.getElementById('seqStagger');
+    const seqLoop = document.getElementById('seqLoop');
+    const btnSeqPlay = document.getElementById('btnSeqPlay');
+    const btnSeqPause = document.getElementById('btnSeqPause');
+    const btnSeqStop = document.getElementById('btnSeqStop');
+
+    if (seqEnabled) {
+        seqEnabled.addEventListener('change', () => {
+            AppState.sequencer.enabled = seqEnabled.checked;
+            seqOptions.classList.toggle('enabled', seqEnabled.checked);
+            timelineContainer.classList.toggle('hidden', !seqEnabled.checked);
+            if (seqEnabled.checked) {
+                renderSequenceList();
+                renderTimeline();
+            }
+            saveToLocalStorage();
+        });
+    }
+
+    if (btnCreateGroup) {
+        btnCreateGroup.addEventListener('click', createGroup);
+    }
+
+    if (seqTotalDuration) {
+        seqTotalDuration.addEventListener('change', () => {
+            AppState.sequencer.totalDuration = parseInt(seqTotalDuration.value);
+            renderTimeline();
+            saveToLocalStorage();
+        });
+    }
+
+    if (seqStagger) {
+        seqStagger.addEventListener('change', () => {
+            applyStaggerDelay(parseInt(seqStagger.value));
+        });
+    }
+
+    if (seqLoop) {
+        seqLoop.addEventListener('change', () => {
+            AppState.sequencer.loop = seqLoop.checked;
+            saveToLocalStorage();
+        });
+    }
+
+    // Playback controls
+    if (btnSeqPlay) btnSeqPlay.addEventListener('click', playSequence);
+    if (btnSeqPause) btnSeqPause.addEventListener('click', pauseSequence);
+    if (btnSeqStop) btnSeqStop.addEventListener('click', stopSequence);
+
+    // Timeline controls
+    const btnTimelinePlay = document.getElementById('btnTimelinePlay');
+    if (btnTimelinePlay) {
+        btnTimelinePlay.addEventListener('click', playSequence);
+    }
+}
+
+function renderSequenceList() {
+    const listEl = document.getElementById('sequenceList');
+    if (!listEl) return;
+
+    if (AppState.elements.length === 0) {
+        listEl.innerHTML = '<p class="property-hint">Zadne elementy k sekvencovani.</p>';
+        return;
+    }
+
+    // Sort elements by sequence order
+    const sortedElements = [...AppState.elements].sort((a, b) =>
+        (a.sequenceOrder || 0) - (b.sequenceOrder || 0)
+    );
+
+    listEl.innerHTML = sortedElements.map((el, index) => `
+        <div class="sequence-item" data-id="${el.id}" draggable="true">
+            <span class="seq-order">${index + 1}</span>
+            <span class="seq-name">${escapeHtml(el.name)}</span>
+            <div class="seq-delay">
+                <input type="number" value="${el.sequenceDelay || 0}" min="0" max="10000" step="100"
+                       onchange="updateSequenceDelay('${el.id}', this.value)">
+                <span>ms</span>
+            </div>
+        </div>
+    `).join('');
+
+    // Setup drag-drop reordering
+    setupSequenceDragDrop();
+}
+
+function setupSequenceDragDrop() {
+    const items = document.querySelectorAll('.sequence-item');
+    let draggedItem = null;
+
+    items.forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+            draggedItem = item;
+            item.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        item.addEventListener('dragend', () => {
+            draggedItem.classList.remove('dragging');
+            items.forEach(i => i.classList.remove('drop-target'));
+            draggedItem = null;
+        });
+
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            if (item !== draggedItem) {
+                item.classList.add('drop-target');
+            }
+        });
+
+        item.addEventListener('dragleave', () => {
+            item.classList.remove('drop-target');
+        });
+
+        item.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (draggedItem && item !== draggedItem) {
+                const draggedId = draggedItem.dataset.id;
+                const targetId = item.dataset.id;
+                reorderSequence(draggedId, targetId);
+            }
+            item.classList.remove('drop-target');
+        });
+    });
+}
+
+function reorderSequence(draggedId, targetId) {
+    const draggedEl = AppState.elements.find(e => e.id === draggedId);
+    const targetEl = AppState.elements.find(e => e.id === targetId);
+
+    if (!draggedEl || !targetEl) return;
+
+    // Get current orders
+    const sortedElements = [...AppState.elements].sort((a, b) =>
+        (a.sequenceOrder || 0) - (b.sequenceOrder || 0)
+    );
+
+    const draggedIndex = sortedElements.findIndex(e => e.id === draggedId);
+    const targetIndex = sortedElements.findIndex(e => e.id === targetId);
+
+    // Reorder
+    sortedElements.splice(draggedIndex, 1);
+    sortedElements.splice(targetIndex, 0, draggedEl);
+
+    // Update sequence orders
+    sortedElements.forEach((el, index) => {
+        el.sequenceOrder = index;
+    });
+
+    renderSequenceList();
+    renderTimeline();
+    saveToLocalStorage();
+}
+
+function updateSequenceDelay(elementId, delay) {
+    const element = AppState.elements.find(e => e.id === elementId);
+    if (element) {
+        element.sequenceDelay = parseInt(delay) || 0;
+        renderTimeline();
+        saveToLocalStorage();
+    }
+}
+
+function applyStaggerDelay(stagger) {
+    const sortedElements = [...AppState.elements].sort((a, b) =>
+        (a.sequenceOrder || 0) - (b.sequenceOrder || 0)
+    );
+
+    sortedElements.forEach((el, index) => {
+        el.sequenceDelay = index * stagger;
+    });
+
+    renderSequenceList();
+    renderTimeline();
+    saveToLocalStorage();
+    showToast(`Stagger ${stagger}ms aplikovan`, 'success');
+}
+
+// Group Management
+function createGroup() {
+    const groupId = `group-${++AppState.groupIdCounter}`;
+    const group = {
+        id: groupId,
+        name: `Skupina ${AppState.sequencer.groups.length + 1}`,
+        elements: [],
+        delay: 0
+    };
+
+    AppState.sequencer.groups.push(group);
+    renderGroupsList();
+    saveToLocalStorage();
+    showToast('Skupina vytvorena', 'success');
+}
+
+function renderGroupsList() {
+    const listEl = document.getElementById('groupsList');
+    if (!listEl) return;
+
+    if (AppState.sequencer.groups.length === 0) {
+        listEl.innerHTML = '<p class="property-hint">Zadne skupiny.</p>';
+        return;
+    }
+
+    listEl.innerHTML = AppState.sequencer.groups.map(group => {
+        const groupElements = AppState.elements.filter(e => e.groupId === group.id);
+        return `
+            <div class="group-item" data-group-id="${group.id}">
+                <div class="group-header">
+                    <span class="group-name">${escapeHtml(group.name)}</span>
+                    <div class="group-actions">
+                        <button class="btn btn-icon btn-small" onclick="deleteGroup('${group.id}')" title="Smazat">🗑</button>
+                    </div>
+                </div>
+                <div class="group-elements">
+                    ${groupElements.map(el => `
+                        <span class="group-element-tag" onclick="removeFromGroup('${el.id}')">${escapeHtml(el.name)} ×</span>
+                    `).join('')}
+                    <span class="group-element-tag add" onclick="showAddToGroupMenu('${group.id}', event)">+ Pridat</span>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function deleteGroup(groupId) {
+    const index = AppState.sequencer.groups.findIndex(g => g.id === groupId);
+    if (index !== -1) {
+        // Remove group ID from elements
+        AppState.elements.forEach(el => {
+            if (el.groupId === groupId) {
+                el.groupId = null;
+            }
+        });
+        AppState.sequencer.groups.splice(index, 1);
+        renderGroupsList();
+        renderTimeline();
+        saveToLocalStorage();
+    }
+}
+
+function addToGroup(elementId, groupId) {
+    const element = AppState.elements.find(e => e.id === elementId);
+    if (element) {
+        element.groupId = groupId;
+        renderGroupsList();
+        renderSequenceList();
+        renderTimeline();
+        saveToLocalStorage();
+    }
+    removeContextMenu();
+}
+
+function removeFromGroup(elementId) {
+    const element = AppState.elements.find(e => e.id === elementId);
+    if (element) {
+        element.groupId = null;
+        renderGroupsList();
+        renderSequenceList();
+        renderTimeline();
+        saveToLocalStorage();
+    }
+}
+
+function showAddToGroupMenu(groupId, event) {
+    event.stopPropagation();
+    removeContextMenu();
+
+    const ungroupedElements = AppState.elements.filter(e => !e.groupId);
+    if (ungroupedElements.length === 0) {
+        showToast('Zadne volne elementy', 'info');
+        return;
+    }
+
+    const menu = document.createElement('div');
+    menu.className = 'context-menu';
+    menu.id = 'contextMenu';
+    menu.style.left = `${event.clientX}px`;
+    menu.style.top = `${event.clientY}px`;
+
+    menu.innerHTML = ungroupedElements.map(el => `
+        <div class="context-menu-item" onclick="addToGroup('${el.id}', '${groupId}')">
+            ${escapeHtml(el.name)}
+        </div>
+    `).join('');
+
+    document.body.appendChild(menu);
+    AppState.contextMenu = menu;
+
+    setTimeout(() => {
+        document.addEventListener('click', removeContextMenu, { once: true });
+    }, 10);
+}
+
+// Timeline Visualization
+function renderTimeline() {
+    const rulerEl = document.getElementById('timelineRuler');
+    const tracksEl = document.getElementById('timelineTracks');
+    if (!rulerEl || !tracksEl) return;
+
+    const totalDuration = AppState.sequencer.totalDuration;
+    const pixelsPerMs = 0.1; // 100px per second
+    const totalWidth = totalDuration * pixelsPerMs + 100; // +100 for label column
+
+    // Render ruler
+    rulerEl.style.width = `${totalWidth}px`;
+    let rulerHTML = '';
+    for (let ms = 0; ms <= totalDuration; ms += 1000) {
+        const x = 100 + ms * pixelsPerMs;
+        const isMajor = ms % 5000 === 0;
+        rulerHTML += `<div class="timeline-marker ${isMajor ? 'major' : ''}" style="left: ${x}px">
+            ${ms >= 1000 ? (ms / 1000) + 's' : ''}
+        </div>`;
+    }
+    rulerEl.innerHTML = rulerHTML;
+
+    // Render tracks
+    tracksEl.style.width = `${totalWidth}px`;
+    const sortedElements = [...AppState.elements].sort((a, b) =>
+        (a.sequenceOrder || 0) - (b.sequenceOrder || 0)
+    );
+
+    tracksEl.innerHTML = sortedElements.map((el, index) => {
+        const startX = 100 + (el.sequenceDelay || 0) * pixelsPerMs;
+        const clipWidth = Math.max(20, el.animationDuration * pixelsPerMs);
+        const groupClass = el.groupId ? `group-${(AppState.sequencer.groups.findIndex(g => g.id === el.groupId) % 5) + 1}` : '';
+
+        return `
+            <div class="timeline-track">
+                <span class="timeline-track-label">${escapeHtml(el.name)}</span>
+                <div class="timeline-clip ${groupClass}"
+                     style="left: ${startX}px; width: ${clipWidth}px"
+                     data-id="${el.id}"
+                     title="${el.name} - ${el.sequenceDelay}ms">
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Playback
+let playbackInterval = null;
+let playbackStartTime = 0;
+
+function playSequence() {
+    if (AppState.sequencer.isPlaying) return;
+
+    AppState.sequencer.isPlaying = true;
+    playbackStartTime = Date.now() - AppState.sequencer.currentTime;
+
+    const btnPlay = document.getElementById('btnSeqPlay');
+    const btnTimelinePlay = document.getElementById('btnTimelinePlay');
+    if (btnPlay) btnPlay.classList.add('playing');
+    if (btnTimelinePlay) btnTimelinePlay.classList.add('playing');
+
+    // Animate elements based on sequence
+    const sortedElements = [...AppState.elements].sort((a, b) =>
+        (a.sequenceOrder || 0) - (b.sequenceOrder || 0)
+    );
+
+    sortedElements.forEach(el => {
+        const domEl = DOM.canvas.querySelector(`[data-id="${el.id}"]`);
+        if (!domEl) return;
+
+        const animInfo = ANIMATION_MAP[el.animationType];
+        if (!animInfo) return;
+
+        // Reset animation
+        domEl.style.animation = 'none';
+        domEl.offsetHeight;
+
+        // Apply animation with sequence delay
+        const totalDelay = (el.sequenceDelay || 0) + el.animationDelay;
+        const isContinuous = animInfo.continuous;
+        const animStr = isContinuous
+            ? `${animInfo.enter} ${el.animationDuration}ms ${el.animationEasing} ${totalDelay}ms infinite`
+            : `${animInfo.enter} ${el.animationDuration}ms ${el.animationEasing} ${totalDelay}ms forwards`;
+
+        domEl.style.animation = animStr;
+    });
+
+    // Update playhead
+    playbackInterval = setInterval(() => {
+        AppState.sequencer.currentTime = Date.now() - playbackStartTime;
+        updatePlayhead();
+
+        if (AppState.sequencer.currentTime >= AppState.sequencer.totalDuration) {
+            if (AppState.sequencer.loop) {
+                // Restart
+                playbackStartTime = Date.now();
+                AppState.sequencer.currentTime = 0;
+                sortedElements.forEach(el => {
+                    const domEl = DOM.canvas.querySelector(`[data-id="${el.id}"]`);
+                    if (domEl) {
+                        domEl.style.animation = 'none';
+                        domEl.offsetHeight;
+                        const animInfo = ANIMATION_MAP[el.animationType];
+                        if (animInfo) {
+                            const totalDelay = (el.sequenceDelay || 0) + el.animationDelay;
+                            const isContinuous = animInfo.continuous;
+                            const animStr = isContinuous
+                                ? `${animInfo.enter} ${el.animationDuration}ms ${el.animationEasing} ${totalDelay}ms infinite`
+                                : `${animInfo.enter} ${el.animationDuration}ms ${el.animationEasing} ${totalDelay}ms forwards`;
+                            domEl.style.animation = animStr;
+                        }
+                    }
+                });
+            } else {
+                stopSequence();
+            }
+        }
+    }, 50);
+
+    showToast('Sekvence spustena', 'info');
+}
+
+function pauseSequence() {
+    if (!AppState.sequencer.isPlaying) return;
+
+    AppState.sequencer.isPlaying = false;
+    clearInterval(playbackInterval);
+
+    const btnPlay = document.getElementById('btnSeqPlay');
+    const btnTimelinePlay = document.getElementById('btnTimelinePlay');
+    if (btnPlay) btnPlay.classList.remove('playing');
+    if (btnTimelinePlay) btnTimelinePlay.classList.remove('playing');
+
+    showToast('Sekvence pozastavena', 'info');
+}
+
+function stopSequence() {
+    AppState.sequencer.isPlaying = false;
+    AppState.sequencer.currentTime = 0;
+    clearInterval(playbackInterval);
+
+    const btnPlay = document.getElementById('btnSeqPlay');
+    const btnTimelinePlay = document.getElementById('btnTimelinePlay');
+    if (btnPlay) btnPlay.classList.remove('playing');
+    if (btnTimelinePlay) btnTimelinePlay.classList.remove('playing');
+
+    // Reset all animations
+    AppState.elements.forEach(el => {
+        const domEl = DOM.canvas.querySelector(`[data-id="${el.id}"]`);
+        if (domEl) {
+            domEl.style.animation = '';
+        }
+    });
+
+    updatePlayhead();
+}
+
+function updatePlayhead() {
+    const playhead = document.getElementById('timelinePlayhead');
+    const timeDisplay = document.getElementById('timelineTime');
+
+    if (playhead) {
+        const pixelsPerMs = 0.1;
+        playhead.style.left = `${100 + AppState.sequencer.currentTime * pixelsPerMs}px`;
+    }
+
+    if (timeDisplay) {
+        const current = (AppState.sequencer.currentTime / 1000).toFixed(1);
+        const total = (AppState.sequencer.totalDuration / 1000).toFixed(1);
+        timeDisplay.textContent = `${current}s / ${total}s`;
+    }
+}
+
+// Make sequencer functions global
+window.updateSequenceDelay = updateSequenceDelay;
+window.deleteGroup = deleteGroup;
+window.addToGroup = addToGroup;
+window.removeFromGroup = removeFromGroup;
+window.showAddToGroupMenu = showAddToGroupMenu;
+
+// Add sequencer setup to enhanced listeners
+const originalSetupEnhanced = setupEnhancedEventListeners;
+setupEnhancedEventListeners = function() {
+    originalSetupEnhanced();
+    setupSequencerListeners();
+};
