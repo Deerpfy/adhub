@@ -1622,7 +1622,14 @@ function saveToLocalStorage() {
         elements: AppState.elements,
         animation: AppState.animation,
         timer: AppState.timer,
-        elementIdCounter: AppState.elementIdCounter
+        elementIdCounter: AppState.elementIdCounter,
+        sequencer: {
+            enabled: AppState.sequencer.enabled,
+            groups: AppState.sequencer.groups,
+            totalDuration: AppState.sequencer.totalDuration,
+            loop: AppState.sequencer.loop
+        },
+        groupIdCounter: AppState.groupIdCounter
     };
     localStorage.setItem('adanimations_project', JSON.stringify(project));
 }
@@ -1665,9 +1672,21 @@ function loadFromLocalStorage() {
                 DOM.timerEnabled.checked = AppState.timer.enabled;
                 handleTimerToggle();
             }
+
+            // Restore sequencer state
+            if (project.sequencer) {
+                AppState.sequencer = { ...AppState.sequencer, ...project.sequencer };
+            }
         } catch (err) {
             console.error('Failed to load from localStorage:', err);
         }
+    }
+}
+
+// Initialize sequencer UI after load (called from init)
+function initializeSequencerUI() {
+    if (AppState.sequencer.enabled) {
+        toggleSequencer(true);
     }
 }
 
@@ -2203,7 +2222,11 @@ const originalInit = init;
 init = function() {
     originalInit();
     setupEnhancedEventListeners();
-    setupSequencerListeners(); // Add sequencer listeners
+    setupSequencerListeners();
+    // Initialize sequencer UI if it was enabled
+    setTimeout(() => {
+        initializeSequencerUI();
+    }, 150);
 };
 
 // Make functions available globally for onclick handlers
@@ -2216,6 +2239,40 @@ window.hideModal = hideModal;
 // ========================================
 // SEQUENCER
 // ========================================
+
+// Toggle sequencer on/off
+function toggleSequencer(enabled) {
+    const seqOptions = document.getElementById('sequencerOptions');
+    const timelineContainer = document.getElementById('timelineContainer');
+    const seqEnabled = document.getElementById('sequencerEnabled');
+
+    AppState.sequencer.enabled = enabled;
+
+    if (seqOptions) {
+        seqOptions.classList.toggle('enabled', enabled);
+    }
+
+    if (timelineContainer) {
+        if (enabled) {
+            timelineContainer.classList.remove('hidden');
+        } else {
+            timelineContainer.classList.add('hidden');
+        }
+    }
+
+    if (seqEnabled) {
+        seqEnabled.checked = enabled;
+    }
+
+    if (enabled) {
+        renderSequenceList();
+        renderTimeline();
+    }
+
+    saveToLocalStorage();
+    console.log('Sequencer toggled:', enabled, 'Timeline visible:', !timelineContainer?.classList.contains('hidden'));
+}
+
 function setupSequencerListeners() {
     const seqEnabled = document.getElementById('sequencerEnabled');
     const seqOptions = document.getElementById('sequencerOptions');
@@ -2228,16 +2285,16 @@ function setupSequencerListeners() {
     const btnSeqPause = document.getElementById('btnSeqPause');
     const btnSeqStop = document.getElementById('btnSeqStop');
 
-    if (seqEnabled) {
+    console.log('Setting up sequencer listeners', {
+        seqEnabled: !!seqEnabled,
+        seqOptions: !!seqOptions,
+        timelineContainer: !!timelineContainer
+    });
+
+    if (seqEnabled && seqOptions && timelineContainer) {
         seqEnabled.addEventListener('change', () => {
-            AppState.sequencer.enabled = seqEnabled.checked;
-            seqOptions.classList.toggle('enabled', seqEnabled.checked);
-            timelineContainer.classList.toggle('hidden', !seqEnabled.checked);
-            if (seqEnabled.checked) {
-                renderSequenceList();
-                renderTimeline();
-            }
-            saveToLocalStorage();
+            console.log('Sequencer toggled:', seqEnabled.checked);
+            toggleSequencer(seqEnabled.checked);
         });
     }
 
@@ -2721,4 +2778,5 @@ window.updateSequenceDelay = updateSequenceDelay;
 window.deleteGroup = deleteGroup;
 window.addToGroup = addToGroup;
 window.removeFromGroup = removeFromGroup;
+window.toggleSequencer = toggleSequencer;
 window.showAddToGroupMenu = showAddToGroupMenu;
