@@ -2515,15 +2515,25 @@ function showAddToGroupMenu(groupId, event) {
     }, 10);
 }
 
-// Timeline Visualization
+// Timeline Visualization - shows entry, display, and exit phases
 function renderTimeline() {
     const rulerEl = document.getElementById('timelineRuler');
     const tracksEl = document.getElementById('timelineTracks');
     if (!rulerEl || !tracksEl) return;
 
-    const totalDuration = AppState.sequencer.totalDuration;
+    // Calculate total duration based on all elements
+    let maxEndTime = AppState.sequencer.totalDuration;
+    AppState.elements.forEach(el => {
+        const elementEndTime = (el.sequenceDelay || 0) + el.animationDuration +
+            (el.exitAnimationEnabled ? el.displayDuration + el.animationDuration : 0);
+        if (elementEndTime > maxEndTime) {
+            maxEndTime = elementEndTime;
+        }
+    });
+
+    const totalDuration = Math.max(maxEndTime + 1000, 5000); // Min 5s
     const pixelsPerMs = 0.1; // 100px per second
-    const totalWidth = totalDuration * pixelsPerMs + 100; // +100 for label column
+    const totalWidth = totalDuration * pixelsPerMs + 100;
 
     // Render ruler
     rulerEl.style.width = `${totalWidth}px`;
@@ -2537,28 +2547,45 @@ function renderTimeline() {
     }
     rulerEl.innerHTML = rulerHTML;
 
-    // Render tracks
+    // Render tracks - show entry, display, and exit phases
     tracksEl.style.width = `${totalWidth}px`;
     const sortedElements = [...AppState.elements].sort((a, b) =>
         (a.sequenceOrder || 0) - (b.sequenceOrder || 0)
     );
 
-    tracksEl.innerHTML = sortedElements.map((el, index) => {
-        const startX = 100 + (el.sequenceDelay || 0) * pixelsPerMs;
-        const clipWidth = Math.max(20, el.animationDuration * pixelsPerMs);
-        const groupClass = el.groupId ? `group-${(AppState.sequencer.groups.findIndex(g => g.id === el.groupId) % 5) + 1}` : '';
+    tracksEl.innerHTML = sortedElements.map((el) => {
+        const startDelay = el.sequenceDelay || 0;
+        const entryDuration = el.animationDuration;
+        const displayDuration = el.displayDuration || 5000;
+        const hasExit = el.exitAnimationEnabled;
+        const groupIdx = el.groupId ? (AppState.sequencer.groups.findIndex(g => g.id === el.groupId) % 5) + 1 : 0;
 
-        return `
-            <div class="timeline-track">
-                <span class="timeline-track-label">${escapeHtml(el.name)}</span>
-                <div class="timeline-clip ${groupClass}"
-                     style="left: ${startX}px; width: ${clipWidth}px"
-                     data-id="${el.id}"
-                     title="${el.name} - ${el.sequenceDelay}ms">
-                </div>
-            </div>
-        `;
+        // Calculate positions
+        const entryStart = 100 + startDelay * pixelsPerMs;
+        const entryWidth = Math.max(8, entryDuration * pixelsPerMs);
+        const displayStart = entryStart + entryWidth;
+        const displayWidth = hasExit ? Math.max(8, displayDuration * pixelsPerMs) : 0;
+        const exitStart = displayStart + displayWidth;
+        const exitWidth = hasExit ? Math.max(8, entryDuration * pixelsPerMs) : 0;
+
+        let clipsHTML = '';
+        if (hasExit) {
+            // Entry (green), Display (purple), Exit (red)
+            clipsHTML += `<div class="timeline-clip" style="left:${entryStart}px;width:${entryWidth}px;background:linear-gradient(135deg,#10b981,#059669);" title="Vstup: ${entryDuration}ms">▶</div>`;
+            clipsHTML += `<div class="timeline-clip group-${groupIdx || 1}" style="left:${displayStart}px;width:${displayWidth}px;" title="Zobrazeno: ${displayDuration}ms"></div>`;
+            clipsHTML += `<div class="timeline-clip" style="left:${exitStart}px;width:${exitWidth}px;background:linear-gradient(135deg,#ef4444,#dc2626);" title="Odchod: ${entryDuration}ms">◀</div>`;
+        } else {
+            const totalClipWidth = Math.max(30, (entryDuration + 500) * pixelsPerMs);
+            clipsHTML += `<div class="timeline-clip group-${groupIdx || 1}" style="left:${entryStart}px;width:${totalClipWidth}px" title="${el.name} - ${startDelay}ms"></div>`;
+        }
+
+        return `<div class="timeline-track"><span class="timeline-track-label" title="${escapeHtml(el.name)}">${escapeHtml(el.name)}</span>${clipsHTML}</div>`;
     }).join('');
+
+    // Update time display
+    const timeDisplay = document.getElementById('timelineTime');
+    if (timeDisplay) timeDisplay.textContent = `0s / ${(totalDuration / 1000).toFixed(1)}s`;
+    AppState.sequencer.totalDuration = totalDuration;
 }
 
 // Playback
