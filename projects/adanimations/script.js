@@ -113,7 +113,7 @@ const TEMPLATES = {
         shadowX: 0,
         shadowY: 8,
         shadowBlur: 24,
-        shadowColor: 'rgba(139, 92, 246, 0.5)',
+        shadowColor: '#8b5cf6',
         text: 'FOLLOW',
         textColor: '#ffffff',
         fontSize: 32,
@@ -192,13 +192,13 @@ const TEMPLATES = {
         bgColor: '#ffffff',
         bgOpacity: 10,
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.2)',
+        borderColor: '#ffffff',
         borderRadius: 16,
         shadowEnabled: true,
         shadowX: 0,
         shadowY: 8,
         shadowBlur: 32,
-        shadowColor: 'rgba(0, 0, 0, 0.3)',
+        shadowColor: '#000000',
         text: 'Subscribe',
         textColor: '#ffffff',
         fontSize: 24,
@@ -219,7 +219,7 @@ const TEMPLATES = {
         shadowX: 0,
         shadowY: 12,
         shadowBlur: 40,
-        shadowColor: 'rgba(0, 0, 0, 0.5)',
+        shadowColor: '#000000',
         text: 'New Subscriber!',
         textColor: '#ffffff',
         fontSize: 28,
@@ -238,7 +238,7 @@ const TEMPLATES = {
         shadowX: 2,
         shadowY: 2,
         shadowBlur: 4,
-        shadowColor: 'rgba(0, 0, 0, 0.8)',
+        shadowColor: '#000000',
         text: 'Playing: Game',
         textColor: '#ffffff',
         fontSize: 20,
@@ -268,18 +268,21 @@ document.addEventListener('DOMContentLoaded', init);
 function init() {
     cacheDOM();
     setupEventListeners();
-    updateCanvasSize();
-    updateZoomDisplay();
     loadFromLocalStorage();
 
-    // Debug: Log initialization
-    console.log('AdAnimations initialized', {
-        canvasWidth: AppState.canvas.width,
-        canvasHeight: AppState.canvas.height,
-        zoom: AppState.canvas.zoom,
-        elements: AppState.elements.length,
-        canvasElement: DOM.canvas ? 'found' : 'NOT FOUND'
-    });
+    // Apply canvas size and zoom after DOM is ready
+    updateCanvasSize();
+
+    // Auto-fit to container on first load
+    setTimeout(() => {
+        zoomToFit();
+        console.log('AdAnimations initialized', {
+            canvasWidth: AppState.canvas.width,
+            canvasHeight: AppState.canvas.height,
+            zoom: AppState.canvas.zoom,
+            elements: AppState.elements.length
+        });
+    }, 100);
 }
 
 function cacheDOM() {
@@ -356,7 +359,7 @@ function cacheDOM() {
     DOM.timerPreset = document.getElementById('timerPreset');
     DOM.timerCustom = document.getElementById('timerCustom');
     DOM.customIntervalRow = document.getElementById('customIntervalRow');
-    DOM.timerRandomize = document.getElementById('timerRandomize');
+    // timerRandomize was removed - timer is now in sequencer tab
 
     // Actions
     DOM.btnTest = document.getElementById('btnTest');
@@ -511,13 +514,10 @@ function setupEventListeners() {
     });
 
     // Timer
-    DOM.timerEnabled.addEventListener('change', handleTimerToggle);
-    DOM.timerPreset.addEventListener('change', handleTimerPresetChange);
-    DOM.timerCustom.addEventListener('change', () => {
+    if (DOM.timerEnabled) DOM.timerEnabled.addEventListener('change', handleTimerToggle);
+    if (DOM.timerPreset) DOM.timerPreset.addEventListener('change', handleTimerPresetChange);
+    if (DOM.timerCustom) DOM.timerCustom.addEventListener('change', () => {
         AppState.timer.interval = parseInt(DOM.timerCustom.value) * 1000;
-    });
-    DOM.timerRandomize.addEventListener('change', () => {
-        AppState.timer.randomize = DOM.timerRandomize.checked;
     });
 
     // Action buttons
@@ -972,6 +972,8 @@ function handleCanvasPresetChange() {
         DOM.canvasWidth.value = width;
         DOM.canvasHeight.value = height;
         updateCanvasSize();
+        // Auto-fit when resolution changes
+        zoomToFit();
     }
 }
 
@@ -1054,6 +1056,7 @@ function updateShadow() {
 }
 
 function handleTimerToggle() {
+    if (!DOM.timerEnabled || !DOM.timerOptions) return;
     const enabled = DOM.timerEnabled.checked;
     AppState.timer.enabled = enabled;
     DOM.timerOptions.classList.toggle('enabled', enabled);
@@ -1638,14 +1641,30 @@ function loadFromLocalStorage() {
 
             DOM.canvasWidth.value = AppState.canvas.width;
             DOM.canvasHeight.value = AppState.canvas.height;
+
+            // Update preset dropdown to match
+            const presetValue = `${AppState.canvas.width}x${AppState.canvas.height}`;
+            const presetOption = Array.from(DOM.canvasPreset.options).find(o => o.value === presetValue);
+            if (presetOption) {
+                DOM.canvasPreset.value = presetValue;
+            } else {
+                DOM.canvasPreset.value = 'custom';
+                DOM.canvasWidth.classList.remove('hidden');
+                DOM.canvasHeight.classList.remove('hidden');
+                const separator = document.querySelector('.size-separator');
+                if (separator) separator.classList.remove('hidden');
+            }
+
             updateCanvasSize();
-            setZoom(AppState.canvas.zoom);
+            setZoom(AppState.canvas.zoom || 0.5);
 
             renderElementList();
             AppState.elements.forEach(el => renderCanvasElement(el));
 
-            DOM.timerEnabled.checked = AppState.timer.enabled;
-            handleTimerToggle();
+            if (DOM.timerEnabled) {
+                DOM.timerEnabled.checked = AppState.timer.enabled;
+                handleTimerToggle();
+            }
         } catch (err) {
             console.error('Failed to load from localStorage:', err);
         }
@@ -1904,13 +1923,13 @@ function applyQuickStyle(element, style) {
             element.bgColor = '#ffffff';
             element.bgOpacity = 10;
             element.borderWidth = 1;
-            element.borderColor = 'rgba(255, 255, 255, 0.2)';
+            element.borderColor = '#ffffff';
             element.borderRadius = 16;
             element.shadowEnabled = true;
             element.shadowX = 0;
             element.shadowY = 8;
             element.shadowBlur = 32;
-            element.shadowColor = 'rgba(0, 0, 0, 0.3)';
+            element.shadowColor = '#000000';
             break;
         case 'minimal':
             element.bgType = 'none';
@@ -1919,7 +1938,7 @@ function applyQuickStyle(element, style) {
             element.shadowX = 2;
             element.shadowY = 2;
             element.shadowBlur = 4;
-            element.shadowColor = 'rgba(0, 0, 0, 0.8)';
+            element.shadowColor = '#000000';
             if (element.type === 'text') {
                 element.textColor = '#ffffff';
             }
