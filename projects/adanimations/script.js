@@ -2242,41 +2242,56 @@ window.hideModal = hideModal;
 
 // Toggle sequencer on/off
 function toggleSequencer(enabled) {
+    console.log('toggleSequencer called with:', enabled);
+
     const seqOptions = document.getElementById('sequencerOptions');
     const timelineContainer = document.getElementById('timelineContainer');
     const seqEnabled = document.getElementById('sequencerEnabled');
 
     AppState.sequencer.enabled = enabled;
 
+    // Toggle sequencer options visibility
     if (seqOptions) {
-        seqOptions.classList.toggle('enabled', enabled);
+        if (enabled) {
+            seqOptions.classList.add('enabled');
+        } else {
+            seqOptions.classList.remove('enabled');
+        }
+        console.log('seqOptions enabled:', seqOptions.classList.contains('enabled'));
+    } else {
+        console.error('sequencerOptions not found');
     }
 
+    // Toggle timeline container visibility
     if (timelineContainer) {
         if (enabled) {
             timelineContainer.classList.remove('hidden');
+            timelineContainer.style.display = 'flex'; // Force display
         } else {
             timelineContainer.classList.add('hidden');
+            timelineContainer.style.display = 'none';
         }
+        console.log('Timeline hidden class:', timelineContainer.classList.contains('hidden'));
+    } else {
+        console.error('timelineContainer not found');
     }
 
-    if (seqEnabled) {
+    // Update checkbox state
+    if (seqEnabled && seqEnabled.checked !== enabled) {
         seqEnabled.checked = enabled;
     }
 
+    // Render content if enabled
     if (enabled) {
         renderSequenceList();
         renderTimeline();
     }
 
     saveToLocalStorage();
-    console.log('Sequencer toggled:', enabled, 'Timeline visible:', !timelineContainer?.classList.contains('hidden'));
 }
 
 function setupSequencerListeners() {
     const seqEnabled = document.getElementById('sequencerEnabled');
-    const seqOptions = document.getElementById('sequencerOptions');
-    const timelineContainer = document.getElementById('timelineContainer');
     const btnCreateGroup = document.getElementById('btnCreateGroup');
     const seqTotalDuration = document.getElementById('seqTotalDuration');
     const seqStagger = document.getElementById('seqStagger');
@@ -2287,15 +2302,18 @@ function setupSequencerListeners() {
 
     console.log('Setting up sequencer listeners', {
         seqEnabled: !!seqEnabled,
-        seqOptions: !!seqOptions,
-        timelineContainer: !!timelineContainer
+        timelineContainer: !!document.getElementById('timelineContainer')
     });
 
-    if (seqEnabled && seqOptions && timelineContainer) {
-        seqEnabled.addEventListener('change', () => {
-            console.log('Sequencer toggled:', seqEnabled.checked);
-            toggleSequencer(seqEnabled.checked);
+    // Main sequencer toggle - this is critical
+    if (seqEnabled) {
+        seqEnabled.addEventListener('change', function() {
+            console.log('Sequencer checkbox changed:', this.checked);
+            toggleSequencer(this.checked);
         });
+        console.log('Sequencer change listener attached');
+    } else {
+        console.error('sequencerEnabled checkbox not found!');
     }
 
     if (btnCreateGroup) {
