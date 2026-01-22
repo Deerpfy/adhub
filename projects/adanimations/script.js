@@ -2203,6 +2203,7 @@ const originalInit = init;
 init = function() {
     originalInit();
     setupEnhancedEventListeners();
+    setupSequencerListeners(); // Add sequencer listeners
 };
 
 // Make functions available globally for onclick handlers
@@ -2721,10 +2722,3 @@ window.deleteGroup = deleteGroup;
 window.addToGroup = addToGroup;
 window.removeFromGroup = removeFromGroup;
 window.showAddToGroupMenu = showAddToGroupMenu;
-
-// Add sequencer setup to enhanced listeners
-const originalSetupEnhanced = setupEnhancedEventListeners;
-setupEnhancedEventListeners = function() {
-    originalSetupEnhanced();
-    setupSequencerListeners();
-};
