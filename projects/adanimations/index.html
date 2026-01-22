@@ -97,7 +97,7 @@
                 <div class="panel-tabs">
                     <button class="tab-btn active" data-tab="properties">Vlastnosti</button>
                     <button class="tab-btn" data-tab="animation">Animace</button>
-                    <button class="tab-btn" data-tab="timer">Casovac</button>
+                    <button class="tab-btn" data-tab="sequencer">Sekvencer</button>
                 </div>
 
                 <!-- Properties Tab -->
@@ -365,43 +365,127 @@
                     </div>
                 </div>
 
-                <!-- Timer Tab -->
-                <div class="tab-content" id="tab-timer">
+                <!-- Sequencer Tab -->
+                <div class="tab-content" id="tab-sequencer">
                     <div class="property-group">
-                        <h3>Opakovani</h3>
+                        <h3>Sekvencer animaci</h3>
+                        <p class="property-hint">Nastav poradi a casovani animaci elementu.</p>
+
                         <div class="property-row">
                             <label>
-                                <input type="checkbox" id="timerEnabled">
-                                Automaticke opakovani
+                                <input type="checkbox" id="sequencerEnabled">
+                                Aktivovat sekvencer
                             </label>
                         </div>
-                        <div class="timer-options" id="timerOptions">
-                            <div class="property-row">
-                                <label>Interval:</label>
-                                <select id="timerPreset">
-                                    <option value="60000">1 minuta</option>
-                                    <option value="300000" selected>5 minut</option>
-                                    <option value="600000">10 minut</option>
-                                    <option value="900000">15 minut</option>
-                                    <option value="1800000">30 minut</option>
-                                    <option value="custom">Vlastni...</option>
-                                </select>
+                    </div>
+
+                    <div class="sequencer-options" id="sequencerOptions">
+                        <!-- Sequence list -->
+                        <div class="property-group">
+                            <h3>Poradi elementu</h3>
+                            <div class="sequence-list" id="sequenceList">
+                                <!-- Elements will be rendered here -->
                             </div>
-                            <div class="property-row hidden" id="customIntervalRow">
-                                <label>Vlastni (sekundy):</label>
-                                <input type="number" id="timerCustom" value="300" min="10" max="86400">
+                        </div>
+
+                        <!-- Groups -->
+                        <div class="property-group">
+                            <h3>Skupiny</h3>
+                            <p class="property-hint">Elementy ve skupine se animuji spolecne.</p>
+                            <button class="btn btn-small btn-accent" id="btnCreateGroup">
+                                <span>+</span> Vytvorit skupinu
+                            </button>
+                            <div class="groups-list" id="groupsList">
+                                <!-- Groups will be rendered here -->
+                            </div>
+                        </div>
+
+                        <!-- Timing -->
+                        <div class="property-group">
+                            <h3>Globalni casovani</h3>
+                            <div class="property-row">
+                                <label>Celkova doba:</label>
+                                <input type="number" id="seqTotalDuration" value="10000" min="1000" max="60000" step="500">
+                                <span>ms</span>
+                            </div>
+                            <div class="property-row">
+                                <label>Stagger delay:</label>
+                                <input type="number" id="seqStagger" value="200" min="0" max="2000" step="50">
+                                <span>ms</span>
+                            </div>
+                        </div>
+
+                        <!-- Playback -->
+                        <div class="property-group">
+                            <h3>Prehravani</h3>
+                            <div class="playback-controls">
+                                <button class="btn btn-icon" id="btnSeqPlay" title="Prehrat">▶</button>
+                                <button class="btn btn-icon" id="btnSeqPause" title="Pauza">⏸</button>
+                                <button class="btn btn-icon" id="btnSeqStop" title="Stop">⏹</button>
                             </div>
                             <div class="property-row">
                                 <label>
-                                    <input type="checkbox" id="timerRandomize">
-                                    Nahodne +/- 30s
+                                    <input type="checkbox" id="seqLoop">
+                                    Opakovat
                                 </label>
+                            </div>
+                        </div>
+
+                        <!-- Timer (moved here) -->
+                        <div class="property-group">
+                            <h3>Auto-opakovani</h3>
+                            <div class="property-row">
+                                <label>
+                                    <input type="checkbox" id="timerEnabled">
+                                    Automaticke opakovani
+                                </label>
+                            </div>
+                            <div class="timer-options" id="timerOptions">
+                                <div class="property-row">
+                                    <label>Interval:</label>
+                                    <select id="timerPreset">
+                                        <option value="60000">1 minuta</option>
+                                        <option value="300000" selected>5 minut</option>
+                                        <option value="600000">10 minut</option>
+                                        <option value="900000">15 minut</option>
+                                        <option value="1800000">30 minut</option>
+                                        <option value="custom">Vlastni...</option>
+                                    </select>
+                                </div>
+                                <div class="property-row hidden" id="customIntervalRow">
+                                    <label>Vlastni (s):</label>
+                                    <input type="number" id="timerCustom" value="300" min="10" max="86400">
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </aside>
         </main>
+
+        <!-- Timeline (Sequencer) -->
+        <div class="timeline-container hidden" id="timelineContainer">
+            <div class="timeline-header">
+                <div class="timeline-controls">
+                    <button class="btn btn-icon btn-small" id="btnTimelinePlay" title="Prehrat">▶</button>
+                    <span class="timeline-time" id="timelineTime">0:00 / 10:00</span>
+                </div>
+                <div class="timeline-zoom">
+                    <button class="btn btn-icon btn-small" id="btnTimelineZoomOut">-</button>
+                    <span>Zoom</span>
+                    <button class="btn btn-icon btn-small" id="btnTimelineZoomIn">+</button>
+                </div>
+            </div>
+            <div class="timeline-scroll">
+                <div class="timeline-ruler" id="timelineRuler">
+                    <!-- Time markers will be rendered here -->
+                </div>
+                <div class="timeline-tracks" id="timelineTracks">
+                    <!-- Element tracks will be rendered here -->
+                </div>
+                <div class="timeline-playhead" id="timelinePlayhead"></div>
+            </div>
+        </div>
 
         <!-- Bottom Action Bar -->
         <footer class="action-bar">
