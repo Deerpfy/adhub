@@ -271,6 +271,15 @@ function init() {
     updateCanvasSize();
     updateZoomDisplay();
     loadFromLocalStorage();
+
+    // Debug: Log initialization
+    console.log('AdAnimations initialized', {
+        canvasWidth: AppState.canvas.width,
+        canvasHeight: AppState.canvas.height,
+        zoom: AppState.canvas.zoom,
+        elements: AppState.elements.length,
+        canvasElement: DOM.canvas ? 'found' : 'NOT FOUND'
+    });
 }
 
 function cacheDOM() {
@@ -780,12 +789,18 @@ function renderElementList() {
 }
 
 function renderCanvasElement(element) {
+    if (!DOM.canvas) {
+        console.error('Canvas not found!');
+        return;
+    }
+
     let domElement = DOM.canvas.querySelector(`[data-id="${element.id}"]`);
 
     if (!domElement) {
         domElement = document.createElement('div');
         domElement.className = 'canvas-element';
         domElement.dataset.id = element.id;
+        domElement.dataset.type = element.type; // Add type for CSS styling
         domElement.innerHTML = `
             <div class="resize-handle nw"></div>
             <div class="resize-handle ne"></div>
@@ -794,6 +809,7 @@ function renderCanvasElement(element) {
         `;
         DOM.canvas.appendChild(domElement);
         setupElementDrag(domElement);
+        console.log('Created canvas element:', element.id, 'at', element.x, element.y);
     }
 
     // Position & Size
@@ -1488,16 +1504,33 @@ function newProject() {
         }
     }
 
+    // Clear all state
     AppState.elements = [];
     AppState.selectedElement = null;
     AppState.elementIdCounter = 0;
+    AppState.sequencer.groups = [];
+    AppState.sequencer.enabled = false;
+    AppState.groupIdCounter = 0;
 
-    DOM.canvas.querySelectorAll('.canvas-element').forEach(el => el.remove());
+    // Clear canvas elements
+    if (DOM.canvas) {
+        DOM.canvas.querySelectorAll('.canvas-element').forEach(el => el.remove());
+    }
+
     renderElementList();
     selectElement(null);
     localStorage.removeItem('adanimations_project');
 
+    // Reset canvas size
+    AppState.canvas.width = 1920;
+    AppState.canvas.height = 1080;
+    AppState.canvas.zoom = 0.5;
+    if (DOM.canvasWidth) DOM.canvasWidth.value = 1920;
+    if (DOM.canvasHeight) DOM.canvasHeight.value = 1080;
+    updateCanvasSize();
+
     showToast('Novy projekt vytvoren', 'success');
+    console.log('Project reset', AppState);
 }
 
 function saveProject() {

@@ -116,11 +116,14 @@ body {
     border: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
+    overflow: hidden;
 }
 
 .panel-left {
     width: var(--panel-width);
+    min-width: 200px;
     border-right: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .panel-right {
@@ -128,6 +131,8 @@ body {
     min-width: 280px;
     border-left: 1px solid var(--border-color);
     flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .panel-center {
@@ -135,6 +140,8 @@ body {
     display: flex;
     flex-direction: column;
     background: var(--bg-color);
+    min-width: 0;
+    overflow: hidden;
 }
 
 .panel-header {
@@ -317,14 +324,18 @@ body {
 
 .canvas-wrapper {
     position: relative;
+    transform-origin: center center;
 }
 
 .canvas {
     position: relative;
     /* Semi-transparent dark background for the actual canvas area */
-    background: rgba(10, 10, 15, 0.95);
-    box-shadow: var(--shadow-lg), 0 0 0 1px rgba(139, 92, 246, 0.3);
+    background: #0a0a12;
+    box-shadow: var(--shadow-lg), 0 0 0 2px rgba(139, 92, 246, 0.4);
     overflow: hidden;
+    /* Ensure canvas is visible */
+    min-width: 100px;
+    min-height: 100px;
 }
 
 .canvas-grid {
@@ -346,6 +357,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 1;
+    box-sizing: border-box;
 }
 
 .canvas-element.selected {
