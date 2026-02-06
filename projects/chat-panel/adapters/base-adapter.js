@@ -31,6 +31,7 @@ class BaseAdapter {
         // Event listeners
         this._listeners = {
             message: [],
+            alert: [],
             connect: [],
             disconnect: [],
             error: [],

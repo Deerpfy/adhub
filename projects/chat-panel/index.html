@@ -295,6 +295,83 @@
                     </div>
                 </div>
                 <div class="settings-section">
+                    <h4>Event Alerts</h4>
+                    <div class="setting-item">
+                        <label>
+                            <input type="checkbox" id="showAlerts" checked>
+                            Zobrazit event alerty v chatu
+                        </label>
+                    </div>
+                    <div class="alert-type-toggles" id="alertTypeToggles">
+                        <div class="setting-item setting-sub-item">
+                            <label><input type="checkbox" data-alert-type="subscribe" checked> Subscriptions</label>
+                        </div>
+                        <div class="setting-item setting-sub-item">
+                            <label><input type="checkbox" data-alert-type="follow" checked> Follows</label>
+                        </div>
+                        <div class="setting-item setting-sub-item">
+                            <label><input type="checkbox" data-alert-type="gift_sub" checked> Gift Subs</label>
+                        </div>
+                        <div class="setting-item setting-sub-item">
+                            <label><input type="checkbox" data-alert-type="cheer" checked> Cheers/Bits</label>
+                        </div>
+                        <div class="setting-item setting-sub-item">
+                            <label><input type="checkbox" data-alert-type="raid" checked> Raids</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h4>Twitch EventSub (volitelne)</h4>
+                    <p class="setting-hint">Zakladni alerty (sub, resub, gift, raid) funguji bez prihlaseni. EventSub pridava: follows, cheers, channel points.</p>
+                    <div id="eventsubStatus" class="eventsub-status">
+                        <span class="eventsub-dot disconnected"></span>
+                        <span class="eventsub-label" id="eventsubLabel">Nepripojeno</span>
+                    </div>
+                    <div class="eventsub-fields" id="eventsubFields">
+                        <div class="form-group">
+                            <label for="eventsubClientId">Twitch Client ID</label>
+                            <input type="text" id="eventsubClientId" placeholder="Vloz Client ID z dev.twitch.tv" autocomplete="off">
+                            <span class="input-hint">Vytvor aplikaci na <a href="https://dev.twitch.tv/console/apps" target="_blank" rel="noopener">dev.twitch.tv</a>, Redirect URI: nastav na URL teto stranky + <code>/oauth-callback.html</code></span>
+                        </div>
+                        <div class="eventsub-actions">
+                            <button class="btn btn-sm btn-primary" id="eventsubConnectBtn">Pripojit Twitch</button>
+                            <button class="btn btn-sm btn-danger" id="eventsubDisconnectBtn" style="display:none">Odpojit</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h4>Donace (volitelne)</h4>
+                    <p class="setting-hint">Pripojte Streamlabs nebo StreamElements pro zobrazeni donaci v chatu. Token najdete v nastaveni prislusne sluzby.</p>
+                    <div class="donation-service">
+                        <div class="donation-service-header">
+                            <span class="donation-service-name">Streamlabs</span>
+                            <span class="donation-dot disconnected" id="slDot"></span>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="streamlabsToken" placeholder="Socket API Token" autocomplete="off">
+                            <span class="input-hint">Nastaveni -> API Settings -> Socket API Token na <a href="https://streamlabs.com/dashboard#/settings/api-settings" target="_blank" rel="noopener">streamlabs.com</a></span>
+                        </div>
+                        <div class="donation-actions">
+                            <button class="btn btn-sm btn-primary" id="slConnectBtn">Pripojit</button>
+                            <button class="btn btn-sm btn-danger" id="slDisconnectBtn" style="display:none">Odpojit</button>
+                        </div>
+                    </div>
+                    <div class="donation-service">
+                        <div class="donation-service-header">
+                            <span class="donation-service-name">StreamElements</span>
+                            <span class="donation-dot disconnected" id="seDot"></span>
+                        </div>
+                        <div class="form-group">
+                            <input type="password" id="streamelementsToken" placeholder="JWT Token" autocomplete="off">
+                            <span class="input-hint">Profil -> Channels -> Show Secrets -> JWT Token na <a href="https://streamelements.com/dashboard/account/channels" target="_blank" rel="noopener">streamelements.com</a></span>
+                        </div>
+                        <div class="donation-actions">
+                            <button class="btn btn-sm btn-primary" id="seConnectBtn">Pripojit</button>
+                            <button class="btn btn-sm btn-danger" id="seDisconnectBtn" style="display:none">Odpojit</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="settings-section">
                     <h4>Chat</h4>
                     <div class="setting-item">
                         <label for="maxMessages">Max. počet zpráv</label>
@@ -308,6 +385,87 @@
                             <option value="16">Velké (16px)</option>
                             <option value="18">Extra velké (18px)</option>
                         </select>
+                    </div>
+                </div>
+                <div class="settings-section">
+                    <h4>Chat Style (OBS / Streamlabs)</h4>
+                    <div class="style-selector">
+                        <label class="style-radio">
+                            <input type="radio" name="chatStyle" value="default" checked>
+                            <span>Default</span>
+                        </label>
+                        <label class="style-radio">
+                            <input type="radio" name="chatStyle" value="preset">
+                            <span>Preset</span>
+                        </label>
+                        <label class="style-radio">
+                            <input type="radio" name="chatStyle" value="custom">
+                            <span>Custom CSS</span>
+                        </label>
+                    </div>
+                    <!-- Preset vyber -->
+                    <div id="stylePresetPanel" class="style-panel" style="display:none">
+                        <select id="stylePresetSelect">
+                            <option value="">-- Vyber preset --</option>
+                            <option value="clean-dark">Clean Dark</option>
+                            <option value="neon-glow">Neon Glow</option>
+                            <option value="bubble">Chat Bubbles</option>
+                            <option value="minimal">Minimal</option>
+                            <option value="twitch-native">Twitch Native</option>
+                        </select>
+                    </div>
+                    <!-- Custom CSS editor -->
+                    <div id="styleCustomPanel" class="style-panel" style="display:none">
+                        <textarea id="customCSSEditor" rows="8" placeholder="/* Vloz Streamlabs Custom CSS nebo vlastni CSS */&#10;/* Pouzij Streamlabs tridy: #log, .wrap, .meta, .name, .message, .emote */"></textarea>
+                        <details class="style-html-ref">
+                            <summary>HTML Reference</summary>
+                            <pre><code>&lt;div id="log"&gt;
+  &lt;div class="wrap" data-from="user"&gt;
+    &lt;div class="meta" style="color:#ff0"&gt;
+      &lt;span class="badges"&gt;&lt;img class="badge"&gt;&lt;/span&gt;
+      &lt;span class="name"&gt;User&lt;/span&gt;
+      &lt;span class="colon"&gt;: &lt;/span&gt;
+    &lt;/div&gt;
+    &lt;span class="message"&gt;text&lt;/span&gt;
+  &lt;/div&gt;
+&lt;/div&gt;</code></pre>
+                        </details>
+                    </div>
+                    <!-- Template promenne -->
+                    <div id="styleVarsPanel" class="style-panel" style="display:none">
+                        <div class="style-vars-grid">
+                            <label><span>{font_size}</span><input type="number" id="varFontSize" value="14" min="10" max="32"></label>
+                            <label><span>{text_color}</span><input type="color" id="varTextColor" value="#ffffff"></label>
+                            <label><span>{background_color}</span><input type="color" id="varBgColor" value="#000000"></label>
+                        </div>
+                    </div>
+                    <button class="btn btn-sm btn-secondary" id="applyStyleBtn" style="margin-top:6px">Aplikovat styl</button>
+                </div>
+                <div class="settings-section">
+                    <h4>OBS Browser Source</h4>
+                    <div class="obs-section">
+                        <div class="obs-url-container">
+                            <input type="text" id="obsUrlInput" readonly placeholder="Klikni na 'Generovat' pro vytvoreni URL">
+                            <button class="btn btn-sm btn-secondary" id="obsUrlCopy" title="Kopirovat URL">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="obs-settings-row">
+                            <label>
+                                <input type="checkbox" id="obsShowAlerts" checked>
+                                Alerty v OBS
+                            </label>
+                            <label>
+                                Skryt po
+                                <input type="number" id="obsHideAfter" value="0" min="0" max="300" style="width:50px">
+                                s (0 = nikdy)
+                            </label>
+                        </div>
+                        <button class="btn btn-primary btn-sm" id="obsGenerateUrl">Generovat OBS URL</button>
+                        <p class="obs-hint">Doporucena velikost: 400 x 600 px. Vlozte URL do OBS jako Browser Source.</p>
                     </div>
                 </div>
                 <div class="settings-section">
@@ -409,6 +567,8 @@
     <script src="adapters/youtube-adapter.js"></script>
     <script src="adapters/youtube-iframe-adapter.js"></script>
     <script src="adapters/youtube-extension-adapter.js"></script>
+    <script src="adapters/twitch-eventsub-adapter.js"></script>
+    <script src="adapters/donation-adapter.js"></script>
     <script src="jszip.min.js"></script>
     <script src="script.js"></script>
 </body>

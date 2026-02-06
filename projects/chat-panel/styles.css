@@ -1974,3 +1974,469 @@ a:hover {
     justify-content: center;
     gap: 8px;
 }
+
+/* =============================================================================
+   EVENT ALERTS
+   ============================================================================= */
+
+.chat-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 0;
+    padding: 0;
+    margin: 2px 0;
+    border-left: 3px solid;
+    border-radius: var(--border-radius-sm);
+    font-size: 0.9em;
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.chat-alert.alert-visible {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Alert streamer label - same as message */
+.alert-streamer-label {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 6px;
+    min-width: 80px;
+    flex-shrink: 0;
+}
+
+.alert-streamer-label svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.alert-streamer-label .streamer-name {
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0.7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 80px;
+}
+
+.alert-streamer-label.twitch { color: var(--twitch-color); }
+.alert-streamer-label.kick { color: var(--kick-color); }
+.alert-streamer-label.youtube { color: var(--youtube-color); }
+
+/* Alert body */
+.alert-body {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.alert-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.alert-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.alert-content {
+    font-weight: 600;
+    word-break: break-word;
+}
+
+.alert-detail {
+    display: block;
+    margin-top: 2px;
+    font-style: italic;
+    opacity: 0.8;
+    font-weight: 400;
+    font-size: 0.9em;
+}
+
+/* Alert type colors */
+.chat-alert.alert-subscribe,
+.chat-alert.alert-resubscribe {
+    background: rgba(138, 43, 226, 0.12);
+    border-left-color: #8a2be2;
+}
+.chat-alert.alert-subscribe .alert-icon,
+.chat-alert.alert-resubscribe .alert-icon {
+    color: #b366ff;
+}
+
+.chat-alert.alert-gift_sub,
+.chat-alert.alert-gift_sub_received {
+    background: rgba(255, 105, 180, 0.12);
+    border-left-color: #ff69b4;
+}
+.chat-alert.alert-gift_sub .alert-icon,
+.chat-alert.alert-gift_sub_received .alert-icon {
+    color: #ff69b4;
+}
+
+.chat-alert.alert-follow {
+    background: rgba(255, 68, 68, 0.10);
+    border-left-color: #ff4444;
+}
+.chat-alert.alert-follow .alert-icon {
+    color: #ff4444;
+}
+
+.chat-alert.alert-cheer,
+.chat-alert.alert-donation {
+    background: rgba(255, 215, 0, 0.12);
+    border-left-color: #ffd700;
+}
+.chat-alert.alert-cheer .alert-icon,
+.chat-alert.alert-donation .alert-icon {
+    color: #ffd700;
+}
+
+.chat-alert.alert-raid {
+    background: rgba(0, 191, 255, 0.12);
+    border-left-color: #00bfff;
+}
+.chat-alert.alert-raid .alert-icon {
+    color: #00bfff;
+}
+
+.chat-alert.alert-channel_points {
+    background: rgba(0, 255, 127, 0.10);
+    border-left-color: #00ff7f;
+}
+.chat-alert.alert-channel_points .alert-icon {
+    color: #00ff7f;
+}
+
+/* Light theme alert adjustments */
+[data-theme="light"] .chat-alert.alert-subscribe,
+[data-theme="light"] .chat-alert.alert-resubscribe {
+    background: rgba(138, 43, 226, 0.06);
+}
+[data-theme="light"] .chat-alert.alert-gift_sub {
+    background: rgba(255, 105, 180, 0.06);
+}
+[data-theme="light"] .chat-alert.alert-follow {
+    background: rgba(255, 68, 68, 0.06);
+}
+[data-theme="light"] .chat-alert.alert-cheer,
+[data-theme="light"] .chat-alert.alert-donation {
+    background: rgba(255, 215, 0, 0.08);
+}
+[data-theme="light"] .chat-alert.alert-raid {
+    background: rgba(0, 191, 255, 0.06);
+}
+
+/* Alert settings sub-items */
+.setting-sub-item {
+    padding-left: 24px;
+    font-size: 0.9em;
+}
+
+.alert-type-toggles {
+    transition: opacity 0.2s ease;
+}
+
+/* =============================================================================
+   OBS LINK SECTION (in settings)
+   ============================================================================= */
+
+.obs-section {
+    margin-top: 8px;
+}
+
+.obs-url-container {
+    display: flex;
+    gap: 6px;
+    margin: 8px 0;
+}
+
+.obs-url-container input {
+    flex: 1;
+    font-size: 0.8em;
+    padding: 6px 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+    font-family: monospace;
+}
+
+.obs-url-container .btn {
+    flex-shrink: 0;
+}
+
+.obs-settings-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+    font-size: 0.9em;
+}
+
+.obs-settings-row input[type="number"] {
+    width: 60px;
+    padding: 3px 6px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+}
+
+.obs-hint {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+
+/* =============================================================================
+   STREAMLABS STYLE IMPORT
+   ============================================================================= */
+
+.style-selector {
+    display: flex;
+    gap: 8px;
+    margin: 8px 0;
+}
+
+.style-radio {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.9em;
+    cursor: pointer;
+}
+
+.style-panel {
+    margin: 8px 0;
+}
+
+.style-panel textarea {
+    width: 100%;
+    padding: 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.85em;
+    resize: vertical;
+    min-height: 80px;
+}
+
+.style-panel select {
+    width: 100%;
+    padding: 6px 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+    font-size: 0.9em;
+}
+
+.style-html-ref {
+    margin-top: 6px;
+    font-size: 0.8em;
+}
+
+.style-html-ref summary {
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.style-html-ref pre {
+    margin-top: 4px;
+    padding: 6px 8px;
+    background: var(--bg-primary);
+    border-radius: var(--border-radius-sm);
+    overflow-x: auto;
+    font-size: 0.85em;
+}
+
+.style-vars-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 8px;
+}
+
+.style-vars-grid label {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 0.8em;
+}
+
+.style-vars-grid label span {
+    color: var(--text-muted);
+    font-family: monospace;
+}
+
+.style-vars-grid input[type="number"] {
+    width: 100%;
+    padding: 3px 6px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+}
+
+.style-vars-grid input[type="color"] {
+    width: 100%;
+    height: 28px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    cursor: pointer;
+    background: var(--bg-tertiary);
+}
+
+/* =============================================================================
+   TWITCH EVENTSUB
+   ============================================================================= */
+
+.setting-hint {
+    font-size: 0.82em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+
+.eventsub-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    padding: 6px 10px;
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius-sm);
+    font-size: 0.9em;
+}
+
+.eventsub-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.eventsub-dot.connected { background: var(--success); }
+.eventsub-dot.connecting { background: var(--warning); animation: pulse 1s infinite; }
+.eventsub-dot.disconnected { background: var(--text-muted); }
+.eventsub-dot.error { background: var(--error); }
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+
+.eventsub-fields .form-group {
+    margin-bottom: 8px;
+}
+
+.eventsub-fields .form-group label {
+    display: block;
+    font-size: 0.85em;
+    margin-bottom: 4px;
+    color: var(--text-secondary);
+}
+
+.eventsub-fields .form-group input {
+    width: 100%;
+    padding: 6px 8px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+    font-size: 0.9em;
+}
+
+.eventsub-fields .input-hint {
+    font-size: 0.78em;
+    color: var(--text-muted);
+    margin-top: 2px;
+    display: block;
+}
+
+.eventsub-fields .input-hint code {
+    background: var(--bg-primary);
+    padding: 1px 4px;
+    border-radius: 2px;
+    font-size: 0.9em;
+}
+
+.eventsub-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+/* =============================================================================
+   DONATION SERVICES
+   ============================================================================= */
+
+.donation-service {
+    padding: 10px;
+    background: var(--bg-tertiary);
+    border-radius: var(--border-radius-sm);
+    margin-bottom: 8px;
+}
+
+.donation-service-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.donation-service-name {
+    font-weight: 500;
+    font-size: 0.9em;
+}
+
+.donation-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.donation-dot.connected { background: var(--success); }
+.donation-dot.connecting { background: var(--warning); animation: pulse 1s infinite; }
+.donation-dot.disconnected { background: var(--text-muted); }
+.donation-dot.error { background: var(--error); }
+
+.donation-service .form-group {
+    margin-bottom: 6px;
+}
+
+.donation-service .form-group input {
+    width: 100%;
+    padding: 6px 8px;
+    background: var(--bg-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-primary);
+    font-size: 0.85em;
+}
+
+.donation-service .input-hint {
+    font-size: 0.78em;
+    color: var(--text-muted);
+    margin-top: 2px;
+    display: block;
+}
+
+.donation-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+}
