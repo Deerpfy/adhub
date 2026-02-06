@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Twitch OAuth - AdHub</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0e0e10;
+            color: #efeff1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .status {
+            text-align: center;
+            padding: 40px;
+        }
+        .status h2 { margin-bottom: 8px; }
+        .status p { color: #adadb8; }
+    </style>
+</head>
+<body>
+    <div class="status">
+        <h2 id="title">Zpracovavam...</h2>
+        <p id="msg">Toto okno se brzy zavre.</p>
+    </div>
+    <script>
+        (function() {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            const accessToken = params.get('access_token');
+            const error = params.get('error');
+            const state = params.get('state');
+
+            if (accessToken) {
+                document.getElementById('title').textContent = 'Prihlaseni uspesne!';
+                document.getElementById('msg').textContent = 'Zaviram okno...';
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'twitch_oauth_callback',
+                        access_token: accessToken,
+                        state: state,
+                    }, '*');
+                }
+                setTimeout(() => window.close(), 1500);
+            } else {
+                document.getElementById('title').textContent = 'Chyba prihlaseni';
+                document.getElementById('msg').textContent = error || 'Neznama chyba. Zavrete toto okno a zkuste znovu.';
+                if (window.opener) {
+                    window.opener.postMessage({
+                        type: 'twitch_oauth_callback',
+                        error: error || 'unknown_error',
+                        state: state,
+                    }, '*');
+                }
+            }
+        })();
+    </script>
+</body>
+</html>

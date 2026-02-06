@@ -97,6 +97,9 @@ class KickAdapter extends BaseAdapter {
 
         // Emotes cache
         this.emotes = {};
+
+        // Channel ID (odlišný od chatroomId, potřebný pro channel events)
+        this.channelId = config.channelId || null;
     }
 
     /**
@@ -297,6 +300,29 @@ class KickAdapter extends BaseAdapter {
 
         this._savePusherConfig(this.pusherKey, this.pusherCluster);
         this._startActivityTimeout();
+
+        // Odebírat channel events (sub, gift, follow, host) pokud máme channelId
+        this._subscribeToChannelEvents();
+    }
+
+    /**
+     * Odběr channel events (sub, gift, follow, raid/host)
+     * Používá channel.{channelId} Pusher kanál
+     */
+    _subscribeToChannelEvents() {
+        // channelId může být stejný jako chatroomId u mnoha kanálů
+        const channelId = this.channelId || this.chatroomId;
+        if (!channelId || !this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+
+        this.ws.send(JSON.stringify({
+            event: 'pusher:subscribe',
+            data: {
+                auth: '',
+                channel: `channel.${channelId}`,
+            },
+        }));
+
+        console.log(`[Kick] Subscribed to channel events: channel.${channelId}`);
     }
 
     /**
@@ -321,6 +347,35 @@ class KickAdapter extends BaseAdapter {
                 // Uživatel byl zabanován
                 break;
 
+            // Channel events (sub, gift, follow, host)
+            case 'App\\Events\\ChannelSubscriptionEvent':
+                this._handleAlertEvent('subscribe', data.data);
+                break;
+
+            case 'App\\Events\\GiftedSubscriptionsEvent':
+                this._handleAlertEvent('gift_sub', data.data);
+                break;
+
+            case 'App\\Events\\LuckyUsersWhoGotGiftSubscriptionsEvent':
+                this._handleAlertEvent('gift_sub_received', data.data);
+                break;
+
+            case 'App\\Events\\FollowersUpdated':
+                this._handleAlertEvent('follow', data.data);
+                break;
+
+            case 'App\\Events\\StreamHost':
+                this._handleAlertEvent('raid', data.data);
+                break;
+
+            case 'App\\Events\\Sub\\SubscriptionEvent':
+                this._handleAlertEvent('subscribe', data.data);
+                break;
+
+            case 'App\\Events\\Sub\\GiftsLeaderboardUpdated':
+                // Leaderboard update, ignorovat
+                break;
+
             case 'pusher:pong':
                 // Activity refresh
                 break;
@@ -328,6 +383,143 @@ class KickAdapter extends BaseAdapter {
             case 'pusher:error':
                 console.error('[Kick] Pusher error:', data.data);
                 break;
+        }
+    }
+
+    /**
+     * Zpracování channel event alertů
+     */
+    _handleAlertEvent(alertType, rawData) {
+        try {
+            const data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+            const alert = this._createAlert(alertType, data);
+            if (alert) {
+                this.emit('alert', alert);
+            }
+        } catch (error) {
+            console.error(`[Kick] Error processing ${alertType} event:`, error);
+        }
+    }
+
+    /**
+     * Vytvoření alert objektu z Kick channel eventu
+     */
+    _createAlert(alertType, data) {
+        const base = {
+            id: `kick-${alertType}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            platform: 'kick',
+            channel: this.channel,
+            type: 'alert',
+            timestamp: new Date(),
+            raw: data,
+        };
+
+        switch (alertType) {
+            case 'subscribe':
+                return {
+                    ...base,
+                    alertType: 'subscribe',
+                    author: {
+                        id: String(data.user_id || data.subscriber?.id || ''),
+                        username: data.username || data.subscriber?.username || 'Someone',
+                        displayName: data.username || data.subscriber?.username || 'Someone',
+                        color: '#53fc18',
+                        badges: [],
+                        roles: {},
+                    },
+                    content: `${data.username || data.subscriber?.username || 'Someone'} just subscribed!`,
+                    alertData: {
+                        tier: '1000',
+                        months: data.months || 1,
+                        isGift: false,
+                    },
+                };
+
+            case 'gift_sub':
+                return {
+                    ...base,
+                    alertType: 'gift_sub',
+                    author: {
+                        id: String(data.gifter_id || data.gifter?.id || ''),
+                        username: data.gifter_username || data.gifter?.username || 'Anonymous',
+                        displayName: data.gifter_username || data.gifter?.username || 'Anonymous',
+                        color: '#53fc18',
+                        badges: [],
+                        roles: {},
+                    },
+                    content: `${data.gifter_username || data.gifter?.username || 'Someone'} gifted ${data.gifted_count || data.quantity || 1} subs!`,
+                    alertData: {
+                        isGift: true,
+                        gifterName: data.gifter_username || data.gifter?.username || 'Anonymous',
+                        giftCount: data.gifted_count || data.quantity || 1,
+                    },
+                };
+
+            case 'gift_sub_received':
+                // Příjemci gift subů - může obsahovat pole
+                if (Array.isArray(data)) {
+                    for (const recipient of data) {
+                        this.emit('alert', {
+                            ...base,
+                            id: `kick-giftrec-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+                            alertType: 'gift_sub_received',
+                            author: {
+                                id: String(recipient.id || ''),
+                                username: recipient.username || 'Someone',
+                                displayName: recipient.username || 'Someone',
+                                color: '#53fc18',
+                                badges: [],
+                                roles: {},
+                            },
+                            content: `${recipient.username || 'Someone'} received a gift sub!`,
+                            alertData: { isGift: true },
+                        });
+                    }
+                    return null; // Už emitováno v cyklu
+                }
+                return null;
+
+            case 'follow':
+                return {
+                    ...base,
+                    alertType: 'follow',
+                    author: {
+                        id: '',
+                        username: data.username || 'Someone',
+                        displayName: data.username || 'Someone',
+                        color: '#53fc18',
+                        badges: [],
+                        roles: {},
+                    },
+                    content: data.username
+                        ? `${data.username} is now following!`
+                        : `New follower! (${data.followersCount || data.followers_count || '?'} total)`,
+                    alertData: {
+                        followedAt: new Date(),
+                    },
+                };
+
+            case 'raid':
+                return {
+                    ...base,
+                    alertType: 'raid',
+                    author: {
+                        id: String(data.host_id || data.id || ''),
+                        username: data.host_username || data.slug || 'Unknown',
+                        displayName: data.host_username || data.slug || 'Unknown',
+                        color: '#53fc18',
+                        badges: [],
+                        roles: {},
+                    },
+                    content: `${data.host_username || data.slug || 'Someone'} is hosting with ${data.number_viewers || data.viewers_count || '?'} viewers!`,
+                    alertData: {
+                        viewers: data.number_viewers || data.viewers_count || 0,
+                        fromChannel: data.host_username || data.slug || 'Unknown',
+                    },
+                };
+
+            default:
+                return null;
         }
     }
 
@@ -446,6 +638,7 @@ class KickAdapter extends BaseAdapter {
 
             if (data?.chatroom?.id) {
                 this.chatroomId = data.chatroom.id;
+                this.channelId = data.id || null;
                 this.channelInfo = {
                     id: data.id,
                     slug: data.slug,

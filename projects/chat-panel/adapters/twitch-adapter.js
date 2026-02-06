@@ -156,6 +156,11 @@ class TwitchAdapter extends BaseAdapter {
                         this._handlePrivmsg(message);
                     }
 
+                    // Event alerty (sub, resub, gift sub, raid)
+                    if (message.includes('USERNOTICE')) {
+                        this._handleUsernotice(message);
+                    }
+
                     // PONG odpověď
                     if (message.startsWith('PONG') || message.includes('PONG')) {
                         if (this.pongTimeout) {
@@ -378,6 +383,161 @@ class TwitchAdapter extends BaseAdapter {
         }
 
         return colors[Math.abs(hash) % colors.length];
+    }
+
+    // =========================================================================
+    // EVENT ALERTS (USERNOTICE) - sub, resub, gift sub, raid
+    // =========================================================================
+
+    /**
+     * Zpracování USERNOTICE (sub, resub, gift sub, raid, ritual)
+     */
+    _handleUsernotice(raw) {
+        try {
+            const tags = this._parseIrcTags(raw);
+            const msgId = tags['msg-id'];
+            if (!msgId) return;
+
+            const alert = this._createAlertFromUsernotice(tags, msgId, raw);
+            if (alert) {
+                this.emit('alert', alert);
+            }
+        } catch (error) {
+            console.error('[Twitch] Error parsing USERNOTICE:', error);
+        }
+    }
+
+    /**
+     * Parsování IRC tagů z USERNOTICE
+     */
+    _parseIrcTags(raw) {
+        const tagMatch = raw.match(/^@([^ ]+) /);
+        const tags = {};
+        if (tagMatch) {
+            tagMatch[1].split(';').forEach(tag => {
+                const idx = tag.indexOf('=');
+                if (idx !== -1) {
+                    tags[tag.substring(0, idx)] = tag.substring(idx + 1)
+                        .replace(/\\s/g, ' ')
+                        .replace(/\\n/g, '\n')
+                        .replace(/\\\\/g, '\\');
+                }
+            });
+        }
+        return tags;
+    }
+
+    /**
+     * Vytvoření alert objektu z USERNOTICE tagů
+     */
+    _createAlertFromUsernotice(tags, msgId, raw) {
+        // Zpráva přiložená k USERNOTICE (resub message atd.)
+        const userMessage = raw.match(/USERNOTICE #[^ ]+ :(.+)$/);
+        const attachedMessage = userMessage ? userMessage[1] : '';
+
+        const base = {
+            id: tags.id || `twitch-alert-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            platform: 'twitch',
+            channel: this.channel,
+            type: 'alert',
+            timestamp: new Date(parseInt(tags['tmi-sent-ts']) || Date.now()),
+            raw: tags,
+            author: {
+                id: tags['user-id'] || '',
+                username: (tags['display-name'] || tags.login || 'Unknown').toLowerCase(),
+                displayName: tags['display-name'] || tags.login || 'Unknown',
+                color: tags.color || this._generateColor(tags['display-name'] || 'alert'),
+                badges: this._parseBadges(tags.badges || ''),
+                roles: {},
+            },
+        };
+
+        const systemMsg = (tags['system-msg'] || '').replace(/\\s/g, ' ');
+
+        switch (msgId) {
+            case 'sub':
+                return {
+                    ...base,
+                    alertType: 'subscribe',
+                    content: systemMsg || `${base.author.displayName} subscribed!`,
+                    alertData: {
+                        tier: tags['msg-param-sub-plan'] || '1000',
+                        tierName: (tags['msg-param-sub-plan-name'] || '').replace(/\\s/g, ' '),
+                        months: 1,
+                        isGift: false,
+                    },
+                };
+
+            case 'resub':
+                return {
+                    ...base,
+                    alertType: 'resubscribe',
+                    content: systemMsg || `${base.author.displayName} resubscribed!`,
+                    alertData: {
+                        tier: tags['msg-param-sub-plan'] || '1000',
+                        tierName: (tags['msg-param-sub-plan-name'] || '').replace(/\\s/g, ' '),
+                        months: parseInt(tags['msg-param-cumulative-months']) || 1,
+                        streak: parseInt(tags['msg-param-streak-months']) || 0,
+                        message: attachedMessage,
+                        isGift: false,
+                    },
+                };
+
+            case 'subgift':
+                return {
+                    ...base,
+                    alertType: 'gift_sub',
+                    content: systemMsg || `${base.author.displayName} gifted a sub to ${(tags['msg-param-recipient-display-name'] || 'someone').replace(/\\s/g, ' ')}!`,
+                    alertData: {
+                        tier: tags['msg-param-sub-plan'] || '1000',
+                        months: parseInt(tags['msg-param-months']) || 1,
+                        isGift: true,
+                        gifterName: base.author.displayName,
+                        giftRecipient: (tags['msg-param-recipient-display-name'] || 'Unknown').replace(/\\s/g, ' '),
+                        giftCount: 1,
+                    },
+                };
+
+            case 'submysterygift':
+                return {
+                    ...base,
+                    alertType: 'gift_sub',
+                    content: systemMsg || `${base.author.displayName} gifted ${tags['msg-param-mass-gift-count'] || '?'} subs!`,
+                    alertData: {
+                        tier: tags['msg-param-sub-plan'] || '1000',
+                        isGift: true,
+                        gifterName: base.author.displayName,
+                        giftCount: parseInt(tags['msg-param-mass-gift-count']) || 1,
+                    },
+                };
+
+            case 'raid':
+                return {
+                    ...base,
+                    alertType: 'raid',
+                    content: systemMsg || `${base.author.displayName} is raiding with ${tags['msg-param-viewerCount'] || '?'} viewers!`,
+                    alertData: {
+                        viewers: parseInt(tags['msg-param-viewerCount']) || 0,
+                        fromChannel: base.author.displayName,
+                    },
+                };
+
+            case 'ritual':
+                if (tags['msg-param-ritual-name'] === 'new_chatter') {
+                    return {
+                        ...base,
+                        alertType: 'follow',
+                        content: systemMsg || `${base.author.displayName} is new here!`,
+                        alertData: {
+                            message: attachedMessage,
+                        },
+                    };
+                }
+                return null;
+
+            default:
+                return null;
+        }
     }
 
     /**

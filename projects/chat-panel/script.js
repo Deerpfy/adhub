@@ -22,6 +22,18 @@ const AppState = {
         maxMessages: 500,
         fontSize: 14,
         theme: 'dark',
+        showAlerts: true,
+        alertTypes: {
+            subscribe: true,
+            resubscribe: true,
+            gift_sub: true,
+            gift_sub_received: true,
+            follow: true,
+            cheer: true,
+            donation: true,
+            raid: true,
+            channel_points: true,
+        },
     },
     youtubeApiKey: '', // Uloženo pouze v session
     // Moderator extension stav
@@ -79,6 +91,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Aplikovat nastavení
     applySettings();
+
+    // Inicializovat style manager
+    initStyleManager();
+
+    // Inicializovat EventSub (volitelne)
+    initEventSub();
+
+    // Inicializovat donace (volitelne)
+    initDonations();
 
     // Inicializovat moderator extension
     initModeratorExtension();
@@ -266,6 +287,62 @@ function initEventListeners() {
         applySettings();
     });
 
+    // Alert settings
+    document.getElementById('showAlerts').addEventListener('change', (e) => {
+        AppState.settings.showAlerts = e.target.checked;
+        const toggles = document.getElementById('alertTypeToggles');
+        if (toggles) toggles.style.opacity = e.target.checked ? '1' : '0.4';
+        saveSettings();
+    });
+
+    document.querySelectorAll('[data-alert-type]').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+            const type = e.target.dataset.alertType;
+            if (!AppState.settings.alertTypes) AppState.settings.alertTypes = {};
+            AppState.settings.alertTypes[type] = e.target.checked;
+            // Sync resubscribe with subscribe
+            if (type === 'subscribe') {
+                AppState.settings.alertTypes.resubscribe = e.target.checked;
+            }
+            // Sync gift_sub_received with gift_sub
+            if (type === 'gift_sub') {
+                AppState.settings.alertTypes.gift_sub_received = e.target.checked;
+            }
+            saveSettings();
+        });
+    });
+
+    // EventSub connect/disconnect
+    document.getElementById('eventsubConnectBtn')?.addEventListener('click', eventsubConnect);
+    document.getElementById('eventsubDisconnectBtn')?.addEventListener('click', eventsubDisconnect);
+
+    // Donation service connect/disconnect
+    document.getElementById('slConnectBtn')?.addEventListener('click', donationConnectStreamlabs);
+    document.getElementById('slDisconnectBtn')?.addEventListener('click', donationDisconnectStreamlabs);
+    document.getElementById('seConnectBtn')?.addEventListener('click', donationConnectStreamElements);
+    document.getElementById('seDisconnectBtn')?.addEventListener('click', donationDisconnectStreamElements);
+
+    // OBS URL generator
+    document.getElementById('obsGenerateUrl').addEventListener('click', () => {
+        const url = generateOBSUrl();
+        document.getElementById('obsUrlInput').value = url;
+    });
+
+    document.getElementById('obsUrlCopy').addEventListener('click', () => {
+        const input = document.getElementById('obsUrlInput');
+        if (!input.value) {
+            showToast('Nejprve vygenerujte URL', 'warning');
+            return;
+        }
+        navigator.clipboard.writeText(input.value).then(() => {
+            showToast('OBS URL zkopirovan do schranky!', 'success');
+        }).catch(() => {
+            input.select();
+            document.execCommand('copy');
+            showToast('OBS URL zkopirovan!', 'success');
+        });
+    });
+
     // Data management
     document.getElementById('exportSettings').addEventListener('click', exportSettings);
     document.getElementById('importSettings').addEventListener('click', importSettings);
@@ -432,6 +509,10 @@ async function addChannel(platform, channel, options = {}) {
 
     adapter.on('message', (message) => {
         handleMessage(message);
+    });
+
+    adapter.on('alert', (alert) => {
+        handleAlert(alert);
     });
 
     // Připojit
@@ -893,6 +974,105 @@ function handleMessage(message) {
 }
 
 /**
+ * Zpracování event alertu (sub, follow, donate, raid atd.)
+ */
+function handleAlert(alert) {
+    // Kontrola nastavení
+    if (!AppState.settings.showAlerts) return;
+
+    // Kontrola specifického typu alertu
+    if (AppState.settings.alertTypes && AppState.settings.alertTypes[alert.alertType] === false) return;
+
+    // Přidat do pole zpráv
+    AppState.messages.push(alert);
+
+    // Oříznout
+    trimMessages();
+
+    // Vykreslit alert
+    renderAlert(alert);
+
+    // Auto-scroll
+    scrollToBottom();
+}
+
+/**
+ * Vykreslení event alertu v chatu
+ */
+function renderAlert(alert) {
+    let messagesContainer = DOM.chatContainer.querySelector('.chat-messages');
+    if (!messagesContainer) {
+        messagesContainer = document.createElement('div');
+        messagesContainer.className = 'chat-messages';
+        DOM.chatContainer.innerHTML = '';
+        DOM.chatContainer.appendChild(messagesContainer);
+    }
+
+    const basePlatform = alert.platform.split('-')[0];
+    const channelName = alert.channel || 'unknown';
+    const channelId = `${alert.platform}-${channelName.toLowerCase()}`;
+    const channelData = AppState.channels.get(channelId);
+    const channelDisplayName = channelData?.displayName || channelName;
+
+    const alertEl = document.createElement('div');
+    alertEl.className = `chat-alert alert-${alert.alertType} platform-${basePlatform}`;
+    alertEl.dataset.alertId = alert.id;
+    alertEl.dataset.messageId = alert.id;
+
+    const icon = getAlertIcon(alert.alertType);
+    const platformIcon = getPlatformIcon(alert.platform);
+
+    let html = '';
+
+    // Streamer label
+    html += `<div class="alert-streamer-label ${basePlatform}">`;
+    html += `<span class="streamer-icon">${platformIcon}</span>`;
+    html += `<span class="streamer-name">${escapeHtml(channelDisplayName)}</span>`;
+    html += '</div>';
+
+    // Alert body
+    html += '<div class="alert-body">';
+    html += `<span class="alert-icon">${icon}</span>`;
+    html += `<span class="alert-content">${escapeHtml(alert.content)}</span>`;
+
+    // Doplňkový detail (resub zpráva atd.)
+    if (alert.alertData?.message) {
+        html += `<span class="alert-detail">"${escapeHtml(alert.alertData.message)}"</span>`;
+    }
+    if (alert.alertData?.donateMessage) {
+        html += `<span class="alert-detail">"${escapeHtml(alert.alertData.donateMessage)}"</span>`;
+    }
+
+    html += '</div>';
+
+    alertEl.innerHTML = html;
+    messagesContainer.appendChild(alertEl);
+
+    // Animace vstupu
+    requestAnimationFrame(() => {
+        alertEl.classList.add('alert-visible');
+    });
+}
+
+/**
+ * Získání ikony pro typ alertu
+ */
+function getAlertIcon(alertType) {
+    const icons = {
+        'subscribe': '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
+        'resubscribe': '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
+        'gift_sub': '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2a3 3 0 0 0-3 3c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 12 7.4l3.38 4.6L17 10.83 14.92 8H20v6z"/></svg>',
+        'gift_sub_received': '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2a3 3 0 0 0-3 3c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5-2c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zM9 4c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm11 15H4v-2h16v2zm0-5H4V8h5.08L7 10.83 8.62 12 12 7.4l3.38 4.6L17 10.83 14.92 8H20v6z"/></svg>',
+        'follow': '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>',
+        'cheer': '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>',
+        'donation': '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>',
+        'raid': '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M15 13V5c0-1.66-1.34-3-3-3S9 3.34 9 5v8c-1.21.91-2 2.37-2 4 0 2.76 2.24 5 5 5s5-2.24 5-5c0-1.63-.79-3.09-2-4zm-4-8c0-.55.45-1 1-1s1 .45 1 1h-1v1h1v2h-1v1h1v2h-2V5z"/></svg>',
+        'channel_points': '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>',
+    };
+    return icons[alertType] || '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>';
+}
+
+/**
  * Vykreslení zprávy
  */
 function renderMessage(message) {
@@ -1050,7 +1230,11 @@ function rerenderMessages() {
     if (messagesContainer) {
         messagesContainer.innerHTML = '';
         for (const message of AppState.messages) {
-            renderMessage(message);
+            if (message.type === 'alert') {
+                renderAlert(message);
+            } else {
+                renderMessage(message);
+            }
         }
     }
 }
@@ -1277,6 +1461,20 @@ function loadSettings() {
     document.getElementById('compactMode').checked = AppState.settings.compactMode;
     document.getElementById('maxMessages').value = AppState.settings.maxMessages;
     document.getElementById('fontSize').value = AppState.settings.fontSize;
+
+    // Alert settings
+    const showAlertsEl = document.getElementById('showAlerts');
+    if (showAlertsEl) {
+        showAlertsEl.checked = AppState.settings.showAlerts !== false;
+        const toggles = document.getElementById('alertTypeToggles');
+        if (toggles) toggles.style.opacity = showAlertsEl.checked ? '1' : '0.4';
+    }
+    if (AppState.settings.alertTypes) {
+        document.querySelectorAll('[data-alert-type]').forEach(cb => {
+            const type = cb.dataset.alertType;
+            cb.checked = AppState.settings.alertTypes[type] !== false;
+        });
+    }
 }
 
 /**
@@ -1288,6 +1486,492 @@ function applySettings() {
 
     // Font size
     document.documentElement.style.setProperty('--font-size-base', `${AppState.settings.fontSize}px`);
+}
+
+// =============================================================================
+// STREAMLABS STYLE MANAGER
+// =============================================================================
+
+const STYLE_PRESETS = {
+    'clean-dark': `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+body { font-family: 'Inter', sans-serif; }
+#log > div { background: linear-gradient(135deg, rgba(30,30,30,0.8), rgba(20,20,20,0.6)); border-radius: 6px; padding: 6px 10px; margin-bottom: 4px; border-left: 2px solid rgba(255,255,255,0.1); }
+.name { font-weight: 700; }
+.message { font-weight: 400; opacity: 0.95; }
+.colon { display: none; }
+.name::after { content: ' '; }`,
+
+    'neon-glow': `@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap');
+body { font-family: 'Orbitron', monospace; font-size: 13px; }
+#log > div { background: rgba(0,0,0,0.6); border: 1px solid rgba(0,255,255,0.3); padding: 4px 8px; margin-bottom: 2px; text-shadow: 0 0 5px currentColor; }
+.name { font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.message { text-shadow: 0 0 3px rgba(255,255,255,0.3); }`,
+
+    'bubble': `@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap');
+body { font-family: 'Nunito', sans-serif; }
+#log { padding: 10px; }
+#log > div { background: rgba(255,255,255,0.12); border-radius: 18px; padding: 8px 14px; margin-bottom: 6px; max-width: 85%; backdrop-filter: blur(5px); }
+.meta { display: block; margin-bottom: 2px; }
+.name { font-weight: 700; font-size: 0.85em; }
+.colon { display: none; }
+.message { display: block; line-height: 1.3; }`,
+
+    'minimal': `@import url('https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600&display=swap');
+body { font-family: 'Source Sans 3', sans-serif; font-size: 15px; }
+.badges { display: none; }
+#log > div { padding: 2px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.name { font-weight: 600; }
+.message { opacity: 0.9; }
+.emote { height: 22px; }`,
+
+    'twitch-native': `@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+body { font-family: 'Inter', 'Roobert', 'Helvetica Neue', sans-serif; font-size: 13px; }
+#log { padding: 0 10px; }
+#log > div { padding: 5px 0; line-height: 20px; }
+.badge { width: 18px; height: 18px; margin-right: 3px; border-radius: 3px; }
+.name { font-weight: 700; font-size: 13px; }
+.colon { margin: 0 3px 0 0; }
+.message { color: #efeff1; font-size: 13px; }
+.emote { height: 28px; margin: -5px 0; }`,
+};
+
+/**
+ * Inicializace style manageru
+ */
+function initStyleManager() {
+    // Radio buttony
+    document.querySelectorAll('input[name="chatStyle"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+            const val = e.target.value;
+            document.getElementById('stylePresetPanel').style.display = val === 'preset' ? 'block' : 'none';
+            document.getElementById('styleCustomPanel').style.display = val === 'custom' ? 'block' : 'none';
+            document.getElementById('styleVarsPanel').style.display = val === 'custom' ? 'block' : 'none';
+        });
+    });
+
+    // Apply button
+    document.getElementById('applyStyleBtn').addEventListener('click', applySelectedStyle);
+
+    // Nacist ulozeny styl
+    loadSavedStyle();
+}
+
+function loadSavedStyle() {
+    try {
+        const saved = localStorage.getItem('adhub_obs_style');
+        if (saved) {
+            const data = JSON.parse(saved);
+            // Nastavit radio
+            const radio = document.querySelector(`input[name="chatStyle"][value="${data.style}"]`);
+            if (radio) {
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change'));
+            }
+            // Nastavit preset select
+            if (data.preset) {
+                const sel = document.getElementById('stylePresetSelect');
+                if (sel) sel.value = data.preset;
+            }
+            // Nastavit custom CSS
+            if (data.css) {
+                const ed = document.getElementById('customCSSEditor');
+                if (ed) ed.value = data.css;
+            }
+            // Nastavit template vars
+            if (data.vars) {
+                if (data.vars.font_size) document.getElementById('varFontSize').value = data.vars.font_size;
+                if (data.vars.text_color) document.getElementById('varTextColor').value = data.vars.text_color;
+                if (data.vars.background_color) document.getElementById('varBgColor').value = data.vars.background_color;
+            }
+        }
+    } catch (e) {}
+}
+
+function applySelectedStyle() {
+    const styleType = document.querySelector('input[name="chatStyle"]:checked')?.value || 'default';
+    let css = '';
+    let preset = '';
+
+    if (styleType === 'preset') {
+        preset = document.getElementById('stylePresetSelect').value;
+        css = STYLE_PRESETS[preset] || '';
+    } else if (styleType === 'custom') {
+        css = document.getElementById('customCSSEditor').value || '';
+        // Nahradit template promenne
+        css = processTemplateVars(css);
+    }
+
+    // Ulozit
+    const vars = {
+        font_size: document.getElementById('varFontSize').value,
+        text_color: document.getElementById('varTextColor').value,
+        background_color: document.getElementById('varBgColor').value,
+    };
+
+    localStorage.setItem('adhub_obs_style', JSON.stringify({
+        style: styleType,
+        preset,
+        css: styleType === 'custom' ? document.getElementById('customCSSEditor').value : '',
+        vars,
+    }));
+
+    // Ulozit do OBS config
+    saveOBSConfig({ customCSS: css });
+
+    showToast('Styl aplikovan! Bude pouzit v OBS view.', 'success');
+}
+
+function processTemplateVars(css) {
+    const vars = {
+        font_size: document.getElementById('varFontSize')?.value || '14',
+        text_color: document.getElementById('varTextColor')?.value || '#ffffff',
+        background_color: document.getElementById('varBgColor')?.value || '#000000',
+    };
+    let result = css;
+    for (const [key, value] of Object.entries(vars)) {
+        result = result.replace(new RegExp(`\\{${key}\\}`, 'g'), value);
+    }
+    return result;
+}
+
+// =============================================================================
+// TWITCH EVENTSUB (VOLITELNE)
+// =============================================================================
+
+/** @type {TwitchEventSubManager|null} */
+let eventSubManager = null;
+
+/**
+ * Inicializace EventSub - nacte ulozene kredencialy a auto-pripoji pokud platne
+ */
+function initEventSub() {
+    if (typeof TwitchEventSubManager === 'undefined') return;
+
+    eventSubManager = new TwitchEventSubManager();
+
+    // Nacist ulozeny Client ID
+    try {
+        const saved = localStorage.getItem('adhub_twitch_eventsub');
+        if (saved) {
+            const data = JSON.parse(saved);
+            if (data.clientId) {
+                const input = document.getElementById('eventsubClientId');
+                if (input) input.value = data.clientId;
+            }
+        }
+    } catch (e) {}
+
+    // Zkusit auto-connect z ulozenych kredencialu
+    if (eventSubManager.loadSavedCredentials()) {
+        eventSubManager.validateToken().then(valid => {
+            if (valid) {
+                _eventsubSetupAndConnect();
+            } else {
+                _eventsubUpdateUI('disconnected', 'Token vyprsel');
+            }
+        });
+    }
+}
+
+/**
+ * Pripojeni EventSub pres OAuth popup
+ */
+async function eventsubConnect() {
+    if (!eventSubManager) return;
+
+    const clientId = document.getElementById('eventsubClientId')?.value?.trim();
+    if (!clientId) {
+        showToast('Zadejte Twitch Client ID', 'warning');
+        return;
+    }
+
+    const btn = document.getElementById('eventsubConnectBtn');
+    btn.disabled = true;
+    btn.textContent = 'Prihlasuji...';
+    _eventsubUpdateUI('connecting', 'Prihlasuji...');
+
+    try {
+        const redirectUri = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '') + '/oauth-callback.html';
+        await eventSubManager.startOAuth(clientId, redirectUri);
+
+        // Validovat token a ziskat broadcaster ID
+        const valid = await eventSubManager.validateToken();
+        if (!valid) throw new Error('Token validation failed');
+
+        await _eventsubSetupAndConnect();
+        showToast('Twitch EventSub pripojeno!', 'success');
+    } catch (e) {
+        console.error('[EventSub] Connect error:', e);
+        _eventsubUpdateUI('disconnected', 'Chyba: ' + e.message);
+        showToast('EventSub pripojeni selhalo: ' + e.message, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Pripojit Twitch';
+    }
+}
+
+/**
+ * Odpojeni EventSub
+ */
+function eventsubDisconnect() {
+    if (!eventSubManager) return;
+    eventSubManager.logout();
+    _eventsubUpdateUI('disconnected', 'Odpojeno');
+    document.getElementById('eventsubConnectBtn').style.display = '';
+    document.getElementById('eventsubDisconnectBtn').style.display = 'none';
+    showToast('EventSub odpojeno', 'info');
+}
+
+/**
+ * Nastaveni listeneru a pripojeni k WebSocket
+ */
+async function _eventsubSetupAndConnect() {
+    // Listener pro alerty
+    eventSubManager.on('alert', (alert) => {
+        handleAlert(alert);
+    });
+
+    eventSubManager.on('connect', () => {
+        _eventsubUpdateUI('connected', 'Pripojeno');
+        document.getElementById('eventsubConnectBtn').style.display = 'none';
+        document.getElementById('eventsubDisconnectBtn').style.display = '';
+    });
+
+    eventSubManager.on('disconnect', () => {
+        _eventsubUpdateUI('disconnected', 'Odpojeno');
+        document.getElementById('eventsubConnectBtn').style.display = '';
+        document.getElementById('eventsubDisconnectBtn').style.display = 'none';
+    });
+
+    eventSubManager.on('error', (err) => {
+        console.error('[EventSub] Error:', err);
+        _eventsubUpdateUI('error', 'Chyba');
+    });
+
+    await eventSubManager.connect();
+}
+
+/**
+ * Aktualizace EventSub UI stavu
+ */
+function _eventsubUpdateUI(state, label) {
+    const dot = document.querySelector('#eventsubStatus .eventsub-dot');
+    const labelEl = document.getElementById('eventsubLabel');
+    if (dot) {
+        dot.className = 'eventsub-dot ' + state;
+    }
+    if (labelEl) {
+        labelEl.textContent = label;
+    }
+}
+
+// =============================================================================
+// DONATIONS (STREAMLABS / STREAMELEMENTS)
+// =============================================================================
+
+/** @type {DonationManager|null} */
+let donationManager = null;
+
+function initDonations() {
+    if (typeof DonationManager === 'undefined') return;
+
+    donationManager = new DonationManager();
+
+    donationManager.on('alert', (alert) => {
+        handleAlert(alert);
+    });
+
+    donationManager.on('connect', (data) => {
+        _donationUpdateDot(data.service, 'connected');
+        showToast(`${data.service} pripojeno!`, 'success');
+    });
+
+    donationManager.on('disconnect', (data) => {
+        _donationUpdateDot(data.service, 'disconnected');
+    });
+
+    donationManager.on('error', (data) => {
+        _donationUpdateDot(data.service, 'error');
+    });
+
+    // Nacist ulozene tokeny a auto-connect
+    try {
+        const saved = localStorage.getItem('adhub_donation_tokens');
+        if (saved) {
+            const tokens = JSON.parse(saved);
+            if (tokens.streamlabs) {
+                const input = document.getElementById('streamlabsToken');
+                if (input) input.value = tokens.streamlabs;
+                donationManager.connectStreamlabs(tokens.streamlabs).catch(() => {});
+                _donationShowDisconnect('sl');
+            }
+            if (tokens.streamelements) {
+                const input = document.getElementById('streamelementsToken');
+                if (input) input.value = tokens.streamelements;
+                donationManager.connectStreamElements(tokens.streamelements);
+                _donationShowDisconnect('se');
+            }
+        }
+    } catch (e) {}
+}
+
+function donationConnectStreamlabs() {
+    if (!donationManager) return;
+    const token = document.getElementById('streamlabsToken')?.value?.trim();
+    if (!token) {
+        showToast('Zadejte Streamlabs Socket API Token', 'warning');
+        return;
+    }
+    _donationUpdateDot('streamlabs', 'connecting');
+    donationManager.connectStreamlabs(token).then(() => {
+        _donationSaveTokens();
+        _donationShowDisconnect('sl');
+    }).catch(e => {
+        showToast('Streamlabs pripojeni selhalo: ' + e.message, 'error');
+        _donationUpdateDot('streamlabs', 'disconnected');
+    });
+}
+
+function donationDisconnectStreamlabs() {
+    if (!donationManager) return;
+    donationManager.disconnectStreamlabs();
+    _donationUpdateDot('streamlabs', 'disconnected');
+    _donationShowConnect('sl');
+    _donationSaveTokens();
+    showToast('Streamlabs odpojeno', 'info');
+}
+
+function donationConnectStreamElements() {
+    if (!donationManager) return;
+    const token = document.getElementById('streamelementsToken')?.value?.trim();
+    if (!token) {
+        showToast('Zadejte StreamElements JWT Token', 'warning');
+        return;
+    }
+    _donationUpdateDot('streamelements', 'connecting');
+    donationManager.connectStreamElements(token);
+    _donationSaveTokens();
+    _donationShowDisconnect('se');
+}
+
+function donationDisconnectStreamElements() {
+    if (!donationManager) return;
+    donationManager.disconnectStreamElements();
+    _donationUpdateDot('streamelements', 'disconnected');
+    _donationShowConnect('se');
+    _donationSaveTokens();
+    showToast('StreamElements odpojeno', 'info');
+}
+
+function _donationUpdateDot(service, state) {
+    const dotId = service === 'streamlabs' ? 'slDot' : 'seDot';
+    const dot = document.getElementById(dotId);
+    if (dot) dot.className = 'donation-dot ' + state;
+}
+
+function _donationShowDisconnect(prefix) {
+    const conn = document.getElementById(prefix + 'ConnectBtn');
+    const disc = document.getElementById(prefix + 'DisconnectBtn');
+    if (conn) conn.style.display = 'none';
+    if (disc) disc.style.display = '';
+}
+
+function _donationShowConnect(prefix) {
+    const conn = document.getElementById(prefix + 'ConnectBtn');
+    const disc = document.getElementById(prefix + 'DisconnectBtn');
+    if (conn) conn.style.display = '';
+    if (disc) disc.style.display = 'none';
+}
+
+function _donationSaveTokens() {
+    try {
+        const tokens = {};
+        const slToken = document.getElementById('streamlabsToken')?.value?.trim();
+        const seToken = document.getElementById('streamelementsToken')?.value?.trim();
+        if (slToken && donationManager?.streamlabsConnected) tokens.streamlabs = slToken;
+        if (seToken && donationManager?.streamelementsConnected) tokens.streamelements = seToken;
+        if (Object.keys(tokens).length > 0) {
+            localStorage.setItem('adhub_donation_tokens', JSON.stringify(tokens));
+        } else {
+            localStorage.removeItem('adhub_donation_tokens');
+        }
+    } catch (e) {}
+}
+
+/**
+ * Generování OBS Browser Source URL
+ */
+function generateOBSUrl() {
+    const channels = [];
+    for (const [id, data] of AppState.channels) {
+        const platform = data.platform;
+        const channel = data.channel;
+        let channelStr = `${platform}:${channel}`;
+
+        // Pro Kick pridat chatroom ID
+        if (platform === 'kick' && data.adapter?.chatroomId) {
+            channelStr += `:${data.adapter.chatroomId}`;
+        }
+
+        channels.push(channelStr);
+    }
+
+    if (channels.length === 0) {
+        showToast('Nejprve pridejte nejaky kanal', 'warning');
+        return '';
+    }
+
+    const params = new URLSearchParams();
+    params.set('channels', channels.join(','));
+    params.set('theme', 'transparent');
+    params.set('fontSize', AppState.settings.fontSize);
+    params.set('showTimestamps', 'false');
+    params.set('showBadges', String(AppState.settings.showPlatformBadges));
+    params.set('showEmotes', String(AppState.settings.showEmotes));
+
+    const obsShowAlerts = document.getElementById('obsShowAlerts');
+    params.set('showAlerts', String(obsShowAlerts ? obsShowAlerts.checked : true));
+
+    const obsHideAfter = document.getElementById('obsHideAfter');
+    if (obsHideAfter && parseInt(obsHideAfter.value) > 0) {
+        params.set('hideAfter', obsHideAfter.value);
+    }
+
+    params.set('maxMessages', '100');
+
+    // Custom CSS z StyleManager (pokud existuje)
+    const obsConfig = getOBSConfig();
+    if (obsConfig.customCSS) {
+        try {
+            params.set('customCSS', btoa(obsConfig.customCSS));
+        } catch (e) {}
+    }
+
+    // Zjistit base URL
+    const baseUrl = window.location.origin + window.location.pathname.replace(/\/[^/]*$/, '') + '/obs/';
+    return `${baseUrl}?${params.toString()}`;
+}
+
+/**
+ * Ziskani OBS konfigurace z localStorage
+ */
+function getOBSConfig() {
+    try {
+        const stored = localStorage.getItem('adhub_obs_config');
+        return stored ? JSON.parse(stored) : {};
+    } catch (e) {
+        return {};
+    }
+}
+
+/**
+ * Ulozeni OBS konfigurace do localStorage
+ */
+function saveOBSConfig(config) {
+    try {
+        const existing = getOBSConfig();
+        localStorage.setItem('adhub_obs_config', JSON.stringify({ ...existing, ...config }));
+    } catch (e) {}
 }
 
 /**
@@ -2539,6 +3223,9 @@ window.AdHubChat = {
     downloadChatReaderExtension,
     toggleChannelHighlight,
     clearAllHighlights,
+    // EventSub & Donations
+    eventSubManager: () => eventSubManager,
+    donationManager: () => donationManager,
     // Moderator API
     hasModeratorPermission,
     performModAction,

@@ -1,0 +1,269 @@
+/* =============================================================================
+   AdHub Chat - OBS Browser Source Styles
+
+   HTML struktura je kompatibilni se Streamlabs chat widgetem.
+   Tridy: #log, .wrap, .meta, .badges, .badge, .name, .colon,
+          .message, .emote, .timestamp
+
+   Custom CSS ze Streamlabs by mel fungovat s minimalnimi upravami.
+   ============================================================================= */
+
+/* Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: transparent !important;
+    font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+    font-size: 14px;
+    color: #ffffff;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* --- Chat Container --- */
+
+#log {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    padding: 0 10px 10px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    max-height: 100vh;
+}
+
+/* --- Message Row (Streamlabs compatible: .wrap) --- */
+
+.wrap {
+    padding: 4px 8px;
+    margin-bottom: 2px;
+    line-height: 1.4;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.wrap.visible {
+    opacity: 1;
+}
+
+.wrap.hide {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
+
+/* Text shadow pro citelnost na streamu */
+.wrap {
+    text-shadow:
+        0 0 3px rgba(0, 0, 0, 0.9),
+        0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+/* --- Username + Badges --- */
+
+.meta {
+    display: inline;
+}
+
+.badges {
+    display: inline;
+    vertical-align: middle;
+    margin-right: 3px;
+}
+
+.badge {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    vertical-align: middle;
+    margin-right: 2px;
+}
+
+.name {
+    font-weight: 700;
+}
+
+.name[data-role="broadcaster"] {
+    font-weight: 800;
+}
+
+.colon {
+    margin-right: 4px;
+}
+
+.timestamp {
+    font-size: 0.85em;
+    opacity: 0.6;
+    margin-right: 4px;
+}
+
+/* --- Message Content --- */
+
+.message {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.emote {
+    display: inline-block;
+    height: 28px;
+    vertical-align: middle;
+    margin: -2px 2px;
+}
+
+/* --- Event Alerts --- */
+
+.alert {
+    padding: 6px 12px;
+    margin: 4px 0;
+    border-radius: 4px;
+    border-left: 3px solid;
+    text-shadow:
+        0 0 3px rgba(0, 0, 0, 0.9),
+        0 0 6px rgba(0, 0, 0, 0.5);
+}
+
+.alert-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.alert-icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+.alert-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
+.alert-text {
+    font-weight: 600;
+    font-size: 0.95em;
+}
+
+.alert-submessage {
+    display: block;
+    margin-top: 2px;
+    font-style: italic;
+    font-weight: 400;
+    opacity: 0.8;
+    font-size: 0.9em;
+    padding-left: 26px;
+}
+
+/* Alert barvy */
+.alert-subscribe, .alert-resubscribe {
+    background: rgba(138, 43, 226, 0.3);
+    border-left-color: #8a2be2;
+}
+.alert-subscribe .alert-icon, .alert-resubscribe .alert-icon { color: #b366ff; }
+
+.alert-gift_sub, .alert-gift_sub_received {
+    background: rgba(255, 105, 180, 0.3);
+    border-left-color: #ff69b4;
+}
+.alert-gift_sub .alert-icon { color: #ff69b4; }
+
+.alert-follow {
+    background: rgba(255, 0, 0, 0.25);
+    border-left-color: #ff4444;
+}
+.alert-follow .alert-icon { color: #ff4444; }
+
+.alert-cheer, .alert-donation {
+    background: rgba(255, 215, 0, 0.3);
+    border-left-color: #ffd700;
+}
+.alert-cheer .alert-icon, .alert-donation .alert-icon { color: #ffd700; }
+
+.alert-raid {
+    background: rgba(0, 191, 255, 0.3);
+    border-left-color: #00bfff;
+}
+.alert-raid .alert-icon { color: #00bfff; }
+
+.alert-channel_points {
+    background: rgba(0, 255, 127, 0.25);
+    border-left-color: #00ff7f;
+}
+.alert-channel_points .alert-icon { color: #00ff7f; }
+
+/* --- Animace --- */
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-20px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* --- Dark Theme --- */
+
+[data-theme="dark"] body {
+    background: #0e0e10 !important;
+}
+
+[data-theme="dark"] .wrap {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+}
+
+/* --- Light Theme --- */
+
+[data-theme="light"] body {
+    background: #ffffff !important;
+    color: #0e0e10;
+}
+
+[data-theme="light"] .wrap {
+    text-shadow: none;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 4px;
+}
+
+/* --- Transparent Theme (default pro OBS) --- */
+
+[data-theme="transparent"] body {
+    background: transparent !important;
+}
+
+/* --- Platform indikatory --- */
+
+.platform-twitch .name { color: #9146ff; }
+.platform-kick .name { color: #53fc18; }
+.platform-youtube .name { color: #ff0000; }
+
+/* Override pokud uzivatel ma vlastni barvu */
+.meta[style] .name {
+    color: inherit;
+}
+
+/* --- Smazane zpravy --- */
+
+.wrap.deleted {
+    display: none;
+}
+
+/* --- Responsive --- */
+
+@media (max-width: 300px) {
+    .badge { width: 14px; height: 14px; }
+    .emote { height: 22px; }
+    body { font-size: 12px; }
+}

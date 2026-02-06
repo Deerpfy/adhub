@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="cs" data-theme="transparent">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdHub Chat - OBS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="obs-styles.css">
+    <!-- Custom CSS slot (dynamicky naplnen) -->
+    <style id="custom-styles"></style>
+</head>
+<body>
+    <!-- Chat kontejner - kompatibilni se Streamlabs strukturou -->
+    <div id="log" class="sl__chat__layout"></div>
+
+    <!-- Adaptery (sdilene s hlavnim panelem) -->
+    <script src="../adapters/base-adapter.js"></script>
+    <script src="../adapters/twitch-adapter.js"></script>
+    <script src="../adapters/kick-adapter.js"></script>
+    <script src="../adapters/youtube-iframe-adapter.js"></script>
+
+    <!-- OBS logika -->
+    <script src="obs-script.js"></script>
+</body>
+</html>
