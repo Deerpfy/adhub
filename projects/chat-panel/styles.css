@@ -886,6 +886,9 @@ a:hover {
 .modal {
     width: 90%;
     max-width: 480px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
     background: var(--bg-secondary);
     border-radius: var(--border-radius);
     border: 1px solid var(--border-color);
@@ -903,6 +906,7 @@ a:hover {
     justify-content: space-between;
     padding: 16px 20px;
     border-bottom: 1px solid var(--border-color);
+    flex-shrink: 0;
 }
 
 .modal-header h3 {
@@ -912,6 +916,8 @@ a:hover {
 
 .modal-body {
     padding: 20px;
+    overflow-y: auto;
+    flex: 1;
 }
 
 /* Platform Selector */
@@ -2145,6 +2151,48 @@ a:hover {
 
 .alert-type-toggles {
     transition: opacity 0.2s ease;
+}
+
+/* Alert test buttons */
+.alert-test-section {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border-color);
+}
+
+.alert-test-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 6px;
+}
+
+.btn-xs {
+    padding: 3px 8px;
+    font-size: 0.75em;
+    border-radius: var(--border-radius-sm);
+    line-height: 1.4;
+}
+
+.btn-test {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.btn-test:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--accent-primary);
+}
+
+.btn-test svg {
+    flex-shrink: 0;
 }
 
 /* =============================================================================
