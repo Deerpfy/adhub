@@ -312,6 +312,14 @@ function initEventListeners() {
         });
     });
 
+    // Test alert buttons
+    document.querySelectorAll('[data-test-alert]').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const alertType = e.currentTarget.dataset.testAlert;
+            fireTestAlert(alertType);
+        });
+    });
+
     // EventSub connect/disconnect
     document.getElementById('eventsubConnectBtn')?.addEventListener('click', eventsubConnect);
     document.getElementById('eventsubDisconnectBtn')?.addEventListener('click', eventsubDisconnect);
@@ -994,6 +1002,106 @@ function handleAlert(alert) {
 
     // Auto-scroll
     scrollToBottom();
+}
+
+/**
+ * Odeslani testovaci alert zpravy (jako Streamlabs "Test" tlacitko)
+ */
+function fireTestAlert(alertType) {
+    // Zjistit prvni pripojeny kanal pro kontext
+    let testPlatform = 'twitch';
+    let testChannel = 'TestChannel';
+    for (const [id, data] of AppState.channels) {
+        if (data.state === 'connected') {
+            testPlatform = data.platform.split('-')[0];
+            testChannel = data.displayName || data.channel;
+            break;
+        }
+    }
+
+    const testNames = ['CoolViewer42', 'StreamFan99', 'NightOwl_', 'xHypeKing', 'LurkMaster', 'PixelNinja7', 'ChatHero_'];
+    const name = testNames[Math.floor(Math.random() * testNames.length)];
+
+    const base = {
+        id: `test-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+        platform: testPlatform,
+        channel: testChannel,
+        type: 'alert',
+        timestamp: new Date(),
+        author: {
+            id: name.toLowerCase(),
+            username: name.toLowerCase(),
+            displayName: name,
+            color: '#ff4500',
+            badges: [],
+            roles: {},
+        },
+    };
+
+    const templates = {
+        subscribe: {
+            ...base,
+            alertType: 'subscribe',
+            content: `${name} subscribed (Tier 1)!`,
+            author: { ...base.author, color: '#8a2be2' },
+            alertData: { tier: '1000', months: 1, isGift: false },
+        },
+        resubscribe: {
+            ...base,
+            alertType: 'resubscribe',
+            content: `${name} resubscribed for ${Math.floor(Math.random() * 24) + 2} months (Tier 1)!`,
+            author: { ...base.author, color: '#8a2be2' },
+            alertData: { tier: '1000', months: Math.floor(Math.random() * 24) + 2, streak: Math.floor(Math.random() * 12) + 1, message: 'Love this stream!', isGift: false },
+        },
+        gift_sub: {
+            ...base,
+            alertType: 'gift_sub',
+            content: `${name} gifted ${Math.floor(Math.random() * 5) + 1} subs (Tier 1)!`,
+            author: { ...base.author, color: '#ff69b4' },
+            alertData: { tier: '1000', isGift: true, gifterName: name, giftCount: Math.floor(Math.random() * 5) + 1 },
+        },
+        follow: {
+            ...base,
+            alertType: 'follow',
+            content: `${name} is now following!`,
+            author: { ...base.author, color: '#ff4444' },
+            alertData: {},
+        },
+        cheer: {
+            ...base,
+            alertType: 'cheer',
+            content: `${name} cheered ${(Math.floor(Math.random() * 20) + 1) * 100} bits!`,
+            author: { ...base.author, color: '#ffd700' },
+            alertData: { amount: (Math.floor(Math.random() * 20) + 1) * 100, currency: 'bits', donateMessage: 'PogChamp great stream!' },
+        },
+        donation: {
+            ...base,
+            alertType: 'donation',
+            content: `${name} donated $${(Math.floor(Math.random() * 50) + 1)}.00!`,
+            author: { ...base.author, color: '#ffd700' },
+            alertData: { amount: Math.floor(Math.random() * 50) + 1, currency: 'USD', formattedAmount: `$${Math.floor(Math.random() * 50) + 1}.00`, donateMessage: 'Keep it up!' },
+        },
+        raid: {
+            ...base,
+            alertType: 'raid',
+            content: `${name} is raiding with ${(Math.floor(Math.random() * 500) + 10)} viewers!`,
+            author: { ...base.author, color: '#00bfff' },
+            alertData: { viewers: Math.floor(Math.random() * 500) + 10, fromChannel: name },
+        },
+        channel_points: {
+            ...base,
+            alertType: 'channel_points',
+            content: `${name} redeemed "Hydrate!" (500 pts)`,
+            author: { ...base.author, color: '#00ff7f' },
+            alertData: { rewardTitle: 'Hydrate!', rewardCost: 500, userInput: '' },
+        },
+    };
+
+    const alert = templates[alertType];
+    if (alert) {
+        handleAlert(alert);
+        showToast(`Test: ${alertType}`, 'info');
+    }
 }
 
 /**
@@ -3223,6 +3331,8 @@ window.AdHubChat = {
     downloadChatReaderExtension,
     toggleChannelHighlight,
     clearAllHighlights,
+    // Testing
+    fireTestAlert,
     // EventSub & Donations
     eventSubManager: () => eventSubManager,
     donationManager: () => donationManager,
