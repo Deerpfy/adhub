@@ -16,7 +16,8 @@ adhub/
 │   ├── research/           # Analyzy a vyzkum
 │   │   ├── external-services/  # Analyzy externich sluzeb
 │   │   └── project-research/   # Vyzkum pro projekty
-│   └── artifacts/          # AI prompty a artefakty
+│   ├── artifacts/          # AI prompty a artefakty
+│   └── twitch-api/         # Twitch API referencni dokumentace (18 .md souboru)
 └── projects/
     ├── youtube-downloader/ # YouTube stahovac (Chrome extension)
     ├── chat-panel/         # Multistream chat
@@ -69,6 +70,46 @@ adhub/
 **Typ:** Web app + Node.js WebSocket server
 
 **Backend:** `server/` slozka s WebSocket serverem pro real-time chat
+
+### Twitch API Documentation (`docs/twitch-api/`)
+
+**Typ:** Referencni dokumentace (18 self-contained .md souboru)
+
+**Ucel:** Kompletni reference pro integraci s Twitch API (Helix) — pouziva se predevsim pro Chat Panel a dalsi projekty potrebujici Twitch funkcionalitu.
+
+**Zakladni informace:**
+- API Base URL: `https://api.twitch.tv/helix`
+- Auth Base URL: `https://id.twitch.tv`
+- EventSub WebSocket: `wss://eventsub.wss.twitch.tv/ws`
+
+**Navigace v dokumentaci — kde co najit:**
+
+| Potrebuji... | Soubor |
+|--------------|--------|
+| Zaregistrovat aplikaci, prvni API call | `twitch-getting-started.md` |
+| OAuth tokeny, refresh, validaci | `twitch-authentication.md` |
+| Webhook integrace (HMAC verifikace) | `twitch-eventsub-webhooks.md` |
+| WebSocket real-time eventy | `twitch-eventsub-websockets.md` |
+| Vsechny EventSub typy (follow, sub, cheer...) | `twitch-eventsub-subscription-types.md` |
+| Skalovat WebSocket pripojeni | `twitch-eventsub-conduits.md` |
+| Chat endpointy (send message, emotes, badges) | `twitch-api-chat-whispers.md` |
+| Stream info, kanaly, raidy | `twitch-api-channels-streams.md` |
+| Moderaci (ban, timeout, automod) | `twitch-api-moderation.md` |
+| Channel Points, Polls, Predictions | `twitch-api-channel-points-polls-predictions.md` |
+| Uzivatele, subscriptions | `twitch-api-users-subscriptions.md` |
+| Bits, Analytics, Drops | `twitch-api-bits-extensions-analytics.md` |
+| Clips, Videos, Search | `twitch-api-clips-videos-games.md` |
+| Rate limity, paginaci, error format | `twitch-api-concepts-ratelimits-pagination.md` |
+| OAuth scopes (jaky scope pro jaky endpoint) | `twitch-scopes-reference.md` |
+| Twitch Extensions (JS Helper, JWT) | `twitch-extensions.md` |
+| Migraci z PubSub na EventSub | `twitch-pubsub-migration.md` |
+| Kompletni index vsech endpointu | `twitch-master-reference.md` |
+
+**Dulezite:**
+- Kazdy soubor je self-contained — obsahuje vsechny endpointy, schemata, cURL priklady, TypeScript/Python kod
+- Kazdy soubor konci sekcemi "Best Practices & Production Hardening" a "Known Issues & Community Notes"
+- Dokumentace byla vytvorena z oficialnich Twitch docs (oznaceno `[PAGE INACCESSIBLE - VERIFY AGAINST LIVE DOCS]` kde nebyly stranky primo pristupne)
+- PubSub byl decommissioned 14. dubna 2025 — pouzivat EventSub
 
 ### PDF Editor/Merge (`projects/pdf-editor/`, `projects/pdf-merge/`)
 
