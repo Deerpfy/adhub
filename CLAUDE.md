@@ -17,7 +17,8 @@ adhub/
 │   │   ├── external-services/  # Analyzy externich sluzeb
 │   │   └── project-research/   # Vyzkum pro projekty
 │   ├── artifacts/          # AI prompty a artefakty
-│   └── twitch-api/         # Twitch API referencni dokumentace (18 .md souboru)
+│   ├── twitch-api/         # Twitch API referencni dokumentace (18 .md souboru)
+│   └── kick-api/           # Kick API referencni dokumentace (13 .md souboru)
 └── projects/
     ├── youtube-downloader/ # YouTube stahovac (Chrome extension)
     ├── chat-panel/         # Multistream chat
@@ -110,6 +111,43 @@ adhub/
 - Kazdy soubor konci sekcemi "Best Practices & Production Hardening" a "Known Issues & Community Notes"
 - Dokumentace byla vytvorena z oficialnich Twitch docs (oznaceno `[PAGE INACCESSIBLE - VERIFY AGAINST LIVE DOCS]` kde nebyly stranky primo pristupne)
 - PubSub byl decommissioned 14. dubna 2025 — pouzivat EventSub
+
+### Kick API Documentation (`docs/kick-api/`)
+
+**Typ:** Referencni dokumentace (13 self-contained .md souboru)
+
+**Ucel:** Kompletni reference pro integraci s Kick Developer API — pouziva se pro Chat Panel a dalsi projekty potrebujici Kick funkcionalitu (chat boty, stream alerty, moderaci).
+
+**Zakladni informace:**
+- API Base URL: `https://api.kick.com/public/v1`
+- OAuth Server: `https://id.kick.com`
+- OpenAPI Spec: `https://api.kick.com/swagger/doc.yaml`
+
+**Navigace v dokumentaci — kde co najit:**
+
+| Potrebuji... | Soubor |
+|--------------|--------|
+| OAuth 2.1 tokeny (PKCE, client credentials, refresh) | `kick-oauth2-flow.md` |
+| Jaky scope pro jaky endpoint | `kick-scopes-reference.md` |
+| Webhook verifikaci (RSA podpisy) | `kick-webhook-security.md` |
+| Vsechny webhook event typy (chat, follow, sub...) | `kick-webhook-payloads-event-types.md` |
+| Subscribe/unsubscribe na eventy | `kick-subscribe-to-events.md` |
+| Informace o uzivateli | `kick-users-api.md` |
+| Informace o kanalu, stream metadata | `kick-channels-api.md` |
+| Poslat/smazat chat zpravu, bot patterny | `kick-chat-api.md` |
+| Ban/unban/timeout uzivatele | `kick-moderation-api.md` |
+| Channel Points rewards (CRUD + redemptions) | `kick-channel-rewards-api.md` |
+| KICKs leaderboard | `kick-kicks-api.md` |
+| RSA public key pro verifikaci | `kick-public-key-api.md` |
+| Kompletni index vsech 28 endpointu | `kick-devdocs-master-reference.md` |
+
+**Dulezite:**
+- Kazdy soubor je self-contained — obsahuje endpointy, schemata, cURL priklady, TypeScript/Python kod
+- Kazdy soubor konci sekcemi "Best Practices & Production Hardening" a "Known Issues & Community Notes"
+- Kick pouziva RSA PKCS1v15-SHA256 pro webhook podpisy (ne HMAC jako Twitch)
+- Kick nema WebSocket API — chat se cte pres webhook eventy (`chat.message.sent`)
+- Bot MUSI kontrolovat `sender.user_id` aby se vyhnul nekonecnym smyckam
+- DELETE `/moderation/bans` vyzaduje JSON body (nestandardni HTTP semantika)
 
 ### PDF Editor/Merge (`projects/pdf-editor/`, `projects/pdf-merge/`)
 

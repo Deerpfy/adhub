@@ -11,7 +11,8 @@ docs/
 │   ├── external-services/  # Analyzy externich sluzeb a produktu
 │   └── project-research/   # Vyzkum pro konkretni AdHUB projekty
 ├── artifacts/              # AI artefakty a generovane dokumenty
-└── twitch-api/             # Kompletni Twitch API referencni dokumentace (18 souboru)
+├── twitch-api/             # Kompletni Twitch API referencni dokumentace (18 souboru)
+└── kick-api/               # Kompletni Kick API referencni dokumentace (13 souboru)
 ```
 
 ## Hlavni dokumenty
@@ -88,6 +89,38 @@ Kompletni referencni dokumentace Twitch API (Helix). 18 samostatnych souboru pok
 | `twitch-extensions.md` | Extensions JS Helper, JWT schema, Bits in Extensions, Configuration Service |
 | `twitch-pubsub-migration.md` | PubSub → EventSub migracni tabulka, scope rozdily, behavioral zmeny |
 | `twitch-master-reference.md` | Hlavni index — sitemap, endpoint index, scope tabulka, EventSub type index, CLI reference |
+
+### kick-api/
+
+Kompletni referencni dokumentace Kick Developer API. 13 samostatnych souboru pokryvajicich vsechny aspekty Kick API — kazdy soubor je self-contained a slouzi jako single-source-of-truth pro sve tema.
+
+**Zakladni soubory (Foundation):**
+
+| Soubor | Obsah |
+|--------|-------|
+| `kick-oauth2-flow.md` | OAuth 2.1 — Authorization Code Grant s PKCE, Client Credentials, token refresh/revokace/introspekce |
+| `kick-scopes-reference.md` | Vsech 11 OAuth scopes s mapovanim na endpointy a minimum scope sets pro 6 use cases |
+| `kick-webhook-security.md` | RSA PKCS1v15-SHA256 verifikace, 6 webhook hlavicek, replay ochrana, Go/TS/Python priklady |
+| `kick-webhook-payloads-event-types.md` | Vsech 10 webhook event typu s kompletnymi JSON payload schematy |
+| `kick-subscribe-to-events.md` | GET/POST/DELETE subscription endpointy, limity, auto-unsubscribe pravidla |
+
+**API kategorie:**
+
+| Soubor | Endpointy |
+|--------|-----------|
+| `kick-users-api.md` | Users API — GET uzivatelskych informaci (1 endpoint) |
+| `kick-channels-api.md` | Channels API — GET + PATCH kanal/stream metadata (2 endpointy) |
+| `kick-chat-api.md` | Chat API — odeslani/smazani zprav, bot anti-loop patterny (2 endpointy) |
+| `kick-moderation-api.md` | Moderation API — ban/unban/timeout, permission model (2 endpointy) |
+| `kick-channel-rewards-api.md` | Channel Rewards API — CRUD rewards + accept/reject redemptions (7 endpointu) |
+| `kick-kicks-api.md` | KICKs API — leaderboard, gift properties (1 endpoint) |
+| `kick-public-key-api.md` | Public Key API — RSA klic pro webhook verifikaci, caching strategie (1 endpoint) |
+
+**Master reference:**
+
+| Soubor | Obsah |
+|--------|-------|
+| `kick-devdocs-master-reference.md` | Hlavni index — repo mapa, kompletni endpoint index (28 endpointu), changelog, scope tabulka, getting started guide |
 
 ## Pojmenovani souboru
 
