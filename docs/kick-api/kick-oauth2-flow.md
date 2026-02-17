@@ -1,3 +1,10 @@
+---
+title: "Kick OAuth 2.1 Flow"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Kick OAuth 2.1 Flow
 
 > **Source:** https://docs.kick.com/getting-started/generating-tokens-oauth2-flow

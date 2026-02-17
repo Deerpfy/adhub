@@ -1,3 +1,10 @@
+---
+title: "Chat Panel - Streamlabs CSS Import / Style Manager"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Chat Panel - Streamlabs CSS Import / Style Manager
 
 > **Modul:** Streamlabs CSS Import System (Phase 3)

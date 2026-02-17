@@ -1,3 +1,10 @@
+---
+title: "Kompletní analýza Procreate.com a aplikace Procreate"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Kompletní analýza Procreate.com a aplikace Procreate
 
 Procreate představuje **zlatý standard digitální malby na iPad** díky kombinaci intuitivního rozhraní, profesionálního výkonu a jednorázového cenového modelu bez předplatného. Webová prezentace procreate.com je technicky dobře zpracovaná s moderním stackem (Nuxt.js/Vue.js), silným SEO a konzistentním brandingem. Klíčovou konkurenční výhodou zůstává **nulový sběr uživatelských dat** a dvě ocenění Apple Design Awards za design a přístupnost.

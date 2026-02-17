@@ -1,3 +1,10 @@
+---
+title: "Twitch API — Extensions"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Twitch API — Extensions
 
 > **Source:** https://dev.twitch.tv/docs/extensions, https://dev.twitch.tv/docs/extensions/reference

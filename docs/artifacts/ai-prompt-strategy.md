@@ -1,3 +1,10 @@
+---
+title: "AI Prompt Formatter: Complete 2024-2025 Strategy Guide"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # AI Prompt Formatter: Complete 2024-2025 Strategy Guide
 
 The most effective AI prompt formatter in 2025 must expand beyond basic categories to address the real patterns of AI usage—where **writing tasks dominate 40% of work-related prompts**, while technical/coding help has declined from 12% to just 5%. This guide provides specific, implementable recommendations for expanding prompt categories, optimizing prompting strategies, and adapting formats across major AI models.

@@ -1,3 +1,10 @@
+---
+title: "Analýza webových řešení: Cenové kalkulace 3D tisku na zakázku"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Analýza webových řešení: Cenové kalkulace 3D tisku na zakázku
 
 **Datum analýzy**: 2025-12-28

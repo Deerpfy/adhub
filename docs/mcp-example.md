@@ -1,3 +1,10 @@
+---
+title: "MCP (Model Context Protocol) - Konfigurace pro AdHUB"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # MCP (Model Context Protocol) - Konfigurace pro AdHUB
 
 Tento dokument ukazuje priklad konfigurace MCP serveru pro praci s projektem AdHUB.

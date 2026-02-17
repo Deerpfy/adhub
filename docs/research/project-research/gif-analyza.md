@@ -1,3 +1,10 @@
+---
+title: "Komplexní analýza nástrojů pro before/after GIF porovnání"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Komplexní analýza nástrojů pro before/after GIF porovnání
 
 Vytváření before/after porovnávacích GIFů v prohlížeči je dnes možné díky kombinaci **Canvas API**, **JavaScript knihoven pro GIF encoding** (jako gif.js) a **WebGL shaderů**. JuxtaposeJS od Knight Lab nabízí primárně interaktivní slider s volitelným GIF exportem, zatímco specializované nástroje jako ezgif.com poskytují plnohodnotné crossfade přechody zcela zdarma a bez vodoznaků. Pro implementaci vlastního řešení je klíčová volba mezi client-side zpracováním (nižší latence, soukromí dat) a server-side (větší výkon pro komplexní operace).

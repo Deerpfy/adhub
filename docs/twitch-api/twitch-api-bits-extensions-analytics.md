@@ -1,3 +1,10 @@
+---
+title: "Twitch API — Bits, Extensions, Analytics, Entitlements & Content Classification Labels"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Twitch API — Bits, Extensions, Analytics, Entitlements & Content Classification Labels
 
 > **Source:** https://dev.twitch.tv/docs/api/reference/

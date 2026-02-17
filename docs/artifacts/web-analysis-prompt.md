@@ -1,3 +1,10 @@
+---
+title: "Analyticky Prompt pro Kompletni Webovou Analyzu"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Analyticky Prompt pro Kompletni Webovou Analyzu
 
 > Reusable prompt pro systematickou diagnostiku a analyzu webovych stranek od A do Z.

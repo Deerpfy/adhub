@@ -1,3 +1,10 @@
+---
+title: "NIMT.AI: Průkopnická platforma pro AI visibility tracking"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # NIMT.AI: Průkopnická platforma pro AI visibility tracking
 
 **NIMT.AI představuje první SaaS nástroj na trhu specializovaný na sledování a optimalizaci viditelnosti značek v AI vyhledávačích.** Švédský startup založený v roce 2025 řeší zásadní problém: tradiční SEO přestává stačit, protože uživatelé přecházejí od Google k AI chatbotům jako ChatGPT nebo Perplexity. Platforma umožňuje značkám měřit jejich „Share of Voice" v AI odpovědích, identifikovat citované zdroje a porovnávat se s konkurencí napříč **105 zeměmi** a jakýmkoli jazykem. S cenou od **$39/měsíc** patří mezi nejdostupnější nástroje v kategorii Answer Engine Optimization (AEO).

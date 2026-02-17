@@ -1,3 +1,10 @@
+---
+title: "Twitch API — Channels, Streams, Raids, Schedule & Teams"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Twitch API — Channels, Streams, Raids, Schedule & Teams
 
 > **Source:** [Twitch API Reference — Channels](https://dev.twitch.tv/docs/api/reference/#get-channel-information), [Streams](https://dev.twitch.tv/docs/api/reference/#get-streams), [Raids](https://dev.twitch.tv/docs/api/reference/#start-a-raid), [Schedule](https://dev.twitch.tv/docs/api/reference/#get-channel-stream-schedule), [Teams](https://dev.twitch.tv/docs/api/reference/#get-teams)

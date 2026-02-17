@@ -1,3 +1,10 @@
+---
+title: "Twitch API — Getting Started"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Twitch API — Getting Started
 
 > **Source:** https://dev.twitch.tv/docs/api/get-started, https://dev.twitch.tv/docs/cli/

@@ -1,3 +1,10 @@
+---
+title: "Technicka analyza kapi-kit"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Technicka analyza kapi-kit
 
 Komplexni rozbor knihovny pro integraci KICK API do AdHub multistream chat projektu.

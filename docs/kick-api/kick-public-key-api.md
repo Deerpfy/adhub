@@ -1,3 +1,10 @@
+---
+title: "Kick Public Key API"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Kick Public Key API
 
 > **Source:** https://docs.kick.com/apis/public-key

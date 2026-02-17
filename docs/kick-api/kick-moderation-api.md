@@ -1,3 +1,10 @@
+---
+title: "Kick Moderation API"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Kick Moderation API
 
 > **Source:** https://docs.kick.com/apis/moderation

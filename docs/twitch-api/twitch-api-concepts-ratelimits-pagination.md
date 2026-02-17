@@ -1,3 +1,10 @@
+---
+title: "Twitch API — Concepts, Rate Limits & Pagination"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Twitch API — Concepts, Rate Limits & Pagination
 
 > **Source:** [Twitch API Rate Limits](https://dev.twitch.tv/docs/api/guide/#rate-limits), [Twitch API Pagination](https://dev.twitch.tv/docs/api/guide/#pagination), [Twitch API Guide](https://dev.twitch.tv/docs/api/guide/)

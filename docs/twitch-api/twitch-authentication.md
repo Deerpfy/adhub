@@ -1,3 +1,10 @@
+---
+title: "Twitch API — Authentication & OAuth 2.0"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Twitch API — Authentication & OAuth 2.0
 
 > **Source:** [Twitch Authentication Guide](https://dev.twitch.tv/docs/authentication/), [Getting Tokens: OIDC](https://dev.twitch.tv/docs/authentication/getting-tokens-oidc/), [Registering Your App](https://dev.twitch.tv/docs/authentication/register-app/), [Validating Requests](https://dev.twitch.tv/docs/authentication/validate-tokens/), [Refreshing Tokens](https://dev.twitch.tv/docs/authentication/refresh-tokens/), [Revoking Tokens](https://dev.twitch.tv/docs/authentication/revoke-tokens/)

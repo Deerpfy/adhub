@@ -1,3 +1,10 @@
+---
+title: "Komplexni analyza xCloud: WordPress hosting control panel"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Komplexni analyza xCloud: WordPress hosting control panel
 
 > **Autor:** Deerpfy | **Datum:** Prosinec 2025  

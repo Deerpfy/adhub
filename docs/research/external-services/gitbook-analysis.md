@@ -1,3 +1,10 @@
+---
+title: "Analýza webu: GitBook"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Analýza webu: GitBook
 
 **URL**: https://www.gitbook.com / https://app.gitbook.com

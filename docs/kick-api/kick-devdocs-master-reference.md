@@ -1,3 +1,10 @@
+---
+title: "Kick Developer Docs -- Master Reference"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Kick Developer Docs -- Master Reference
 
 > **Source:** https://github.com/KickEngineering/KickDevDocs

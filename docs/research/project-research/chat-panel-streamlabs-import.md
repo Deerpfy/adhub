@@ -1,3 +1,10 @@
+---
+title: "Chat Panel - Streamlabs CSS/HTML Import System"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Chat Panel - Streamlabs CSS/HTML Import System
 
 > **Projekt:** AdHub Multistream Chat v2

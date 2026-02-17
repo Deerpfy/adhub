@@ -1,3 +1,10 @@
+---
+title: "Chat Panel - Implementační plán (Master dokument)"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Chat Panel - Implementační plán (Master dokument)
 
 > **Projekt:** AdHub Multistream Chat v2

@@ -1,3 +1,10 @@
+---
+title: "Analýza metod detekce veřejné IP adresy"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Analýza metod detekce veřejné IP adresy
 
 **Datum**: 30. prosince 2025

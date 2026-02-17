@@ -1,3 +1,10 @@
+---
+title: "Kompletní průvodce open-source nástroji pro PDF vyhledávání"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Kompletní průvodce open-source nástroji pro PDF vyhledávání
 
 **Pro platformu AdHub existuje optimální kombinace nástrojů:** PyMuPDF pro extrakci textu z PDF, Meilisearch nebo Typesense jako fulltextový vyhledávač, a Qdrant pro budoucí sémantické vyhledávání. Alternativně lze nasadit hotové řešení Paperless-ngx s rozšířením o vektorovou databázi. Výběr závisí na požadované míře kontroly, škálovatelnosti a rychlosti nasazení.

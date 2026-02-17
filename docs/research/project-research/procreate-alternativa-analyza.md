@@ -1,3 +1,10 @@
+---
+title: "Open-source webové alternativy k Procreate pro digitální malbu"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Open-source webové alternativy k Procreate pro digitální malbu
 
 **Procreate dominuje iPadu, ale existuje pouze 6 skutečně open-source webových nástrojů pro digitální malbu.** Z desítky kandidátů pouze Kleki, Drawpile, miniPaint, Graphite, JS Paint a DPaint.js splňují všechna kritéria – open-source licence, běh v prohlížeči a funkce pro digitální malbu. Photopea, často zmiňovaná jako alternativa, je proprietární software. Krita nemá žádnou oficiální web verzi. Nejblíže profesionálnímu malování se přibližuje **Kleki** pro individuální práci a **Drawpile** pro kolaborativní tvorbu.

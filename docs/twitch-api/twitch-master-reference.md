@@ -1,3 +1,10 @@
+---
+title: "Twitch API — Master Reference"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Twitch API — Master Reference
 
 > **Source:** All Twitch Developer Documentation — https://dev.twitch.tv/docs/

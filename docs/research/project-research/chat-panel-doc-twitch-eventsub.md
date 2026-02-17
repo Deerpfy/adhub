@@ -1,3 +1,10 @@
+---
+title: "Chat Panel - Twitch EventSub"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Chat Panel - Twitch EventSub
 
 > **Modul:** Twitch EventSub WebSocket (Phase 4)

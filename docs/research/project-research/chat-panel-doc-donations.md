@@ -1,3 +1,10 @@
+---
+title: "Chat Panel - Donace (Streamlabs & StreamElements)"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Chat Panel - Donace (Streamlabs & StreamElements)
 
 > **Modul:** Third-party Donation Adapters (Phase 5)

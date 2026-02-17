@@ -1,3 +1,10 @@
+---
+title: "AI Artifacts"
+version: 1.0.0
+last_updated: 2026-02-17
+status: current
+---
+
 # AI Artifacts
 
 Dokumenty generovane AI asistenty behem prace na projektu.

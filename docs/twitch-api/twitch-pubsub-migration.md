@@ -1,3 +1,10 @@
+---
+title: "Twitch PubSub to EventSub — Migration Guide"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Twitch PubSub to EventSub — Migration Guide
 
 > **Source:** [Twitch PubSub Migration Guide](https://dev.twitch.tv/docs/pubsub/#migration), [EventSub Documentation](https://dev.twitch.tv/docs/eventsub/)
