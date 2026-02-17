@@ -169,6 +169,22 @@ Preklady v `script.js` v objektu `BASE_TRANSLATIONS` (cs, en).
 | `docs/research/project-research/` | Vyzkum pro projekty (20 souboru, prevazne Chat Panel) |
 | `docs/twitch-api/` | Twitch API reference (18 self-contained souboru) |
 | `docs/kick-api/` | Kick API reference (13 self-contained souboru) |
+| `docs/ai-workflow-guide.md` | Agent Teams, Effort Routing, Context Strategy |
+| `docs/prompt-registry/` | Reusable prompt formulas pro cross-session pouziti |
+
+---
+
+## Model Aliases
+
+Vsechny routing pravidla pouzivaji aliasy. Pri novem modelu aktualizuj POUZE tuto tabulku.
+
+| Alias | Model ID | Context | Effort Levels | $/MTok (in/out) | Updated |
+|---|---|---|---|---|---|
+| HEAVY | claude-opus-4-6 | 1M (beta) | low/medium/high/max | $15/$75 | 2026-02-17 |
+| STANDARD | claude-sonnet-4-5-20250929 | 200K | high (default) | $3/$15 | 2026-02-17 |
+| LIGHT | claude-haiku-4-5-20251001 | 200K | low (default) | $1/$5 | 2026-02-17 |
+
+**Migrace:** Otestuj novy model na nekritickym tasku → porovnej kvalitu/cenu → aktualizuj alias → spust re-analyzu docs → zaloguj do Session Logu.
 
 ---
 
@@ -176,43 +192,92 @@ Preklady v `script.js` v objektu `BASE_TRANSLATIONS` (cs, en).
 
 Profil projektu: Hub-and-spokes architektura, 26 vanilla JS/HTML/CSS projektu, 2 Chrome extensions s native hosty, 50K+ LOC, Twitch/Kick/Steam API integrace, zadne automaticke testy.
 
-Vychozi model: **Sonnet 4.5**
+Vychozi model: **STANDARD**
 
 ### Task-to-Model Map
 
-| Task | Model | Duvod |
+| Task | Alias | Duvod |
 |---|---|---|
-| YouTube Downloader verzovani (6+ souboru sync) | Opus 4.6 | Cross-file dependency, verze musi byt konzistentni |
-| Chat Panel + Twitch/Kick API integrace | Opus 4.6 | Multi-service reasoning, OAuth + EventSub + WebSocket |
-| CardHarvest Steam protokol zmeny | Opus 4.6 | Security-critical (auth, 2FA), native messaging bridge |
-| Architektura novych projektu | Opus 4.6 | Multi-module planning |
-| CLAUDE.md aktualizace | Opus 4.6 | Meta-dokumentace, cely kontext projektu |
-| Feature implementace v jednom projektu | Sonnet 4.5 | Ohraniceny scope, standardni vyvoj |
-| Bug fixy s jasnymi kroky | Sonnet 4.5 | Lokalizovany problem |
-| API endpoint implementace | Sonnet 4.5 | Standardni CRUD/REST prace |
-| Dokumentace jednotlivych features | Sonnet 4.5 | Psani/aktualizace v docs/ |
-| Server-side zmeny (Node.js WebSocket) | Sonnet 4.5 | Backend v ohranicenem scope |
-| UI/CSS zmeny v jednom projektu | Sonnet 4.5 | Vizualni prace, nizsi riziko |
-| Aktualizace prekladu (BASE_TRANSLATIONS) | Haiku 4.5 | Mechanicke, opakovane, nizke riziko |
-| Prejmenovani souboru, import updaty | Haiku 4.5 | Find-and-replace operace |
-| Scaffolding novych projektu | Haiku 4.5 | Boilerplate generovani |
-| Jednoduche dotazy na codebase | Haiku 4.5 | Quick lookup |
-| Commit message generovani | Haiku 4.5 | Kratke, mechanicke |
+| YouTube Downloader verzovani (6+ souboru sync) | HEAVY | Cross-file dependency, verze musi byt konzistentni |
+| Chat Panel + Twitch/Kick API integrace | HEAVY | Multi-service reasoning, OAuth + EventSub + WebSocket |
+| CardHarvest Steam protokol zmeny | HEAVY | Security-critical (auth, 2FA), native messaging bridge |
+| Architektura novych projektu | HEAVY | Multi-module planning |
+| CLAUDE.md aktualizace | HEAVY | Meta-dokumentace, cely kontext projektu |
+| Feature implementace v jednom projektu | STANDARD | Ohraniceny scope, standardni vyvoj |
+| Bug fixy s jasnymi kroky | STANDARD | Lokalizovany problem |
+| API endpoint implementace | STANDARD | Standardni CRUD/REST prace |
+| Dokumentace jednotlivych features | STANDARD | Psani/aktualizace v docs/ |
+| Server-side zmeny (Node.js WebSocket) | STANDARD | Backend v ohranicenem scope |
+| UI/CSS zmeny v jednom projektu | STANDARD | Vizualni prace, nizsi riziko |
+| Hub registry update (script.js config) | STANDARD | Centralni coupling point, 5000+ LOC |
+| Aktualizace prekladu (BASE_TRANSLATIONS) | LIGHT | Mechanicke, opakovane, nizke riziko |
+| Prejmenovani souboru, import updaty | LIGHT | Find-and-replace operace |
+| Scaffolding novych projektu | LIGHT | Boilerplate generovani |
+| Jednoduche dotazy na codebase | LIGHT | Quick lookup |
+| Commit message generovani | LIGHT | Kratke, mechanicke |
 
 ### Project-Specific Overrides
 
-- **Vsechny zmeny v extension manifest/version souborech** → Opus 4.6 (verze musi byt synchronizovane v 6+ souborech, chyba rozbije extension)
-- **Twitch/Kick API doc aktualizace** → Sonnet 4.5 (self-contained soubory, staci lokalni edit)
-- **paintnook/bg-remover TensorFlow.js zmeny** → Opus 4.6 (sdilene ML modely, 212MB assets, cross-project impact)
-- **Research docs v docs/research/** → Haiku 4.5 (analyticke texty, nizke riziko)
+- **Vsechny zmeny v extension manifest/version souborech** → HEAVY (verze musi byt synchronizovane v 6+ souborech, chyba rozbije extension)
+- **Twitch/Kick API doc aktualizace** → STANDARD (self-contained soubory, staci lokalni edit)
+- **paintnook/bg-remover TensorFlow.js zmeny** → HEAVY (sdilene ML modely, 212MB assets, cross-project impact)
+- **Research docs v docs/research/** → LIGHT (analyticke texty, nizke riziko)
 
 ### Auto-Routing Hint
 
 Pred kazdym taskem zhodnotni:
-1. Kolik souboru task ovlivni? (1-3: Sonnet/Haiku, 4-10: Sonnet, 10+: Opus)
-2. Je to security-critical nebo architektura? (Ano: Opus)
-3. Je to mechanicke/opakovane? (Ano: Haiku)
-4. Pokud nic z vyse, pouzij Sonnet.
+1. Kolik souboru task ovlivni? (1-3: STANDARD/LIGHT, 4-10: STANDARD, 10+: HEAVY)
+2. Je to security-critical nebo architektura? (Ano: HEAVY)
+3. Je to mechanicke/opakovane? (Ano: LIGHT)
+4. Pokud nic z vyse, pouzij STANDARD.
+
+### Effort Routing
+
+Effort levels ridi hloubku reasoning vs rychlost/cenu. Pouzivej s aliasy vyse.
+
+| Task Type | Alias | Effort | Context Strategy |
+|---|---|---|---|
+| Architektura / refactor 10+ souboru | HEAVY | max | 1M context (beta) + compaction |
+| Security audit (CardHarvest, extensions) | HEAVY | high | Vsechny relevantni moduly |
+| Extension verzovani (6+ souboru sync) | HEAVY | high | Vsechny version soubory |
+| Feature v jednom projektu | STANDARD | high | Standard 200K |
+| Bug fix s jasnymi kroky | STANDARD | medium | Relevantni soubory |
+| Hub registry update (script.js) | STANDARD | high | script.js + cílový projekt |
+| Twitch/Kick API doc update | STANDARD | medium | Cilovy doc + master-reference |
+| Dokumentace, version headers | LIGHT | low | Cilovy doc + zdrojovy kod |
+| Preklady, rename, scaffold | LIGHT | low | Cilove soubory |
+| Full codebase analyza / re-analyza | HEAVY | max | 1M context + compaction na 80% |
+| CLAUDE.md update | HEAVY | high | Cely CLAUDE.md + projekt struktura |
+
+---
+
+## Agent Team Configuration
+
+Multi-agent orchestrace pres Agent Teams (experimental, flag `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS`) a subagenty (stable). Podrobnosti v `docs/ai-workflow-guide.md`.
+
+### Team Roles
+
+| Role | Scope | Alias | Effort | Spawn When |
+|---|---|---|---|---|
+| Lead / Architect | Dekompozice tasku, CLAUDE.md, cross-project zmeny | HEAVY | high | Vzdy pritomen jako orchestrator |
+| Extension Developer | youtube-downloader, cardharvest, chat-panel plugin/ | HEAVY | high | Extension/native host zmeny |
+| Hub & Web Developer | index.html, script.js, styles.css, standalone projekty | STANDARD | high | Hub UI, feature prace, registry |
+| Docs Maintainer | docs/, version headers, README.md, ANALYSIS.md | LIGHT | low | Dokumentacni tasky |
+
+### Spawn Rules
+
+| Pattern | Agents | Mode |
+|---|---|---|
+| Single-file bug fix | Zadny (single session) | N/A |
+| Feature (2-5 souboru) | Developer + subagent | Subagent report |
+| Cross-module refactor (5+) | Full team | Agent Teams (experimental) |
+| Security-critical zmena | Security Analyst + Lead | Adversarial review |
+| Extension verzovani | Lead (HEAVY, single session) | Sekvencni (6+ souboru musi byt atomic) |
+| Dokumentace | Docs Maintainer (subagent) | Subagent report |
+
+### Doporuceni
+
+Pro tento projekt jsou **subagenty vhodnejsi nez Agent Teams** — 26 projektu je nezavislych, vetsina tasku se tyka 1-3 souboru. Agent Teams pouzij jen pro full hub redesign nebo cross-project refactoring.
 
 ---
 
@@ -225,14 +290,17 @@ Podrobna pravidla jsou v `docs/session-directives.md`. Klicove body:
 3. **Token Optimisation**: Odhadni scope tasku pred zacatkem. Male (<2K tokenu), stredni (<8K), velke (<20K).
 4. **Documentation Lifecycle**: Po kazde zmene kodu zkontroluj, zda ovlivnuje existujici dokumentaci. Pokud ano, aktualizuj.
 5. **Re-Analysis Protocol**: Pri opakovane analyze zacni od Session Logu, zamer se na soubory se stavem "needs-review".
+6. **Think-Before-Act**: Pro complex tasky (3+ souboru): GATHER → THINK → PLAN → ACT → VERIFY. Pro single-file edity staci lightweight reasoning.
+7. **Long Session Strategy**: Pri 1M kontextu compaction na 80%. Pri preteceni commitnout hotove zmeny, zalogovat partial session, rozdelit zbytek na subtasky.
 
 ---
 
 ## Session Log
 
-| Date | Model | Task Summary | Files Touched | Est. Tokens | Version Changes |
-|---|---|---|---|---|---|
-| 2026-02-17 | opus-4.6 | Docs restructure, versioning headers, CLAUDE.md rewrite | 73 | ~15000 | 70 docs: 0→1.0.0, docs/README.md: 1.0.0→1.1.0, CLAUDE.md: full rewrite |
+| Date | Model | Teammates | Task Summary | Files Touched | Est. Tokens | Version Changes |
+|---|---|---|---|---|---|---|
+| 2026-02-17 | opus-4.6 | N/A | Docs restructure, versioning headers, CLAUDE.md rewrite | 73 | ~15000 | 70 docs: 0→1.0.0, docs/README.md: 1.0.0→1.1.0, CLAUDE.md: full rewrite |
+| 2026-02-17 | opus-4.6 | N/A | Multi-agent upgrade: aliases, effort routing, agent teams, slash commands, prompt registry | 12 | ~18000 | CLAUDE.md: rewrite→2.0.0, session-directives: 1.0.0→1.1.0 |
 
 ---
 

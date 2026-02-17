@@ -1,6 +1,6 @@
 ---
 title: "Session Directives for AI-Assisted Development"
-version: 1.0.0
+version: 1.1.0
 last_updated: 2026-02-17
 status: current
 ---
@@ -90,3 +90,55 @@ If asked to re-run documentation analysis, structure review, or full audit:
 6. Append a new entry to the Session Log
 7. Re-evaluate the Model Routing task-to-model table if the project scope has changed
 8. Estimate and report total tokens consumed for the re-analysis
+
+## Think-Before-Act Protocol
+
+Pro complex multi-step tasky (3+ sekvencnich tool calls) pouzij strukturovane reasoning pauzy:
+
+1. **GATHER**: Precti vsechny relevantni soubory. NEZACINEJ menit.
+2. **THINK**: Po shromazdeni informaci posud:
+   - Mam vsechny informace pro pokracovani?
+   - Jake jsou zavislosti mezi zmenami?
+   - Co se muze pokazit? Jake edge cases existuji?
+   - Existuje jednodussi pristup?
+   - Jsem spravny model tier pro tento task? (Zkontroluj Effort Routing)
+3. **PLAN**: Zapis sekvenci zmen pred provedenim:
+   - Soubory k uprave v poradi zavislosti
+   - Ktere zmeny musi byt atomicke (all-or-nothing)
+   - Verifikacni kroky (testy, build check)
+4. **ACT**: Proved plan krok po kroku.
+5. **VERIFY**: Po vsech zmenach zkontroluj:
+   - Konzistence mezi upravenymi soubory
+   - Zadne rozbite reference nebo importy
+   - Dokumentace stale odpovida kodu
+   - Version headers aktualizovany
+
+**Kdy pouzit plny protokol:**
+- Task dotykajici se 3+ souboru
+- Security-critical modifikace
+- Zmeny build/deploy konfigurace
+- Jakakoli zmena CLAUDE.md
+
+**Kdy staci lightweight reasoning:**
+- Single-file edity s jasnym scopem
+- Dokumentacni zmeny v jednom souboru
+- Formatting / linting fixy
+
+## Long Session Strategy
+
+Pro sese ktere mohou prekrocit standardni context limity:
+
+1. **Full project audity**: Pouzij HEAVY s 1M kontextem (beta) + compaction
+   - Compaction threshold na 80% context window
+   - Pri compaction zachovat: klicova rozhodnuti, seznam upravenych souboru, version zmeny
+   - Zahodit: verbose obsah jiz zpracovanych souboru, intermediate reasoning
+2. **Cilene reviews**: Pouzij STANDARD s 200K kontextem
+   - Pre-filtruj soubory na relevantni
+   - Pokud se kontext naplni pred dokoncenim, rozdel na subtasky
+3. **Batch mechanicke operace**: Pouzij LIGHT s minimalnim kontextem
+   - Zpracovavej soubory sekvencne, uvolnuj kontext mezi davkami
+4. **Pri detekci bliziciho se limitu**:
+   - Uloz aktualni progress (seznam hotovych a zbyvajicich subtasku)
+   - Commitni vsechny dokoncene zmeny
+   - Zaloguj partial session do Session Logu se statusem "partial"
+   - Report zbyvajici praci jako continuation prompt

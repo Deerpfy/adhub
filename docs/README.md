@@ -1,6 +1,6 @@
 ---
 title: "AdHUB Documentation"
-version: 1.1.0
+version: 1.2.0
 last_updated: 2026-02-17
 status: current
 ---
@@ -15,10 +15,13 @@ Tato slozka obsahuje dokumentaci, vyzkumne materialy a artefakty pro projekt AdH
 docs/
 ├── README.md               # Tento soubor - index dokumentace
 ├── mcp-example.md          # Priklad MCP konfigurace
+├── session-directives.md   # Auto-enforced pravidla pro AI sese
+├── ai-workflow-guide.md    # Agent Teams, Effort Routing, Context Strategy
 ├── research/               # Vyzkumne analyzy a dokumentace
 │   ├── external-services/  # Analyzy externich sluzeb a produktu (11 souboru)
 │   └── project-research/   # Vyzkum pro konkretni AdHUB projekty (20 souboru)
 ├── artifacts/              # AI artefakty a generovane dokumenty (4 soubory + README)
+├── prompt-registry/        # Reusable prompt formulas
 ├── twitch-api/             # Kompletni Twitch API referencni dokumentace (18 souboru)
 └── kick-api/               # Kompletni Kick API referencni dokumentace (13 souboru)
 ```
@@ -26,6 +29,8 @@ docs/
 ## Hlavni dokumenty
 
 - **mcp-example.md** - Priklad konfigurace MCP (Model Context Protocol)
+- **session-directives.md** - Auto-enforced pravidla pro AI sese (versioning, model awareness, think-before-act)
+- **ai-workflow-guide.md** - Agent Teams konfigurace, Effort Routing detail, Context Strategy
 
 ## Slozky
 
