@@ -1,3 +1,10 @@
+---
+title: "Kick Webhook Security"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Kick Webhook Security
 
 > **Source:** https://docs.kick.com/events/webhook-security

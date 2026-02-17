@@ -1,3 +1,10 @@
+---
+title: "Podrobna analyza repozitare cporter202/API-mega-list"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Podrobna analyza repozitare cporter202/API-mega-list
 
 **Komplexni sbirka API pro snadnou integraci**

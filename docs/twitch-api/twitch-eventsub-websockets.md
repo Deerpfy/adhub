@@ -1,3 +1,10 @@
+---
+title: "Twitch EventSub — WebSocket Transport"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Twitch EventSub — WebSocket Transport
 
 > **Source:** [Twitch EventSub WebSocket Reference](https://dev.twitch.tv/docs/eventsub/handling-websocket-events/)

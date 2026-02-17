@@ -1,3 +1,10 @@
+---
+title: "Chat Panel - Event Alerts (Subscribe, Follow, Donate, Raid)"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Chat Panel - Event Alerts (Subscribe, Follow, Donate, Raid)
 
 > **Projekt:** AdHub Multistream Chat v2

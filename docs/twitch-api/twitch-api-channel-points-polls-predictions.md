@@ -1,3 +1,10 @@
+---
+title: "Twitch API — Channel Points, Polls, Predictions, Hype Train, Goals & Charity"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Twitch API — Channel Points, Polls, Predictions, Hype Train, Goals & Charity
 
 > **Source:** https://dev.twitch.tv/docs/api/reference

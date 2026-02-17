@@ -1,3 +1,10 @@
+---
+title: "Analýza webu: ipify API"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Analýza webu: ipify API
 
 **URL**: https://api.ipify.org/

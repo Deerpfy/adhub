@@ -1,3 +1,10 @@
+---
+title: "Technická analýza Steam hour boosting nástrojů"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Technická analýza Steam hour boosting nástrojů
 
 Nástroje pro simulaci hraní Steam her využívají přímou komunikaci se Steam servery prostřednictvím reverzně inženýrovaného protokolu, přičemž **žádný z nich nevyžaduje skutečné spuštění hry**. Klíčem je knihovna SteamKit2 (C#) nebo steam-user (Node.js), které odesílají zprávu `CMsgClientGamesPlayed` informující Steam o "hraní" až **32 her současně**. Webová implementace vyžaduje backend server – browser-only řešení je technicky nemožné kvůli Steam protokolu a CORS omezením.

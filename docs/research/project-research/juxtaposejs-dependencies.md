@@ -1,3 +1,10 @@
+---
+title: "JuxtaposeJS - Analyza externich zavislosti pro offline PWA"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # JuxtaposeJS - Analyza externich zavislosti pro offline PWA
 
 **Datum:** 13. prosince 2025

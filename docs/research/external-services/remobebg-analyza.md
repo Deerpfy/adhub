@@ -1,3 +1,10 @@
+---
+title: "Komplexní analýza webu remove.bg"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Komplexní analýza webu remove.bg
 
 **Remove.bg je přední AI nástroj pro automatické odstranění pozadí z obrázků**, zpracovávající přes **150 milionů obrázků měsíčně** pro 32 milionů aktivních uživatelů. Od akvizice společností Canva Austria GmbH v roce 2021 se služba etablovala jako průmyslový standard s excelentní kvalitou zpracování, robustním API a nejširším portfoliem integrací na trhu. Hlavní konkurenční výhoda spočívá ve špičkovém zpracování složitých hran (vlasy, srst) a hluboké integraci s profesionálními nástroji jako Photoshop a Figma.

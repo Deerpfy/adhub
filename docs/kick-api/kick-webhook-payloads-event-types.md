@@ -1,3 +1,10 @@
+---
+title: "Kick Webhook Payloads & Event Types"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Kick Webhook Payloads & Event Types
 
 > **Source:** https://docs.kick.com/events/event-types

@@ -1,3 +1,10 @@
+---
+title: "Chat Panel - OBS Browser Source"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Chat Panel - OBS Browser Source
 
 > **Modul:** OBS Browser Source endpoint (Phase 2)

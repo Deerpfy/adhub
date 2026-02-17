@@ -1,3 +1,10 @@
+---
+title: "Chat Panel - OBS Browser Source API Endpoint"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Chat Panel - OBS Browser Source API Endpoint
 
 > **Projekt:** AdHub Multistream Chat v2

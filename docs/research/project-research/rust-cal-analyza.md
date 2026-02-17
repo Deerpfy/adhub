@@ -1,3 +1,10 @@
+---
+title: "Komplexní technická dokumentace pro Rust game tools"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Komplexní technická dokumentace pro Rust game tools
 
 Vytvoření vlastních nástrojů pro Rust je technicky proveditelné díky kombinaci **BattleMetrics API**, **Steam Web API**, **A2S Query protokolu** a **Rust+ WebSocket API**. Žádný z existujících kalkulátorů (RustLabs, RustTips, RustCalculator) nenabízí veřejné API — veškerá data musíte sestavit z herních souborů nebo reverse-engineeringu. Pro server tracking je BattleMetrics nejkomplexnější zdroj s limitem **300 requestů/minutu** pro autentizované uživatele, zatímco přímé A2S dotazy na servery poskytují real-time data bez autentizace.

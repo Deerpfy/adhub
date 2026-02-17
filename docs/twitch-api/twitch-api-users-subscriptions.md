@@ -1,3 +1,10 @@
+---
+title: "Twitch API — Users & Subscriptions"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Twitch API — Users & Subscriptions
 
 > **Source:** https://dev.twitch.tv/docs/api/reference/#get-users, https://dev.twitch.tv/docs/api/reference/#get-broadcaster-subscriptions

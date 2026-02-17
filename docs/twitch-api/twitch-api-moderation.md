@@ -1,3 +1,10 @@
+---
+title: "Twitch API — Moderation"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Twitch API — Moderation
 
 > **Source:** https://dev.twitch.tv/docs/api/reference/#check-automod-status

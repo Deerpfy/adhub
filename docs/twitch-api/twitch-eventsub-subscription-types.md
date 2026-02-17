@@ -1,3 +1,10 @@
+---
+title: "Twitch EventSub Subscription Types"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Twitch EventSub Subscription Types
 
 > **Source**: https://dev.twitch.tv/docs/eventsub/eventsub-subscription-types/

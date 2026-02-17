@@ -1,222 +1,131 @@
 # Claude Code - AdHUB Project Guide
 
-Toto je dokumentace pro Claude Code a AI asistenty pracující s projektem AdHUB.
+Dokumentace pro AI asistenty pracujici s projektem AdHUB. Pred kazdou sesi si precti tento soubor a `docs/session-directives.md`.
 
 ## Struktura projektu
 
 ```
 adhub/
-├── index.html              # Hlavni stranka hubu
-├── script.js               # Logika, konfigurace, preklady
-├── styles.css              # Globalni styly
+├── index.html              # Hlavni stranka hubu (~3200 LOC)
+├── script.js               # Logika, konfigurace, preklady (~5000 LOC)
+├── styles.css              # Globalni styly (~2000 LOC)
 ├── CLAUDE.md               # Tento soubor
 ├── README.md               # Dokumentace projektu
-├── docs/                   # Dokumentace a vyzkum
-│   ├── mcp-example.md      # Priklad MCP konfigurace
-│   ├── research/           # Analyzy a vyzkum
-│   │   ├── external-services/  # Analyzy externich sluzeb
-│   │   └── project-research/   # Vyzkum pro projekty
-│   ├── artifacts/          # AI prompty a artefakty
-│   ├── twitch-api/         # Twitch API referencni dokumentace (18 .md souboru)
-│   └── kick-api/           # Kick API referencni dokumentace (13 .md souboru)
-└── projects/
-    ├── youtube-downloader/ # YouTube stahovac (Chrome extension)
-    ├── chat-panel/         # Multistream chat
-    ├── pdf-editor/         # PDF editor
-    ├── pdf-merge/          # PDF spojovac
-    ├── goalix/             # Task manager (dříve MindHub)
-    ├── cardharvest/        # Steam hours & cards farming (dříve Steam Farm)
-    ├── scribblix/          # Offline dokumentace (dříve DocBook)
-    ├── paintnook/          # Digitální malba (dříve Paint Studio)
-    ├── slidersnap/         # Before/after porovnání (dříve Juxtapose)
-    ├── spinning-wheel-giveaway/
-    ├── resignation-bets/
-    ├── ai-prompting/
-    └── komopizza/
+├── docs/                   # Dokumentace a vyzkum (70+ .md souboru)
+│   ├── README.md           # Index dokumentace
+│   ├── mcp-example.md      # MCP konfigurace
+│   ├── session-directives.md # Auto-enforced pravidla pro AI sese
+│   ├── research/           # Analyzy a vyzkum (31 souboru)
+│   │   ├── external-services/  # Analyzy externich sluzeb (11)
+│   │   └── project-research/   # Vyzkum pro projekty (20)
+│   ├── artifacts/          # AI artefakty (4 + README)
+│   ├── twitch-api/         # Twitch API reference (18 souboru)
+│   └── kick-api/           # Kick API reference (13 souboru)
+├── projects/               # 26 projektu
+│   ├── youtube-downloader/ # Chrome extension, yt-dlp
+│   ├── chat-panel/         # Multistream chat + WebSocket server
+│   ├── cardharvest/        # Steam farming (Chrome ext + Native Host)
+│   ├── paintnook/          # Digitalni malba (Canvas + TensorFlow.js)
+│   ├── bg-remover/         # AI background removal (TensorFlow.js)
+│   ├── pdf-editor/         # PDF editor (pdf-lib, pdf.js)
+│   ├── pdf-merge/          # PDF spojovac (pdf-lib)
+│   ├── pdf-search/         # PDF vyhledavani
+│   ├── goalix/             # Task manager (localStorage)
+│   ├── scribblix/          # Offline dokumentace (PWA)
+│   ├── slidersnap/         # Before/after porovnani
+│   ├── clipforge/          # Video editing (FFmpeg)
+│   ├── ai-prompting/       # AI prompt engineering tools
+│   ├── claude-rcs/         # Offline P2P workspace
+│   ├── ip-api/             # GeoIP + IP lookup server
+│   ├── ip-lookup/          # IP lookup utility
+│   ├── print3d-calc/       # 3D printing calculator
+│   ├── rust-calculator/    # WASM calculator
+│   ├── nimt-tracker/       # Tracker app
+│   ├── api-catalog/        # API aggregation reference
+│   ├── adanimations/       # Animation utilities
+│   ├── server-hub/         # Central hub server
+│   ├── samplehub/          # Sample project templates
+│   ├── spinning-wheel-giveaway/
+│   ├── resignation-bets/
+│   ├── komopizza/
+│   └── video-editing-analysis/ # Research (no code)
+├── server/                 # Node.js WebSocket server
+└── .github/                # CI/CD workflows + analyze-projects.py
 ```
 
-## Hlavni projekty a technologie
+## Hlavni projekty
 
 ### YouTube Downloader (`projects/youtube-downloader/`)
 
-**Typ:** Chrome Extension (Manifest V3)
+**Typ:** Chrome Extension (Manifest V3) + Python Native Host + Node.js server
 
-**Soubory:**
-- `plugin/manifest.json` - Extension manifest v5.5.0
-- `plugin/content.js` - UI na YouTube strance
-- `plugin/background.js` - Service worker, cookies, native messaging
-- `plugin/popup.html` + `popup.js` - Nastaveni rozsirenni
-- `plugin/youtube-ui.css` - Styly
-- `native-host/adhub_yt_host.py` - Python Native Messaging host pro yt-dlp
+**Klicove soubory:** `plugin/manifest.json`, `plugin/content.js`, `plugin/background.js`, `plugin/popup.html`, `plugin/popup.js`, `plugin/youtube-ui.css`, `native-host/adhub_yt_host.py`
 
-**Funkcionalita:**
-- Zakladni rezim: Stahovani do 720p primo z prohlizece
-- Rozsireny rezim: HD/4K/MP3 pres yt-dlp + native host
-- Automaticke cookies pro vekove omezena videa
-- Podpora: YouTube, YouTube Music, Shorts
+**Verze musi byt konzistentni ve vsech souborech:**
+- `manifest.json`: `"version": "5.5.0"`
+- `content.js`: `window.__ADHUB_YT_DL_V55__`
+- `background.js`: `version: '5.5'`
+- `popup.html` + `popup.js`: `v5.5`
+- `native-host/adhub_yt_host.py`: `VERSION = '5.5'`
 
-**Dulezite:**
-```javascript
-// Verze musi byt konzistentni ve vsech souborech
-// manifest.json: "version": "5.5.0"
-// content.js: window.__ADHUB_YT_DL_V55__
-// background.js: version: '5.5'
-// popup.html: v5.5
-// popup.js: v5.5
-// native host: VERSION = '5.5'
-```
+**Tok dat:** YouTube stranka → content.js (ytInitialPlayerResponse) → background.js → Zakladni rezim (chrome.downloads max 720p) NEBO Rozsireny rezim (Native Messaging → adhub_yt_host.py → yt-dlp + ffmpeg → ~/Downloads/)
 
 ### Chat Panel (`projects/chat-panel/`)
 
-**Typ:** Web app + Node.js WebSocket server
-
-**Backend:** `server/` slozka s WebSocket serverem pro real-time chat
-
-### Twitch API Documentation (`docs/twitch-api/`)
-
-**Typ:** Referencni dokumentace (18 self-contained .md souboru)
-
-**Ucel:** Kompletni reference pro integraci s Twitch API (Helix) — pouziva se predevsim pro Chat Panel a dalsi projekty potrebujici Twitch funkcionalitu.
-
-**Zakladni informace:**
-- API Base URL: `https://api.twitch.tv/helix`
-- Auth Base URL: `https://id.twitch.tv`
-- EventSub WebSocket: `wss://eventsub.wss.twitch.tv/ws`
-
-**Navigace v dokumentaci — kde co najit:**
-
-| Potrebuji... | Soubor |
-|--------------|--------|
-| Zaregistrovat aplikaci, prvni API call | `twitch-getting-started.md` |
-| OAuth tokeny, refresh, validaci | `twitch-authentication.md` |
-| Webhook integrace (HMAC verifikace) | `twitch-eventsub-webhooks.md` |
-| WebSocket real-time eventy | `twitch-eventsub-websockets.md` |
-| Vsechny EventSub typy (follow, sub, cheer...) | `twitch-eventsub-subscription-types.md` |
-| Skalovat WebSocket pripojeni | `twitch-eventsub-conduits.md` |
-| Chat endpointy (send message, emotes, badges) | `twitch-api-chat-whispers.md` |
-| Stream info, kanaly, raidy | `twitch-api-channels-streams.md` |
-| Moderaci (ban, timeout, automod) | `twitch-api-moderation.md` |
-| Channel Points, Polls, Predictions | `twitch-api-channel-points-polls-predictions.md` |
-| Uzivatele, subscriptions | `twitch-api-users-subscriptions.md` |
-| Bits, Analytics, Drops | `twitch-api-bits-extensions-analytics.md` |
-| Clips, Videos, Search | `twitch-api-clips-videos-games.md` |
-| Rate limity, paginaci, error format | `twitch-api-concepts-ratelimits-pagination.md` |
-| OAuth scopes (jaky scope pro jaky endpoint) | `twitch-scopes-reference.md` |
-| Twitch Extensions (JS Helper, JWT) | `twitch-extensions.md` |
-| Migraci z PubSub na EventSub | `twitch-pubsub-migration.md` |
-| Kompletni index vsech endpointu | `twitch-master-reference.md` |
-
-**Dulezite:**
-- Kazdy soubor je self-contained — obsahuje vsechny endpointy, schemata, cURL priklady, TypeScript/Python kod
-- Kazdy soubor konci sekcemi "Best Practices & Production Hardening" a "Known Issues & Community Notes"
-- Dokumentace byla vytvorena z oficialnich Twitch docs (oznaceno `[PAGE INACCESSIBLE - VERIFY AGAINST LIVE DOCS]` kde nebyly stranky primo pristupne)
-- PubSub byl decommissioned 14. dubna 2025 — pouzivat EventSub
-
-### Kick API Documentation (`docs/kick-api/`)
-
-**Typ:** Referencni dokumentace (13 self-contained .md souboru)
-
-**Ucel:** Kompletni reference pro integraci s Kick Developer API — pouziva se pro Chat Panel a dalsi projekty potrebujici Kick funkcionalitu (chat boty, stream alerty, moderaci).
-
-**Zakladni informace:**
-- API Base URL: `https://api.kick.com/public/v1`
-- OAuth Server: `https://id.kick.com`
-- OpenAPI Spec: `https://api.kick.com/swagger/doc.yaml`
-
-**Navigace v dokumentaci — kde co najit:**
-
-| Potrebuji... | Soubor |
-|--------------|--------|
-| OAuth 2.1 tokeny (PKCE, client credentials, refresh) | `kick-oauth2-flow.md` |
-| Jaky scope pro jaky endpoint | `kick-scopes-reference.md` |
-| Webhook verifikaci (RSA podpisy) | `kick-webhook-security.md` |
-| Vsechny webhook event typy (chat, follow, sub...) | `kick-webhook-payloads-event-types.md` |
-| Subscribe/unsubscribe na eventy | `kick-subscribe-to-events.md` |
-| Informace o uzivateli | `kick-users-api.md` |
-| Informace o kanalu, stream metadata | `kick-channels-api.md` |
-| Poslat/smazat chat zpravu, bot patterny | `kick-chat-api.md` |
-| Ban/unban/timeout uzivatele | `kick-moderation-api.md` |
-| Channel Points rewards (CRUD + redemptions) | `kick-channel-rewards-api.md` |
-| KICKs leaderboard | `kick-kicks-api.md` |
-| RSA public key pro verifikaci | `kick-public-key-api.md` |
-| Kompletni index vsech 28 endpointu | `kick-devdocs-master-reference.md` |
-
-**Dulezite:**
-- Kazdy soubor je self-contained — obsahuje endpointy, schemata, cURL priklady, TypeScript/Python kod
-- Kazdy soubor konci sekcemi "Best Practices & Production Hardening" a "Known Issues & Community Notes"
-- Kick pouziva RSA PKCS1v15-SHA256 pro webhook podpisy (ne HMAC jako Twitch)
-- Kick nema WebSocket API — chat se cte pres webhook eventy (`chat.message.sent`)
-- Bot MUSI kontrolovat `sender.user_id` aby se vyhnul nekonecnym smyckam
-- DELETE `/moderation/bans` vyzaduje JSON body (nestandardni HTTP semantika)
-
-### PDF Editor/Merge (`projects/pdf-editor/`, `projects/pdf-merge/`)
-
-**Typ:** 100% client-side web aplikace
-
-**Knihovny:** pdf-lib, pdf.js
-
-### Goalix (`projects/goalix/`)
-
-**Typ:** SPA task manager (dříve MindHub)
-
-**Uloziste:** 100% localStorage
+**Typ:** Web app + Node.js WebSocket server (`server/`)
 
 ### CardHarvest (`projects/cardharvest/`)
 
-**Typ:** Chrome Extension + Native Host (Node.js) + Web UI
+**Typ:** Chrome Extension + Native Host (Node.js) + Web UI. Farming az 32 her, 2FA, Steam CM servery. Architektura: Web UI → content.js → background.js → Native Messaging → cardharvest-host.js → steam-user → Steam CM.
 
-**Soubory:**
-- `index.html` - Web UI pro ovladani farmingu
-- `script.js` - Frontend logika
-- `styles.css` - Styly v AdHUB designu
-- `plugin/manifest.json` - Extension manifest v2.0.0
-- `plugin/background.js` - Service worker, Native Messaging
-- `plugin/content.js` - Bridge mezi webem a extension
-- `plugin/popup.html` + `popup.js` - Popup rozsirenni
-- `native-host/cardharvest-host.js` - Node.js host pro steam-user
-- `native-host/package.json` - NPM dependencies (steam-user, steam-totp)
-- `native-host/install.bat` + `install.sh` - Instalacni skripty
+### PaintNook / BG Remover (`projects/paintnook/`, `projects/bg-remover/`)
 
-**Funkcionalita:**
-- Farming az 32 her soucasne
-- Zobrazeni zbyvajicich trading cards
-- Automaticke 2FA s shared_secret
-- Lokalni ulozeni session (refresh token)
-- 100% lokalni zpracovani - zadne data neodchazeji na externi servery
+**Typ:** Canvas API + TensorFlow.js. Sdili ML modely (~212MB kazdy).
 
-**Architektura:**
-```
-Web UI (index.html)
-     |
-     v
-content.js (window.postMessage)
-     |
-     v
-background.js (chrome.runtime.sendMessage)
-     |
-     v
-Native Messaging (chrome.runtime.connectNative)
-     |
-     v
-cardharvest-host.js (Node.js)
-     |
-     v
-steam-user knihovna
-     |
-     v
-Steam CM servery
-```
+### Twitch API Documentation (`docs/twitch-api/`)
 
-**Instalace:**
-1. Nahrat rozsirenni z `plugin/` do chrome://extensions
-2. Spustit `npm install` v `native-host/`
-3. Spustit `install.bat` nebo `install.sh` s ID rozsirenni
-4. Restartovat prohlizec
+18 self-contained .md souboru. API Base URL: `https://api.twitch.tv/helix`. PubSub decommissioned 2025-04-14 — pouzivat EventSub.
 
-**Dulezite:**
-- Steam protokol vyzaduje Native Host - browser-only neni mozne
-- Max 32 her soucasne (Steam limit)
-- Refresh token ma platnost ~200 dni
+| Potrebuji... | Soubor |
+|---|---|
+| Registrace, prvni call | `twitch-getting-started.md` |
+| OAuth tokeny | `twitch-authentication.md` |
+| Webhooks (HMAC) | `twitch-eventsub-webhooks.md` |
+| WebSocket eventy | `twitch-eventsub-websockets.md` |
+| EventSub typy | `twitch-eventsub-subscription-types.md` |
+| Conduits (scaling) | `twitch-eventsub-conduits.md` |
+| Chat, emotes, badges | `twitch-api-chat-whispers.md` |
+| Channels, streams, raids | `twitch-api-channels-streams.md` |
+| Moderace | `twitch-api-moderation.md` |
+| Points, polls, predictions | `twitch-api-channel-points-polls-predictions.md` |
+| Users, subscriptions | `twitch-api-users-subscriptions.md` |
+| Bits, analytics | `twitch-api-bits-extensions-analytics.md` |
+| Clips, videos, search | `twitch-api-clips-videos-games.md` |
+| Rate limity, paginace | `twitch-api-concepts-ratelimits-pagination.md` |
+| OAuth scopes | `twitch-scopes-reference.md` |
+| Extensions | `twitch-extensions.md` |
+| PubSub migrace | `twitch-pubsub-migration.md` |
+| Master index | `twitch-master-reference.md` |
+
+### Kick API Documentation (`docs/kick-api/`)
+
+13 self-contained .md souboru. API Base URL: `https://api.kick.com/public/v1`. RSA PKCS1v15-SHA256 pro webhook podpisy. Nema WebSocket — chat pres webhook eventy.
+
+| Potrebuji... | Soubor |
+|---|---|
+| OAuth 2.1 (PKCE) | `kick-oauth2-flow.md` |
+| Scopes | `kick-scopes-reference.md` |
+| Webhook security | `kick-webhook-security.md` |
+| Event typy | `kick-webhook-payloads-event-types.md` |
+| Subscriptions | `kick-subscribe-to-events.md` |
+| Users | `kick-users-api.md` |
+| Channels | `kick-channels-api.md` |
+| Chat | `kick-chat-api.md` |
+| Moderation | `kick-moderation-api.md` |
+| Channel rewards | `kick-channel-rewards-api.md` |
+| KICKs | `kick-kicks-api.md` |
+| Public key | `kick-public-key-api.md` |
+| Master index | `kick-devdocs-master-reference.md` |
 
 ---
 
@@ -224,179 +133,106 @@ Steam CM servery
 
 ### 1. Bez build procesu
 
-Vsechny projekty jsou vanilla JS/HTML/CSS. Zadny webpack, Vite ani jiny bundler.
-
-```bash
-# Spusteni - staci HTTP server
-python -m http.server 8000
-# nebo
-npx serve .
-```
+Vsechny projekty jsou vanilla JS/HTML/CSS. Zadny webpack, Vite ani bundler. Spusteni: `python -m http.server 8000` nebo `npx serve .`
 
 ### 2. Verzovani
 
-Pri zmene rozsirent (youtube-downloader):
-1. Aktualizuj verzi ve VSECH souborech konzistentne
-2. Pouzij semanticke verzovani (MAJOR.MINOR.PATCH)
+Pri zmene extensions aktualizuj verzi ve VSECH souborech konzistentne (semanticke verzovani MAJOR.MINOR.PATCH).
 
 ### 3. Jazykova podpora
 
-Preklady jsou v `script.js` v objektu `BASE_TRANSLATIONS`:
-
-```javascript
-const BASE_TRANSLATIONS = {
-  cs: { /* ceske preklady */ },
-  en: { /* anglicke preklady */ }
-};
-```
+Preklady v `script.js` v objektu `BASE_TRANSLATIONS` (cs, en).
 
 ### 4. Pridani noveho projektu
 
-1. Vytvor slozku `projects/nazev-projektu/`
-2. Pridej `index.html` jako vstupni bod
-3. Edituj `script.js` a pridej do `getLocalizedConfig()`
-4. Pridej preklady do `BASE_TRANSLATIONS`
-5. Pridej konfiguraci do `.github/scripts/analyze-projects.py` (PROJECT_CONFIGS)
+1. Vytvor `projects/nazev-projektu/` s `index.html`
+2. Pridej do `getLocalizedConfig()` v `script.js`
+3. Pridej preklady do `BASE_TRANSLATIONS`
+4. Pridej konfiguraci do `.github/scripts/analyze-projects.py` (PROJECT_CONFIGS)
 
-### 5. Automaticka analyza projektu (GitHub Action)
+### 5. Automaticka analyza (GitHub Action)
 
-Repository obsahuje automaticky system pro generovani ANALYSIS.md souboru.
-
-**Jak to funguje:**
-- Pri push do `main` vetve (zmeny v `projects/**`) se spusti GitHub Action
-- Action detekuje zmemene projekty a aktualizuje POUZE jejich ANALYSIS.md
-- Zmeny se automaticky commitnou
-
-**Dulezite pro Claude Code:**
-- NEUPRAVUJ rucne soubory `projects/*/ANALYSIS.md` - jsou generovany automaticky
-- Pri pridani noveho projektu PRIDEJ konfiguraci do `.github/scripts/analyze-projects.py`:
-
-```python
-PROJECT_CONFIGS = {
-    "nazev-projektu": {
-        "name": "Nazev Projektu",
-        "type": "Web App",
-        "version": "1.0",
-        "status": "Active",
-        "technologies": ["HTML/CSS/JS", "React", ...],
-        "category": "Category",
-        "description": "Popis projektu",
-        "main_file": "index.html",
-        "features": [
-            "Feature 1",
-            "Feature 2"
-        ]
-    }
-}
-```
-
-**Manualni spusteni:**
-- GitHub -> Actions -> "Project Analysis" -> Run workflow
-- Lze zadat konkretni projekt nebo analyzovat vse
-
-**Soubory:**
-- `.github/workflows/project-analysis.yml` - GitHub Action workflow
-- `.github/scripts/analyze-projects.py` - Python skript pro generovani analyzy
+- NEUPRAVUJ rucne `projects/*/ANALYSIS.md` — jsou generovany automaticky pri push do `main`
+- Soubory: `.github/workflows/project-analysis.yml`, `.github/scripts/analyze-projects.py`
 
 ---
 
-## YouTube Downloader - Detailni architektura
+## Documentation Map
 
-### Tok dat
-
-```
-YouTube stranka
-     |
-     v
-content.js (extrakce ytInitialPlayerResponse)
-     |
-     v
-background.js (chrome.runtime.sendMessage)
-     |
-     +---> Zakladni rezim: chrome.downloads.download()
-     |
-     +---> Rozsireny rezim:
-           |
-           v
-     Native Messaging (chrome.runtime.sendNativeMessage)
-           |
-           v
-     adhub_yt_host.py (Python)
-           |
-           v
-     yt-dlp + ffmpeg
-           |
-           v
-     ~/Downloads/
-```
-
-### Podporovane typy videi
-
-| Typ | Zakladni | Rozsireny |
-|-----|----------|-----------|
-| Bezne video | max 720p | 4K |
-| YouTube Shorts | max 720p | 4K |
-| YouTube Music | max 720p | HD + MP3 |
-| Vekove omezene | NE | ANO (cookies) |
-| Zive prenosy | NE | ANO |
-| Soukrome | NE | NE |
-
-### Automaticke cookies
-
-```javascript
-// background.js - ziskani cookies
-const cookies = await chrome.cookies.getAll({ domain: '.youtube.com' });
-const musicCookies = await chrome.cookies.getAll({ domain: 'music.youtube.com' });
-const googleCookies = await chrome.cookies.getAll({ domain: '.google.com' });
-
-// Konverze do Netscape formatu pro yt-dlp
-```
-
-### Native Host instalace
-
-```bash
-# Linux/macOS
-cd native-host && ./install.sh
-
-# Windows
-cd native-host && install.bat
-```
+| Cesta | Popis |
+|---|---|
+| `docs/README.md` | Index vsech dokumentu s navigaci |
+| `docs/mcp-example.md` | MCP konfigurace |
+| `docs/session-directives.md` | Auto-enforced pravidla pro AI sese |
+| `docs/artifacts/` | AI artefakty (PDF tools, Steam boost, prompting) |
+| `docs/research/external-services/` | Analyzy externich sluzeb (11 souboru) |
+| `docs/research/project-research/` | Vyzkum pro projekty (20 souboru, prevazne Chat Panel) |
+| `docs/twitch-api/` | Twitch API reference (18 self-contained souboru) |
+| `docs/kick-api/` | Kick API reference (13 self-contained souboru) |
 
 ---
 
-## Casty problemy a reseni
+## Model Routing
 
-### YouTube Downloader nefunguje
+Profil projektu: Hub-and-spokes architektura, 26 vanilla JS/HTML/CSS projektu, 2 Chrome extensions s native hosty, 50K+ LOC, Twitch/Kick/Steam API integrace, zadne automaticke testy.
 
-1. **Zadne formaty** - YouTube zmenil strukturu, zkontroluj `extractPlayerResponse()`
-2. **Native host error** - Zkontroluj instalaci: `chrome://extensions` -> Details -> Native Messaging hosts
-3. **Cookies nefunguji** - Zkontroluj permission "cookies" v manifest.json
+Vychozi model: **Sonnet 4.5**
 
-### Verze nejsou synchronizovane
+### Task-to-Model Map
 
-```bash
-# Najdi vsechny soubory s verzi
-grep -r "v5\." projects/youtube-downloader/plugin/
-grep -r "VERSION" projects/youtube-downloader/native-host/
-```
+| Task | Model | Duvod |
+|---|---|---|
+| YouTube Downloader verzovani (6+ souboru sync) | Opus 4.6 | Cross-file dependency, verze musi byt konzistentni |
+| Chat Panel + Twitch/Kick API integrace | Opus 4.6 | Multi-service reasoning, OAuth + EventSub + WebSocket |
+| CardHarvest Steam protokol zmeny | Opus 4.6 | Security-critical (auth, 2FA), native messaging bridge |
+| Architektura novych projektu | Opus 4.6 | Multi-module planning |
+| CLAUDE.md aktualizace | Opus 4.6 | Meta-dokumentace, cely kontext projektu |
+| Feature implementace v jednom projektu | Sonnet 4.5 | Ohraniceny scope, standardni vyvoj |
+| Bug fixy s jasnymi kroky | Sonnet 4.5 | Lokalizovany problem |
+| API endpoint implementace | Sonnet 4.5 | Standardni CRUD/REST prace |
+| Dokumentace jednotlivych features | Sonnet 4.5 | Psani/aktualizace v docs/ |
+| Server-side zmeny (Node.js WebSocket) | Sonnet 4.5 | Backend v ohranicenem scope |
+| UI/CSS zmeny v jednom projektu | Sonnet 4.5 | Vizualni prace, nizsi riziko |
+| Aktualizace prekladu (BASE_TRANSLATIONS) | Haiku 4.5 | Mechanicke, opakovane, nizke riziko |
+| Prejmenovani souboru, import updaty | Haiku 4.5 | Find-and-replace operace |
+| Scaffolding novych projektu | Haiku 4.5 | Boilerplate generovani |
+| Jednoduche dotazy na codebase | Haiku 4.5 | Quick lookup |
+| Commit message generovani | Haiku 4.5 | Kratke, mechanicke |
+
+### Project-Specific Overrides
+
+- **Vsechny zmeny v extension manifest/version souborech** → Opus 4.6 (verze musi byt synchronizovane v 6+ souborech, chyba rozbije extension)
+- **Twitch/Kick API doc aktualizace** → Sonnet 4.5 (self-contained soubory, staci lokalni edit)
+- **paintnook/bg-remover TensorFlow.js zmeny** → Opus 4.6 (sdilene ML modely, 212MB assets, cross-project impact)
+- **Research docs v docs/research/** → Haiku 4.5 (analyticke texty, nizke riziko)
+
+### Auto-Routing Hint
+
+Pred kazdym taskem zhodnotni:
+1. Kolik souboru task ovlivni? (1-3: Sonnet/Haiku, 4-10: Sonnet, 10+: Opus)
+2. Je to security-critical nebo architektura? (Ano: Opus)
+3. Je to mechanicke/opakovane? (Ano: Haiku)
+4. Pokud nic z vyse, pouzij Sonnet.
 
 ---
 
-## Uzitecne prikazy
+## Session Directives (Auto-Enforced)
 
-```bash
-# Kontrola syntaxe JS
-npx eslint projects/youtube-downloader/plugin/*.js
+Podrobna pravidla jsou v `docs/session-directives.md`. Klicove body:
 
-# Kontrola JSON
-python -m json.tool projects/youtube-downloader/plugin/manifest.json
+1. **Auto-Versioning**: Kazdy .md soubor MUSI mit YAML frontmatter (`title`, `version`, `last_updated`, `status`). Pri editaci bumpni verzi a aktualizuj datum.
+2. **Model Awareness**: Na zacatku tasku over, ze jsi spravny model dle Model Routing tabulky. Pokud ne, upozorni uzivatele.
+3. **Token Optimisation**: Odhadni scope tasku pred zacatkem. Male (<2K tokenu), stredni (<8K), velke (<20K).
+4. **Documentation Lifecycle**: Po kazde zmene kodu zkontroluj, zda ovlivnuje existujici dokumentaci. Pokud ano, aktualizuj.
+5. **Re-Analysis Protocol**: Pri opakovane analyze zacni od Session Logu, zamer se na soubory se stavem "needs-review".
 
-# Test native host
-echo '{"action":"ping"}' | python3 native-host/adhub_yt_host.py
+---
 
-# Git - ukazat zmeny v extension
-git diff projects/youtube-downloader/plugin/
-```
+## Session Log
+
+| Date | Model | Task Summary | Files Touched | Est. Tokens | Version Changes |
+|---|---|---|---|---|---|
+| 2026-02-17 | opus-4.6 | Docs restructure, versioning headers, CLAUDE.md rewrite | 73 | ~15000 | 70 docs: 0→1.0.0, docs/README.md: 1.0.0→1.1.0, CLAUDE.md: full rewrite |
 
 ---
 

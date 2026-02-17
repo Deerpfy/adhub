@@ -1,3 +1,10 @@
+---
+title: "Analýza webu: Procreate"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Analýza webu: Procreate
 
 **URL**: https://procreate.com/

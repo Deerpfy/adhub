@@ -1,3 +1,10 @@
+---
+title: "Kompletní audit webu GitBook: Silný technický základ s prostorem pro růst"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Kompletní audit webu GitBook: Silný technický základ s prostorem pro růst
 
 GitBook (gitbook.com) je AI-nativní dokumentační platforma využívaná více než **150 000 organizacemi** včetně NVIDIA, Zoom, Cisco a FedEx. Tato analýza odhaluje moderní technologický stack s **98/100 desktop skóre PageSpeed**, solidní GDPR compliance podpořenou certifikacemi **SOC 2 Type II a ISO 27001**, ale také významné mezery v oblasti přístupnosti a schema markup, které představují příležitosti k optimalizaci.

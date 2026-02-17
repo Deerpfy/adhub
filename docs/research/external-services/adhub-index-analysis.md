@@ -1,3 +1,10 @@
+---
+title: "Analýza webu: AdHUB"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Analýza webu: AdHUB
 
 **URL**: https://deerpfy.github.io/adhub/index.html

@@ -1,3 +1,10 @@
+---
+title: "C++ Local IP Detection - Kompletní řešení"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # C++ Local IP Detection - Kompletní řešení
 
 ## Knihovny (battle-tested, open-source)

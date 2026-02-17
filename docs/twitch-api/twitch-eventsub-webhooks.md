@@ -1,3 +1,10 @@
+---
+title: "Twitch EventSub — Webhook Transport"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Twitch EventSub — Webhook Transport
 
 > **Source:** https://dev.twitch.tv/docs/eventsub/handling-webhook-events/, https://dev.twitch.tv/docs/eventsub/

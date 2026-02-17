@@ -1,3 +1,10 @@
+---
+title: "Analyza webu: JuxtaposeJS (Knight Lab)"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Analyza webu: JuxtaposeJS (Knight Lab)
 
 **URL**: https://juxtapose.knightlab.com/  

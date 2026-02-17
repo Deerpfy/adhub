@@ -1,3 +1,10 @@
+---
+title: "Twitch API — EventSub Conduits"
+version: 1.0.0
+last_updated: 2026-02-17
+status: needs-review
+---
+
 # Twitch API — EventSub Conduits
 
 > **Source:** https://dev.twitch.tv/docs/eventsub/handling-conduit-events/
