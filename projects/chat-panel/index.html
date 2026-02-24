@@ -345,7 +345,6 @@
                         <div class="eventsub-fields" id="eventsubFields">
                             <div class="form-group">
                                 <label for="eventsubClientId">Twitch Client ID</label>
-                                <!-- REPLACE THIS: your Twitch Client ID from dev.twitch.tv -->
                                 <input type="text" id="eventsubClientId" placeholder="Vloz Client ID z dev.twitch.tv" autocomplete="off">
                                 <span class="input-hint">Vytvor aplikaci na <a href="https://dev.twitch.tv/console/apps" target="_blank" rel="noopener">dev.twitch.tv</a>, Redirect URI: nastav na URL teto stranky + <code>/oauth-callback.html</code></span>
                             </div>
@@ -603,6 +602,15 @@
                 <!-- TAB: Services -->
                 <div class="settings-tab-panel" id="tab-services">
                     <div class="settings-section">
+                        <h4>YouTube API</h4>
+                        <p class="setting-hint">Pro YouTube API rezim (polling) je potreba API klic. Ostatni YouTube rezimy (iframe, extension) ho nevyzaduji.</p>
+                        <div class="form-group">
+                            <label for="cpYoutubeApiKey">YouTube Data API v3 Key</label>
+                            <input type="password" id="cpYoutubeApiKey" placeholder="AIza..." autocomplete="off">
+                            <span class="input-hint"><a href="https://console.cloud.google.com/apis/credentials" target="_blank" rel="noopener">Ziskat API klic</a> - klic je ulozen pouze lokalne v prohlizeci</span>
+                        </div>
+                    </div>
+                    <div class="settings-section">
                         <h4>Donace (volitelne)</h4>
                         <p class="setting-hint">Pripojte Streamlabs nebo StreamElements pro zobrazeni donaci v chatu. Token najdete v nastaveni prislusne sluzby.</p>
                         <div class="donation-service">
@@ -634,6 +642,7 @@
                             </div>
                         </div>
                     </div>
+                    <button class="btn btn-primary" id="cpServicesSave">Ulozit sluzby</button>
                 </div>
 
                 <!-- TAB: Data -->
@@ -887,6 +896,11 @@
                 username: null,
                 filter: { enabled: false, keywords: [] }
             },
+            services: {
+                youtubeApiKey: '',
+                streamlabsToken: '',
+                streamelementsToken: ''
+            },
             obs: {
                 transparentBg: true,
                 fontSize: 14,
@@ -982,6 +996,30 @@
             if (twitchFilterEnabled) twitchFilterEnabled.checked = s.twitch.filter.enabled;
             if (twitchFilterKeywords) twitchFilterKeywords.value = (s.twitch.filter.keywords || []).join(', ');
 
+            // Twitch Client ID
+            const eventsubClientId = document.getElementById('eventsubClientId');
+            if (eventsubClientId && s.twitch.clientId && !eventsubClientId.value) {
+                eventsubClientId.value = s.twitch.clientId;
+            }
+
+            // Services tab
+            const ytApiKey = document.getElementById('cpYoutubeApiKey');
+            const slToken = document.getElementById('streamlabsToken');
+            const seToken = document.getElementById('streamelementsToken');
+            if (ytApiKey && s.services.youtubeApiKey) ytApiKey.value = s.services.youtubeApiKey;
+            if (slToken && s.services.streamlabsToken && !slToken.value) slToken.value = s.services.streamlabsToken;
+            if (seToken && s.services.streamelementsToken && !seToken.value) seToken.value = s.services.streamelementsToken;
+
+            // Sync YouTube API key to AppState
+            if (typeof AppState !== 'undefined' && s.services.youtubeApiKey) {
+                AppState.youtubeApiKey = s.services.youtubeApiKey;
+            }
+            // Also populate the YouTube API key input in the Add Channel modal
+            const ytApiKeyModal = document.getElementById('youtubeApiKey');
+            if (ytApiKeyModal && s.services.youtubeApiKey && !ytApiKeyModal.value) {
+                ytApiKeyModal.value = s.services.youtubeApiKey;
+            }
+
             // OBS tab
             const obsTransparent = document.getElementById('cpObsTransparentBg');
             const obsFontSize = document.getElementById('cpObsFontSize');
@@ -1047,10 +1085,28 @@
                 twitchSave.addEventListener('click', function() {
                     cpSettings.twitch.enabled = document.getElementById('cpTwitchEnabled')?.checked || false;
                     cpSettings.twitch.channelName = (document.getElementById('cpTwitchChannel')?.value || '').trim();
+                    cpSettings.twitch.clientId = (document.getElementById('eventsubClientId')?.value || '').trim();
                     cpSettings.twitch.filter.enabled = document.getElementById('cpTwitchFilterEnabled')?.checked || false;
                     cpSettings.twitch.filter.keywords = parseKeywordInput(document.getElementById('cpTwitchFilterKeywords')?.value || '');
                     saveCPSettings(cpSettings);
+                    // Also populate the EventSub Client ID input so script.js picks it up
                     if (typeof showToast === 'function') showToast('Twitch nastaveni ulozeno', 'success');
+                });
+            }
+
+            // Services Save
+            const servicesSave = document.getElementById('cpServicesSave');
+            if (servicesSave) {
+                servicesSave.addEventListener('click', function() {
+                    cpSettings.services.youtubeApiKey = (document.getElementById('cpYoutubeApiKey')?.value || '').trim();
+                    cpSettings.services.streamlabsToken = (document.getElementById('streamlabsToken')?.value || '').trim();
+                    cpSettings.services.streamelementsToken = (document.getElementById('streamelementsToken')?.value || '').trim();
+                    saveCPSettings(cpSettings);
+                    // Sync YouTube API key to AppState so it's available when adding channels
+                    if (typeof AppState !== 'undefined') {
+                        AppState.youtubeApiKey = cpSettings.services.youtubeApiKey;
+                    }
+                    if (typeof showToast === 'function') showToast('Sluzby ulozeny', 'success');
                 });
             }
 
