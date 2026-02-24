@@ -25,6 +25,7 @@ class DonationManager {
         this._streamlabsConnected = false;
         this._streamelementsConnected = false;
         this._streamlabsReconnectTimer = null;
+        this._streamlabsPingInterval = null;
         this._streamelementsReconnectTimer = null;
         this._streamlabsToken = null;
         this._streamelementsToken = null;
@@ -54,79 +55,83 @@ class DonationManager {
      * Pripojeni k Streamlabs Socket API
      * Token: Nastaveni -> API Settings -> Socket API Token (na streamlabs.com)
      *
-     * Streamlabs pouziva Socket.IO v2 protokol.
-     * Socket.IO v2 handshake: HTTP polling -> upgrade na WebSocket.
-     * Pro jednoduchost pouzijeme primo WebSocket s polling fallbackem.
+     * Streamlabs pouziva Socket.IO (Engine.IO v3) protokol.
+     * Pripojujeme primo pres WebSocket (bez HTTP polling handshake,
+     * ktery neni mozny z browseru kvuli CORS). Handshake probiha
+     * jako prvni zprava ("0{...}") po WebSocket otevreni.
      */
-    async connectStreamlabs(token) {
+    connectStreamlabs(token) {
         this._streamlabsToken = token;
 
-        // Streamlabs Socket.IO v2 - nejprve handshake pres polling
-        try {
-            const handshakeUrl = `https://sockets.streamlabs.com/socket.io/?EIO=3&transport=polling&token=${encodeURIComponent(token)}`;
-            const resp = await fetch(handshakeUrl);
-            const text = await resp.text();
+        // Primo WebSocket — token v URL query, EIO=3 = Engine.IO v3
+        const wsUrl = `wss://sockets.streamlabs.com/socket.io/?EIO=3&transport=websocket&token=${encodeURIComponent(token)}`;
+        this._streamlabsWs = new WebSocket(wsUrl);
 
-            // Socket.IO response format: "digits:json_data"
-            const jsonMatch = text.match(/\d+:(\{.*\})/);
-            if (!jsonMatch) throw new Error('Invalid Streamlabs handshake response');
+        this._streamlabsWs.onopen = () => {
+            console.log('[Streamlabs] WebSocket opened, waiting for handshake...');
+        };
 
-            const data = JSON.parse(jsonMatch[1]);
-            const sid = data.sid;
+        this._streamlabsWs.onmessage = (event) => {
+            this._handleStreamlabsMessage(event.data);
+        };
 
-            // Nyni upgrade na WebSocket
-            const wsUrl = `wss://sockets.streamlabs.com/socket.io/?EIO=3&transport=websocket&sid=${sid}&token=${encodeURIComponent(token)}`;
-            this._streamlabsWs = new WebSocket(wsUrl);
+        this._streamlabsWs.onerror = () => {
+            this._emit('error', { service: 'streamlabs', message: 'WebSocket error' });
+        };
 
-            this._streamlabsWs.onopen = () => {
-                // Socket.IO upgrade probe
-                this._streamlabsWs.send('2probe');
-            };
-
-            this._streamlabsWs.onmessage = (event) => {
-                this._handleStreamlabsMessage(event.data);
-            };
-
-            this._streamlabsWs.onerror = () => {
-                this._emit('error', { service: 'streamlabs', message: 'WebSocket error' });
-            };
-
-            this._streamlabsWs.onclose = () => {
-                this._streamlabsConnected = false;
-                this._emit('disconnect', { service: 'streamlabs' });
-                // Auto-reconnect po 10s
-                this._streamlabsReconnectTimer = setTimeout(() => {
-                    if (this._streamlabsToken) {
-                        this.connectStreamlabs(this._streamlabsToken).catch(() => {});
-                    }
-                }, 10000);
-            };
-        } catch (e) {
-            console.error('[Streamlabs] Connect error:', e);
-            this._emit('error', { service: 'streamlabs', message: e.message });
-            throw e;
-        }
+        this._streamlabsWs.onclose = () => {
+            this._streamlabsConnected = false;
+            this._emit('disconnect', { service: 'streamlabs' });
+            // Auto-reconnect po 10s
+            this._streamlabsReconnectTimer = setTimeout(() => {
+                if (this._streamlabsToken) {
+                    this.connectStreamlabs(this._streamlabsToken);
+                }
+            }, 10000);
+        };
     }
 
     _handleStreamlabsMessage(raw) {
-        // Socket.IO protocol:
-        // "3probe" = probe ack (upgrade confirmed)
-        // "3" = pong
+        // Engine.IO v3 protocol over WebSocket:
+        // "0{...}" = handshake (sid, pingInterval, pingTimeout)
+        // "2" = ping from server
+        // "3" = pong response
+        // "40" = Socket.IO connect (namespace /)
         // "42[event, data]" = event message
-        // "2" = ping
 
-        if (raw === '3probe') {
-            // Upgrade confirmed, send upgrade packet
-            this._streamlabsWs.send('5');
+        // Handshake — server sends session config
+        if (raw.startsWith('0')) {
+            try {
+                const data = JSON.parse(raw.substring(1));
+                console.log('[Streamlabs] Handshake OK, sid:', data.sid);
+                // Set up ping interval based on server config
+                if (data.pingInterval) {
+                    this._streamlabsPingInterval = setInterval(() => {
+                        if (this._streamlabsWs?.readyState === WebSocket.OPEN) {
+                            this._streamlabsWs.send('2');
+                        }
+                    }, data.pingInterval);
+                }
+            } catch (e) {}
+            return;
+        }
+
+        // Socket.IO connect ack on namespace /
+        if (raw === '40') {
             this._streamlabsConnected = true;
             this._emit('connect', { service: 'streamlabs' });
             console.log('[Streamlabs] Connected via Socket.IO');
             return;
         }
 
+        // Ping from server -> pong
         if (raw === '2') {
-            // Server ping -> respond with pong
             this._streamlabsWs.send('3');
+            return;
+        }
+
+        // Pong ack (response to our ping)
+        if (raw === '3') {
             return;
         }
 
@@ -184,6 +189,10 @@ class DonationManager {
         if (this._streamlabsReconnectTimer) {
             clearTimeout(this._streamlabsReconnectTimer);
             this._streamlabsReconnectTimer = null;
+        }
+        if (this._streamlabsPingInterval) {
+            clearInterval(this._streamlabsPingInterval);
+            this._streamlabsPingInterval = null;
         }
         if (this._streamlabsWs) {
             this._streamlabsWs.close();
