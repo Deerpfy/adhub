@@ -998,6 +998,18 @@ function handleMessage(message) {
  * Zpracování event alertu (sub, follow, donate, raid atd.)
  */
 function handleAlert(alert) {
+    // Resolve donation service names to actual platform/channel
+    // Streamlabs/StreamElements are relay services, not platforms
+    if (alert.platform === 'streamlabs' || alert.platform === 'streamelements') {
+        for (const [id, data] of AppState.channels) {
+            if (data.state === 'connected') {
+                alert.platform = data.platform.split('-')[0];
+                alert.channel = data.displayName || data.channel;
+                break;
+            }
+        }
+    }
+
     // Kontrola nastavení
     if (!AppState.settings.showAlerts) return;
 
