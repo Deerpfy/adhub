@@ -2385,6 +2385,7 @@ function loadSavedChannels() {
  */
 function exportSettings() {
     const data = {
+        version: 1,
         settings: AppState.settings,
         channels: Array.from(AppState.channels.values()).map(c => ({
             platform: c.platform,
@@ -2392,6 +2393,24 @@ function exportSettings() {
         })),
         highlightedChannels: Array.from(AppState.highlightedChannels),
     };
+
+    // Chat panel settings (keyword filters, bad words, OBS config, UI)
+    try {
+        const cp = localStorage.getItem('chatpanel_settings');
+        if (cp) data.chatpanelSettings = JSON.parse(cp);
+    } catch (e) {}
+
+    // Custom CSS/HTML/JS (OBS style code)
+    const obsConf = getOBSConfig();
+    if (obsConf && Object.keys(obsConf).length > 0) {
+        data.obsConfig = obsConf;
+    }
+
+    // Style preset selection
+    try {
+        const style = localStorage.getItem('adhub_obs_style');
+        if (style) data.obsStyle = JSON.parse(style);
+    } catch (e) {}
 
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -2444,7 +2463,22 @@ function importSettings() {
                 });
             }
 
-            showToast('Nastavení importováno', 'success');
+            // Chat panel settings (keyword filters, bad words, OBS config, UI)
+            if (data.chatpanelSettings) {
+                localStorage.setItem('chatpanel_settings', JSON.stringify(data.chatpanelSettings));
+            }
+
+            // Custom CSS/HTML/JS
+            if (data.obsConfig) {
+                localStorage.setItem('adhub_obs_config', JSON.stringify(data.obsConfig));
+            }
+
+            // Style preset selection
+            if (data.obsStyle) {
+                localStorage.setItem('adhub_obs_style', JSON.stringify(data.obsStyle));
+            }
+
+            showToast('Nastavení importováno — obnovte stránku pro plné načtení', 'success');
         } catch (error) {
             showToast('Chyba při importu: ' + error.message, 'error');
         }
