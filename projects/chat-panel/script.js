@@ -312,13 +312,26 @@ function initEventListeners() {
         });
     });
 
+    // Test alert platform tab switching
+    document.querySelectorAll('.alert-platform-tab').forEach(tab => {
+        tab.addEventListener('click', (e) => {
+            document.querySelectorAll('.alert-platform-tab').forEach(t => t.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+        });
+    });
+
     // Test alert buttons
     document.querySelectorAll('[data-test-alert]').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const alertType = e.currentTarget.dataset.testAlert;
-            fireTestAlert(alertType);
+            const platformTab = document.querySelector('.alert-platform-tab.active');
+            const forcePlatform = platformTab?.dataset.testPlatform || 'auto';
+            fireTestAlert(alertType, forcePlatform === 'auto' ? null : forcePlatform);
         });
     });
+
+    // Streamlabs real test alert button
+    document.getElementById('slTestAlertBtn')?.addEventListener('click', fireStreamlabsTestAlert);
 
     // EventSub connect/disconnect
     document.getElementById('eventsubConnectBtn')?.addEventListener('click', eventsubConnect);
@@ -1007,15 +1020,33 @@ function handleAlert(alert) {
 /**
  * Odeslani testovaci alert zpravy (jako Streamlabs "Test" tlacitko)
  */
-function fireTestAlert(alertType) {
-    // Zjistit prvni pripojeny kanal pro kontext
-    let testPlatform = 'twitch';
+function fireTestAlert(alertType, forcePlatform) {
+    // Resolve platform and channel for test alert
+    let testPlatform = forcePlatform || 'twitch';
     let testChannel = 'TestChannel';
-    for (const [id, data] of AppState.channels) {
-        if (data.state === 'connected') {
-            testPlatform = data.platform.split('-')[0];
-            testChannel = data.displayName || data.channel;
-            break;
+
+    if (forcePlatform) {
+        // Try to find a connected channel for the forced platform
+        for (const [id, data] of AppState.channels) {
+            const plat = data.platform.split('-')[0];
+            if (plat === forcePlatform && data.state === 'connected') {
+                testChannel = data.displayName || data.channel;
+                break;
+            }
+        }
+        // Fallback names when no connected channel
+        if (testChannel === 'TestChannel') {
+            const fallbackNames = { twitch: 'TwitchChannel', kick: 'KickChannel', youtube: 'YouTubeChannel' };
+            testChannel = fallbackNames[forcePlatform] || 'TestChannel';
+        }
+    } else {
+        // Auto: pick first connected channel
+        for (const [id, data] of AppState.channels) {
+            if (data.state === 'connected') {
+                testPlatform = data.platform.split('-')[0];
+                testChannel = data.displayName || data.channel;
+                break;
+            }
         }
     }
 
@@ -1892,14 +1923,26 @@ function initDonations() {
     donationManager.on('connect', (data) => {
         _donationUpdateDot(data.service, 'connected');
         showToast(`${data.service} pripojeno!`, 'success');
+        // Show Streamlabs test alert button when connected
+        if (data.service === 'streamlabs') {
+            const slRow = document.getElementById('alertTestSlRow');
+            if (slRow) slRow.style.display = '';
+        }
     });
 
     donationManager.on('disconnect', (data) => {
         _donationUpdateDot(data.service, 'disconnected');
+        if (data.service === 'streamlabs') {
+            const slRow = document.getElementById('alertTestSlRow');
+            if (slRow) slRow.style.display = 'none';
+        }
     });
 
     donationManager.on('error', (data) => {
         _donationUpdateDot(data.service, 'error');
+        if (data.service === 'streamlabs') {
+            showToast('Streamlabs pripojeni selhalo', 'error');
+        }
     });
 
     // Nacist ulozene tokeny a auto-connect
@@ -1965,6 +2008,52 @@ function donationDisconnectStreamElements() {
     _donationShowConnect('se');
     _donationSaveTokens();
     showToast('StreamElements odpojeno', 'info');
+}
+
+/**
+ * Fire a real Streamlabs test alert via their Socket API.
+ * Streamlabs Socket.IO "alertPlaying" emulation - sends a test event through
+ * the connected WebSocket so it shows both in our chat AND on the Streamlabs
+ * overlay widget (if the streamer has it active).
+ */
+function fireStreamlabsTestAlert() {
+    if (!donationManager?.streamlabsConnected) {
+        showToast('Streamlabs neni pripojeno', 'warning');
+        return;
+    }
+
+    // Send test event through the Streamlabs WebSocket
+    // This triggers a real donation test alert on the Streamlabs overlay
+    const testEvent = {
+        type: 'donation',
+        message: [{
+            id: `sl-test-${Date.now()}`,
+            name: 'Streamlabs Test',
+            amount: '5.00',
+            formatted_amount: '$5.00',
+            formattedAmount: '$5.00',
+            message: 'This is a test donation from AdHub!',
+            currency: 'USD',
+            from: 'Streamlabs Test',
+            isTest: true,
+        }],
+    };
+
+    // Emit through the WebSocket as a Socket.IO event
+    try {
+        const ws = donationManager._streamlabsWs;
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send('42' + JSON.stringify(['event', testEvent]));
+            showToast('Streamlabs test alert odeslan!', 'success');
+        } else {
+            showToast('Streamlabs WebSocket neni pripraven', 'warning');
+        }
+    } catch (e) {
+        showToast('Chyba pri odesilani testu: ' + e.message, 'error');
+    }
+
+    // Also fire a local test alert so it shows in our chat immediately
+    fireTestAlert('donation', null);
 }
 
 function _donationUpdateDot(service, state) {

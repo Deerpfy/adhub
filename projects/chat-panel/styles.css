@@ -2004,30 +2004,41 @@ a:hover {
     transform: translateX(0);
 }
 
-/* Alert streamer label - same as message */
+/* Alert streamer label - match message-streamer-label exactly */
 .alert-streamer-label {
     display: flex;
     align-items: center;
-    gap: 4px;
-    padding: 4px 6px;
-    min-width: 80px;
+    gap: 6px;
+    min-width: 120px;
+    max-width: 140px;
+    padding-right: 12px;
+    border-right: 1px solid var(--border-color);
+    margin-right: 12px;
     flex-shrink: 0;
 }
 
+.alert-streamer-label .streamer-icon {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .alert-streamer-label svg {
-    width: 14px;
-    height: 14px;
+    width: 16px;
+    height: 16px;
     flex-shrink: 0;
 }
 
 .alert-streamer-label .streamer-name {
-    font-size: 0.75rem;
-    font-weight: 500;
-    opacity: 0.7;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 80px;
+    text-transform: uppercase;
 }
 
 .alert-streamer-label.twitch { color: var(--twitch-color); }
@@ -2193,6 +2204,86 @@ a:hover {
 
 .btn-test svg {
     flex-shrink: 0;
+}
+
+/* Alert test platform tabs */
+.alert-test-platform-tabs {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+    margin-bottom: 4px;
+}
+
+.alert-platform-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    font-size: 0.75em;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: var(--transition-fast);
+}
+
+.alert-platform-tab:hover {
+    color: var(--text-primary);
+    border-color: var(--text-muted);
+}
+
+.alert-platform-tab.active {
+    color: var(--text-primary);
+    border-color: var(--accent-primary);
+    background: rgba(83, 252, 24, 0.08);
+}
+
+.alert-platform-tab.twitch.active {
+    border-color: var(--twitch-color);
+    background: rgba(145, 70, 255, 0.1);
+    color: var(--twitch-color);
+}
+
+.alert-platform-tab.kick.active {
+    border-color: var(--kick-color);
+    background: rgba(83, 252, 24, 0.08);
+    color: var(--kick-color);
+}
+
+.alert-platform-tab.youtube.active {
+    border-color: var(--youtube-color);
+    background: rgba(255, 0, 0, 0.08);
+    color: var(--youtube-color);
+}
+
+.alert-platform-tab svg {
+    flex-shrink: 0;
+}
+
+/* Streamlabs real test alert row */
+.alert-test-sl-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed var(--border-color);
+}
+
+.btn-test-sl {
+    background: rgba(49, 196, 141, 0.12) !important;
+    border-color: #31c48d !important;
+    color: #31c48d !important;
+}
+
+.btn-test-sl:hover {
+    background: rgba(49, 196, 141, 0.25) !important;
+}
+
+.setting-hint-inline {
+    font-size: 0.7em;
+    color: var(--text-muted);
 }
 
 /* =============================================================================
