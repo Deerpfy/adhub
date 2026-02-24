@@ -1294,6 +1294,23 @@
             `;
             document.head.appendChild(obsStyle);
 
+            // Apply custom CSS from URL param or localStorage (preset / custom CSS editor)
+            var customCSSText = '';
+            if (params.has('customCSS')) {
+                try { customCSSText = atob(params.get('customCSS')); } catch (e) {}
+            } else {
+                try {
+                    var obsConf = JSON.parse(localStorage.getItem('adhub_obs_config') || '{}');
+                    if (obsConf.customCSS) customCSSText = obsConf.customCSS;
+                } catch (e) {}
+            }
+            if (customCSSText) {
+                var customStyleEl = document.createElement('style');
+                customStyleEl.id = 'custom-styles';
+                customStyleEl.textContent = customCSSText;
+                document.head.appendChild(customStyleEl);
+            }
+
             // Override AppState settings for OBS
             if (typeof AppState !== 'undefined') {
                 AppState.settings.maxMessages = maxMsg;
@@ -1389,6 +1406,14 @@
             if (obsHideAfter && parseInt(obsHideAfter.value) > 0) {
                 params.set('hideAfter', obsHideAfter.value);
             }
+
+            // Custom CSS from style manager (adhub_obs_config)
+            try {
+                var obsConf = JSON.parse(localStorage.getItem('adhub_obs_config') || '{}');
+                if (obsConf.customCSS) {
+                    params.set('customCSS', btoa(obsConf.customCSS));
+                }
+            } catch (e) {}
 
             const baseUrl = window.location.origin + window.location.pathname;
             return baseUrl + '?' + params.toString();
