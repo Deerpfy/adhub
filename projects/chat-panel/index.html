@@ -280,26 +280,10 @@
                 <!-- TAB: Kick -->
                 <div class="settings-tab-panel active" id="tab-kick">
                     <div class="settings-section">
-                        <h4>Kick Chat</h4>
-                        <div class="setting-item">
-                            <label>
-                                <input type="checkbox" id="cpKickEnabled">
-                                Povolit Kick chat
-                            </label>
-                            <span class="cp-status-dot" id="cpKickStatusDot" title="Nepripojeno"></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="cpKickSlug">Nazev kanalu (slug)</label>
-                            <input type="text" id="cpKickSlug" placeholder="napr. xqc, trainwreckstv" autocomplete="off">
-                            <span class="input-hint">Zadejte nazev Kick kanalu. Pro ostatni: <strong>nazev:chatroomID</strong></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="cpKickChatroomId">Chatroom ID</label>
-                            <div class="input-with-btn">
-                                <input type="text" id="cpKickChatroomId" placeholder="Automaticky nebo rucne" autocomplete="off">
-                                <button class="btn btn-sm btn-secondary" id="cpKickFetchId">Zjistit ID</button>
-                            </div>
-                            <span class="input-hint" id="cpKickIdHint">Klikni na "Zjistit ID" nebo zadej rucne. Zname kanaly se vyplni automaticky.</span>
+                        <h4>Kick kanaly</h4>
+                        <p class="setting-hint">Kanaly pridavejte tlacitkem "Pridat" v hlavnim panelu. Zde vidite stav pripojeni.</p>
+                        <div class="cp-channel-list" id="cpKickChannelList">
+                            <div class="cp-channel-empty">Zadny Kick kanal neni pripojen</div>
                         </div>
                     </div>
                     <div class="settings-section">
@@ -321,18 +305,10 @@
                 <!-- TAB: Twitch -->
                 <div class="settings-tab-panel" id="tab-twitch">
                     <div class="settings-section">
-                        <h4>Twitch Chat</h4>
-                        <div class="setting-item">
-                            <label>
-                                <input type="checkbox" id="cpTwitchEnabled">
-                                Povolit Twitch chat
-                            </label>
-                            <span class="cp-status-dot" id="cpTwitchStatusDot" title="Nepripojeno"></span>
-                        </div>
-                        <div class="form-group">
-                            <label for="cpTwitchChannel">Nazev kanalu</label>
-                            <input type="text" id="cpTwitchChannel" placeholder="napr. xqc, shroud" autocomplete="off">
-                            <span class="input-hint">Zadejte jmeno Twitch kanalu bez URL</span>
+                        <h4>Twitch kanaly</h4>
+                        <p class="setting-hint">Kanaly pridavejte tlacitkem "Pridat" v hlavnim panelu. Zde vidite stav pripojeni.</p>
+                        <div class="cp-channel-list" id="cpTwitchChannelList">
+                            <div class="cp-channel-empty">Zadny Twitch kanal neni pripojen</div>
                         </div>
                     </div>
                     <div class="settings-section">
@@ -800,6 +776,42 @@
             50% { opacity: 0.4; }
         }
 
+        /* Channel list in settings tabs */
+        .cp-channel-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .cp-channel-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        .cp-channel-item .cp-status-dot {
+            margin-left: 0;
+            flex-shrink: 0;
+        }
+        .cp-channel-item .cp-channel-name {
+            flex: 1;
+            color: #e0e0e0;
+        }
+        .cp-channel-item .cp-channel-state {
+            font-size: 11px;
+            color: #888;
+            text-transform: capitalize;
+        }
+        .cp-channel-empty {
+            color: #666;
+            font-size: 13px;
+            font-style: italic;
+            padding: 8px 0;
+        }
+
         /* Input with button inline */
         .input-with-btn {
             display: flex;
@@ -883,17 +895,10 @@
 
         const CP_DEFAULTS = {
             kick: {
-                enabled: false,
-                channelSlug: '',
-                chatroomId: null,
                 filter: { enabled: false, keywords: [] }
             },
             twitch: {
-                enabled: false,
-                channelName: '',
                 clientId: '',
-                accessToken: null,
-                username: null,
                 filter: { enabled: false, keywords: [] }
             },
             services: {
@@ -974,25 +979,15 @@
 
         function populateSettingsUI() {
             const s = cpSettings;
-            // Kick tab
-            const kickEnabled = document.getElementById('cpKickEnabled');
-            const kickSlug = document.getElementById('cpKickSlug');
-            const kickChatroomId = document.getElementById('cpKickChatroomId');
+            // Kick tab - filter settings only, channels shown dynamically
             const kickFilterEnabled = document.getElementById('cpKickFilterEnabled');
             const kickFilterKeywords = document.getElementById('cpKickFilterKeywords');
-            if (kickEnabled) kickEnabled.checked = s.kick.enabled;
-            if (kickSlug) kickSlug.value = s.kick.channelSlug || '';
-            if (kickChatroomId) kickChatroomId.value = s.kick.chatroomId || '';
             if (kickFilterEnabled) kickFilterEnabled.checked = s.kick.filter.enabled;
             if (kickFilterKeywords) kickFilterKeywords.value = (s.kick.filter.keywords || []).join(', ');
 
-            // Twitch tab
-            const twitchEnabled = document.getElementById('cpTwitchEnabled');
-            const twitchChannel = document.getElementById('cpTwitchChannel');
+            // Twitch tab - filter settings only, channels shown dynamically
             const twitchFilterEnabled = document.getElementById('cpTwitchFilterEnabled');
             const twitchFilterKeywords = document.getElementById('cpTwitchFilterKeywords');
-            if (twitchEnabled) twitchEnabled.checked = s.twitch.enabled;
-            if (twitchChannel) twitchChannel.value = s.twitch.channelName || '';
             if (twitchFilterEnabled) twitchFilterEnabled.checked = s.twitch.filter.enabled;
             if (twitchFilterKeywords) twitchFilterKeywords.value = (s.twitch.filter.keywords || []).join(', ');
 
@@ -1065,31 +1060,25 @@
         // =====================================================================
 
         function initSaveButtons() {
-            // Kick Save
+            // Kick Save (filter settings only)
             const kickSave = document.getElementById('cpKickSave');
             if (kickSave) {
                 kickSave.addEventListener('click', function() {
-                    cpSettings.kick.enabled = document.getElementById('cpKickEnabled')?.checked || false;
-                    cpSettings.kick.channelSlug = (document.getElementById('cpKickSlug')?.value || '').trim();
-                    cpSettings.kick.chatroomId = (document.getElementById('cpKickChatroomId')?.value || '').trim() || null;
                     cpSettings.kick.filter.enabled = document.getElementById('cpKickFilterEnabled')?.checked || false;
                     cpSettings.kick.filter.keywords = parseKeywordInput(document.getElementById('cpKickFilterKeywords')?.value || '');
                     saveCPSettings(cpSettings);
-                    if (typeof showToast === 'function') showToast('Kick nastaveni ulozeno', 'success');
+                    if (typeof showToast === 'function') showToast('Kick filtr ulozen', 'success');
                 });
             }
 
-            // Twitch Save
+            // Twitch Save (filter settings + EventSub client ID)
             const twitchSave = document.getElementById('cpTwitchSave');
             if (twitchSave) {
                 twitchSave.addEventListener('click', function() {
-                    cpSettings.twitch.enabled = document.getElementById('cpTwitchEnabled')?.checked || false;
-                    cpSettings.twitch.channelName = (document.getElementById('cpTwitchChannel')?.value || '').trim();
                     cpSettings.twitch.clientId = (document.getElementById('eventsubClientId')?.value || '').trim();
                     cpSettings.twitch.filter.enabled = document.getElementById('cpTwitchFilterEnabled')?.checked || false;
                     cpSettings.twitch.filter.keywords = parseKeywordInput(document.getElementById('cpTwitchFilterKeywords')?.value || '');
                     saveCPSettings(cpSettings);
-                    // Also populate the EventSub Client ID input so script.js picks it up
                     if (typeof showToast === 'function') showToast('Twitch nastaveni ulozeno', 'success');
                 });
             }
@@ -1131,91 +1120,6 @@
             // Split by comma or newline
             const parts = text.split(/[,\n]+/);
             return parts.map(s => s.trim().toLowerCase()).filter(Boolean);
-        }
-
-        // =====================================================================
-        // KICK CHATROOM ID FETCH (Phase 2.2)
-        // =====================================================================
-
-        function initKickFetchId() {
-            const fetchBtn = document.getElementById('cpKickFetchId');
-            if (!fetchBtn) return;
-
-            fetchBtn.addEventListener('click', async function() {
-                const slugInput = document.getElementById('cpKickSlug');
-                const idInput = document.getElementById('cpKickChatroomId');
-                const hint = document.getElementById('cpKickIdHint');
-                const slug = (slugInput?.value || '').trim().toLowerCase();
-
-                if (!slug) {
-                    if (typeof showToast === 'function') showToast('Zadej nazev kanalu', 'warning');
-                    return;
-                }
-
-                // Check if slug has :id format
-                if (slug.includes(':')) {
-                    const parts = slug.split(':');
-                    if (parts[1]) {
-                        if (idInput) idInput.value = parts[1];
-                        if (slugInput) slugInput.value = parts[0];
-                        if (typeof showToast === 'function') showToast('Chatroom ID nacteno z formatu nazev:id', 'success');
-                        return;
-                    }
-                }
-
-                // Check KickAdapter known chatrooms if available
-                if (typeof KickAdapter !== 'undefined' && KickAdapter.KNOWN_CHATROOMS) {
-                    const known = KickAdapter.KNOWN_CHATROOMS[slug];
-                    if (known) {
-                        if (idInput) idInput.value = known;
-                        if (typeof showToast === 'function') showToast('Chatroom ID nalezeno v databazi', 'success');
-                        return;
-                    }
-                }
-
-                // Check localStorage cache
-                try {
-                    const cached = localStorage.getItem('kick_chatroom_' + slug);
-                    if (cached) {
-                        const c = JSON.parse(cached);
-                        if (c.id && c.ts && (Date.now() - c.ts < 7 * 24 * 60 * 60 * 1000)) {
-                            if (idInput) idInput.value = c.id;
-                            if (typeof showToast === 'function') showToast('Chatroom ID nacteno z cache', 'success');
-                            return;
-                        }
-                    }
-                } catch (e) {}
-
-                // Try CORS proxy fetch
-                fetchBtn.disabled = true;
-                fetchBtn.textContent = 'Hledam...';
-                if (hint) hint.textContent = 'Pokousim se najit chatroom ID...';
-
-                try {
-                    const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://kick.com/api/v2/channels/' + slug);
-                    const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
-                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-                    const data = await resp.json();
-                    const chatroomId = data?.chatroom?.id;
-                    if (chatroomId) {
-                        if (idInput) idInput.value = chatroomId;
-                        // Cache it
-                        try {
-                            localStorage.setItem('kick_chatroom_' + slug, JSON.stringify({ id: chatroomId, ts: Date.now() }));
-                        } catch (e) {}
-                        if (typeof showToast === 'function') showToast('Chatroom ID nalezeno: ' + chatroomId, 'success');
-                    } else {
-                        throw new Error('Chatroom ID nenalezeno v odpovedi');
-                    }
-                } catch (err) {
-                    console.warn('[CP] Kick chatroom ID fetch failed:', err);
-                    if (hint) hint.textContent = 'Automaticke zjisteni selhalo. Zadejte chatroom ID rucne. Najdete ho na kick.com/api/v2/channels/' + slug;
-                    if (typeof showToast === 'function') showToast('CORS chyba - zadejte chatroom ID rucne', 'warning');
-                } finally {
-                    fetchBtn.disabled = false;
-                    fetchBtn.textContent = 'Zjistit ID';
-                }
-            });
         }
 
         // =====================================================================
@@ -1304,57 +1208,49 @@
         function updateCPStatusDots() {
             if (typeof AppState === 'undefined') return;
 
-            let kickConnected = false;
-            let twitchConnected = false;
+            const kickChannels = [];
+            const twitchChannels = [];
 
             for (const [id, data] of AppState.channels) {
                 const platform = (data.platform || '').split('-')[0];
-                if (platform === 'kick' && data.state === 'connected') kickConnected = true;
-                if (platform === 'twitch' && data.state === 'connected') twitchConnected = true;
+                const name = data.name || id.replace(/^(kick|twitch)-/, '');
+                const state = data.state || 'disconnected';
+                if (platform === 'kick') kickChannels.push({ name: name, state: state });
+                if (platform === 'twitch') twitchChannels.push({ name: name, state: state });
             }
 
-            const kickDot = document.getElementById('cpKickStatusDot');
-            const twitchDot = document.getElementById('cpTwitchStatusDot');
-            if (kickDot) {
-                kickDot.className = 'cp-status-dot' + (kickConnected ? ' connected' : '');
-                kickDot.title = kickConnected ? 'Pripojeno' : 'Nepripojeno';
+            renderChannelList('cpKickChannelList', kickChannels, 'Kick');
+            renderChannelList('cpTwitchChannelList', twitchChannels, 'Twitch');
+        }
+
+        function renderChannelList(containerId, channels, platformLabel) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            if (channels.length === 0) {
+                container.innerHTML = '<div class="cp-channel-empty">Zadny ' + platformLabel + ' kanal neni pripojen</div>';
+                return;
             }
-            if (twitchDot) {
-                twitchDot.className = 'cp-status-dot' + (twitchConnected ? ' connected' : '');
-                twitchDot.title = twitchConnected ? 'Pripojeno' : 'Nepripojeno';
+
+            const stateLabels = { connected: 'Pripojeno', connecting: 'Pripojovani...', disconnected: 'Odpojeno', error: 'Chyba' };
+            let html = '';
+            for (var i = 0; i < channels.length; i++) {
+                var ch = channels[i];
+                var dotClass = 'cp-status-dot';
+                if (ch.state === 'connected') dotClass += ' connected';
+                else if (ch.state === 'connecting') dotClass += ' connecting';
+                else if (ch.state === 'error') dotClass += ' error';
+                html += '<div class="cp-channel-item">' +
+                    '<span class="' + dotClass + '"></span>' +
+                    '<span class="cp-channel-name">' + ch.name + '</span>' +
+                    '<span class="cp-channel-state">' + (stateLabels[ch.state] || ch.state) + '</span>' +
+                    '</div>';
             }
+            container.innerHTML = html;
         }
 
         // Poll status dots every 3 seconds
         setInterval(updateCPStatusDots, 3000);
-
-        // =====================================================================
-        // AUTO-CONNECT ON LOAD (Phase 2.5 / 3.7)
-        // =====================================================================
-
-        function autoConnectFromSettings() {
-            if (typeof addChannel !== 'function') return;
-
-            // Kick auto-connect
-            if (cpSettings.kick.enabled && cpSettings.kick.channelSlug) {
-                const slug = cpSettings.kick.channelSlug;
-                const chatroomId = cpSettings.kick.chatroomId;
-                const channelStr = chatroomId ? slug + ':' + chatroomId : slug;
-                const channelId = 'kick-' + slug.toLowerCase();
-                if (!AppState.channels.has(channelId)) {
-                    addChannel('kick', channelStr);
-                }
-            }
-
-            // Twitch auto-connect
-            if (cpSettings.twitch.enabled && cpSettings.twitch.channelName) {
-                const channel = cpSettings.twitch.channelName;
-                const channelId = 'twitch-' + channel.toLowerCase();
-                if (!AppState.channels.has(channelId)) {
-                    addChannel('twitch', channel);
-                }
-            }
-        }
 
         // =====================================================================
         // OBS OVERLAY MODE (Phase 5)
@@ -1463,16 +1359,6 @@
                         params.set('channel_twitch', data.channel);
                     }
                 }
-            }
-
-            // Fallback to saved settings if no active channels
-            if (!params.has('channel_kick') && cpSettings.kick.enabled && cpSettings.kick.channelSlug) {
-                const slug = cpSettings.kick.channelSlug;
-                const cid = cpSettings.kick.chatroomId;
-                params.set('channel_kick', cid ? slug + ':' + cid : slug);
-            }
-            if (!params.has('channel_twitch') && cpSettings.twitch.enabled && cpSettings.twitch.channelName) {
-                params.set('channel_twitch', cpSettings.twitch.channelName);
             }
 
             // Determine platform
@@ -1610,12 +1496,8 @@
                 initSettingsTabs();
                 populateSettingsUI();
                 initSaveButtons();
-                initKickFetchId();
                 initEnhancedOBSUrl();
                 initAutoScrollPause();
-
-                // Auto-connect after a short delay to let adapters initialize
-                setTimeout(autoConnectFromSettings, 1500);
             }
 
             // Update status dots
