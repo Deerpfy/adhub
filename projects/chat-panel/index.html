@@ -983,6 +983,7 @@
             background: transparent !important;
             border: none !important;
             box-shadow: none !important;
+            align-items: center;
         }
         /* OBS: streamer label hidden by default, shown via dynamic CSS when showChannelNames=true */
         body.obs-mode .message-streamer-label {
@@ -994,11 +995,18 @@
         /* OBS: when channel names enabled, show streamer labels */
         body.obs-mode.obs-show-channels .message-streamer-label {
             display: flex !important;
+            align-items: center;
+            justify-content: center;
             min-width: 90px;
             max-width: 120px;
+            border-right: none;
+            padding-right: 8px;
+            margin-right: 8px;
         }
         body.obs-mode.obs-show-channels .alert-streamer-label {
             display: flex !important;
+            align-items: center;
+            justify-content: center;
             min-width: 90px;
             max-width: 120px;
             border-right: none;
@@ -1018,6 +1026,10 @@
             border-radius: 6px;
             margin: 4px 0;
             padding: 4px 0;
+        }
+        body.obs-mode .chat-alert.alert-visible {
+            opacity: 1 !important;
+            transform: none !important;
         }
         body.obs-mode .chat-alert .alert-content {
             color: #ffffff;
@@ -1760,6 +1772,13 @@
                     if (typeof saveOBSConfig === 'function') {
                         saveOBSConfig({ customHTML: htmlCode, customJS: jsCode });
                     }
+                    // Auto-regenerate OBS URL after saving HTML/JS
+                    setTimeout(function() {
+                        var urlInput = document.getElementById('obsUrlOutput');
+                        if (urlInput && typeof generateEnhancedOBSUrl === 'function') {
+                            urlInput.value = generateEnhancedOBSUrl();
+                        }
+                    }, 200);
                 });
             }
 

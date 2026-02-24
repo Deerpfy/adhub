@@ -1374,6 +1374,11 @@ function renderMessage(message) {
         return renderSlMessage(message);
     }
 
+    // DOM-level dedup: skip if a message with this ID is already rendered
+    if (message.id && document.querySelector(`[data-message-id="${CSS.escape(message.id)}"]`)) {
+        return;
+    }
+
     // Zajistit že existuje kontejner pro zprávy
     let messagesContainer = DOM.chatContainer.querySelector('.chat-messages');
     if (!messagesContainer) {
@@ -1916,7 +1921,17 @@ function applySelectedStyle() {
     // Ulozit do OBS config
     saveOBSConfig({ customCSS: css });
 
-    showToast('Styl aplikovan! Bude pouzit v OBS view.', 'success');
+    // Auto-regenerate OBS URL so it includes the new custom code
+    if (typeof generateEnhancedOBSUrl === 'function') {
+        setTimeout(() => {
+            const urlInput = document.getElementById('obsUrlOutput');
+            if (urlInput) {
+                urlInput.value = generateEnhancedOBSUrl();
+            }
+        }, 100);
+    }
+
+    showToast('Styl aplikovan! Zkopiruj novou OBS URL.', 'success');
 }
 
 function processTemplateVars(css) {
@@ -2024,6 +2039,9 @@ function eventsubDisconnect() {
  * Nastaveni listeneru a pripojeni k WebSocket
  */
 async function _eventsubSetupAndConnect() {
+    // Clear old listeners to prevent accumulation on reconnect
+    eventSubManager._listeners = { alert: [], connect: [], disconnect: [], error: [] };
+
     // Listener pro alerty
     eventSubManager.on('alert', (alert) => {
         handleAlert(alert);
