@@ -94,6 +94,16 @@ class TwitchAdapter extends BaseAdapter {
     async _connectIrc() {
         return new Promise((resolve, reject) => {
             this.joinConfirmed = false;
+
+            // Clean up any orphaned WebSocket to prevent duplicate messages
+            if (this.ws) {
+                this.ws.onmessage = null;
+                this.ws.onclose = null;
+                this.ws.onerror = null;
+                this.ws.close();
+                this.ws = null;
+            }
+
             this.ws = new WebSocket(this.wsUrl);
 
             const timeout = setTimeout(() => {

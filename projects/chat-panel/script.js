@@ -980,7 +980,21 @@ function getPlatformIconSmall(platform) {
 /**
  * Zpracování nové zprávy
  */
+// Dedup buffer — prevents duplicate messages from orphaned WebSocket reconnects
+const _recentMessageIds = new Set();
+const _DEDUP_BUFFER_SIZE = 200;
+
 function handleMessage(message) {
+    // Deduplicate by message ID
+    if (message.id && _recentMessageIds.has(message.id)) return;
+    if (message.id) {
+        _recentMessageIds.add(message.id);
+        if (_recentMessageIds.size > _DEDUP_BUFFER_SIZE) {
+            const first = _recentMessageIds.values().next().value;
+            _recentMessageIds.delete(first);
+        }
+    }
+
     // Přidat do pole
     AppState.messages.push(message);
 

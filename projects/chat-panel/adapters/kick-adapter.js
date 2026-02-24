@@ -240,7 +240,13 @@ class KickAdapter extends BaseAdapter {
 
                     if (data.event === 'pusher_internal:subscription_succeeded') {
                         clearTimeout(timeout);
-                        // Úspěch! Uložit WebSocket pro další použití
+                        // Close any orphaned WebSocket to prevent duplicate messages
+                        if (this.ws && this.ws !== testWs) {
+                            this.ws.onmessage = null;
+                            this.ws.onclose = null;
+                            this.ws.onerror = null;
+                            this.ws.close();
+                        }
                         this.ws = testWs;
                         this._setupWebSocketHandlers(testWs);
                         resolve();
