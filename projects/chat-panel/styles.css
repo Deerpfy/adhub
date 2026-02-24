@@ -1987,7 +1987,7 @@ a:hover {
 
 .chat-alert {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     gap: 0;
     padding: 0;
     margin: 2px 0;
