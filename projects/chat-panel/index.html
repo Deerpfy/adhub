@@ -256,9 +256,9 @@
 
     <!-- Settings Modal -->
     <div class="modal-overlay" id="settingsModal">
-        <div class="modal">
+        <div class="modal modal-wide">
             <div class="modal-header">
-                <h3>Nastavení</h3>
+                <h3>Nastaveni</h3>
                 <button class="btn btn-icon modal-close" id="closeSettingsModal">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -267,196 +267,176 @@
                 </button>
             </div>
             <div class="modal-body">
-                <div class="settings-section">
-                    <h4>Zobrazení</h4>
-                    <div class="setting-item">
-                        <label>
-                            <input type="checkbox" id="showTimestamps" checked>
-                            Zobrazit časové značky
-                        </label>
-                    </div>
-                    <div class="setting-item">
-                        <label>
-                            <input type="checkbox" id="showPlatformBadges" checked>
-                            Zobrazit badge platformy
-                        </label>
-                    </div>
-                    <div class="setting-item">
-                        <label>
-                            <input type="checkbox" id="showEmotes" checked>
-                            Zobrazit emotes
-                        </label>
-                    </div>
-                    <div class="setting-item">
-                        <label>
-                            <input type="checkbox" id="compactMode">
-                            Kompaktní režim
-                        </label>
-                    </div>
+                <!-- Settings Tabs Navigation -->
+                <div class="settings-tabs" id="settingsTabs">
+                    <button class="settings-tab active" data-tab="tab-kick">Kick</button>
+                    <button class="settings-tab" data-tab="tab-twitch">Twitch</button>
+                    <button class="settings-tab" data-tab="tab-obs">OBS / Overlay</button>
+                    <button class="settings-tab" data-tab="tab-appearance">Vzhled</button>
+                    <button class="settings-tab" data-tab="tab-services">Sluzby</button>
+                    <button class="settings-tab" data-tab="tab-data">Data</button>
                 </div>
-                <div class="settings-section">
-                    <h4>Event Alerts</h4>
-                    <div class="setting-item">
-                        <label>
-                            <input type="checkbox" id="showAlerts" checked>
-                            Zobrazit event alerty v chatu
-                        </label>
-                    </div>
-                    <div class="alert-type-toggles" id="alertTypeToggles">
-                        <div class="setting-item setting-sub-item">
-                            <label><input type="checkbox" data-alert-type="subscribe" checked> Subscriptions</label>
-                        </div>
-                        <div class="setting-item setting-sub-item">
-                            <label><input type="checkbox" data-alert-type="follow" checked> Follows</label>
-                        </div>
-                        <div class="setting-item setting-sub-item">
-                            <label><input type="checkbox" data-alert-type="gift_sub" checked> Gift Subs</label>
-                        </div>
-                        <div class="setting-item setting-sub-item">
-                            <label><input type="checkbox" data-alert-type="cheer" checked> Cheers/Bits</label>
-                        </div>
-                        <div class="setting-item setting-sub-item">
-                            <label><input type="checkbox" data-alert-type="raid" checked> Raids</label>
-                        </div>
-                    </div>
-                    <div class="alert-test-section">
-                        <p class="setting-hint">Otestovat alerty:</p>
-                        <div class="alert-test-buttons">
-                            <button class="btn btn-xs btn-test" data-test-alert="subscribe" title="Test Subscribe">
-                                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                                Sub
-                            </button>
-                            <button class="btn btn-xs btn-test" data-test-alert="resubscribe" title="Test Resub">
-                                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                                Resub
-                            </button>
-                            <button class="btn btn-xs btn-test" data-test-alert="gift_sub" title="Test Gift Sub">
-                                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2a3 3 0 0 0-3 3c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2z"/></svg>
-                                Gift
-                            </button>
-                            <button class="btn btn-xs btn-test" data-test-alert="follow" title="Test Follow">
-                                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                                Follow
-                            </button>
-                            <button class="btn btn-xs btn-test" data-test-alert="cheer" title="Test Cheer">
-                                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>
-                                Bits
-                            </button>
-                            <button class="btn btn-xs btn-test" data-test-alert="donation" title="Test Donation">
-                                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
-                                Donate
-                            </button>
-                            <button class="btn btn-xs btn-test" data-test-alert="raid" title="Test Raid">
-                                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M15 13V5c0-1.66-1.34-3-3-3S9 3.34 9 5v8c-1.21.91-2 2.37-2 4 0 2.76 2.24 5 5 5s5-2.24 5-5c0-1.63-.79-3.09-2-4z"/></svg>
-                                Raid
-                            </button>
-                            <button class="btn btn-xs btn-test" data-test-alert="channel_points" title="Test Channel Points">
-                                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
-                                Points
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <div class="settings-section">
-                    <h4>Twitch EventSub (volitelne)</h4>
-                    <p class="setting-hint">Zakladni alerty (sub, resub, gift, raid) funguji bez prihlaseni. EventSub pridava: follows, cheers, channel points.</p>
-                    <div id="eventsubStatus" class="eventsub-status">
-                        <span class="eventsub-dot disconnected"></span>
-                        <span class="eventsub-label" id="eventsubLabel">Nepripojeno</span>
-                    </div>
-                    <div class="eventsub-fields" id="eventsubFields">
-                        <div class="form-group">
-                            <label for="eventsubClientId">Twitch Client ID</label>
-                            <input type="text" id="eventsubClientId" placeholder="Vloz Client ID z dev.twitch.tv" autocomplete="off">
-                            <span class="input-hint">Vytvor aplikaci na <a href="https://dev.twitch.tv/console/apps" target="_blank" rel="noopener">dev.twitch.tv</a>, Redirect URI: nastav na URL teto stranky + <code>/oauth-callback.html</code></span>
-                        </div>
-                        <div class="eventsub-actions">
-                            <button class="btn btn-sm btn-primary" id="eventsubConnectBtn">Pripojit Twitch</button>
-                            <button class="btn btn-sm btn-danger" id="eventsubDisconnectBtn" style="display:none">Odpojit</button>
-                        </div>
-                    </div>
-                </div>
-                <div class="settings-section">
-                    <h4>Donace (volitelne)</h4>
-                    <p class="setting-hint">Pripojte Streamlabs nebo StreamElements pro zobrazeni donaci v chatu. Token najdete v nastaveni prislusne sluzby.</p>
-                    <div class="donation-service">
-                        <div class="donation-service-header">
-                            <span class="donation-service-name">Streamlabs</span>
-                            <span class="donation-dot disconnected" id="slDot"></span>
+
+                <!-- TAB: Kick -->
+                <div class="settings-tab-panel active" id="tab-kick">
+                    <div class="settings-section">
+                        <h4>Kick Chat</h4>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="cpKickEnabled">
+                                Povolit Kick chat
+                            </label>
+                            <span class="cp-status-dot" id="cpKickStatusDot" title="Nepripojeno"></span>
                         </div>
                         <div class="form-group">
-                            <input type="password" id="streamlabsToken" placeholder="Socket API Token" autocomplete="off">
-                            <span class="input-hint">Nastaveni -> API Settings -> Socket API Token na <a href="https://streamlabs.com/dashboard#/settings/api-settings" target="_blank" rel="noopener">streamlabs.com</a></span>
-                        </div>
-                        <div class="donation-actions">
-                            <button class="btn btn-sm btn-primary" id="slConnectBtn">Pripojit</button>
-                            <button class="btn btn-sm btn-danger" id="slDisconnectBtn" style="display:none">Odpojit</button>
-                        </div>
-                    </div>
-                    <div class="donation-service">
-                        <div class="donation-service-header">
-                            <span class="donation-service-name">StreamElements</span>
-                            <span class="donation-dot disconnected" id="seDot"></span>
+                            <label for="cpKickSlug">Nazev kanalu (slug)</label>
+                            <input type="text" id="cpKickSlug" placeholder="napr. xqc, trainwreckstv" autocomplete="off">
+                            <span class="input-hint">Zadejte nazev Kick kanalu. Pro ostatni: <strong>nazev:chatroomID</strong></span>
                         </div>
                         <div class="form-group">
-                            <input type="password" id="streamelementsToken" placeholder="JWT Token" autocomplete="off">
-                            <span class="input-hint">Profil -> Channels -> Show Secrets -> JWT Token na <a href="https://streamelements.com/dashboard/account/channels" target="_blank" rel="noopener">streamelements.com</a></span>
+                            <label for="cpKickChatroomId">Chatroom ID</label>
+                            <div class="input-with-btn">
+                                <input type="text" id="cpKickChatroomId" placeholder="Automaticky nebo rucne" autocomplete="off">
+                                <button class="btn btn-sm btn-secondary" id="cpKickFetchId">Zjistit ID</button>
+                            </div>
+                            <span class="input-hint" id="cpKickIdHint">Klikni na "Zjistit ID" nebo zadej rucne. Zname kanaly se vyplni automaticky.</span>
                         </div>
-                        <div class="donation-actions">
-                            <button class="btn btn-sm btn-primary" id="seConnectBtn">Pripojit</button>
-                            <button class="btn btn-sm btn-danger" id="seDisconnectBtn" style="display:none">Odpojit</button>
+                    </div>
+                    <div class="settings-section">
+                        <h4>Filtr zprav (Kick)</h4>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="cpKickFilterEnabled">
+                                Povolit filtr klicovych slov
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label for="cpKickFilterKeywords">Klicova slova (oddelena carkou)</label>
+                            <textarea id="cpKickFilterKeywords" rows="3" placeholder="slovo1, slovo2, slovo3&#10;Zpravy obsahujici tato slova nebudou zobrazeny"></textarea>
                         </div>
                     </div>
+                    <button class="btn btn-primary" id="cpKickSave">Ulozit Kick nastaveni</button>
                 </div>
-                <div class="settings-section">
-                    <h4>Chat</h4>
-                    <div class="setting-item">
-                        <label for="maxMessages">Max. počet zpráv</label>
-                        <input type="number" id="maxMessages" value="500" min="100" max="2000">
+
+                <!-- TAB: Twitch -->
+                <div class="settings-tab-panel" id="tab-twitch">
+                    <div class="settings-section">
+                        <h4>Twitch Chat</h4>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="cpTwitchEnabled">
+                                Povolit Twitch chat
+                            </label>
+                            <span class="cp-status-dot" id="cpTwitchStatusDot" title="Nepripojeno"></span>
+                        </div>
+                        <div class="form-group">
+                            <label for="cpTwitchChannel">Nazev kanalu</label>
+                            <input type="text" id="cpTwitchChannel" placeholder="napr. xqc, shroud" autocomplete="off">
+                            <span class="input-hint">Zadejte jmeno Twitch kanalu bez URL</span>
+                        </div>
                     </div>
-                    <div class="setting-item">
-                        <label for="fontSize">Velikost písma</label>
-                        <select id="fontSize">
-                            <option value="12">Malé (12px)</option>
-                            <option value="14" selected>Střední (14px)</option>
-                            <option value="16">Velké (16px)</option>
-                            <option value="18">Extra velké (18px)</option>
-                        </select>
+                    <div class="settings-section">
+                        <h4>Twitch EventSub (volitelne)</h4>
+                        <p class="setting-hint">Zakladni alerty (sub, resub, gift, raid) funguji bez prihlaseni. EventSub pridava: follows, cheers, channel points.</p>
+                        <div id="eventsubStatus" class="eventsub-status">
+                            <span class="eventsub-dot disconnected"></span>
+                            <span class="eventsub-label" id="eventsubLabel">Nepripojeno</span>
+                        </div>
+                        <div class="eventsub-fields" id="eventsubFields">
+                            <div class="form-group">
+                                <label for="eventsubClientId">Twitch Client ID</label>
+                                <!-- REPLACE THIS: your Twitch Client ID from dev.twitch.tv -->
+                                <input type="text" id="eventsubClientId" placeholder="Vloz Client ID z dev.twitch.tv" autocomplete="off">
+                                <span class="input-hint">Vytvor aplikaci na <a href="https://dev.twitch.tv/console/apps" target="_blank" rel="noopener">dev.twitch.tv</a>, Redirect URI: nastav na URL teto stranky + <code>/oauth-callback.html</code></span>
+                            </div>
+                            <div class="eventsub-actions">
+                                <button class="btn btn-sm btn-primary" id="eventsubConnectBtn">Pripojit Twitch</button>
+                                <button class="btn btn-sm btn-danger" id="eventsubDisconnectBtn" style="display:none">Odpojit</button>
+                            </div>
+                        </div>
                     </div>
+                    <div class="settings-section">
+                        <h4>Filtr zprav (Twitch)</h4>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="cpTwitchFilterEnabled">
+                                Povolit filtr klicovych slov
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label for="cpTwitchFilterKeywords">Klicova slova (oddelena carkou)</label>
+                            <textarea id="cpTwitchFilterKeywords" rows="3" placeholder="slovo1, slovo2, slovo3&#10;Zpravy obsahujici tato slova nebudou zobrazeny"></textarea>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="cpTwitchSave">Ulozit Twitch nastaveni</button>
                 </div>
-                <div class="settings-section">
-                    <h4>Chat Style (OBS / Streamlabs)</h4>
-                    <div class="style-selector">
-                        <label class="style-radio">
-                            <input type="radio" name="chatStyle" value="default" checked>
-                            <span>Default</span>
-                        </label>
-                        <label class="style-radio">
-                            <input type="radio" name="chatStyle" value="preset">
-                            <span>Preset</span>
-                        </label>
-                        <label class="style-radio">
-                            <input type="radio" name="chatStyle" value="custom">
-                            <span>Custom CSS</span>
-                        </label>
+
+                <!-- TAB: OBS / Overlay -->
+                <div class="settings-tab-panel" id="tab-obs">
+                    <div class="settings-section">
+                        <h4>OBS Overlay nastaveni</h4>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="cpObsTransparentBg" checked>
+                                Transparentni pozadi
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label for="cpObsFontSize">Velikost pisma (px)</label>
+                            <input type="number" id="cpObsFontSize" value="14" min="8" max="48" style="width:80px">
+                        </div>
+                        <div class="setting-item">
+                            <label for="cpObsTextColor">Barva textu</label>
+                            <input type="color" id="cpObsTextColor" value="#ffffff">
+                        </div>
+                        <div class="setting-item">
+                            <label for="cpObsUsernameColor">Barva uzivatelskeho jmena</label>
+                            <input type="color" id="cpObsUsernameColor" value="#00ff7f">
+                        </div>
+                        <div class="setting-item">
+                            <label for="cpObsMaxMessages">Max. pocet zprav</label>
+                            <input type="number" id="cpObsMaxMessages" value="50" min="10" max="500" style="width:80px">
+                        </div>
                     </div>
-                    <!-- Preset vyber -->
-                    <div id="stylePresetPanel" class="style-panel" style="display:none">
-                        <select id="stylePresetSelect">
-                            <option value="">-- Vyber preset --</option>
-                            <option value="clean-dark">Clean Dark</option>
-                            <option value="neon-glow">Neon Glow</option>
-                            <option value="bubble">Chat Bubbles</option>
-                            <option value="minimal">Minimal</option>
-                            <option value="twitch-native">Twitch Native</option>
-                        </select>
+                    <div class="settings-section">
+                        <h4>Bad Word filtr (cenzura)</h4>
+                        <p class="setting-hint">Slova budou nahrazena *** ve zobrazeni. Zprava se nepreskoci, pouze se cenzuruje.</p>
+                        <div class="form-group">
+                            <label for="cpObsBadWords">Zakazana slova (jedno slovo na radek nebo oddelena carkou)</label>
+                            <textarea id="cpObsBadWords" rows="4" placeholder="slovo1&#10;slovo2&#10;slovo3"></textarea>
+                        </div>
                     </div>
-                    <!-- Custom CSS editor -->
-                    <div id="styleCustomPanel" class="style-panel" style="display:none">
-                        <textarea id="customCSSEditor" rows="8" placeholder="/* Vloz Streamlabs Custom CSS nebo vlastni CSS */&#10;/* Pouzij Streamlabs tridy: #log, .wrap, .meta, .name, .message, .emote */"></textarea>
-                        <details class="style-html-ref">
-                            <summary>HTML Reference</summary>
-                            <pre><code>&lt;div id="log"&gt;
+                    <div class="settings-section">
+                        <h4>Chat Style (OBS / Streamlabs)</h4>
+                        <div class="style-selector">
+                            <label class="style-radio">
+                                <input type="radio" name="chatStyle" value="default" checked>
+                                <span>Default</span>
+                            </label>
+                            <label class="style-radio">
+                                <input type="radio" name="chatStyle" value="preset">
+                                <span>Preset</span>
+                            </label>
+                            <label class="style-radio">
+                                <input type="radio" name="chatStyle" value="custom">
+                                <span>Custom CSS</span>
+                            </label>
+                        </div>
+                        <div id="stylePresetPanel" class="style-panel" style="display:none">
+                            <select id="stylePresetSelect">
+                                <option value="">-- Vyber preset --</option>
+                                <option value="clean-dark">Clean Dark</option>
+                                <option value="neon-glow">Neon Glow</option>
+                                <option value="bubble">Chat Bubbles</option>
+                                <option value="minimal">Minimal</option>
+                                <option value="twitch-native">Twitch Native</option>
+                            </select>
+                        </div>
+                        <div id="styleCustomPanel" class="style-panel" style="display:none">
+                            <textarea id="customCSSEditor" rows="8" placeholder="/* Vloz Streamlabs Custom CSS nebo vlastni CSS */&#10;/* Pouzij Streamlabs tridy: #log, .wrap, .meta, .name, .message, .emote */"></textarea>
+                            <details class="style-html-ref">
+                                <summary>HTML Reference</summary>
+                                <pre><code>&lt;div id="log"&gt;
   &lt;div class="wrap" data-from="user"&gt;
     &lt;div class="meta" style="color:#ff0"&gt;
       &lt;span class="badges"&gt;&lt;img class="badge"&gt;&lt;/span&gt;
@@ -466,50 +446,204 @@
     &lt;span class="message"&gt;text&lt;/span&gt;
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
-                        </details>
+                            </details>
+                        </div>
+                        <div id="styleVarsPanel" class="style-panel" style="display:none">
+                            <div class="style-vars-grid">
+                                <label><span>{font_size}</span><input type="number" id="varFontSize" value="14" min="10" max="32"></label>
+                                <label><span>{text_color}</span><input type="color" id="varTextColor" value="#ffffff"></label>
+                                <label><span>{background_color}</span><input type="color" id="varBgColor" value="#000000"></label>
+                            </div>
+                        </div>
+                        <button class="btn btn-sm btn-secondary" id="applyStyleBtn" style="margin-top:6px">Aplikovat styl</button>
                     </div>
-                    <!-- Template promenne -->
-                    <div id="styleVarsPanel" class="style-panel" style="display:none">
-                        <div class="style-vars-grid">
-                            <label><span>{font_size}</span><input type="number" id="varFontSize" value="14" min="10" max="32"></label>
-                            <label><span>{text_color}</span><input type="color" id="varTextColor" value="#ffffff"></label>
-                            <label><span>{background_color}</span><input type="color" id="varBgColor" value="#000000"></label>
+                    <div class="settings-section">
+                        <h4>OBS Browser Source</h4>
+                        <div class="obs-section">
+                            <div class="obs-url-container">
+                                <input type="text" id="obsUrlInput" readonly placeholder="Klikni na 'Generovat' pro vytvoreni URL">
+                                <button class="btn btn-sm btn-secondary" id="obsUrlCopy" title="Kopirovat URL">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="obs-settings-row">
+                                <label>
+                                    <input type="checkbox" id="obsShowAlerts" checked>
+                                    Alerty v OBS
+                                </label>
+                                <label>
+                                    Skryt po
+                                    <input type="number" id="obsHideAfter" value="0" min="0" max="300" style="width:50px">
+                                    s (0 = nikdy)
+                                </label>
+                            </div>
+                            <div class="obs-btn-row">
+                                <button class="btn btn-primary btn-sm" id="obsGenerateUrl">Generovat OBS URL</button>
+                                <button class="btn btn-secondary btn-sm" id="obsPreviewBtn">Nahled v novem tabu</button>
+                            </div>
+                            <p class="obs-hint">Doporucena velikost: 400 x 600 px. Vlozte URL do OBS jako Browser Source.</p>
                         </div>
                     </div>
-                    <button class="btn btn-sm btn-secondary" id="applyStyleBtn" style="margin-top:6px">Aplikovat styl</button>
+                    <button class="btn btn-primary" id="cpObsSave">Ulozit OBS nastaveni</button>
                 </div>
-                <div class="settings-section">
-                    <h4>OBS Browser Source</h4>
-                    <div class="obs-section">
-                        <div class="obs-url-container">
-                            <input type="text" id="obsUrlInput" readonly placeholder="Klikni na 'Generovat' pro vytvoreni URL">
-                            <button class="btn btn-sm btn-secondary" id="obsUrlCopy" title="Kopirovat URL">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"></path>
-                                </svg>
-                            </button>
-                        </div>
-                        <div class="obs-settings-row">
+
+                <!-- TAB: Appearance -->
+                <div class="settings-tab-panel" id="tab-appearance">
+                    <div class="settings-section">
+                        <h4>Zobrazeni</h4>
+                        <div class="setting-item">
                             <label>
-                                <input type="checkbox" id="obsShowAlerts" checked>
-                                Alerty v OBS
-                            </label>
-                            <label>
-                                Skryt po
-                                <input type="number" id="obsHideAfter" value="0" min="0" max="300" style="width:50px">
-                                s (0 = nikdy)
+                                <input type="checkbox" id="showTimestamps" checked>
+                                Zobrazit casove znacky
                             </label>
                         </div>
-                        <button class="btn btn-primary btn-sm" id="obsGenerateUrl">Generovat OBS URL</button>
-                        <p class="obs-hint">Doporucena velikost: 400 x 600 px. Vlozte URL do OBS jako Browser Source.</p>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="showPlatformBadges" checked>
+                                Zobrazit badge platformy
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="showEmotes" checked>
+                                Zobrazit emotes
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="compactMode">
+                                Kompaktni rezim
+                            </label>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h4>Chat</h4>
+                        <div class="setting-item">
+                            <label for="maxMessages">Max. pocet zprav</label>
+                            <input type="number" id="maxMessages" value="500" min="100" max="2000">
+                        </div>
+                        <div class="setting-item">
+                            <label for="fontSize">Velikost pisma</label>
+                            <select id="fontSize">
+                                <option value="12">Male (12px)</option>
+                                <option value="14" selected>Stredni (14px)</option>
+                                <option value="16">Velke (16px)</option>
+                                <option value="18">Extra velke (18px)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="settings-section">
+                        <h4>Event Alerts</h4>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="showAlerts" checked>
+                                Zobrazit event alerty v chatu
+                            </label>
+                        </div>
+                        <div class="alert-type-toggles" id="alertTypeToggles">
+                            <div class="setting-item setting-sub-item">
+                                <label><input type="checkbox" data-alert-type="subscribe" checked> Subscriptions</label>
+                            </div>
+                            <div class="setting-item setting-sub-item">
+                                <label><input type="checkbox" data-alert-type="follow" checked> Follows</label>
+                            </div>
+                            <div class="setting-item setting-sub-item">
+                                <label><input type="checkbox" data-alert-type="gift_sub" checked> Gift Subs</label>
+                            </div>
+                            <div class="setting-item setting-sub-item">
+                                <label><input type="checkbox" data-alert-type="cheer" checked> Cheers/Bits</label>
+                            </div>
+                            <div class="setting-item setting-sub-item">
+                                <label><input type="checkbox" data-alert-type="raid" checked> Raids</label>
+                            </div>
+                        </div>
+                        <div class="alert-test-section">
+                            <p class="setting-hint">Otestovat alerty:</p>
+                            <div class="alert-test-buttons">
+                                <button class="btn btn-xs btn-test" data-test-alert="subscribe" title="Test Subscribe">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    Sub
+                                </button>
+                                <button class="btn btn-xs btn-test" data-test-alert="resubscribe" title="Test Resub">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                                    Resub
+                                </button>
+                                <button class="btn btn-xs btn-test" data-test-alert="gift_sub" title="Test Gift Sub">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M20 6h-2.18c.11-.31.18-.65.18-1a2.996 2.996 0 0 0-5.5-1.65l-.5.67-.5-.68C10.96 2.54 10.05 2 9 2a3 3 0 0 0-3 3c0 .35.07.69.18 1H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2z"/></svg>
+                                    Gift
+                                </button>
+                                <button class="btn btn-xs btn-test" data-test-alert="follow" title="Test Follow">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                                    Follow
+                                </button>
+                                <button class="btn btn-xs btn-test" data-test-alert="cheer" title="Test Cheer">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>
+                                    Bits
+                                </button>
+                                <button class="btn btn-xs btn-test" data-test-alert="donation" title="Test Donation">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/></svg>
+                                    Donate
+                                </button>
+                                <button class="btn btn-xs btn-test" data-test-alert="raid" title="Test Raid">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M15 13V5c0-1.66-1.34-3-3-3S9 3.34 9 5v8c-1.21.91-2 2.37-2 4 0 2.76 2.24 5 5 5s5-2.24 5-5c0-1.63-.79-3.09-2-4z"/></svg>
+                                    Raid
+                                </button>
+                                <button class="btn btn-xs btn-test" data-test-alert="channel_points" title="Test Channel Points">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+                                    Points
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="settings-section">
-                    <h4>Data</h4>
-                    <button class="btn btn-secondary" id="exportSettings">Exportovat nastavení</button>
-                    <button class="btn btn-secondary" id="importSettings">Importovat nastavení</button>
-                    <button class="btn btn-danger" id="clearAllData">Vymazat všechna data</button>
+
+                <!-- TAB: Services -->
+                <div class="settings-tab-panel" id="tab-services">
+                    <div class="settings-section">
+                        <h4>Donace (volitelne)</h4>
+                        <p class="setting-hint">Pripojte Streamlabs nebo StreamElements pro zobrazeni donaci v chatu. Token najdete v nastaveni prislusne sluzby.</p>
+                        <div class="donation-service">
+                            <div class="donation-service-header">
+                                <span class="donation-service-name">Streamlabs</span>
+                                <span class="donation-dot disconnected" id="slDot"></span>
+                            </div>
+                            <div class="form-group">
+                                <input type="password" id="streamlabsToken" placeholder="Socket API Token" autocomplete="off">
+                                <span class="input-hint">Nastaveni -> API Settings -> Socket API Token na <a href="https://streamlabs.com/dashboard#/settings/api-settings" target="_blank" rel="noopener">streamlabs.com</a></span>
+                            </div>
+                            <div class="donation-actions">
+                                <button class="btn btn-sm btn-primary" id="slConnectBtn">Pripojit</button>
+                                <button class="btn btn-sm btn-danger" id="slDisconnectBtn" style="display:none">Odpojit</button>
+                            </div>
+                        </div>
+                        <div class="donation-service">
+                            <div class="donation-service-header">
+                                <span class="donation-service-name">StreamElements</span>
+                                <span class="donation-dot disconnected" id="seDot"></span>
+                            </div>
+                            <div class="form-group">
+                                <input type="password" id="streamelementsToken" placeholder="JWT Token" autocomplete="off">
+                                <span class="input-hint">Profil -> Channels -> Show Secrets -> JWT Token na <a href="https://streamelements.com/dashboard/account/channels" target="_blank" rel="noopener">streamelements.com</a></span>
+                            </div>
+                            <div class="donation-actions">
+                                <button class="btn btn-sm btn-primary" id="seConnectBtn">Pripojit</button>
+                                <button class="btn btn-sm btn-danger" id="seDisconnectBtn" style="display:none">Odpojit</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: Data -->
+                <div class="settings-tab-panel" id="tab-data">
+                    <div class="settings-section">
+                        <h4>Data</h4>
+                        <button class="btn btn-secondary" id="exportSettings">Exportovat nastaveni</button>
+                        <button class="btn btn-secondary" id="importSettings">Importovat nastaveni</button>
+                        <button class="btn btn-danger" id="clearAllData">Vymazat vsechna data</button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -597,6 +731,124 @@
     <!-- Toast Container -->
     <div class="toast-container" id="toastContainer"></div>
 
+    <!-- Streaming Overlay + Settings Tabs CSS -->
+    <style>
+        /* Settings Tabs */
+        .settings-tabs {
+            display: flex;
+            gap: 2px;
+            border-bottom: 2px solid var(--bg-tertiary, #1f1f23);
+            margin-bottom: 16px;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+        }
+        .settings-tab {
+            padding: 8px 14px;
+            background: none;
+            border: none;
+            color: var(--text-secondary, #adadb8);
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            white-space: nowrap;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .settings-tab:hover {
+            color: var(--text-primary, #efeff1);
+        }
+        .settings-tab.active {
+            color: var(--accent-primary, #9147ff);
+            border-bottom-color: var(--accent-primary, #9147ff);
+        }
+        .settings-tab-panel {
+            display: none;
+        }
+        .settings-tab-panel.active {
+            display: block;
+        }
+        .modal-wide .modal-body {
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        /* Connection status dot for settings tabs */
+        .cp-status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #666;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .cp-status-dot.connected { background: #53fc18; }
+        .cp-status-dot.error { background: #ff4444; }
+        .cp-status-dot.connecting { background: #ffaa00; animation: pulse-dot 1s infinite; }
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        /* Input with button inline */
+        .input-with-btn {
+            display: flex;
+            gap: 8px;
+        }
+        .input-with-btn input { flex: 1; }
+
+        /* OBS button row */
+        .obs-btn-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        /* OBS Overlay Mode */
+        body.obs-mode {
+            background: transparent !important;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        body.obs-mode .app-header,
+        body.obs-mode .sidebar,
+        body.obs-mode .modal-overlay,
+        body.obs-mode .toast-container,
+        body.obs-mode .chat-welcome {
+            display: none !important;
+        }
+        body.obs-mode .app-container {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+        body.obs-mode .main-content {
+            padding: 0 !important;
+        }
+        body.obs-mode .chat-area {
+            border: none !important;
+            box-shadow: none !important;
+            background: transparent !important;
+        }
+        body.obs-mode .chat-container {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            height: 100vh;
+            max-height: 100vh;
+        }
+        body.obs-mode .chat-messages {
+            background: transparent !important;
+        }
+        body.obs-mode .chat-message {
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+    </style>
+
     <!-- Scripts -->
     <script src="adapters/base-adapter.js"></script>
     <script src="adapters/twitch-adapter.js"></script>
@@ -608,5 +860,721 @@
     <script src="adapters/donation-adapter.js"></script>
     <script src="jszip.min.js"></script>
     <script src="script.js"></script>
+
+    <!-- Streaming Overlay Tool: Settings tabs, keyword filter, bad word censor, OBS mode -->
+    <script>
+    (function() {
+        'use strict';
+
+        // =====================================================================
+        // CHATPANEL_SETTINGS localStorage schema (Phase 1)
+        // =====================================================================
+
+        const CP_STORAGE_KEY = 'chatpanel_settings';
+
+        const CP_DEFAULTS = {
+            kick: {
+                enabled: false,
+                channelSlug: '',
+                chatroomId: null,
+                filter: { enabled: false, keywords: [] }
+            },
+            twitch: {
+                enabled: false,
+                channelName: '',
+                clientId: '',
+                accessToken: null,
+                username: null,
+                filter: { enabled: false, keywords: [] }
+            },
+            obs: {
+                transparentBg: true,
+                fontSize: 14,
+                textColor: '#ffffff',
+                usernameColor: '#00ff7f',
+                maxMessages: 50,
+                badWordList: []
+            },
+            ui: {
+                theme: 'dark',
+                showBadges: true,
+                showTimestamps: true
+            }
+        };
+
+        function loadCPSettings() {
+            try {
+                const raw = localStorage.getItem(CP_STORAGE_KEY);
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    return deepMerge(JSON.parse(JSON.stringify(CP_DEFAULTS)), parsed);
+                }
+            } catch (e) {
+                console.warn('[CP] Failed to load chatpanel_settings:', e);
+            }
+            return JSON.parse(JSON.stringify(CP_DEFAULTS));
+        }
+
+        function saveCPSettings(settings) {
+            try {
+                // Normalize keywords: trim, lowercase, filter empty
+                if (settings.kick && settings.kick.filter && settings.kick.filter.keywords) {
+                    settings.kick.filter.keywords = normalizeKeywords(settings.kick.filter.keywords);
+                }
+                if (settings.twitch && settings.twitch.filter && settings.twitch.filter.keywords) {
+                    settings.twitch.filter.keywords = normalizeKeywords(settings.twitch.filter.keywords);
+                }
+                if (settings.obs && settings.obs.badWordList) {
+                    settings.obs.badWordList = normalizeKeywords(settings.obs.badWordList);
+                }
+                localStorage.setItem(CP_STORAGE_KEY, JSON.stringify(settings));
+            } catch (e) {
+                console.error('[CP] Failed to save chatpanel_settings:', e);
+            }
+        }
+
+        function normalizeKeywords(arr) {
+            if (!Array.isArray(arr)) return [];
+            return arr.map(s => String(s).trim().toLowerCase()).filter(Boolean);
+        }
+
+        function deepMerge(target, source) {
+            if (!source || typeof source !== 'object') return target;
+            for (const key of Object.keys(source)) {
+                if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+                    if (!target[key] || typeof target[key] !== 'object') target[key] = {};
+                    deepMerge(target[key], source[key]);
+                } else {
+                    target[key] = source[key];
+                }
+            }
+            return target;
+        }
+
+        // Current in-memory state
+        let cpSettings = loadCPSettings();
+
+        // =====================================================================
+        // POPULATE UI FROM SETTINGS (Phase 1.4)
+        // =====================================================================
+
+        function populateSettingsUI() {
+            const s = cpSettings;
+            // Kick tab
+            const kickEnabled = document.getElementById('cpKickEnabled');
+            const kickSlug = document.getElementById('cpKickSlug');
+            const kickChatroomId = document.getElementById('cpKickChatroomId');
+            const kickFilterEnabled = document.getElementById('cpKickFilterEnabled');
+            const kickFilterKeywords = document.getElementById('cpKickFilterKeywords');
+            if (kickEnabled) kickEnabled.checked = s.kick.enabled;
+            if (kickSlug) kickSlug.value = s.kick.channelSlug || '';
+            if (kickChatroomId) kickChatroomId.value = s.kick.chatroomId || '';
+            if (kickFilterEnabled) kickFilterEnabled.checked = s.kick.filter.enabled;
+            if (kickFilterKeywords) kickFilterKeywords.value = (s.kick.filter.keywords || []).join(', ');
+
+            // Twitch tab
+            const twitchEnabled = document.getElementById('cpTwitchEnabled');
+            const twitchChannel = document.getElementById('cpTwitchChannel');
+            const twitchFilterEnabled = document.getElementById('cpTwitchFilterEnabled');
+            const twitchFilterKeywords = document.getElementById('cpTwitchFilterKeywords');
+            if (twitchEnabled) twitchEnabled.checked = s.twitch.enabled;
+            if (twitchChannel) twitchChannel.value = s.twitch.channelName || '';
+            if (twitchFilterEnabled) twitchFilterEnabled.checked = s.twitch.filter.enabled;
+            if (twitchFilterKeywords) twitchFilterKeywords.value = (s.twitch.filter.keywords || []).join(', ');
+
+            // OBS tab
+            const obsTransparent = document.getElementById('cpObsTransparentBg');
+            const obsFontSize = document.getElementById('cpObsFontSize');
+            const obsTextColor = document.getElementById('cpObsTextColor');
+            const obsUsernameColor = document.getElementById('cpObsUsernameColor');
+            const obsMaxMsg = document.getElementById('cpObsMaxMessages');
+            const obsBadWords = document.getElementById('cpObsBadWords');
+            if (obsTransparent) obsTransparent.checked = s.obs.transparentBg;
+            if (obsFontSize) obsFontSize.value = s.obs.fontSize;
+            if (obsTextColor) obsTextColor.value = s.obs.textColor;
+            if (obsUsernameColor) obsUsernameColor.value = s.obs.usernameColor;
+            if (obsMaxMsg) obsMaxMsg.value = s.obs.maxMessages;
+            if (obsBadWords) obsBadWords.value = (s.obs.badWordList || []).join('\n');
+        }
+
+        // =====================================================================
+        // SETTINGS TABS (Phase 1.1)
+        // =====================================================================
+
+        function initSettingsTabs() {
+            const tabContainer = document.getElementById('settingsTabs');
+            if (!tabContainer) return;
+
+            tabContainer.addEventListener('click', function(e) {
+                const tab = e.target.closest('.settings-tab');
+                if (!tab) return;
+                const targetId = tab.dataset.tab;
+                if (!targetId) return;
+
+                // Deactivate all tabs and panels
+                tabContainer.querySelectorAll('.settings-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.settings-tab-panel').forEach(p => p.classList.remove('active'));
+
+                // Activate clicked tab and panel
+                tab.classList.add('active');
+                const panel = document.getElementById(targetId);
+                if (panel) panel.classList.add('active');
+            });
+        }
+
+        // =====================================================================
+        // SAVE BUTTONS (Phase 1.5)
+        // =====================================================================
+
+        function initSaveButtons() {
+            // Kick Save
+            const kickSave = document.getElementById('cpKickSave');
+            if (kickSave) {
+                kickSave.addEventListener('click', function() {
+                    cpSettings.kick.enabled = document.getElementById('cpKickEnabled')?.checked || false;
+                    cpSettings.kick.channelSlug = (document.getElementById('cpKickSlug')?.value || '').trim();
+                    cpSettings.kick.chatroomId = (document.getElementById('cpKickChatroomId')?.value || '').trim() || null;
+                    cpSettings.kick.filter.enabled = document.getElementById('cpKickFilterEnabled')?.checked || false;
+                    cpSettings.kick.filter.keywords = parseKeywordInput(document.getElementById('cpKickFilterKeywords')?.value || '');
+                    saveCPSettings(cpSettings);
+                    if (typeof showToast === 'function') showToast('Kick nastaveni ulozeno', 'success');
+                });
+            }
+
+            // Twitch Save
+            const twitchSave = document.getElementById('cpTwitchSave');
+            if (twitchSave) {
+                twitchSave.addEventListener('click', function() {
+                    cpSettings.twitch.enabled = document.getElementById('cpTwitchEnabled')?.checked || false;
+                    cpSettings.twitch.channelName = (document.getElementById('cpTwitchChannel')?.value || '').trim();
+                    cpSettings.twitch.filter.enabled = document.getElementById('cpTwitchFilterEnabled')?.checked || false;
+                    cpSettings.twitch.filter.keywords = parseKeywordInput(document.getElementById('cpTwitchFilterKeywords')?.value || '');
+                    saveCPSettings(cpSettings);
+                    if (typeof showToast === 'function') showToast('Twitch nastaveni ulozeno', 'success');
+                });
+            }
+
+            // OBS Save
+            const obsSave = document.getElementById('cpObsSave');
+            if (obsSave) {
+                obsSave.addEventListener('click', function() {
+                    cpSettings.obs.transparentBg = document.getElementById('cpObsTransparentBg')?.checked || false;
+                    cpSettings.obs.fontSize = parseInt(document.getElementById('cpObsFontSize')?.value) || 14;
+                    cpSettings.obs.textColor = document.getElementById('cpObsTextColor')?.value || '#ffffff';
+                    cpSettings.obs.usernameColor = document.getElementById('cpObsUsernameColor')?.value || '#00ff7f';
+                    cpSettings.obs.maxMessages = parseInt(document.getElementById('cpObsMaxMessages')?.value) || 50;
+                    cpSettings.obs.badWordList = parseKeywordInput(document.getElementById('cpObsBadWords')?.value || '', true);
+                    saveCPSettings(cpSettings);
+                    if (typeof showToast === 'function') showToast('OBS nastaveni ulozeno', 'success');
+                });
+            }
+        }
+
+        function parseKeywordInput(text, allowNewlines) {
+            if (!text) return [];
+            // Split by comma or newline
+            const parts = text.split(/[,\n]+/);
+            return parts.map(s => s.trim().toLowerCase()).filter(Boolean);
+        }
+
+        // =====================================================================
+        // KICK CHATROOM ID FETCH (Phase 2.2)
+        // =====================================================================
+
+        function initKickFetchId() {
+            const fetchBtn = document.getElementById('cpKickFetchId');
+            if (!fetchBtn) return;
+
+            fetchBtn.addEventListener('click', async function() {
+                const slugInput = document.getElementById('cpKickSlug');
+                const idInput = document.getElementById('cpKickChatroomId');
+                const hint = document.getElementById('cpKickIdHint');
+                const slug = (slugInput?.value || '').trim().toLowerCase();
+
+                if (!slug) {
+                    if (typeof showToast === 'function') showToast('Zadej nazev kanalu', 'warning');
+                    return;
+                }
+
+                // Check if slug has :id format
+                if (slug.includes(':')) {
+                    const parts = slug.split(':');
+                    if (parts[1]) {
+                        if (idInput) idInput.value = parts[1];
+                        if (slugInput) slugInput.value = parts[0];
+                        if (typeof showToast === 'function') showToast('Chatroom ID nacteno z formatu nazev:id', 'success');
+                        return;
+                    }
+                }
+
+                // Check KickAdapter known chatrooms if available
+                if (typeof KickAdapter !== 'undefined' && KickAdapter.KNOWN_CHATROOMS) {
+                    const known = KickAdapter.KNOWN_CHATROOMS[slug];
+                    if (known) {
+                        if (idInput) idInput.value = known;
+                        if (typeof showToast === 'function') showToast('Chatroom ID nalezeno v databazi', 'success');
+                        return;
+                    }
+                }
+
+                // Check localStorage cache
+                try {
+                    const cached = localStorage.getItem('kick_chatroom_' + slug);
+                    if (cached) {
+                        const c = JSON.parse(cached);
+                        if (c.id && c.ts && (Date.now() - c.ts < 7 * 24 * 60 * 60 * 1000)) {
+                            if (idInput) idInput.value = c.id;
+                            if (typeof showToast === 'function') showToast('Chatroom ID nacteno z cache', 'success');
+                            return;
+                        }
+                    }
+                } catch (e) {}
+
+                // Try CORS proxy fetch
+                fetchBtn.disabled = true;
+                fetchBtn.textContent = 'Hledam...';
+                if (hint) hint.textContent = 'Pokousim se najit chatroom ID...';
+
+                try {
+                    const proxyUrl = 'https://corsproxy.io/?' + encodeURIComponent('https://kick.com/api/v2/channels/' + slug);
+                    const resp = await fetch(proxyUrl, { signal: AbortSignal.timeout(10000) });
+                    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+                    const data = await resp.json();
+                    const chatroomId = data?.chatroom?.id;
+                    if (chatroomId) {
+                        if (idInput) idInput.value = chatroomId;
+                        // Cache it
+                        try {
+                            localStorage.setItem('kick_chatroom_' + slug, JSON.stringify({ id: chatroomId, ts: Date.now() }));
+                        } catch (e) {}
+                        if (typeof showToast === 'function') showToast('Chatroom ID nalezeno: ' + chatroomId, 'success');
+                    } else {
+                        throw new Error('Chatroom ID nenalezeno v odpovedi');
+                    }
+                } catch (err) {
+                    console.warn('[CP] Kick chatroom ID fetch failed:', err);
+                    if (hint) hint.textContent = 'Automaticke zjisteni selhalo. Zadejte chatroom ID rucne. Najdete ho na kick.com/api/v2/channels/' + slug;
+                    if (typeof showToast === 'function') showToast('CORS chyba - zadejte chatroom ID rucne', 'warning');
+                } finally {
+                    fetchBtn.disabled = false;
+                    fetchBtn.textContent = 'Zjistit ID';
+                }
+            });
+        }
+
+        // =====================================================================
+        // KEYWORD FILTER - Monkey-patch handleMessage (Phase 2.4 / 3.5)
+        // =====================================================================
+
+        function shouldFilterMessage(message) {
+            if (!message || !message.content) return false;
+            const platform = (message.platform || '').split('-')[0].toLowerCase();
+            const text = message.content.toLowerCase();
+
+            let filterConfig = null;
+            if (platform === 'kick') {
+                filterConfig = cpSettings.kick.filter;
+            } else if (platform === 'twitch') {
+                filterConfig = cpSettings.twitch.filter;
+            }
+
+            if (!filterConfig || !filterConfig.enabled || !filterConfig.keywords || filterConfig.keywords.length === 0) {
+                return false;
+            }
+
+            // Whole-word match, case-insensitive
+            for (const keyword of filterConfig.keywords) {
+                if (!keyword) continue;
+                try {
+                    const re = new RegExp('\\b' + escapeRegex(keyword) + '\\b', 'i');
+                    if (re.test(text)) return true;
+                } catch (e) {
+                    // Fallback: simple includes
+                    if (text.includes(keyword)) return true;
+                }
+            }
+            return false;
+        }
+
+        function escapeRegex(str) {
+            return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // =====================================================================
+        // BAD WORD CENSOR (Phase 4.4)
+        // =====================================================================
+
+        function censorBadWords(text) {
+            const badWords = cpSettings.obs.badWordList;
+            if (!badWords || badWords.length === 0) return text;
+
+            let result = text;
+            for (const word of badWords) {
+                if (!word) continue;
+                try {
+                    const re = new RegExp('\\b' + escapeRegex(word) + '\\b', 'gi');
+                    result = result.replace(re, '***');
+                } catch (e) {
+                    // Fallback: simple replace
+                    result = result.split(new RegExp(escapeRegex(word), 'gi')).join('***');
+                }
+            }
+            return result;
+        }
+
+        // Monkey-patch renderMessage to add keyword filter and bad word censor.
+        // We patch renderMessage (not handleMessage) because adapters bind handleMessage
+        // by reference at connect time, but handleMessage calls renderMessage by NAME,
+        // so global name resolution picks up our patched version at call time.
+        if (typeof renderMessage === 'function') {
+            const _originalRenderMessage = renderMessage;
+            window.renderMessage = function(message) {
+                // Phase 2.4 / 3.5: Skip filtered messages
+                if (shouldFilterMessage(message)) {
+                    return; // Do not render
+                }
+                // Phase 4.4: Censor bad words in content before rendering
+                if (message && message.content) {
+                    message.content = censorBadWords(message.content);
+                }
+                return _originalRenderMessage(message);
+            };
+        }
+
+        // =====================================================================
+        // CONNECTION STATUS DOTS (Phase 2.1 / 3.3 status indicators)
+        // =====================================================================
+
+        function updateCPStatusDots() {
+            if (typeof AppState === 'undefined') return;
+
+            let kickConnected = false;
+            let twitchConnected = false;
+
+            for (const [id, data] of AppState.channels) {
+                const platform = (data.platform || '').split('-')[0];
+                if (platform === 'kick' && data.state === 'connected') kickConnected = true;
+                if (platform === 'twitch' && data.state === 'connected') twitchConnected = true;
+            }
+
+            const kickDot = document.getElementById('cpKickStatusDot');
+            const twitchDot = document.getElementById('cpTwitchStatusDot');
+            if (kickDot) {
+                kickDot.className = 'cp-status-dot' + (kickConnected ? ' connected' : '');
+                kickDot.title = kickConnected ? 'Pripojeno' : 'Nepripojeno';
+            }
+            if (twitchDot) {
+                twitchDot.className = 'cp-status-dot' + (twitchConnected ? ' connected' : '');
+                twitchDot.title = twitchConnected ? 'Pripojeno' : 'Nepripojeno';
+            }
+        }
+
+        // Poll status dots every 3 seconds
+        setInterval(updateCPStatusDots, 3000);
+
+        // =====================================================================
+        // AUTO-CONNECT ON LOAD (Phase 2.5 / 3.7)
+        // =====================================================================
+
+        function autoConnectFromSettings() {
+            if (typeof addChannel !== 'function') return;
+
+            // Kick auto-connect
+            if (cpSettings.kick.enabled && cpSettings.kick.channelSlug) {
+                const slug = cpSettings.kick.channelSlug;
+                const chatroomId = cpSettings.kick.chatroomId;
+                const channelStr = chatroomId ? slug + ':' + chatroomId : slug;
+                const channelId = 'kick-' + slug.toLowerCase();
+                if (!AppState.channels.has(channelId)) {
+                    addChannel('kick', channelStr);
+                }
+            }
+
+            // Twitch auto-connect
+            if (cpSettings.twitch.enabled && cpSettings.twitch.channelName) {
+                const channel = cpSettings.twitch.channelName;
+                const channelId = 'twitch-' + channel.toLowerCase();
+                if (!AppState.channels.has(channelId)) {
+                    addChannel('twitch', channel);
+                }
+            }
+        }
+
+        // =====================================================================
+        // OBS OVERLAY MODE (Phase 5)
+        // =====================================================================
+
+        function checkOBSMode() {
+            const params = new URLSearchParams(window.location.search);
+            const isOBS = params.get('obs') === '1' || params.get('obs') === 'true';
+            if (!isOBS) return false;
+
+            document.body.classList.add('obs-mode');
+
+            // Read settings from URL params (fallback to localStorage)
+            const fontSize = params.get('fontsize') || params.get('fontSize') || cpSettings.obs.fontSize;
+            const textColor = params.get('textcolor') || params.get('textColor') || cpSettings.obs.textColor;
+            const usernameColor = params.get('usernamecolor') || params.get('usernameColor') || cpSettings.obs.usernameColor;
+            const maxMsg = parseInt(params.get('maxmsg') || params.get('maxMessages')) || cpSettings.obs.maxMessages;
+            const showBadges = params.has('showbadges') ? params.get('showbadges') !== '0' : cpSettings.ui.showBadges;
+            const showTimestamps = params.has('showtimestamps') ? params.get('showtimestamps') !== '0' : cpSettings.ui.showTimestamps;
+            const theme = params.get('theme') || cpSettings.ui.theme;
+
+            // Bad words from URL param (comma-separated)
+            if (params.has('badwords')) {
+                const bw = decodeURIComponent(params.get('badwords')).split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+                cpSettings.obs.badWordList = bw;
+            }
+
+            // Apply OBS styles
+            document.documentElement.style.setProperty('--font-size-base', fontSize + 'px');
+            document.documentElement.style.setProperty('--obs-text-color', textColor);
+            document.documentElement.style.setProperty('--obs-username-color', usernameColor);
+
+            // Inject dynamic OBS CSS
+            const obsStyle = document.createElement('style');
+            obsStyle.textContent = `
+                body.obs-mode .chat-message .message-text { color: ${textColor}; }
+                body.obs-mode .chat-message .message-author { color: ${usernameColor}; }
+                body.obs-mode .chat-message .message-timestamp { color: ${textColor}; opacity: 0.6; }
+                body.obs-mode .message-streamer-label { display: ${showBadges ? 'flex' : 'none'}; }
+                body.obs-mode .message-timestamp { display: ${showTimestamps ? 'inline' : 'none'}; }
+            `;
+            document.head.appendChild(obsStyle);
+
+            // Override AppState settings for OBS
+            if (typeof AppState !== 'undefined') {
+                AppState.settings.maxMessages = maxMsg;
+                AppState.settings.fontSize = parseInt(fontSize);
+                AppState.settings.showTimestamps = showTimestamps;
+                AppState.settings.showPlatformBadges = showBadges;
+            }
+
+            // Set theme
+            document.documentElement.dataset.theme = theme;
+
+            // Auto-connect from URL params
+            const platform = params.get('platform') || 'both';
+            const channelKick = params.get('channel_kick') || '';
+            const channelTwitch = params.get('channel_twitch') || '';
+
+            // Wait for adapters to load then connect
+            setTimeout(function() {
+                if (typeof addChannel !== 'function') return;
+
+                if ((platform === 'kick' || platform === 'both') && channelKick) {
+                    addChannel('kick', channelKick);
+                }
+                if ((platform === 'twitch' || platform === 'both') && channelTwitch) {
+                    addChannel('twitch', channelTwitch);
+                }
+
+                // Also try channels param (existing obs/ format)
+                if (params.has('channels')) {
+                    const channels = params.get('channels').split(',');
+                    for (const ch of channels) {
+                        const parts = ch.split(':');
+                        if (parts.length >= 2) {
+                            const plat = parts[0];
+                            const name = parts.slice(1).join(':');
+                            const cid = plat + '-' + name.split(':')[0].toLowerCase();
+                            if (!AppState.channels.has(cid)) {
+                                addChannel(plat, name);
+                            }
+                        }
+                    }
+                }
+            }, 500);
+
+            return true;
+        }
+
+        // =====================================================================
+        // GENERATE OBS URL (Phase 5.3) - Enhanced version
+        // =====================================================================
+
+        function generateEnhancedOBSUrl() {
+            const params = new URLSearchParams();
+            params.set('obs', '1');
+
+            // Channels from current connections
+            if (typeof AppState !== 'undefined') {
+                for (const [id, data] of AppState.channels) {
+                    const platform = data.platform.split('-')[0];
+                    if (platform === 'kick') {
+                        params.set('channel_kick', data.channel + (data.adapter?.chatroomId ? ':' + data.adapter.chatroomId : ''));
+                    } else if (platform === 'twitch') {
+                        params.set('channel_twitch', data.channel);
+                    }
+                }
+            }
+
+            // Fallback to saved settings if no active channels
+            if (!params.has('channel_kick') && cpSettings.kick.enabled && cpSettings.kick.channelSlug) {
+                const slug = cpSettings.kick.channelSlug;
+                const cid = cpSettings.kick.chatroomId;
+                params.set('channel_kick', cid ? slug + ':' + cid : slug);
+            }
+            if (!params.has('channel_twitch') && cpSettings.twitch.enabled && cpSettings.twitch.channelName) {
+                params.set('channel_twitch', cpSettings.twitch.channelName);
+            }
+
+            // Determine platform
+            const hasKick = params.has('channel_kick');
+            const hasTwitch = params.has('channel_twitch');
+            if (hasKick && hasTwitch) params.set('platform', 'both');
+            else if (hasKick) params.set('platform', 'kick');
+            else if (hasTwitch) params.set('platform', 'twitch');
+
+            // OBS settings - URLSearchParams.set() handles encoding automatically
+            params.set('fontsize', String(cpSettings.obs.fontSize));
+            params.set('textcolor', cpSettings.obs.textColor);
+            params.set('usernamecolor', cpSettings.obs.usernameColor);
+            params.set('maxmsg', String(cpSettings.obs.maxMessages));
+            params.set('showbadges', cpSettings.ui.showBadges ? '1' : '0');
+            params.set('showtimestamps', cpSettings.ui.showTimestamps ? '1' : '0');
+            params.set('theme', cpSettings.ui.theme || 'dark');
+
+            // Bad words - URLSearchParams handles encoding
+            if (cpSettings.obs.badWordList && cpSettings.obs.badWordList.length > 0) {
+                params.set('badwords', cpSettings.obs.badWordList.join(','));
+            }
+
+            // OBS-specific settings from existing UI
+            const obsShowAlerts = document.getElementById('obsShowAlerts');
+            if (obsShowAlerts) params.set('showAlerts', String(obsShowAlerts.checked));
+            const obsHideAfter = document.getElementById('obsHideAfter');
+            if (obsHideAfter && parseInt(obsHideAfter.value) > 0) {
+                params.set('hideAfter', obsHideAfter.value);
+            }
+
+            const baseUrl = window.location.origin + window.location.pathname;
+            return baseUrl + '?' + params.toString();
+        }
+
+        // Override the existing OBS URL generation
+        function initEnhancedOBSUrl() {
+            const genBtn = document.getElementById('obsGenerateUrl');
+            const urlInput = document.getElementById('obsUrlInput');
+
+            if (genBtn) {
+                // Remove old listeners by cloning
+                const newBtn = genBtn.cloneNode(true);
+                genBtn.parentNode.replaceChild(newBtn, genBtn);
+
+                newBtn.addEventListener('click', function() {
+                    // Also try existing generateOBSUrl for the obs/ page URL
+                    const enhancedUrl = generateEnhancedOBSUrl();
+                    if (urlInput) urlInput.value = enhancedUrl;
+
+                    // Copy to clipboard
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(enhancedUrl).then(function() {
+                            if (typeof showToast === 'function') showToast('OBS URL zkopirovan do schranky!', 'success');
+                        }).catch(function() {
+                            if (typeof showToast === 'function') showToast('OBS URL vygenerovan', 'info');
+                        });
+                    } else {
+                        if (typeof showToast === 'function') showToast('OBS URL vygenerovan', 'info');
+                    }
+                });
+            }
+
+            // Copy button
+            const copyBtn = document.getElementById('obsUrlCopy');
+            if (copyBtn) {
+                const newCopy = copyBtn.cloneNode(true);
+                copyBtn.parentNode.replaceChild(newCopy, copyBtn);
+                newCopy.addEventListener('click', function() {
+                    if (!urlInput || !urlInput.value) {
+                        if (typeof showToast === 'function') showToast('Nejprve vygenerujte URL', 'warning');
+                        return;
+                    }
+                    if (navigator.clipboard && navigator.clipboard.writeText) {
+                        navigator.clipboard.writeText(urlInput.value).then(function() {
+                            if (typeof showToast === 'function') showToast('OBS URL zkopirovan!', 'success');
+                        }).catch(function() {
+                            urlInput.select();
+                            document.execCommand('copy');
+                            if (typeof showToast === 'function') showToast('OBS URL zkopirovan!', 'success');
+                        });
+                    }
+                });
+            }
+
+            // Preview button (Phase 5.4)
+            const previewBtn = document.getElementById('obsPreviewBtn');
+            if (previewBtn) {
+                previewBtn.addEventListener('click', function() {
+                    const url = urlInput?.value || generateEnhancedOBSUrl();
+                    if (url) {
+                        window.open(url, '_blank');
+                    } else {
+                        if (typeof showToast === 'function') showToast('Nejprve vygenerujte URL', 'warning');
+                    }
+                });
+            }
+        }
+
+        // =====================================================================
+        // AUTO-SCROLL WITH PAUSE ON MANUAL SCROLL (Phase 4.2)
+        // =====================================================================
+
+        let autoScrollEnabled = true;
+
+        function initAutoScrollPause() {
+            const container = document.getElementById('chatContainer');
+            if (!container) return;
+
+            container.addEventListener('scroll', function() {
+                const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 50;
+                autoScrollEnabled = atBottom;
+            });
+
+            // Monkey-patch scrollToBottom to respect pause
+            if (typeof scrollToBottom === 'function') {
+                const _origScroll = scrollToBottom;
+                window.scrollToBottom = function() {
+                    if (autoScrollEnabled) {
+                        _origScroll();
+                    }
+                };
+            }
+        }
+
+        // =====================================================================
+        // INITIALIZATION
+        // =====================================================================
+
+        function initStreamingOverlay() {
+            // Check OBS mode first - if active, skip settings UI init
+            const isOBS = checkOBSMode();
+
+            if (!isOBS) {
+                initSettingsTabs();
+                populateSettingsUI();
+                initSaveButtons();
+                initKickFetchId();
+                initEnhancedOBSUrl();
+                initAutoScrollPause();
+
+                // Auto-connect after a short delay to let adapters initialize
+                setTimeout(autoConnectFromSettings, 1500);
+            }
+
+            // Update status dots
+            setTimeout(updateCPStatusDots, 2000);
+        }
+
+        // Run after DOM is ready (script.js DOMContentLoaded has already fired by now)
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initStreamingOverlay);
+        } else {
+            // DOM already ready, run on next tick to ensure script.js has initialized
+            setTimeout(initStreamingOverlay, 0);
+        }
+
+    })();
+    </script>
 </body>
 </html>
