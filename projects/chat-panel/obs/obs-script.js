@@ -13,6 +13,7 @@ class OBSChatView {
         this.config = {};
         this.adapters = new Map();
         this.messageCount = 0;
+        this._recentIds = new Set();
         this.container = document.getElementById('log');
     }
 
@@ -198,7 +199,17 @@ class OBSChatView {
                 return;
         }
 
-        adapter.on('message', (msg) => this._renderMessage(msg));
+        adapter.on('message', (msg) => {
+            // Deduplicate by message ID (prevents double messages on reconnect)
+            if (msg.id && this._recentIds.has(msg.id)) return;
+            if (msg.id) {
+                this._recentIds.add(msg.id);
+                if (this._recentIds.size > 200) {
+                    this._recentIds.delete(this._recentIds.values().next().value);
+                }
+            }
+            this._renderMessage(msg);
+        });
         adapter.on('alert', (alert) => this._renderAlert(alert));
         adapter.on('connect', () => {
             console.log(`[OBS] Connected to ${platform}:${channel}`);
