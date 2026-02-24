@@ -1522,7 +1522,7 @@
                 document.head.appendChild(customStyleEl);
             }
 
-            // Custom HTML
+            // Custom HTML — detect Streamlabs widget template for compat mode
             var customHTMLText = '';
             if (params.has('customHTML')) {
                 try { customHTMLText = atob(params.get('customHTML')); } catch (e) {}
@@ -1530,10 +1530,57 @@
                 customHTMLText = obsConf.customHTML;
             }
             if (customHTMLText) {
-                var customHTMLEl = document.createElement('div');
-                customHTMLEl.id = 'custom-html';
-                customHTMLEl.innerHTML = customHTMLText;
-                document.body.appendChild(customHTMLEl);
+                // Check for Streamlabs <script type="text/template" id="chatlist_item">
+                var slTemplateMatch = customHTMLText.match(/<script[^>]*type=["']text\/template["'][^>]*id=["']chatlist_item["'][^>]*>([\s\S]*?)<\/script>/i);
+
+                if (slTemplateMatch) {
+                    // ===== STREAMLABS COMPAT MODE =====
+                    window.__slCompatMode = true;
+                    window.__slTemplate = slTemplateMatch[1].trim();
+                    console.log('[OBS] Streamlabs compat mode activated');
+
+                    // Hide default chat container — SL template replaces it
+                    var chatContainer = document.querySelector('.chat-container');
+                    if (chatContainer) chatContainer.style.display = 'none';
+
+                    // Strip the template script from the HTML (we already extracted it)
+                    var cleanHTML = customHTMLText
+                        .replace(/<script[^>]*type=["']text\/template["'][^>]*>[\s\S]*?<\/script>/gi, '');
+
+                    // Parse the remaining HTML
+                    var tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = cleanHTML;
+
+                    // Move <link> elements to <head> (e.g. animate.css)
+                    var links = tempDiv.querySelectorAll('link');
+                    for (var i = 0; i < links.length; i++) {
+                        document.head.appendChild(links[i]);
+                    }
+
+                    // Inject remaining elements into body
+                    while (tempDiv.firstChild) {
+                        document.body.appendChild(tempDiv.firstChild);
+                    }
+
+                    // Ensure #log exists (the template expects it as the message container)
+                    if (!document.getElementById('log')) {
+                        var logEl = document.createElement('div');
+                        logEl.id = 'log';
+                        logEl.className = 'sl__chat__layout';
+                        document.body.appendChild(logEl);
+                    }
+
+                    // Fire Streamlabs onLoad event after a tick (for custom JS)
+                    setTimeout(function() {
+                        try { document.dispatchEvent(new CustomEvent('onLoad', { detail: {} })); } catch (e) {}
+                    }, 200);
+                } else {
+                    // Non-Streamlabs custom HTML — inject as wrapper div
+                    var customHTMLEl = document.createElement('div');
+                    customHTMLEl.id = 'custom-html';
+                    customHTMLEl.innerHTML = customHTMLText;
+                    document.body.appendChild(customHTMLEl);
+                }
             }
 
             // Custom JS

@@ -1139,6 +1139,11 @@ function fireTestAlert(alertType, forcePlatform) {
  * Vykreslení event alertu v chatu
  */
 function renderAlert(alert) {
+    // Streamlabs compat mode — render alert into #log
+    if (window.__slCompatMode) {
+        return renderSlAlert(alert);
+    }
+
     let messagesContainer = DOM.chatContainer.querySelector('.chat-messages');
     if (!messagesContainer) {
         messagesContainer = document.createElement('div');
@@ -1211,10 +1216,138 @@ function getAlertIcon(alertType) {
     return icons[alertType] || '<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 22c1.1 0 2-.9 2-2h-4c0 1.1.9 2 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4c0-.83-.67-1.5-1.5-1.5s-1.5.67-1.5 1.5v.68C7.64 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2zm-2 1H8v-6c0-2.48 1.51-4.5 4-4.5s4 2.02 4 4.5v6z"/></svg>';
 }
 
+// ==========================================================================
+// STREAMLABS COMPAT RENDERING
+// When custom HTML contains a #chatlist_item template, messages are rendered
+// using the Streamlabs widget format: {from}, {message}, {color}, {badges},
+// {messageId}. The custom CSS then targets #log > div, .meta, .name, .message.
+// ==========================================================================
+
+function renderSlMessage(message) {
+    var logEl = document.getElementById('log');
+    if (!logEl) return;
+
+    var template = window.__slTemplate;
+    var displayName = message.author?.displayName || message.author?.username || 'unknown';
+    var userColor = message.author?.color || '#ffffff';
+
+    // Process message text (emotes if enabled)
+    var messageHtml = escapeHtml(message.content || '');
+    if (AppState.settings.showEmotes && message.emotes && message.emotes.length > 0) {
+        messageHtml = replaceEmotes(message.content, message.emotes);
+    }
+
+    // Build badges HTML (Streamlabs format: <img class="badge"> inside .badges)
+    var badgesHtml = '';
+    if (message.author?.badges) {
+        for (var badge of message.author.badges) {
+            if (badge.url) {
+                badgesHtml += '<img class="badge" src="' + escapeHtml(badge.url) + '" alt="' + escapeHtml(badge.title || '') + '" title="' + escapeHtml(badge.title || '') + '">';
+            }
+        }
+    }
+
+    // Fill Streamlabs template variables
+    var html = template
+        .replace(/\{from\}/g, escapeHtml(displayName))
+        .replace(/\{message\}/g, messageHtml)
+        .replace(/\{messageId\}/g, escapeHtml(message.id || ''))
+        .replace(/\{color\}/g, userColor)
+        .replace(/\{time\}/g, message.timestamp ? message.timestamp.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' }) : '');
+
+    // Create DOM element from filled template
+    var wrapper = document.createElement('div');
+    wrapper.innerHTML = html.trim();
+    var msgEl = wrapper.firstElementChild;
+
+    if (msgEl) {
+        // Inject badges into .badges span if present in template
+        var badgesSpan = msgEl.querySelector('.badges');
+        if (badgesSpan && badgesHtml) {
+            badgesSpan.innerHTML = badgesHtml;
+        }
+
+        logEl.appendChild(msgEl);
+    }
+
+    // Trim excess messages from DOM
+    var maxMsg = AppState.settings.maxMessages || 50;
+    while (logEl.children.length > maxMsg) {
+        logEl.removeChild(logEl.firstChild);
+    }
+
+    // Fire Streamlabs onEventReceived event for custom JS
+    _fireSlEvent('message', {
+        from: displayName,
+        text: message.content,
+        msgId: message.id,
+        displayColor: userColor,
+        badges: message.author?.badges || [],
+    });
+}
+
+function renderSlAlert(alert) {
+    var logEl = document.getElementById('log');
+    if (!logEl) return;
+
+    var icon = getAlertIcon(alert.alertType);
+
+    // Render alert as a styled div inside #log (no SL template for alerts)
+    var alertEl = document.createElement('div');
+    alertEl.className = 'sl-alert sl-alert-' + (alert.alertType || 'generic');
+    alertEl.dataset.alertId = alert.id;
+
+    var alertColors = {
+        'subscribe': '#b366ff', 'resubscribe': '#b366ff',
+        'gift_sub': '#ff69b4', 'gift_sub_received': '#ff69b4',
+        'follow': '#ff4444',
+        'cheer': '#ffd700', 'donation': '#ffd700',
+        'raid': '#00bfff',
+        'channel_points': '#00ff7f',
+    };
+    var accentColor = alertColors[alert.alertType] || '#ffd700';
+
+    alertEl.innerHTML =
+        '<div style="display:flex;align-items:center;gap:8px;padding:8px 14px;' +
+        'background:rgba(0,0,0,0.6);border-left:3px solid ' + accentColor + ';' +
+        'border-radius:8px;font-size:14px;color:#fff;margin-bottom:8px;">' +
+        '<span>' + icon + '</span>' +
+        '<span>' + escapeHtml(alert.content || '') + '</span>' +
+        '</div>';
+
+    logEl.appendChild(alertEl);
+
+    // Trim
+    var maxMsg = AppState.settings.maxMessages || 50;
+    while (logEl.children.length > maxMsg) {
+        logEl.removeChild(logEl.firstChild);
+    }
+
+    // Fire SL event
+    _fireSlEvent(alert.alertType || 'alert', {
+        name: alert.author?.displayName || '',
+        message: alert.content,
+        amount: alert.alertData?.amount,
+    });
+}
+
+function _fireSlEvent(type, data) {
+    try {
+        document.dispatchEvent(new CustomEvent('onEventReceived', {
+            detail: { listener: type, event: data },
+        }));
+    } catch (e) {}
+}
+
 /**
  * Vykreslení zprávy
  */
 function renderMessage(message) {
+    // Streamlabs compat mode — use SL template instead of default renderer
+    if (window.__slCompatMode && window.__slTemplate) {
+        return renderSlMessage(message);
+    }
+
     // Zajistit že existuje kontejner pro zprávy
     let messagesContainer = DOM.chatContainer.querySelector('.chat-messages');
     if (!messagesContainer) {
