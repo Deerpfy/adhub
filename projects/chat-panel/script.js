@@ -1910,7 +1910,7 @@ function initDonations() {
             if (tokens.streamlabs) {
                 const input = document.getElementById('streamlabsToken');
                 if (input) input.value = tokens.streamlabs;
-                donationManager.connectStreamlabs(tokens.streamlabs).catch(() => {});
+                donationManager.connectStreamlabs(tokens.streamlabs);
                 _donationShowDisconnect('sl');
             }
             if (tokens.streamelements) {
@@ -1931,13 +1931,9 @@ function donationConnectStreamlabs() {
         return;
     }
     _donationUpdateDot('streamlabs', 'connecting');
-    donationManager.connectStreamlabs(token).then(() => {
-        _donationSaveTokens();
-        _donationShowDisconnect('sl');
-    }).catch(e => {
-        showToast('Streamlabs pripojeni selhalo: ' + e.message, 'error');
-        _donationUpdateDot('streamlabs', 'disconnected');
-    });
+    donationManager.connectStreamlabs(token);
+    _donationSaveTokens();
+    _donationShowDisconnect('sl');
 }
 
 function donationDisconnectStreamlabs() {
