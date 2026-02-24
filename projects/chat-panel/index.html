@@ -868,6 +868,74 @@
             border: none !important;
             box-shadow: none !important;
         }
+        /* OBS: hide streamer label (channel name column) - redundant in OBS overlay */
+        body.obs-mode .message-streamer-label {
+            display: none !important;
+        }
+        /* OBS: add small platform icon before username instead */
+        body.obs-mode .message-body {
+            position: relative;
+        }
+        body.obs-mode .message-content::before {
+            display: none; /* placeholder - platform color shown via border */
+        }
+        /* OBS: style alerts to look good on transparent background */
+        body.obs-mode .chat-alert {
+            background: rgba(0, 0, 0, 0.5) !important;
+            border-radius: 6px;
+            margin: 4px 0;
+            padding: 4px 0;
+        }
+        body.obs-mode .chat-alert .alert-streamer-label {
+            display: none !important;
+        }
+        body.obs-mode .chat-alert .alert-content {
+            color: #ffffff;
+        }
+        body.obs-mode .chat-alert .alert-detail {
+            color: rgba(255, 255, 255, 0.75);
+        }
+        /* OBS: alert type accent colors on border */
+        body.obs-mode .chat-alert.alert-subscribe,
+        body.obs-mode .chat-alert.alert-resubscribe {
+            border-left-color: #b366ff;
+        }
+        body.obs-mode .chat-alert.alert-gift_sub,
+        body.obs-mode .chat-alert.alert-gift_sub_received {
+            border-left-color: #ff69b4;
+        }
+        body.obs-mode .chat-alert.alert-follow {
+            border-left-color: #ff4444;
+        }
+        body.obs-mode .chat-alert.alert-cheer,
+        body.obs-mode .chat-alert.alert-donation {
+            border-left-color: #ffd700;
+        }
+        body.obs-mode .chat-alert.alert-raid {
+            border-left-color: #00bfff;
+        }
+        body.obs-mode .chat-alert.alert-channel_points {
+            border-left-color: #00ff7f;
+        }
+        /* OBS: keep border-left visible on messages for platform color */
+        body.obs-mode .chat-message.platform-twitch {
+            border-left: 3px solid var(--twitch-color, #9146ff) !important;
+        }
+        body.obs-mode .chat-message.platform-kick {
+            border-left: 3px solid var(--kick-color, #53fc18) !important;
+        }
+        body.obs-mode .chat-message.platform-youtube {
+            border-left: 3px solid var(--youtube-color, #ff0000) !important;
+        }
+        /* OBS: ensure chat input is hidden */
+        body.obs-mode .chat-input-area,
+        body.obs-mode .chat-input-container {
+            display: none !important;
+        }
+        /* OBS: mod trigger hidden */
+        body.obs-mode .message-mod-trigger {
+            display: none !important;
+        }
     </style>
 
     <!-- Scripts -->
@@ -1270,6 +1338,7 @@
             const maxMsg = parseInt(params.get('maxmsg') || params.get('maxMessages')) || cpSettings.obs.maxMessages;
             const showBadges = params.has('showbadges') ? params.get('showbadges') !== '0' : cpSettings.ui.showBadges;
             const showTimestamps = params.has('showtimestamps') ? params.get('showtimestamps') !== '0' : cpSettings.ui.showTimestamps;
+            const showAlerts = params.has('showAlerts') ? params.get('showAlerts') !== 'false' : true;
             const theme = params.get('theme') || cpSettings.ui.theme;
 
             // Bad words from URL param (comma-separated)
@@ -1289,8 +1358,9 @@
                 body.obs-mode .chat-message .message-text { color: ${textColor}; }
                 body.obs-mode .chat-message .message-author { color: ${usernameColor}; }
                 body.obs-mode .chat-message .message-timestamp { color: ${textColor}; opacity: 0.6; }
-                body.obs-mode .message-streamer-label { display: ${showBadges ? 'flex' : 'none'}; }
                 body.obs-mode .message-timestamp { display: ${showTimestamps ? 'inline' : 'none'}; }
+                body.obs-mode .user-badges { display: ${showBadges ? 'inline-flex' : 'none'}; }
+                body.obs-mode .chat-alert { display: ${showAlerts ? 'flex' : 'none'} !important; }
             `;
             document.head.appendChild(obsStyle);
 
