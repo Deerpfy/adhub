@@ -1499,6 +1499,18 @@
                 cpSettings.obs.badWordList = bw;
             }
 
+            // Keyword filters from URL params (per-platform)
+            if (params.has('kick_filter')) {
+                const kw = decodeURIComponent(params.get('kick_filter')).split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+                cpSettings.kick.filter.enabled = true;
+                cpSettings.kick.filter.keywords = kw;
+            }
+            if (params.has('twitch_filter')) {
+                const kw = decodeURIComponent(params.get('twitch_filter')).split(',').map(s => s.trim().toLowerCase()).filter(Boolean);
+                cpSettings.twitch.filter.enabled = true;
+                cpSettings.twitch.filter.keywords = kw;
+            }
+
             // Apply OBS styles
             document.documentElement.style.setProperty('--font-size-base', fontSize + 'px');
             document.documentElement.style.setProperty('--obs-text-color', textColor);
@@ -1694,6 +1706,14 @@
             // Bad words - URLSearchParams handles encoding
             if (cpSettings.obs.badWordList && cpSettings.obs.badWordList.length > 0) {
                 params.set('badwords', cpSettings.obs.badWordList.join(','));
+            }
+
+            // Keyword filters (per-platform)
+            if (cpSettings.kick.filter.enabled && cpSettings.kick.filter.keywords && cpSettings.kick.filter.keywords.length > 0) {
+                params.set('kick_filter', cpSettings.kick.filter.keywords.join(','));
+            }
+            if (cpSettings.twitch.filter.enabled && cpSettings.twitch.filter.keywords && cpSettings.twitch.filter.keywords.length > 0) {
+                params.set('twitch_filter', cpSettings.twitch.filter.keywords.join(','));
             }
 
             // OBS-specific settings from existing UI
