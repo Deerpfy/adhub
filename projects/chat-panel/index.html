@@ -408,10 +408,19 @@
                             </select>
                         </div>
                         <div id="styleCustomPanel" class="style-panel" style="display:none">
-                            <textarea id="customCSSEditor" rows="8" placeholder="/* Vloz Streamlabs Custom CSS nebo vlastni CSS */&#10;/* Pouzij Streamlabs tridy: #log, .wrap, .meta, .name, .message, .emote */"></textarea>
-                            <details class="style-html-ref">
-                                <summary>HTML Reference</summary>
-                                <pre><code>&lt;div id="log"&gt;
+                            <div class="code-editor-tabs">
+                                <button class="code-tab active" data-codetab="css">CSS</button>
+                                <button class="code-tab" data-codetab="html">HTML</button>
+                                <button class="code-tab" data-codetab="js">JS</button>
+                            </div>
+                            <div class="code-tab-panel active" id="codetab-css">
+                                <textarea id="customCSSEditor" rows="10" placeholder="/* Streamlabs / vlastni CSS */&#10;/* Tridy: #log, .wrap, .meta, .name, .message, .emote */&#10;/* Promenne: {font_size}, {text_color}, {background_color} */"></textarea>
+                            </div>
+                            <div class="code-tab-panel" id="codetab-html">
+                                <textarea id="customHTMLEditor" rows="10" placeholder="<!-- Vlastni HTML sablona pro zpravy -->&#10;<!-- Pouzij Streamlabs strukturu: -->&#10;<!-- <div id='log'><div class='wrap'>...</div></div> -->"></textarea>
+                                <details class="style-html-ref">
+                                    <summary>HTML Reference (vychozi struktura)</summary>
+                                    <pre><code>&lt;div id="log"&gt;
   &lt;div class="wrap" data-from="user"&gt;
     &lt;div class="meta" style="color:#ff0"&gt;
       &lt;span class="badges"&gt;&lt;img class="badge"&gt;&lt;/span&gt;
@@ -421,7 +430,15 @@
     &lt;span class="message"&gt;text&lt;/span&gt;
   &lt;/div&gt;
 &lt;/div&gt;</code></pre>
-                            </details>
+                                </details>
+                            </div>
+                            <div class="code-tab-panel" id="codetab-js">
+                                <textarea id="customJSEditor" rows="10" placeholder="// Vlastni JavaScript pro OBS overlay&#10;// Pristup k chatovym zprav pres: document.getElementById('log')&#10;// Priklad animace:&#10;// document.addEventListener('onMessage', function(e) { ... });"></textarea>
+                            </div>
+                            <div class="code-editor-footer">
+                                <p class="code-security-warn">Vlastni HTML/JS kod muze mit bezpecnostni rizika. Pouzivejte pouze duveryhodny kod.</p>
+                                <button class="btn btn-sm btn-ghost" id="resetCustomCode">Resetovat kod</button>
+                            </div>
                         </div>
                         <div id="styleVarsPanel" class="style-panel" style="display:none">
                             <div class="style-vars-grid">
@@ -448,6 +465,10 @@
                                 <label>
                                     <input type="checkbox" id="obsShowAlerts" checked>
                                     Alerty v OBS
+                                </label>
+                                <label>
+                                    <input type="checkbox" id="obsShowChannelNames" checked>
+                                    Nazvy kanalu
                                 </label>
                                 <label>
                                     Skryt po
@@ -812,6 +833,79 @@
             padding: 8px 0;
         }
 
+        /* Code editor tabs (HTML/CSS/JS) */
+        .code-editor-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 1px solid var(--border-color, #333);
+            margin-bottom: 0;
+        }
+        .code-tab {
+            padding: 6px 16px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted, #888);
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: color 0.2s, border-color 0.2s;
+        }
+        .code-tab:hover { color: var(--text-primary, #e0e0e0); }
+        .code-tab.active {
+            color: var(--accent-primary, #53fc18);
+            border-bottom-color: var(--accent-primary, #53fc18);
+        }
+        .code-tab-panel {
+            display: none;
+        }
+        .code-tab-panel.active {
+            display: block;
+        }
+        .code-tab-panel textarea {
+            width: 100%;
+            padding: 10px;
+            background: var(--bg-primary, #0a0a0a);
+            border: 1px solid var(--border-color, #333);
+            border-top: none;
+            border-radius: 0 0 var(--border-radius-sm, 4px) var(--border-radius-sm, 4px);
+            color: var(--text-primary, #e0e0e0);
+            font-family: 'Consolas', 'Monaco', 'Fira Code', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            resize: vertical;
+            min-height: 120px;
+            tab-size: 2;
+        }
+        .code-editor-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 6px;
+            gap: 8px;
+        }
+        .code-security-warn {
+            font-size: 11px;
+            color: #ff9800;
+            margin: 0;
+            flex: 1;
+        }
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid var(--border-color, #333);
+            color: var(--text-muted, #888);
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: var(--border-radius-sm, 4px);
+            cursor: pointer;
+        }
+        .btn-ghost:hover {
+            color: var(--text-primary, #e0e0e0);
+            border-color: var(--text-muted, #888);
+        }
+
         /* Input with button inline */
         .input-with-btn {
             display: flex;
@@ -868,16 +962,24 @@
             border: none !important;
             box-shadow: none !important;
         }
-        /* OBS: hide streamer label (channel name column) - redundant in OBS overlay */
+        /* OBS: streamer label hidden by default, shown via dynamic CSS when showChannelNames=true */
         body.obs-mode .message-streamer-label {
-            display: none !important;
+            display: none;
         }
-        /* OBS: add small platform icon before username instead */
-        body.obs-mode .message-body {
-            position: relative;
+        body.obs-mode .alert-streamer-label {
+            display: none;
         }
-        body.obs-mode .message-content::before {
-            display: none; /* placeholder - platform color shown via border */
+        /* OBS: when channel names enabled, show streamer labels */
+        body.obs-mode.obs-show-channels .message-streamer-label {
+            display: flex !important;
+            min-width: 90px;
+            max-width: 120px;
+        }
+        body.obs-mode.obs-show-channels .alert-streamer-label {
+            display: flex !important;
+        }
+        body.obs-mode.obs-show-channels .message-streamer-label .streamer-name {
+            color: rgba(255, 255, 255, 0.6);
         }
         /* OBS: style alerts to look good on transparent background */
         body.obs-mode .chat-alert {
@@ -885,9 +987,6 @@
             border-radius: 6px;
             margin: 4px 0;
             padding: 4px 0;
-        }
-        body.obs-mode .chat-alert .alert-streamer-label {
-            display: none !important;
         }
         body.obs-mode .chat-alert .alert-content {
             color: #ffffff;
@@ -1331,6 +1430,15 @@
 
             document.body.classList.add('obs-mode');
 
+            // Channel names visibility (early, before reading other params)
+            var showChannelNamesEarly = true;
+            if (params.has('showChannelNames')) {
+                showChannelNamesEarly = params.get('showChannelNames') !== 'false';
+            }
+            if (showChannelNamesEarly) {
+                document.body.classList.add('obs-show-channels');
+            }
+
             // Read settings from URL params (fallback to localStorage)
             const fontSize = params.get('fontsize') || params.get('fontSize') || cpSettings.obs.fontSize;
             const textColor = params.get('textcolor') || params.get('textColor') || cpSettings.obs.textColor;
@@ -1339,6 +1447,7 @@
             const showBadges = params.has('showbadges') ? params.get('showbadges') !== '0' : cpSettings.ui.showBadges;
             const showTimestamps = params.has('showtimestamps') ? params.get('showtimestamps') !== '0' : cpSettings.ui.showTimestamps;
             const showAlerts = params.has('showAlerts') ? params.get('showAlerts') !== 'false' : true;
+            const showChannelNames = params.has('showChannelNames') ? params.get('showChannelNames') !== 'false' : true;
             const theme = params.get('theme') || cpSettings.ui.theme;
 
             // Bad words from URL param (comma-separated)
@@ -1364,21 +1473,49 @@
             `;
             document.head.appendChild(obsStyle);
 
-            // Apply custom CSS from URL param or localStorage (preset / custom CSS editor)
+            // Apply custom code (CSS, HTML, JS) from URL params or localStorage
+            var obsConf = {};
+            try { obsConf = JSON.parse(localStorage.getItem('adhub_obs_config') || '{}'); } catch (e) {}
+
+            // Custom CSS
             var customCSSText = '';
             if (params.has('customCSS')) {
                 try { customCSSText = atob(params.get('customCSS')); } catch (e) {}
-            } else {
-                try {
-                    var obsConf = JSON.parse(localStorage.getItem('adhub_obs_config') || '{}');
-                    if (obsConf.customCSS) customCSSText = obsConf.customCSS;
-                } catch (e) {}
+            } else if (obsConf.customCSS) {
+                customCSSText = obsConf.customCSS;
             }
             if (customCSSText) {
                 var customStyleEl = document.createElement('style');
                 customStyleEl.id = 'custom-styles';
                 customStyleEl.textContent = customCSSText;
                 document.head.appendChild(customStyleEl);
+            }
+
+            // Custom HTML
+            var customHTMLText = '';
+            if (params.has('customHTML')) {
+                try { customHTMLText = atob(params.get('customHTML')); } catch (e) {}
+            } else if (obsConf.customHTML) {
+                customHTMLText = obsConf.customHTML;
+            }
+            if (customHTMLText) {
+                var customHTMLEl = document.createElement('div');
+                customHTMLEl.id = 'custom-html';
+                customHTMLEl.innerHTML = customHTMLText;
+                document.body.appendChild(customHTMLEl);
+            }
+
+            // Custom JS
+            var customJSText = '';
+            if (params.has('customJS')) {
+                try { customJSText = atob(params.get('customJS')); } catch (e) {}
+            } else if (obsConf.customJS) {
+                customJSText = obsConf.customJS;
+            }
+            if (customJSText) {
+                var customScriptEl = document.createElement('script');
+                customScriptEl.textContent = customJSText;
+                document.body.appendChild(customScriptEl);
             }
 
             // Override AppState settings for OBS
@@ -1472,21 +1609,94 @@
             // OBS-specific settings from existing UI
             const obsShowAlerts = document.getElementById('obsShowAlerts');
             if (obsShowAlerts) params.set('showAlerts', String(obsShowAlerts.checked));
+            const obsShowChannelNames = document.getElementById('obsShowChannelNames');
+            if (obsShowChannelNames) params.set('showChannelNames', String(obsShowChannelNames.checked));
             const obsHideAfter = document.getElementById('obsHideAfter');
             if (obsHideAfter && parseInt(obsHideAfter.value) > 0) {
                 params.set('hideAfter', obsHideAfter.value);
             }
 
-            // Custom CSS from style manager (adhub_obs_config)
+            // Custom code from style manager (adhub_obs_config)
             try {
                 var obsConf = JSON.parse(localStorage.getItem('adhub_obs_config') || '{}');
                 if (obsConf.customCSS) {
                     params.set('customCSS', btoa(obsConf.customCSS));
                 }
+                if (obsConf.customHTML) {
+                    params.set('customHTML', btoa(obsConf.customHTML));
+                }
+                if (obsConf.customJS) {
+                    params.set('customJS', btoa(obsConf.customJS));
+                }
             } catch (e) {}
 
             const baseUrl = window.location.origin + window.location.pathname;
             return baseUrl + '?' + params.toString();
+        }
+
+        // =====================================================================
+        // CODE EDITOR TABS (HTML/CSS/JS)
+        // =====================================================================
+
+        function initCodeEditorTabs() {
+            // Tab switching for code editor
+            var tabContainer = document.querySelector('.code-editor-tabs');
+            if (tabContainer) {
+                tabContainer.addEventListener('click', function(e) {
+                    var tab = e.target.closest('.code-tab');
+                    if (!tab) return;
+                    var targetId = tab.dataset.codetab;
+                    if (!targetId) return;
+
+                    // Deactivate all
+                    tabContainer.querySelectorAll('.code-tab').forEach(function(t) { t.classList.remove('active'); });
+                    document.querySelectorAll('.code-tab-panel').forEach(function(p) { p.classList.remove('active'); });
+
+                    // Activate clicked
+                    tab.classList.add('active');
+                    var panel = document.getElementById('codetab-' + targetId);
+                    if (panel) panel.classList.add('active');
+                });
+            }
+
+            // Reset button
+            var resetBtn = document.getElementById('resetCustomCode');
+            if (resetBtn) {
+                resetBtn.addEventListener('click', function() {
+                    var cssEditor = document.getElementById('customCSSEditor');
+                    var htmlEditor = document.getElementById('customHTMLEditor');
+                    var jsEditor = document.getElementById('customJSEditor');
+                    if (cssEditor) cssEditor.value = '';
+                    if (htmlEditor) htmlEditor.value = '';
+                    if (jsEditor) jsEditor.value = '';
+                    if (typeof showToast === 'function') showToast('Vlastni kod resetovan', 'info');
+                });
+            }
+
+            // Intercept Apply Style button to also save HTML and JS
+            var applyBtn = document.getElementById('applyStyleBtn');
+            if (applyBtn) {
+                applyBtn.addEventListener('click', function() {
+                    var htmlCode = (document.getElementById('customHTMLEditor')?.value || '').trim();
+                    var jsCode = (document.getElementById('customJSEditor')?.value || '').trim();
+                    if (typeof saveOBSConfig === 'function') {
+                        saveOBSConfig({ customHTML: htmlCode, customJS: jsCode });
+                    }
+                });
+            }
+
+            // Load saved custom HTML and JS into editors
+            try {
+                var saved = JSON.parse(localStorage.getItem('adhub_obs_config') || '{}');
+                if (saved.customHTML) {
+                    var htmlEditor = document.getElementById('customHTMLEditor');
+                    if (htmlEditor) htmlEditor.value = saved.customHTML;
+                }
+                if (saved.customJS) {
+                    var jsEditor = document.getElementById('customJSEditor');
+                    if (jsEditor) jsEditor.value = saved.customJS;
+                }
+            } catch (e) {}
         }
 
         // Override the existing OBS URL generation
@@ -1591,6 +1801,7 @@
                 initSettingsTabs();
                 populateSettingsUI();
                 initSaveButtons();
+                initCodeEditorTabs();
                 initEnhancedOBSUrl();
                 initAutoScrollPause();
             }
