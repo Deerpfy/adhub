@@ -1,0 +1,1545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BetterYTBwidget — YouTube Music Now Playing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+/* ============================================================
+   THEME ENGINE — CSS Custom Properties & Theme Definitions
+   ============================================================ */
+:root {
+    --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    --border-radius: 12px;
+    --border-radius-art: 8px;
+    --transition-speed: 0.35s;
+    --transition-fn: cubic-bezier(0.4, 0, 0.2, 1);
+    --shadow-soft: 0 2px 12px rgba(0,0,0,0.25);
+    --shadow-glow: 0 0 20px rgba(0,0,0,0.3);
+
+    /* Default: glass theme */
+    --bg: rgba(18, 18, 24, 0.65);
+    --bg-blur: 16px;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255,255,255,0.7);
+    --text-muted: rgba(255,255,255,0.45);
+    --accent: #ff0000;
+    --progress-bg: rgba(255,255,255,0.15);
+    --progress-fill: #ff0000;
+    --border: rgba(255,255,255,0.1);
+    --status-connected: #4caf50;
+    --status-reconnecting: #ff9800;
+    --status-disconnected: #f44336;
+    --heart-color: #ff4081;
+    --brand-color: #ff0000;
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+    --bg: #1a1a2e;
+    --bg-blur: 0px;
+    --text-primary: #f0f0f5;
+    --text-secondary: rgba(240,240,245,0.7);
+    --text-muted: rgba(240,240,245,0.45);
+    --border: rgba(255,255,255,0.08);
+}
+
+/* Light theme */
+[data-theme="light"] {
+    --bg: #ffffff;
+    --bg-blur: 0px;
+    --text-primary: #1a1a2e;
+    --text-secondary: rgba(26,26,46,0.65);
+    --text-muted: rgba(26,26,46,0.4);
+    --accent: #cc0000;
+    --progress-bg: rgba(0,0,0,0.1);
+    --progress-fill: #cc0000;
+    --border: rgba(0,0,0,0.08);
+    --shadow-soft: 0 2px 12px rgba(0,0,0,0.1);
+}
+
+/* Transparent theme */
+[data-theme="transparent"] {
+    --bg: transparent;
+    --bg-blur: 0px;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255,255,255,0.85);
+    --text-muted: rgba(255,255,255,0.6);
+    --border: transparent;
+    --shadow-soft: none;
+}
+
+/* Glass theme (default, set in :root above) */
+[data-theme="glass"] {
+    --bg: rgba(18, 18, 24, 0.65);
+    --bg-blur: 16px;
+}
+
+/* ============================================================
+   BASE RESET & LAYOUT
+   ============================================================ */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html, body {
+    background: transparent;
+    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    font-family: var(--font-family);
+}
+
+body {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+    padding: 12px;
+}
+
+/* Position variants */
+body[data-position="bottom-left"]  { align-items: flex-end;   justify-content: flex-start; }
+body[data-position="bottom-right"] { align-items: flex-end;   justify-content: flex-end; }
+body[data-position="top-left"]     { align-items: flex-start; justify-content: flex-start; }
+body[data-position="top-right"]    { align-items: flex-start; justify-content: flex-end; }
+body[data-position="center"]       { align-items: center;     justify-content: center; }
+
+/* ============================================================
+   WIDGET CONTAINER
+   ============================================================ */
+.widget {
+    position: relative;
+    background: var(--bg);
+    backdrop-filter: blur(var(--bg-blur));
+    -webkit-backdrop-filter: blur(var(--bg-blur));
+    border: 1px solid var(--border);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-soft);
+    color: var(--text-primary);
+    overflow: hidden;
+    will-change: transform, opacity;
+}
+
+/* Transparent theme: text shadows for readability */
+[data-theme="transparent"] .widget {
+    border: none;
+    box-shadow: none;
+}
+
+[data-theme="transparent"] .track-title,
+[data-theme="transparent"] .track-artist {
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8), 0 0 12px rgba(0,0,0,0.5);
+}
+
+/* ============================================================
+   SIZE VARIANTS
+   ============================================================ */
+
+/* --- Small: 250px, compact row --- */
+.widget[data-size="small"] {
+    width: 250px;
+    padding: 8px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+
+.widget[data-size="small"] .art-container {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 6px;
+}
+
+.widget[data-size="small"] .track-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.widget[data-size="small"] .track-title {
+    font-size: 12px;
+    line-height: 1.3;
+}
+
+.widget[data-size="small"] .track-artist {
+    font-size: 10px;
+    line-height: 1.3;
+}
+
+.widget[data-size="small"] .timeline {
+    margin-top: 4px;
+}
+
+.widget[data-size="small"] .timeline-bar {
+    height: 2px;
+}
+
+.widget[data-size="small"] .timeline-times {
+    font-size: 8px;
+    margin-top: 1px;
+}
+
+.widget[data-size="small"] .brand-icon {
+    width: 12px;
+    height: 12px;
+}
+
+.widget[data-size="small"] .meta-row {
+    margin-top: 2px;
+    gap: 4px;
+}
+
+.widget[data-size="small"] .like-icon { width: 10px; height: 10px; }
+.widget[data-size="small"] .state-icon { width: 10px; height: 10px; }
+
+/* --- Medium: 320px, standard layout --- */
+.widget[data-size="medium"] {
+    width: 320px;
+    padding: 12px;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.widget[data-size="medium"] .art-container {
+    width: 56px;
+    height: 56px;
+    min-width: 56px;
+    border-radius: var(--border-radius-art);
+}
+
+.widget[data-size="medium"] .track-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.widget[data-size="medium"] .track-title {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+}
+
+.widget[data-size="medium"] .track-artist {
+    font-size: 11px;
+    line-height: 1.3;
+    margin-top: 1px;
+}
+
+.widget[data-size="medium"] .timeline {
+    margin-top: 6px;
+}
+
+.widget[data-size="medium"] .timeline-bar {
+    height: 3px;
+}
+
+.widget[data-size="medium"] .timeline-times {
+    font-size: 9px;
+    margin-top: 2px;
+}
+
+.widget[data-size="medium"] .brand-icon {
+    width: 14px;
+    height: 14px;
+}
+
+.widget[data-size="medium"] .meta-row {
+    margin-top: 4px;
+    gap: 5px;
+}
+
+.widget[data-size="medium"] .like-icon { width: 12px; height: 12px; }
+.widget[data-size="medium"] .state-icon { width: 12px; height: 12px; }
+
+/* --- Large: 400px, expanded layout --- */
+.widget[data-size="large"] {
+    width: 400px;
+    padding: 16px;
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.widget[data-size="large"] .art-container {
+    width: 80px;
+    height: 80px;
+    min-width: 80px;
+    border-radius: var(--border-radius-art);
+}
+
+.widget[data-size="large"] .track-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.widget[data-size="large"] .track-title {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.widget[data-size="large"] .track-artist {
+    font-size: 12px;
+    line-height: 1.35;
+    margin-top: 2px;
+}
+
+.widget[data-size="large"] .timeline {
+    margin-top: 8px;
+}
+
+.widget[data-size="large"] .timeline-bar {
+    height: 3px;
+}
+
+.widget[data-size="large"] .timeline-times {
+    font-size: 10px;
+    margin-top: 2px;
+}
+
+.widget[data-size="large"] .brand-icon {
+    width: 16px;
+    height: 16px;
+}
+
+.widget[data-size="large"] .meta-row {
+    margin-top: 5px;
+    gap: 6px;
+}
+
+.widget[data-size="large"] .like-icon { width: 14px; height: 14px; }
+.widget[data-size="large"] .state-icon { width: 14px; height: 14px; }
+
+/* ============================================================
+   ALBUM ART
+   ============================================================ */
+.art-container {
+    position: relative;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: rgba(255,255,255,0.05);
+}
+
+.art-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.art-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(255,0,0,0.15), rgba(255,0,0,0.05));
+}
+
+.art-placeholder svg {
+    width: 40%;
+    height: 40%;
+    opacity: 0.4;
+    fill: var(--text-secondary);
+}
+
+/* ============================================================
+   TRACK INFO
+   ============================================================ */
+.track-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.track-title {
+    color: var(--text-primary);
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.track-title-inner {
+    display: inline-block;
+    white-space: nowrap;
+}
+
+/* Marquee animation for long titles */
+.track-title.marquee .track-title-inner {
+    animation: marquee-scroll var(--marquee-duration, 10s) linear infinite;
+    animation-delay: 2s;
+}
+
+@keyframes marquee-scroll {
+    0%   { transform: translateX(0); }
+    10%  { transform: translateX(0); }
+    90%  { transform: translateX(var(--marquee-distance, -100px)); }
+    100% { transform: translateX(var(--marquee-distance, -100px)); }
+}
+
+.track-artist {
+    color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ============================================================
+   META ROW — brand icon, like, playback state
+   ============================================================ */
+.meta-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+}
+
+.brand-icon {
+    flex-shrink: 0;
+    opacity: 0.8;
+}
+
+.brand-icon svg { width: 100%; height: 100%; }
+
+.like-icon {
+    flex-shrink: 0;
+    color: var(--heart-color);
+    display: none;
+}
+
+.like-icon.active { display: flex; }
+
+.like-icon svg {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+}
+
+.state-icon {
+    flex-shrink: 0;
+    color: var(--text-muted);
+}
+
+.state-icon svg {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+}
+
+/* ============================================================
+   TIMELINE
+   ============================================================ */
+.timeline {
+    width: 100%;
+}
+
+.timeline-bar {
+    width: 100%;
+    background: var(--progress-bg);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+}
+
+.timeline-fill {
+    height: 100%;
+    background: var(--progress-fill);
+    border-radius: 4px;
+    width: 0%;
+    transition: width 1s linear;
+}
+
+.timeline-times {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   CONNECTION STATUS INDICATOR
+   ============================================================ */
+.connection-status {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--status-disconnected);
+    transition: background 0.3s ease, opacity 0.5s ease;
+    z-index: 10;
+    opacity: 1;
+}
+
+.connection-status.connected {
+    background: var(--status-connected);
+}
+
+.connection-status.reconnecting {
+    background: var(--status-reconnecting);
+    animation: pulse-dot 1s ease infinite;
+}
+
+.connection-status.disconnected {
+    background: var(--status-disconnected);
+}
+
+.connection-status.fade-out {
+    opacity: 0;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+/* ============================================================
+   CONNECTING STATE OVERLAY
+   ============================================================ */
+.connecting-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    backdrop-filter: blur(var(--bg-blur));
+    -webkit-backdrop-filter: blur(var(--bg-blur));
+    border-radius: var(--border-radius);
+    z-index: 5;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.connecting-overlay.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.connecting-text {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.connecting-spinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--text-muted);
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ============================================================
+   ANIMATION CONTROLLER — Show/Hide Transitions
+   ============================================================ */
+
+/* Base state: hidden */
+.widget.anim-hidden {
+    pointer-events: none;
+}
+
+/* Slide animations */
+.widget[data-anim="slide"][data-dir="up"].anim-hidden    { transform: translateY(30px);  opacity: 0; }
+.widget[data-anim="slide"][data-dir="down"].anim-hidden  { transform: translateY(-30px); opacity: 0; }
+.widget[data-anim="slide"][data-dir="left"].anim-hidden  { transform: translateX(30px);  opacity: 0; }
+.widget[data-anim="slide"][data-dir="right"].anim-hidden { transform: translateX(-30px); opacity: 0; }
+
+.widget[data-anim="slide"].anim-visible {
+    transform: translate(0, 0);
+    opacity: 1;
+    transition: transform var(--transition-speed) var(--transition-fn),
+                opacity var(--transition-speed) var(--transition-fn);
+}
+
+.widget[data-anim="slide"].anim-hidden {
+    transition: transform var(--transition-speed) var(--transition-fn),
+                opacity var(--transition-speed) var(--transition-fn);
+}
+
+/* Fade animations */
+.widget[data-anim="fade"].anim-hidden {
+    opacity: 0;
+    transition: opacity var(--transition-speed) var(--transition-fn);
+}
+
+.widget[data-anim="fade"].anim-visible {
+    opacity: 1;
+    transition: opacity var(--transition-speed) var(--transition-fn);
+}
+
+/* Pop animations */
+.widget[data-anim="pop"].anim-hidden {
+    transform: scale(0.85);
+    opacity: 0;
+    transition: transform var(--transition-speed) var(--transition-fn),
+                opacity var(--transition-speed) var(--transition-fn);
+}
+
+.widget[data-anim="pop"].anim-visible {
+    transform: scale(1);
+    opacity: 1;
+    transition: transform var(--transition-speed) var(--transition-fn),
+                opacity var(--transition-speed) var(--transition-fn);
+}
+
+/* None animation */
+.widget[data-anim="none"].anim-hidden {
+    opacity: 0;
+}
+
+.widget[data-anim="none"].anim-visible {
+    opacity: 1;
+}
+
+/* ============================================================
+   DEMO MODE BADGE
+   ============================================================ */
+.demo-badge {
+    position: absolute;
+    bottom: 4px;
+    right: 6px;
+    font-size: 7px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    opacity: 0.5;
+    pointer-events: none;
+}
+    </style>
+</head>
+<body>
+    <!-- Widget container -->
+    <div class="widget anim-hidden" id="widget">
+        <div class="connection-status disconnected" id="statusDot"></div>
+
+        <div class="connecting-overlay" id="connectingOverlay">
+            <div class="connecting-text">
+                <div class="connecting-spinner"></div>
+                <span id="connectingLabel">Connecting…</span>
+            </div>
+        </div>
+
+        <div class="art-container" id="artContainer">
+            <img id="artImage" src="" alt="" style="display:none;">
+            <div class="art-placeholder" id="artPlaceholder">
+                <!-- Music note icon -->
+                <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+            </div>
+        </div>
+
+        <div class="track-info">
+            <div class="track-title" id="trackTitle">
+                <span class="track-title-inner" id="trackTitleInner">Not Playing</span>
+            </div>
+            <div class="track-artist" id="trackArtist">—</div>
+
+            <div class="meta-row" id="metaRow">
+                <!-- YouTube Music brand icon -->
+                <div class="brand-icon" id="brandIcon" title="YouTube Music">
+                    <svg viewBox="0 0 24 24" fill="none">
+                        <circle cx="12" cy="12" r="10" fill="#FF0000"/>
+                        <polygon points="10,8 16,12 10,16" fill="white"/>
+                    </svg>
+                </div>
+
+                <!-- Like/heart icon -->
+                <div class="like-icon" id="likeIcon" title="Liked">
+                    <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                </div>
+
+                <!-- Playback state icon -->
+                <div class="state-icon" id="stateIcon">
+                    <!-- Pause icon (shown when playing) -->
+                    <svg viewBox="0 0 24 24" id="iconPlaying" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                    <!-- Play icon (shown when paused) -->
+                    <svg viewBox="0 0 24 24" id="iconPaused" style="display:none;"><path d="M8 5v14l11-7z"/></svg>
+                </div>
+            </div>
+
+            <div class="timeline" id="timeline">
+                <div class="timeline-bar">
+                    <div class="timeline-fill" id="timelineFill"></div>
+                </div>
+                <div class="timeline-times">
+                    <span id="timeElapsed">0:00</span>
+                    <span id="timeDuration">0:00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-badge" id="demoBadge" style="display:none;">DEMO</div>
+    </div>
+
+    <script>
+/* ============================================================
+   CONFIGURATION PARSER — URL Parameters
+   ============================================================ */
+const Config = (() => {
+    const params = new URLSearchParams(window.location.search);
+
+    function get(key, fallback) {
+        const v = params.get(key);
+        return v !== null ? v : fallback;
+    }
+
+    function getBool(key, fallback) {
+        const v = params.get(key);
+        if (v === null) return fallback;
+        return v === 'true' || v === '1';
+    }
+
+    function getInt(key, fallback) {
+        const v = parseInt(params.get(key), 10);
+        return isNaN(v) ? fallback : v;
+    }
+
+    return {
+        source:       get('source', 'ytmdesktop'),       // ytmdesktop | tuna | manual
+        wsPort:       getInt('wsport', 9863),             // ytmdesktop API port
+        tunaPort:     getInt('tunaport', 1608),           // Tuna HTTP port
+        token:        get('token', ''),                    // ytmdesktop auth token
+        appId:        get('appid', 'betterytbwidget'),     // ytmdesktop app ID
+        theme:        get('theme', 'glass'),               // dark | light | transparent | glass
+        position:     get('position', 'bottom-left'),      // bottom-left|bottom-right|top-left|top-right|center
+        size:         get('size', 'medium'),                // small | medium | large
+        showTimeline: getBool('showTimeline', true),
+        showLikes:    getBool('showLikes', true),
+        showBrand:    getBool('showBrand', true),
+        hideOnPause:  getBool('hideOnPause', false),
+        showOnSwitch: getInt('showOnSwitch', 0),          // seconds, 0 = always visible
+        animation:    get('animation', 'slide'),           // slide | fade | pop | none
+        direction:    get('direction', 'up'),              // left | right | up | down
+        // Manual mode params
+        manualTitle:    get('title', ''),
+        manualArtist:   get('artist', ''),
+        manualArtwork:  get('artwork', ''),
+        manualDuration: getInt('duration', 0),
+    };
+})();
+
+/* ============================================================
+   UI RENDERER — DOM References & Update Functions
+   ============================================================ */
+const UI = (() => {
+    const $ = (id) => document.getElementById(id);
+
+    const els = {
+        widget:           $('widget'),
+        statusDot:        $('statusDot'),
+        connectingOverlay:$('connectingOverlay'),
+        connectingLabel:  $('connectingLabel'),
+        artContainer:     $('artContainer'),
+        artImage:         $('artImage'),
+        artPlaceholder:   $('artPlaceholder'),
+        trackTitle:       $('trackTitle'),
+        trackTitleInner:  $('trackTitleInner'),
+        trackArtist:      $('trackArtist'),
+        metaRow:          $('metaRow'),
+        brandIcon:        $('brandIcon'),
+        likeIcon:         $('likeIcon'),
+        stateIcon:        $('stateIcon'),
+        iconPlaying:      $('iconPlaying'),
+        iconPaused:       $('iconPaused'),
+        timeline:         $('timeline'),
+        timelineFill:     $('timelineFill'),
+        timeElapsed:      $('timeElapsed'),
+        timeDuration:     $('timeDuration'),
+        demoBadge:        $('demoBadge'),
+    };
+
+    function init() {
+        document.documentElement.setAttribute('data-theme', Config.theme);
+        document.body.setAttribute('data-position', Config.position);
+
+        els.widget.setAttribute('data-size', Config.size);
+        els.widget.setAttribute('data-anim', Config.animation);
+        els.widget.setAttribute('data-dir', Config.direction);
+
+        if (!Config.showTimeline) els.timeline.style.display = 'none';
+        if (!Config.showBrand)    els.brandIcon.style.display = 'none';
+        if (!Config.showLikes)    els.likeIcon.style.display = 'none';
+    }
+
+    function formatTime(seconds) {
+        if (!seconds || seconds < 0) return '0:00';
+        const s = Math.floor(seconds);
+        const m = Math.floor(s / 60);
+        const sec = s % 60;
+        return m + ':' + String(sec).padStart(2, '0');
+    }
+
+    let currentArtUrl = '';
+
+    function updateTrack(data) {
+        // data: { title, artist, artwork, duration, elapsed, isPlaying, isLiked }
+
+        els.trackTitleInner.textContent = data.title || 'Not Playing';
+        checkMarquee();
+
+        els.trackArtist.textContent = data.artist || '\u2014';
+
+        // Artwork
+        if (data.artwork && data.artwork !== currentArtUrl) {
+            currentArtUrl = data.artwork;
+            const img = els.artImage;
+            img.onload = () => {
+                img.style.display = 'block';
+                els.artPlaceholder.style.display = 'none';
+            };
+            img.onerror = () => {
+                img.style.display = 'none';
+                els.artPlaceholder.style.display = 'flex';
+            };
+            img.src = data.artwork;
+        } else if (!data.artwork) {
+            currentArtUrl = '';
+            els.artImage.style.display = 'none';
+            els.artPlaceholder.style.display = 'flex';
+        }
+
+        // Timeline
+        if (Config.showTimeline) {
+            const dur = data.duration || 0;
+            const el = data.elapsed || 0;
+            const pct = dur > 0 ? Math.min((el / dur) * 100, 100) : 0;
+            els.timelineFill.style.width = pct + '%';
+            els.timeElapsed.textContent = formatTime(el);
+            els.timeDuration.textContent = formatTime(dur);
+        }
+
+        // Like status
+        if (Config.showLikes) {
+            els.likeIcon.classList.toggle('active', !!data.isLiked);
+        }
+
+        // Playback state icon
+        els.iconPlaying.style.display = data.isPlaying ? 'block' : 'none';
+        els.iconPaused.style.display = data.isPlaying ? 'none' : 'block';
+    }
+
+    function checkMarquee() {
+        const container = els.trackTitle;
+        const inner = els.trackTitleInner;
+
+        container.classList.remove('marquee');
+        inner.style.animation = 'none';
+        inner.style.removeProperty('--marquee-distance');
+        inner.style.removeProperty('--marquee-duration');
+
+        void inner.offsetWidth;
+
+        requestAnimationFrame(() => {
+            const containerW = container.offsetWidth;
+            const textW = inner.scrollWidth;
+            if (textW > containerW + 2) {
+                const overflow = textW - containerW;
+                const duration = Math.max(5, overflow / 30);
+                inner.style.setProperty('--marquee-distance', '-' + (overflow + 20) + 'px');
+                inner.style.setProperty('--marquee-duration', duration + 's');
+                inner.style.animation = '';
+                container.classList.add('marquee');
+            }
+        });
+    }
+
+    function setConnectionStatus(status) {
+        els.statusDot.className = 'connection-status ' + status;
+        if (status === 'connected') {
+            setTimeout(() => els.statusDot.classList.add('fade-out'), 3000);
+        } else {
+            els.statusDot.classList.remove('fade-out');
+        }
+    }
+
+    function showConnectingOverlay(show, label) {
+        els.connectingOverlay.classList.toggle('visible', show);
+        if (label) els.connectingLabel.textContent = label;
+    }
+
+    return { els, init, updateTrack, formatTime, setConnectionStatus, showConnectingOverlay, checkMarquee };
+})();
+
+/* ============================================================
+   ANIMATION CONTROLLER — Show/Hide Widget
+   ============================================================ */
+const Anim = (() => {
+    let isVisible = false;
+    let hideTimer = null;
+
+    function show() {
+        if (isVisible) return;
+        isVisible = true;
+        clearHideTimer();
+        const w = UI.els.widget;
+        w.classList.remove('anim-hidden');
+        w.classList.add('anim-visible');
+    }
+
+    function hide() {
+        if (!isVisible) return;
+        isVisible = false;
+        const w = UI.els.widget;
+        w.classList.remove('anim-visible');
+        w.classList.add('anim-hidden');
+    }
+
+    function clearHideTimer() {
+        if (hideTimer) {
+            clearTimeout(hideTimer);
+            hideTimer = null;
+        }
+    }
+
+    function showForDuration(seconds) {
+        show();
+        if (seconds > 0) {
+            clearHideTimer();
+            hideTimer = setTimeout(() => hide(), seconds * 1000);
+        }
+    }
+
+    function getVisible() { return isVisible; }
+
+    return { show, hide, showForDuration, clearHideTimer, getVisible };
+})();
+
+/* ============================================================
+   WEBSOCKET MODULE — ytmdesktop Companion Server API v1
+   ============================================================
+   ytmdesktop v2 uses Socket.IO over ws://127.0.0.1:9863.
+   Socket.IO protocol: Engine.IO frames prefixed with packet type.
+   EIO packet types: 0=open, 2=ping, 3=pong, 4=message
+   SIO packet types (inside EIO message): 0=connect, 2=event, 3=ack
+
+   We implement a minimal Socket.IO v4 client over raw WebSocket
+   to avoid external dependencies.
+   ============================================================ */
+const YTMDesktop = (() => {
+    let ws = null;
+    let reconnectAttempts = 0;
+    let reconnectTimer = null;
+    let pingTimer = null;
+    let connected = false;
+    let lastTrackId = '';
+    let currentTrackTitle = '';
+    let progressInterval = null;
+
+    const MAX_RECONNECT_DELAY = 30000;
+    const BASE_URL = '127.0.0.1';
+
+    function getReconnectDelay() {
+        return Math.min(1000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
+    }
+
+    // Step 1: Fetch Socket.IO session via HTTP polling handshake
+    function connect() {
+        cleanup();
+        UI.setConnectionStatus('reconnecting');
+        UI.showConnectingOverlay(true, 'Connecting to YTM Desktop\u2026');
+
+        // Socket.IO v4 handshake: GET with EIO=4 and transport=polling
+        const handshakeUrl = 'http://' + BASE_URL + ':' + Config.wsPort +
+            '/socket.io/?EIO=4&transport=polling';
+
+        fetch(handshakeUrl)
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.text();
+            })
+            .then(text => {
+                // Response is Engine.IO encoded: e.g. "0{"sid":"xxx","upgrades":["websocket"],...}"
+                // Strip the leading digit(s) + possible length prefix
+                const jsonStart = text.indexOf('{');
+                if (jsonStart === -1) throw new Error('Invalid handshake response');
+                const json = JSON.parse(text.substring(jsonStart));
+                if (!json.sid) throw new Error('No session ID');
+                openWebSocket(json.sid, json.pingInterval || 25000, json.pingTimeout || 20000);
+            })
+            .catch(() => {
+                // Fallback: try direct WebSocket connection (some versions support it)
+                openWebSocketDirect();
+            });
+    }
+
+    // Step 2a: Open WebSocket with Socket.IO session
+    function openWebSocket(sid, pingIntervalMs, pingTimeoutMs) {
+        const url = 'ws://' + BASE_URL + ':' + Config.wsPort +
+            '/socket.io/?EIO=4&transport=websocket&sid=' + sid;
+        initWS(url, pingIntervalMs);
+    }
+
+    // Step 2b: Direct WebSocket (fallback for non-Socket.IO servers or older versions)
+    function openWebSocketDirect() {
+        const url = 'ws://' + BASE_URL + ':' + Config.wsPort +
+            '/socket.io/?EIO=4&transport=websocket';
+        initWS(url, 25000);
+    }
+
+    function initWS(url, pingIntervalMs) {
+        try {
+            ws = new WebSocket(url);
+        } catch (e) {
+            scheduleReconnect();
+            return;
+        }
+
+        ws.onopen = () => {
+            // Send WebSocket upgrade probe
+            ws.send('2probe');
+        };
+
+        ws.onmessage = (event) => {
+            const data = event.data;
+            if (typeof data !== 'string' || data.length === 0) return;
+
+            const eioType = data.charAt(0);
+
+            switch (eioType) {
+                case '0': {
+                    // Engine.IO OPEN — received session info
+                    // May happen on direct WS connection (no prior polling handshake)
+                    try {
+                        const info = JSON.parse(data.substring(1));
+                        if (info.pingInterval) pingIntervalMs = info.pingInterval;
+                    } catch(e) {}
+                    // Send Socket.IO CONNECT to default namespace
+                    sendSIOConnect();
+                    break;
+                }
+                case '2': {
+                    // Engine.IO PING — respond with PONG
+                    ws.send('3');
+                    break;
+                }
+                case '3': {
+                    // Engine.IO PONG (response to our probe or ping)
+                    if (data === '3probe') {
+                        // Complete the upgrade
+                        ws.send('5'); // Engine.IO UPGRADE
+                        sendSIOConnect();
+                    }
+                    break;
+                }
+                case '4': {
+                    // Engine.IO MESSAGE — contains Socket.IO packet
+                    handleSIOPacket(data.substring(1));
+                    break;
+                }
+            }
+        };
+
+        ws.onclose = () => {
+            onDisconnect();
+        };
+
+        ws.onerror = () => {
+            // onclose fires after this
+        };
+
+        // Heartbeat: send ping on interval
+        if (pingTimer) clearInterval(pingTimer);
+        pingTimer = setInterval(() => {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send('2'); // Engine.IO PING
+            }
+        }, pingIntervalMs);
+    }
+
+    function sendSIOConnect() {
+        // Socket.IO CONNECT packet with auth token
+        if (Config.token) {
+            ws.send('40' + JSON.stringify({ token: Config.token }));
+        } else {
+            ws.send('40');
+        }
+    }
+
+    function handleSIOPacket(packet) {
+        if (packet.length === 0) return;
+        const sioType = packet.charAt(0);
+
+        switch (sioType) {
+            case '0': {
+                // SIO CONNECT — successfully connected to namespace
+                connected = true;
+                reconnectAttempts = 0;
+                UI.setConnectionStatus('connected');
+                UI.showConnectingOverlay(false);
+
+                // Fetch initial state via REST API
+                fetchRESTState();
+                break;
+            }
+            case '2': {
+                // SIO EVENT — ["eventName", data]
+                try {
+                    const arr = JSON.parse(packet.substring(1));
+                    if (Array.isArray(arr) && arr[0] === 'state-update') {
+                        handleStateUpdate(arr[1]);
+                    } else if (Array.isArray(arr) && arr[0] === 'tick') {
+                        handleStateUpdate(arr[1]);
+                    }
+                } catch(e) {}
+                break;
+            }
+            case '4': {
+                // SIO ERROR
+                connected = false;
+                UI.setConnectionStatus('disconnected');
+                UI.showConnectingOverlay(true, 'Auth failed. Check token.');
+                break;
+            }
+        }
+    }
+
+    // Fetch current state via REST (initial load and fallback)
+    function fetchRESTState() {
+        const url = 'http://' + BASE_URL + ':' + Config.wsPort + '/api/v1/state';
+        const headers = {};
+        if (Config.token) headers['Authorization'] = Config.token;
+
+        fetch(url, { headers: headers })
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(state => {
+                handleStateUpdate(state);
+            })
+            .catch(() => {
+                // Non-fatal: we'll get state via WebSocket events
+            });
+    }
+
+    function handleStateUpdate(state) {
+        if (!state) return;
+        const trackData = parseState(state);
+        if (trackData && !trackData.isAd) {
+            const trackChanged = trackData.id !== lastTrackId ||
+                (trackData.title && trackData.title !== currentTrackTitle);
+
+            if (trackChanged) {
+                lastTrackId = trackData.id;
+                currentTrackTitle = trackData.title;
+            }
+
+            UI.updateTrack(trackData);
+            handleVisibility(trackData.isPlaying, trackChanged);
+            startProgressTracking(trackData);
+        }
+    }
+
+    // Parse ytmdesktop v2 state object
+    // v2: { player: { trackState, videoProgress, volume, adPlaying, queue },
+    //        video: { author, title, album, thumbnails[], durationSeconds, id, likeStatus } }
+    function parseState(state) {
+        const player = state.player || {};
+        const video = state.video || state.track || {};
+
+        // Playback state: trackState 0=Paused, 1=Playing, 2=Buffering
+        let isPlaying = false;
+        if ('trackState' in player) {
+            isPlaying = player.trackState === 1;
+        } else if ('isPaused' in player) {
+            isPlaying = !player.isPaused;
+        }
+
+        // Elapsed time (seconds)
+        let elapsed = 0;
+        if ('videoProgress' in player) {
+            elapsed = player.videoProgress;
+        } else if ('seekbarCurrentPosition' in player) {
+            elapsed = player.seekbarCurrentPosition;
+        }
+
+        // Duration (seconds)
+        let duration = 0;
+        if ('durationSeconds' in video) {
+            duration = video.durationSeconds;
+        } else if ('duration' in video) {
+            const d = video.duration;
+            if (typeof d === 'number') {
+                duration = d;
+            } else if (typeof d === 'string' && d.includes(':')) {
+                // "3:45" → 225
+                const parts = d.split(':').map(Number);
+                duration = parts.length === 3
+                    ? parts[0] * 3600 + parts[1] * 60 + parts[2]
+                    : parts[0] * 60 + (parts[1] || 0);
+            }
+        }
+
+        // Like status: v2 uses numeric enum: 0=Dislike, 1=Indifferent, 2=Like
+        let isLiked = false;
+        const ls = video.likeStatus !== undefined ? video.likeStatus : (player.likeStatus || null);
+        if (typeof ls === 'number') {
+            isLiked = ls === 2;
+        } else if (typeof ls === 'string') {
+            isLiked = ls.toUpperCase() === 'LIKE';
+        }
+
+        // Album art — prefer largest thumbnail from thumbnails array
+        let artwork = '';
+        if (video.thumbnails && Array.isArray(video.thumbnails) && video.thumbnails.length > 0) {
+            const sorted = [...video.thumbnails].sort((a, b) => (b.width || 0) - (a.width || 0));
+            artwork = sorted[0].url || '';
+        } else if (video.cover) {
+            artwork = video.cover;
+        } else if (video.imageSrc) {
+            artwork = video.imageSrc;
+        }
+        if (artwork && artwork.startsWith('//')) {
+            artwork = 'https:' + artwork;
+        }
+
+        return {
+            title: video.title || '',
+            artist: video.author || video.artist || '',
+            artwork: artwork,
+            duration: duration,
+            elapsed: elapsed,
+            isPlaying: isPlaying,
+            isLiked: isLiked,
+            id: video.id || video.videoId || '',
+            isAd: !!player.adPlaying,
+        };
+    }
+
+    function startProgressTracking(data) {
+        stopProgressTracking();
+        if (!data.isPlaying || !data.duration) return;
+
+        let elapsed = data.elapsed || 0;
+        const duration = data.duration;
+
+        progressInterval = setInterval(() => {
+            elapsed += 1;
+            if (elapsed > duration) elapsed = duration;
+            if (Config.showTimeline) {
+                const pct = Math.min((elapsed / duration) * 100, 100);
+                UI.els.timelineFill.style.width = pct + '%';
+                UI.els.timeElapsed.textContent = UI.formatTime(elapsed);
+            }
+        }, 1000);
+    }
+
+    function stopProgressTracking() {
+        if (progressInterval) {
+            clearInterval(progressInterval);
+            progressInterval = null;
+        }
+    }
+
+    function onDisconnect() {
+        connected = false;
+        stopProgressTracking();
+        if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
+        UI.setConnectionStatus('disconnected');
+        scheduleReconnect();
+    }
+
+    function scheduleReconnect() {
+        if (reconnectTimer) return;
+        const delay = getReconnectDelay();
+        reconnectAttempts++;
+        UI.setConnectionStatus('reconnecting');
+        UI.showConnectingOverlay(true, 'Reconnecting in ' + Math.round(delay / 1000) + 's\u2026');
+        reconnectTimer = setTimeout(() => {
+            reconnectTimer = null;
+            connect();
+        }, delay);
+    }
+
+    function cleanup() {
+        if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
+        if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
+        stopProgressTracking();
+        if (ws) { try { ws.close(); } catch(e) {} ws = null; }
+        connected = false;
+    }
+
+    function disconnect() {
+        cleanup();
+    }
+
+    function isConnected() { return connected; }
+
+    return { connect, disconnect, isConnected };
+})();
+
+/* ============================================================
+   TUNA MODULE — OBS Tuna Plugin (HTTP polling)
+   ============================================================
+   Tuna exposes a simple HTTP JSON endpoint at localhost:1608.
+   GET / returns: { title, artists (array), album, cover_url,
+     progress (ms), duration (ms), status ("playing"|"paused"|"stopped") }
+   Cover art also available at /cover.png.
+   ============================================================ */
+const Tuna = (() => {
+    let pollTimer = null;
+    let connected = false;
+    let lastTrackId = '';
+    let failCount = 0;
+    const MAX_FAIL = 5;
+
+    function connect() {
+        UI.setConnectionStatus('reconnecting');
+        UI.showConnectingOverlay(true, 'Connecting to Tuna\u2026');
+        poll();
+    }
+
+    function poll() {
+        const url = 'http://127.0.0.1:' + Config.tunaPort + '/';
+
+        fetch(url)
+            .then(r => {
+                if (!r.ok) throw new Error('HTTP ' + r.status);
+                return r.json();
+            })
+            .then(data => {
+                failCount = 0;
+                if (!connected) {
+                    connected = true;
+                    UI.setConnectionStatus('connected');
+                    UI.showConnectingOverlay(false);
+                }
+                handleTunaData(data);
+                schedulePoll(2000);
+            })
+            .catch(() => {
+                failCount++;
+                connected = false;
+                if (failCount >= MAX_FAIL) {
+                    UI.setConnectionStatus('disconnected');
+                    UI.showConnectingOverlay(true, 'Tuna not found. Retrying\u2026');
+                    schedulePoll(5000);
+                } else {
+                    UI.setConnectionStatus('reconnecting');
+                    schedulePoll(2000);
+                }
+            });
+    }
+
+    function schedulePoll(ms) {
+        if (pollTimer) clearTimeout(pollTimer);
+        pollTimer = setTimeout(poll, ms);
+    }
+
+    function handleTunaData(data) {
+        const isPlaying = data.status === 'playing';
+
+        // artists can be a string or an array
+        let artist = '';
+        if (Array.isArray(data.artists)) {
+            artist = data.artists.join(', ');
+        } else if (typeof data.artists === 'string') {
+            artist = data.artists;
+        } else if (data.artist) {
+            artist = data.artist;
+        }
+
+        const trackId = (data.title || '') + '|' + artist;
+        const trackChanged = trackId !== lastTrackId;
+        lastTrackId = trackId;
+
+        // Prefer cover_url, fall back to local cover.png served by Tuna
+        let artwork = data.cover_url || data.artwork_url || '';
+        if (!artwork && connected) {
+            artwork = 'http://127.0.0.1:' + Config.tunaPort + '/cover.png';
+        }
+
+        const trackData = {
+            title: data.title || '',
+            artist: artist,
+            artwork: artwork,
+            duration: data.duration ? data.duration / 1000 : 0,   // ms → s
+            elapsed: data.progress ? data.progress / 1000 : 0,    // ms → s
+            isPlaying: isPlaying,
+            isLiked: false,
+            id: trackId,
+            isAd: false,
+        };
+
+        UI.updateTrack(trackData);
+        handleVisibility(trackData.isPlaying, trackChanged);
+    }
+
+    function disconnect() {
+        if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+        connected = false;
+    }
+
+    function isConnected() { return connected; }
+
+    return { connect, disconnect, isConnected };
+})();
+
+/* ============================================================
+   MANUAL MODE — Static display from URL parameters
+   ============================================================ */
+const Manual = (() => {
+    function init() {
+        UI.setConnectionStatus('connected');
+        UI.showConnectingOverlay(false);
+
+        const isDemo = !Config.manualTitle;
+
+        const data = {
+            title: Config.manualTitle || 'Demo Track \u2014 Long Title That Should Scroll Across',
+            artist: Config.manualArtist || 'Demo Artist',
+            artwork: Config.manualArtwork || '',
+            duration: Config.manualDuration || 237,
+            elapsed: 0,
+            isPlaying: true,
+            isLiked: true,
+            id: 'manual',
+            isAd: false,
+        };
+
+        if (isDemo) {
+            UI.els.demoBadge.style.display = 'block';
+        }
+
+        UI.updateTrack(data);
+        Anim.show();
+
+        // Simulate playback progress
+        if (data.duration > 0) {
+            let elapsed = 0;
+            setInterval(() => {
+                elapsed += 1;
+                if (elapsed > data.duration) elapsed = 0;
+                if (Config.showTimeline) {
+                    const pct = (elapsed / data.duration) * 100;
+                    UI.els.timelineFill.style.width = pct + '%';
+                    UI.els.timeElapsed.textContent = UI.formatTime(elapsed);
+                }
+            }, 1000);
+        }
+    }
+
+    return { init };
+})();
+
+/* ============================================================
+   VISIBILITY LOGIC — hideOnPause / showOnSwitch
+   ============================================================ */
+let pauseHideTimer = null;
+let switchHideTimer = null;
+
+function handleVisibility(isPlaying, trackChanged) {
+    if (pauseHideTimer) {
+        clearTimeout(pauseHideTimer);
+        pauseHideTimer = null;
+    }
+
+    if (Config.showOnSwitch > 0) {
+        // Show briefly on song change, then hide
+        if (trackChanged) {
+            Anim.show();
+            if (switchHideTimer) clearTimeout(switchHideTimer);
+            switchHideTimer = setTimeout(() => {
+                Anim.hide();
+                switchHideTimer = null;
+            }, Config.showOnSwitch * 1000);
+        }
+        if (!isPlaying && Config.hideOnPause) {
+            if (switchHideTimer) { clearTimeout(switchHideTimer); switchHideTimer = null; }
+            Anim.hide();
+        }
+    } else {
+        // Always-visible mode
+        if (Config.hideOnPause) {
+            if (isPlaying) {
+                Anim.show();
+            } else {
+                pauseHideTimer = setTimeout(() => {
+                    Anim.hide();
+                    pauseHideTimer = null;
+                }, 1500);
+            }
+        } else {
+            Anim.show();
+        }
+    }
+}
+
+/* ============================================================
+   OBS BROWSER SOURCE EVENTS
+   ============================================================ */
+function setupOBSEvents() {
+    window.addEventListener('obsSourceActiveChanged', (event) => {
+        if (event.detail && event.detail.active) {
+            startSource();
+        } else {
+            stopSource();
+        }
+    });
+
+    window.addEventListener('obsSourceVisibleChanged', (event) => {
+        if (event.detail && event.detail.visible) {
+            startSource();
+        }
+    });
+}
+
+function startSource() {
+    if (Config.source === 'ytmdesktop' && !YTMDesktop.isConnected()) YTMDesktop.connect();
+    if (Config.source === 'tuna' && !Tuna.isConnected()) Tuna.connect();
+}
+
+function stopSource() {
+    if (Config.source === 'ytmdesktop') YTMDesktop.disconnect();
+    if (Config.source === 'tuna') Tuna.disconnect();
+}
+
+/* ============================================================
+   INITIALIZATION
+   ============================================================ */
+function boot() {
+    UI.init();
+    setupOBSEvents();
+
+    setTimeout(() => {
+        switch (Config.source) {
+            case 'ytmdesktop':
+                YTMDesktop.connect();
+                Anim.show();
+                break;
+            case 'tuna':
+                Tuna.connect();
+                Anim.show();
+                break;
+            case 'manual':
+            default:
+                Manual.init();
+                break;
+        }
+    }, 300);
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', boot);
+} else {
+    boot();
+}
+    </script>
+</body>
+</html>
