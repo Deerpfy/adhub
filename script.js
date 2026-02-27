@@ -329,6 +329,8 @@ const BASE_TRANSLATIONS = {
         tool_ip_lookup_desc: 'Offline-first nástroj pro zjištění veřejné IP adresy. Historie IP, validátor, API příklady. Cachování pro offline režim, využívá ipify API.',
         tool_adanimations_name: 'AdAnimations',
         tool_adanimations_desc: 'Editor animovaných bannerů a overlays pro OBS. Vytvářejte texty, obrázky s animacemi (slide, fade, zoom). Časovač pro opakování, 1:1 preview, export HTML.',
+        tool_betterytbwidget_name: 'BetterYTBwidget',
+        tool_betterytbwidget_desc: 'OBS overlay widget pro zobrazení aktuálně přehrávané skladby z YouTube Music. Propojení přes ytmdesktop nebo Tuna plugin. 4 témata, animace, timeline.',
         category_gaming: 'gaming',
         category_documentation: 'dokumentace',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
@@ -731,6 +733,8 @@ const BASE_TRANSLATIONS = {
         tool_ip_lookup_desc: 'Offline-first tool for getting your public IP address. IP history, validator, API examples. Caching for offline mode, powered by ipify API.',
         tool_adanimations_name: 'AdAnimations',
         tool_adanimations_desc: 'Animated banner and overlay editor for OBS. Create texts, images with animations (slide, fade, zoom). Timer for repetition, 1:1 preview, HTML export.',
+        tool_betterytbwidget_name: 'BetterYTBwidget',
+        tool_betterytbwidget_desc: 'OBS overlay widget showing the currently playing YouTube Music track. Connects via ytmdesktop or Tuna plugin. 4 themes, animations, timeline.',
         category_gaming: 'gaming',
         category_documentation: 'documentation',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
@@ -1736,6 +1740,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["streaming", "obs", "animation", "banner", "overlay", "editor"]
+            },
+            {
+                "id": "betterytbwidget",
+                "name": t('tool_betterytbwidget_name'),
+                "description": t('tool_betterytbwidget_desc'),
+                "category": "streaming",
+                "icon": "🎶",
+                "url": "projects/betterytbwidget/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["streaming", "obs", "youtube", "music", "now-playing", "widget", "overlay"]
             }
         ],
         "links": [

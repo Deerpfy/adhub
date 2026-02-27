@@ -284,6 +284,31 @@ PROJECT_CONFIGS = {
             "Real-time canvas editing with drag & resize",
             "Full styling options (colors, gradients, shadows, borders)"
         ]
+    },
+    "betterytbwidget": {
+        "name": "BetterYTBwidget",
+        "type": "OBS Widget (Browser Source)",
+        "version": "1.0",
+        "status": "Active",
+        "technologies": ["HTML/CSS/JS", "WebSocket", "Socket.IO Protocol", "Fetch API"],
+        "category": "Streaming Tools",
+        "description": "OBS browser source overlay showing the currently playing YouTube Music track",
+        "main_file": "index.html",
+        "features": [
+            "Real-time now-playing display (title, artist, album art)",
+            "ytmdesktop Companion Server API integration (Socket.IO)",
+            "OBS Tuna plugin HTTP polling fallback",
+            "Manual/demo mode via URL parameters",
+            "4 visual themes (dark, light, transparent, glass)",
+            "3 size variants (small, medium, large)",
+            "4 animation types (slide, fade, pop, none)",
+            "Scrolling marquee for long track titles",
+            "Playback timeline with progress bar",
+            "Like/heart indicator and brand icon",
+            "Hide on pause / show on switch behaviors",
+            "OBS source visibility event handling",
+            "Automatic reconnection with exponential backoff"
+        ]
     }
 }
 
