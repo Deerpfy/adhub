@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
 /* ============================================================
-   THEME ENGINE — CSS Custom Properties & Theme Definitions
+   THEME ENGINE — CSS Custom Properties & Widget Theme Definitions
    ============================================================ */
 :root {
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
@@ -19,7 +19,6 @@
     --transition-fn: cubic-bezier(0.4, 0, 0.2, 1);
     --shadow-soft: 0 2px 12px rgba(0,0,0,0.25);
     --shadow-glow: 0 0 20px rgba(0,0,0,0.3);
-
     /* Default: glass theme */
     --bg: rgba(18, 18, 24, 0.65);
     --bg-blur: 16px;
@@ -36,697 +35,943 @@
     --heart-color: #ff4081;
     --brand-color: #ff0000;
 }
-
-/* Dark theme */
 [data-theme="dark"] {
-    --bg: #1a1a2e;
-    --bg-blur: 0px;
-    --text-primary: #f0f0f5;
-    --text-secondary: rgba(240,240,245,0.7);
-    --text-muted: rgba(240,240,245,0.45);
+    --bg: #1a1a2e; --bg-blur: 0px;
+    --text-primary: #f0f0f5; --text-secondary: rgba(240,240,245,0.7); --text-muted: rgba(240,240,245,0.45);
     --border: rgba(255,255,255,0.08);
 }
-
-/* Light theme */
 [data-theme="light"] {
-    --bg: #ffffff;
-    --bg-blur: 0px;
-    --text-primary: #1a1a2e;
-    --text-secondary: rgba(26,26,46,0.65);
-    --text-muted: rgba(26,26,46,0.4);
-    --accent: #cc0000;
-    --progress-bg: rgba(0,0,0,0.1);
-    --progress-fill: #cc0000;
-    --border: rgba(0,0,0,0.08);
-    --shadow-soft: 0 2px 12px rgba(0,0,0,0.1);
+    --bg: #ffffff; --bg-blur: 0px;
+    --text-primary: #1a1a2e; --text-secondary: rgba(26,26,46,0.65); --text-muted: rgba(26,26,46,0.4);
+    --accent: #cc0000; --progress-bg: rgba(0,0,0,0.1); --progress-fill: #cc0000;
+    --border: rgba(0,0,0,0.08); --shadow-soft: 0 2px 12px rgba(0,0,0,0.1);
 }
-
-/* Transparent theme */
 [data-theme="transparent"] {
-    --bg: transparent;
-    --bg-blur: 0px;
-    --text-primary: #ffffff;
-    --text-secondary: rgba(255,255,255,0.85);
-    --text-muted: rgba(255,255,255,0.6);
-    --border: transparent;
-    --shadow-soft: none;
+    --bg: transparent; --bg-blur: 0px;
+    --text-primary: #ffffff; --text-secondary: rgba(255,255,255,0.85); --text-muted: rgba(255,255,255,0.6);
+    --border: transparent; --shadow-soft: none;
 }
-
-/* Glass theme (default, set in :root above) */
-[data-theme="glass"] {
-    --bg: rgba(18, 18, 24, 0.65);
-    --bg-blur: 16px;
-}
+[data-theme="glass"] { --bg: rgba(18, 18, 24, 0.65); --bg-blur: 16px; }
 
 /* ============================================================
-   BASE RESET & LAYOUT
+   BASE RESET
    ============================================================ */
-*, *::before, *::after {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html, body { background: transparent; overflow: hidden; width: 100%; height: 100%; font-family: var(--font-family); }
 
-html, body {
-    background: transparent;
-    overflow: hidden;
-    width: 100%;
-    height: 100%;
-    font-family: var(--font-family);
-}
-
-body {
-    display: flex;
-    align-items: flex-end;
-    justify-content: flex-start;
-    padding: 12px;
-}
-
-/* Position variants */
-body[data-position="bottom-left"]  { align-items: flex-end;   justify-content: flex-start; }
-body[data-position="bottom-right"] { align-items: flex-end;   justify-content: flex-end; }
-body[data-position="top-left"]     { align-items: flex-start; justify-content: flex-start; }
-body[data-position="top-right"]    { align-items: flex-start; justify-content: flex-end; }
-body[data-position="center"]       { align-items: center;     justify-content: center; }
+/* ============================================================
+   WIDGET MODE LAYOUT
+   ============================================================ */
+body.widget-mode { display: flex; align-items: flex-end; justify-content: flex-start; padding: 12px; }
+body.widget-mode[data-position="bottom-left"]  { align-items: flex-end;   justify-content: flex-start; }
+body.widget-mode[data-position="bottom-right"] { align-items: flex-end;   justify-content: flex-end; }
+body.widget-mode[data-position="top-left"]     { align-items: flex-start; justify-content: flex-start; }
+body.widget-mode[data-position="top-right"]    { align-items: flex-start; justify-content: flex-end; }
+body.widget-mode[data-position="center"]       { align-items: center;     justify-content: center; }
 
 /* ============================================================
    WIDGET CONTAINER
    ============================================================ */
 .widget {
-    position: relative;
-    background: var(--bg);
-    backdrop-filter: blur(var(--bg-blur));
-    -webkit-backdrop-filter: blur(var(--bg-blur));
-    border: 1px solid var(--border);
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow-soft);
-    color: var(--text-primary);
-    overflow: hidden;
-    will-change: transform, opacity;
+    position: relative; background: var(--bg);
+    backdrop-filter: blur(var(--bg-blur)); -webkit-backdrop-filter: blur(var(--bg-blur));
+    border: 1px solid var(--border); border-radius: var(--border-radius);
+    box-shadow: var(--shadow-soft); color: var(--text-primary);
+    overflow: hidden; will-change: transform, opacity;
 }
-
-/* Transparent theme: text shadows for readability */
-[data-theme="transparent"] .widget {
-    border: none;
-    box-shadow: none;
-}
-
+[data-theme="transparent"] .widget { border: none; box-shadow: none; }
 [data-theme="transparent"] .track-title,
-[data-theme="transparent"] .track-artist {
-    text-shadow: 0 1px 4px rgba(0,0,0,0.8), 0 0 12px rgba(0,0,0,0.5);
-}
+[data-theme="transparent"] .track-artist { text-shadow: 0 1px 4px rgba(0,0,0,0.8), 0 0 12px rgba(0,0,0,0.5); }
 
-/* ============================================================
-   SIZE VARIANTS
-   ============================================================ */
-
-/* --- Small: 250px, compact row --- */
-.widget[data-size="small"] {
-    width: 250px;
-    padding: 8px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
-}
-
-.widget[data-size="small"] .art-container {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    border-radius: 6px;
-}
-
-.widget[data-size="small"] .track-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.widget[data-size="small"] .track-title {
-    font-size: 12px;
-    line-height: 1.3;
-}
-
-.widget[data-size="small"] .track-artist {
-    font-size: 10px;
-    line-height: 1.3;
-}
-
-.widget[data-size="small"] .timeline {
-    margin-top: 4px;
-}
-
-.widget[data-size="small"] .timeline-bar {
-    height: 2px;
-}
-
-.widget[data-size="small"] .timeline-times {
-    font-size: 8px;
-    margin-top: 1px;
-}
-
-.widget[data-size="small"] .brand-icon {
-    width: 12px;
-    height: 12px;
-}
-
-.widget[data-size="small"] .meta-row {
-    margin-top: 2px;
-    gap: 4px;
-}
-
+/* SIZE VARIANTS */
+.widget[data-size="small"] { width: 250px; padding: 8px; display: flex; flex-direction: row; align-items: center; gap: 8px; }
+.widget[data-size="small"] .art-container { width: 40px; height: 40px; min-width: 40px; border-radius: 6px; }
+.widget[data-size="small"] .track-info { flex: 1; min-width: 0; }
+.widget[data-size="small"] .track-title { font-size: 12px; line-height: 1.3; }
+.widget[data-size="small"] .track-artist { font-size: 10px; line-height: 1.3; }
+.widget[data-size="small"] .timeline { margin-top: 4px; }
+.widget[data-size="small"] .timeline-bar { height: 2px; }
+.widget[data-size="small"] .timeline-times { font-size: 8px; margin-top: 1px; }
+.widget[data-size="small"] .brand-icon { width: 12px; height: 12px; }
+.widget[data-size="small"] .meta-row { margin-top: 2px; gap: 4px; }
 .widget[data-size="small"] .like-icon { width: 10px; height: 10px; }
 .widget[data-size="small"] .state-icon { width: 10px; height: 10px; }
 
-/* --- Medium: 320px, standard layout --- */
-.widget[data-size="medium"] {
-    width: 320px;
-    padding: 12px;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 10px;
-}
-
-.widget[data-size="medium"] .art-container {
-    width: 56px;
-    height: 56px;
-    min-width: 56px;
-    border-radius: var(--border-radius-art);
-}
-
-.widget[data-size="medium"] .track-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.widget[data-size="medium"] .track-title {
-    font-size: 13px;
-    font-weight: 600;
-    line-height: 1.35;
-}
-
-.widget[data-size="medium"] .track-artist {
-    font-size: 11px;
-    line-height: 1.3;
-    margin-top: 1px;
-}
-
-.widget[data-size="medium"] .timeline {
-    margin-top: 6px;
-}
-
-.widget[data-size="medium"] .timeline-bar {
-    height: 3px;
-}
-
-.widget[data-size="medium"] .timeline-times {
-    font-size: 9px;
-    margin-top: 2px;
-}
-
-.widget[data-size="medium"] .brand-icon {
-    width: 14px;
-    height: 14px;
-}
-
-.widget[data-size="medium"] .meta-row {
-    margin-top: 4px;
-    gap: 5px;
-}
-
+.widget[data-size="medium"] { width: 320px; padding: 12px; display: flex; flex-direction: row; align-items: flex-start; gap: 10px; }
+.widget[data-size="medium"] .art-container { width: 56px; height: 56px; min-width: 56px; border-radius: var(--border-radius-art); }
+.widget[data-size="medium"] .track-info { flex: 1; min-width: 0; }
+.widget[data-size="medium"] .track-title { font-size: 13px; font-weight: 600; line-height: 1.35; }
+.widget[data-size="medium"] .track-artist { font-size: 11px; line-height: 1.3; margin-top: 1px; }
+.widget[data-size="medium"] .timeline { margin-top: 6px; }
+.widget[data-size="medium"] .timeline-bar { height: 3px; }
+.widget[data-size="medium"] .timeline-times { font-size: 9px; margin-top: 2px; }
+.widget[data-size="medium"] .brand-icon { width: 14px; height: 14px; }
+.widget[data-size="medium"] .meta-row { margin-top: 4px; gap: 5px; }
 .widget[data-size="medium"] .like-icon { width: 12px; height: 12px; }
 .widget[data-size="medium"] .state-icon { width: 12px; height: 12px; }
 
-/* --- Large: 400px, expanded layout --- */
-.widget[data-size="large"] {
-    width: 400px;
-    padding: 16px;
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
-    gap: 14px;
-}
-
-.widget[data-size="large"] .art-container {
-    width: 80px;
-    height: 80px;
-    min-width: 80px;
-    border-radius: var(--border-radius-art);
-}
-
-.widget[data-size="large"] .track-info {
-    flex: 1;
-    min-width: 0;
-}
-
-.widget[data-size="large"] .track-title {
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 1.4;
-}
-
-.widget[data-size="large"] .track-artist {
-    font-size: 12px;
-    line-height: 1.35;
-    margin-top: 2px;
-}
-
-.widget[data-size="large"] .timeline {
-    margin-top: 8px;
-}
-
-.widget[data-size="large"] .timeline-bar {
-    height: 3px;
-}
-
-.widget[data-size="large"] .timeline-times {
-    font-size: 10px;
-    margin-top: 2px;
-}
-
-.widget[data-size="large"] .brand-icon {
-    width: 16px;
-    height: 16px;
-}
-
-.widget[data-size="large"] .meta-row {
-    margin-top: 5px;
-    gap: 6px;
-}
-
+.widget[data-size="large"] { width: 400px; padding: 16px; display: flex; flex-direction: row; align-items: flex-start; gap: 14px; }
+.widget[data-size="large"] .art-container { width: 80px; height: 80px; min-width: 80px; border-radius: var(--border-radius-art); }
+.widget[data-size="large"] .track-info { flex: 1; min-width: 0; }
+.widget[data-size="large"] .track-title { font-size: 15px; font-weight: 600; line-height: 1.4; }
+.widget[data-size="large"] .track-artist { font-size: 12px; line-height: 1.35; margin-top: 2px; }
+.widget[data-size="large"] .timeline { margin-top: 8px; }
+.widget[data-size="large"] .timeline-bar { height: 3px; }
+.widget[data-size="large"] .timeline-times { font-size: 10px; margin-top: 2px; }
+.widget[data-size="large"] .brand-icon { width: 16px; height: 16px; }
+.widget[data-size="large"] .meta-row { margin-top: 5px; gap: 6px; }
 .widget[data-size="large"] .like-icon { width: 14px; height: 14px; }
 .widget[data-size="large"] .state-icon { width: 14px; height: 14px; }
 
-/* ============================================================
-   ALBUM ART
-   ============================================================ */
-.art-container {
-    position: relative;
-    overflow: hidden;
-    flex-shrink: 0;
-    background: rgba(255,255,255,0.05);
-}
+/* ALBUM ART */
+.art-container { position: relative; overflow: hidden; flex-shrink: 0; background: rgba(255,255,255,0.05); }
+.art-container img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.art-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, rgba(255,0,0,0.15), rgba(255,0,0,0.05)); }
+.art-placeholder svg { width: 40%; height: 40%; opacity: 0.4; fill: var(--text-secondary); }
 
-.art-container img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-}
+/* TRACK INFO */
+.track-info { display: flex; flex-direction: column; overflow: hidden; }
+.track-title { color: var(--text-primary); font-weight: 600; white-space: nowrap; overflow: hidden; }
+.track-title-inner { display: inline-block; white-space: nowrap; }
+.track-title.marquee .track-title-inner { animation: marquee-scroll var(--marquee-duration, 10s) linear infinite; animation-delay: 2s; }
+@keyframes marquee-scroll { 0% { transform: translateX(0); } 10% { transform: translateX(0); } 90% { transform: translateX(var(--marquee-distance, -100px)); } 100% { transform: translateX(var(--marquee-distance, -100px)); } }
+.track-artist { color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-.art-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, rgba(255,0,0,0.15), rgba(255,0,0,0.05));
-}
-
-.art-placeholder svg {
-    width: 40%;
-    height: 40%;
-    opacity: 0.4;
-    fill: var(--text-secondary);
-}
-
-/* ============================================================
-   TRACK INFO
-   ============================================================ */
-.track-info {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.track-title {
-    color: var(--text-primary);
-    font-weight: 600;
-    white-space: nowrap;
-    overflow: hidden;
-}
-
-.track-title-inner {
-    display: inline-block;
-    white-space: nowrap;
-}
-
-/* Marquee animation for long titles */
-.track-title.marquee .track-title-inner {
-    animation: marquee-scroll var(--marquee-duration, 10s) linear infinite;
-    animation-delay: 2s;
-}
-
-@keyframes marquee-scroll {
-    0%   { transform: translateX(0); }
-    10%  { transform: translateX(0); }
-    90%  { transform: translateX(var(--marquee-distance, -100px)); }
-    100% { transform: translateX(var(--marquee-distance, -100px)); }
-}
-
-.track-artist {
-    color: var(--text-secondary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-/* ============================================================
-   META ROW — brand icon, like, playback state
-   ============================================================ */
-.meta-row {
-    display: flex;
-    align-items: center;
-    flex-wrap: nowrap;
-}
-
-.brand-icon {
-    flex-shrink: 0;
-    opacity: 0.8;
-}
-
+/* META ROW */
+.meta-row { display: flex; align-items: center; flex-wrap: nowrap; }
+.brand-icon { flex-shrink: 0; opacity: 0.8; }
 .brand-icon svg { width: 100%; height: 100%; }
-
-.like-icon {
-    flex-shrink: 0;
-    color: var(--heart-color);
-    display: none;
-}
-
+.like-icon { flex-shrink: 0; color: var(--heart-color); display: none; }
 .like-icon.active { display: flex; }
+.like-icon svg { width: 100%; height: 100%; fill: currentColor; }
+.state-icon { flex-shrink: 0; color: var(--text-muted); }
+.state-icon svg { width: 100%; height: 100%; fill: currentColor; }
 
-.like-icon svg {
-    width: 100%;
-    height: 100%;
-    fill: currentColor;
-}
+/* TIMELINE */
+.timeline { width: 100%; }
+.timeline-bar { width: 100%; background: var(--progress-bg); border-radius: 4px; overflow: hidden; position: relative; }
+.timeline-fill { height: 100%; background: var(--progress-fill); border-radius: 4px; width: 0%; transition: width 1s linear; }
+.timeline-times { display: flex; justify-content: space-between; color: var(--text-muted); font-variant-numeric: tabular-nums; }
 
-.state-icon {
-    flex-shrink: 0;
-    color: var(--text-muted);
-}
+/* CONNECTION STATUS */
+.connection-status { position: absolute; top: 6px; right: 6px; width: 6px; height: 6px; border-radius: 50%; background: var(--status-disconnected); transition: background 0.3s ease, opacity 0.5s ease; z-index: 10; opacity: 1; }
+.connection-status.connected { background: var(--status-connected); }
+.connection-status.reconnecting { background: var(--status-reconnecting); animation: pulse-dot 1s ease infinite; }
+.connection-status.disconnected { background: var(--status-disconnected); }
+.connection-status.fade-out { opacity: 0; }
+@keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 
-.state-icon svg {
-    width: 100%;
-    height: 100%;
-    fill: currentColor;
-}
+/* CONNECTING OVERLAY */
+.connecting-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--bg); backdrop-filter: blur(var(--bg-blur)); -webkit-backdrop-filter: blur(var(--bg-blur)); border-radius: var(--border-radius); z-index: 5; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+.connecting-overlay.visible { opacity: 1; pointer-events: auto; }
+.connecting-text { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; }
+.connecting-spinner { width: 12px; height: 12px; border: 2px solid var(--text-muted); border-top-color: transparent; border-radius: 50%; animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 
-/* ============================================================
-   TIMELINE
-   ============================================================ */
-.timeline {
-    width: 100%;
-}
-
-.timeline-bar {
-    width: 100%;
-    background: var(--progress-bg);
-    border-radius: 4px;
-    overflow: hidden;
-    position: relative;
-}
-
-.timeline-fill {
-    height: 100%;
-    background: var(--progress-fill);
-    border-radius: 4px;
-    width: 0%;
-    transition: width 1s linear;
-}
-
-.timeline-times {
-    display: flex;
-    justify-content: space-between;
-    color: var(--text-muted);
-    font-variant-numeric: tabular-nums;
-}
-
-/* ============================================================
-   CONNECTION STATUS INDICATOR
-   ============================================================ */
-.connection-status {
-    position: absolute;
-    top: 6px;
-    right: 6px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: var(--status-disconnected);
-    transition: background 0.3s ease, opacity 0.5s ease;
-    z-index: 10;
-    opacity: 1;
-}
-
-.connection-status.connected {
-    background: var(--status-connected);
-}
-
-.connection-status.reconnecting {
-    background: var(--status-reconnecting);
-    animation: pulse-dot 1s ease infinite;
-}
-
-.connection-status.disconnected {
-    background: var(--status-disconnected);
-}
-
-.connection-status.fade-out {
-    opacity: 0;
-}
-
-@keyframes pulse-dot {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.3; }
-}
-
-/* ============================================================
-   CONNECTING STATE OVERLAY
-   ============================================================ */
-.connecting-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--bg);
-    backdrop-filter: blur(var(--bg-blur));
-    -webkit-backdrop-filter: blur(var(--bg-blur));
-    border-radius: var(--border-radius);
-    z-index: 5;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-}
-
-.connecting-overlay.visible {
-    opacity: 1;
-    pointer-events: auto;
-}
-
-.connecting-text {
-    font-size: 11px;
-    color: var(--text-muted);
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.connecting-spinner {
-    width: 12px;
-    height: 12px;
-    border: 2px solid var(--text-muted);
-    border-top-color: transparent;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-/* ============================================================
-   ANIMATION CONTROLLER — Show/Hide Transitions
-   ============================================================ */
-
-/* Base state: hidden */
-.widget.anim-hidden {
-    pointer-events: none;
-}
-
-/* Slide animations */
+/* ANIMATION CONTROLLER */
+.widget.anim-hidden { pointer-events: none; }
 .widget[data-anim="slide"][data-dir="up"].anim-hidden    { transform: translateY(30px);  opacity: 0; }
 .widget[data-anim="slide"][data-dir="down"].anim-hidden  { transform: translateY(-30px); opacity: 0; }
 .widget[data-anim="slide"][data-dir="left"].anim-hidden  { transform: translateX(30px);  opacity: 0; }
 .widget[data-anim="slide"][data-dir="right"].anim-hidden { transform: translateX(-30px); opacity: 0; }
+.widget[data-anim="slide"].anim-visible { transform: translate(0, 0); opacity: 1; transition: transform var(--transition-speed) var(--transition-fn), opacity var(--transition-speed) var(--transition-fn); }
+.widget[data-anim="slide"].anim-hidden { transition: transform var(--transition-speed) var(--transition-fn), opacity var(--transition-speed) var(--transition-fn); }
+.widget[data-anim="fade"].anim-hidden { opacity: 0; transition: opacity var(--transition-speed) var(--transition-fn); }
+.widget[data-anim="fade"].anim-visible { opacity: 1; transition: opacity var(--transition-speed) var(--transition-fn); }
+.widget[data-anim="pop"].anim-hidden { transform: scale(0.85); opacity: 0; transition: transform var(--transition-speed) var(--transition-fn), opacity var(--transition-speed) var(--transition-fn); }
+.widget[data-anim="pop"].anim-visible { transform: scale(1); opacity: 1; transition: transform var(--transition-speed) var(--transition-fn), opacity var(--transition-speed) var(--transition-fn); }
+.widget[data-anim="none"].anim-hidden { opacity: 0; }
+.widget[data-anim="none"].anim-visible { opacity: 1; }
 
-.widget[data-anim="slide"].anim-visible {
-    transform: translate(0, 0);
-    opacity: 1;
-    transition: transform var(--transition-speed) var(--transition-fn),
-                opacity var(--transition-speed) var(--transition-fn);
-}
-
-.widget[data-anim="slide"].anim-hidden {
-    transition: transform var(--transition-speed) var(--transition-fn),
-                opacity var(--transition-speed) var(--transition-fn);
-}
-
-/* Fade animations */
-.widget[data-anim="fade"].anim-hidden {
-    opacity: 0;
-    transition: opacity var(--transition-speed) var(--transition-fn);
-}
-
-.widget[data-anim="fade"].anim-visible {
-    opacity: 1;
-    transition: opacity var(--transition-speed) var(--transition-fn);
-}
-
-/* Pop animations */
-.widget[data-anim="pop"].anim-hidden {
-    transform: scale(0.85);
-    opacity: 0;
-    transition: transform var(--transition-speed) var(--transition-fn),
-                opacity var(--transition-speed) var(--transition-fn);
-}
-
-.widget[data-anim="pop"].anim-visible {
-    transform: scale(1);
-    opacity: 1;
-    transition: transform var(--transition-speed) var(--transition-fn),
-                opacity var(--transition-speed) var(--transition-fn);
-}
-
-/* None animation */
-.widget[data-anim="none"].anim-hidden {
-    opacity: 0;
-}
-
-.widget[data-anim="none"].anim-visible {
-    opacity: 1;
-}
+.demo-badge { position: absolute; bottom: 4px; right: 6px; font-size: 7px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); opacity: 0.5; pointer-events: none; }
 
 /* ============================================================
-   DEMO MODE BADGE
+   SETUP / DASHBOARD MODE STYLES
    ============================================================ */
-.demo-badge {
-    position: absolute;
-    bottom: 4px;
-    right: 6px;
-    font-size: 7px;
+body.setup-mode {
+    background: #0d0d14;
+    overflow: auto;
+    display: block;
+    color: #e0e0e8;
+    font-family: var(--font-family);
+}
+
+.setup-container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px 60px;
+}
+
+.setup-header {
+    text-align: center;
+    margin-bottom: 36px;
+}
+
+.setup-header h1 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.setup-header h1 .logo-icon {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+}
+
+.setup-header p {
+    font-size: 14px;
+    color: #888;
+}
+
+.setup-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    align-items: start;
+}
+
+@media (max-width: 800px) {
+    .setup-layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Settings Panel --- */
+.settings-panel {
+    background: #151520;
+    border: 1px solid #222233;
+    border-radius: 14px;
+    padding: 24px;
+}
+
+.settings-section {
+    margin-bottom: 22px;
+}
+
+.settings-section:last-child {
+    margin-bottom: 0;
+}
+
+.settings-section h3 {
+    font-size: 11px;
+    font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--text-muted);
-    opacity: 0.5;
-    pointer-events: none;
+    letter-spacing: 1px;
+    color: #666;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #1e1e2e;
+}
+
+.field {
+    margin-bottom: 14px;
+}
+
+.field:last-child {
+    margin-bottom: 0;
+}
+
+.field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: #aaa;
+    margin-bottom: 5px;
+}
+
+.field select,
+.field input[type="text"],
+.field input[type="number"] {
+    width: 100%;
+    background: #0d0d14;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 13px;
+    color: #e0e0e8;
+    font-family: var(--font-family);
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.field select:focus,
+.field input:focus {
+    border-color: #ff0000;
+}
+
+.field select {
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23666' viewBox='0 0 24 24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 30px;
+}
+
+.field-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.toggle-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.toggle-field:last-child {
+    margin-bottom: 0;
+}
+
+.toggle-field span {
+    font-size: 12px;
+    color: #aaa;
+}
+
+.toggle {
+    position: relative;
+    width: 38px;
+    height: 20px;
+    cursor: pointer;
+}
+
+.toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.toggle-slider {
+    position: absolute;
+    inset: 0;
+    background: #2a2a3a;
+    border-radius: 20px;
+    transition: background 0.2s;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: #666;
+    border-radius: 50%;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.toggle input:checked + .toggle-slider {
+    background: #ff0000;
+}
+
+.toggle input:checked + .toggle-slider::before {
+    transform: translateX(18px);
+    background: #fff;
+}
+
+/* --- Preview Panel --- */
+.preview-panel {
+    position: sticky;
+    top: 24px;
+}
+
+.preview-card {
+    background: #151520;
+    border: 1px solid #222233;
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.preview-card h3 {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #666;
+    padding: 16px 20px 10px;
+}
+
+.preview-frame-wrap {
+    position: relative;
+    width: 100%;
+    background: #0a0a12;
+    background-image:
+        linear-gradient(45deg, #111 25%, transparent 25%),
+        linear-gradient(-45deg, #111 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #111 75%),
+        linear-gradient(-45deg, transparent 75%, #111 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-top: 1px solid #1e1e2e;
+    border-bottom: 1px solid #1e1e2e;
+}
+
+.preview-frame-wrap iframe {
+    border: none;
+    width: 100%;
+    height: 200px;
+}
+
+.preview-dimensions {
+    text-align: center;
+    padding: 6px;
+    font-size: 10px;
+    color: #555;
+}
+
+/* --- URL Output --- */
+.url-output {
+    background: #151520;
+    border: 1px solid #222233;
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-top: 16px;
+}
+
+.url-output h3 {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.url-box {
+    display: flex;
+    gap: 8px;
+}
+
+.url-box input {
+    flex: 1;
+    background: #0d0d14;
+    border: 1px solid #2a2a3a;
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+    color: #ff6666;
+    font-family: 'Courier New', monospace;
+    outline: none;
+    min-width: 0;
+}
+
+.url-box input:focus {
+    border-color: #ff0000;
+}
+
+.btn-copy {
+    background: #ff0000;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: var(--font-family);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.btn-copy:hover {
+    background: #cc0000;
+}
+
+.btn-copy:active {
+    transform: scale(0.97);
+}
+
+.btn-copy.copied {
+    background: #4caf50;
+}
+
+.url-hint {
+    margin-top: 8px;
+    font-size: 10px;
+    color: #555;
+    line-height: 1.5;
+}
+
+/* --- Recommended sizes table --- */
+.size-table {
+    margin-top: 8px;
+    width: 100%;
+    font-size: 11px;
+    color: #777;
+    border-collapse: collapse;
+}
+
+.size-table th {
+    text-align: left;
+    font-weight: 500;
+    color: #999;
+    padding: 3px 8px 3px 0;
+}
+
+.size-table td {
+    padding: 3px 8px 3px 0;
+}
+
+.size-table .active-size {
+    color: #ff6666;
+    font-weight: 600;
+}
+
+/* --- Setup footer --- */
+.setup-footer {
+    text-align: center;
+    margin-top: 40px;
+    font-size: 11px;
+    color: #444;
+}
+
+.setup-footer a {
+    color: #666;
+    text-decoration: none;
+}
+
+.setup-footer a:hover {
+    color: #ff0000;
 }
     </style>
 </head>
 <body>
-    <!-- Widget container -->
-    <div class="widget anim-hidden" id="widget">
-        <div class="connection-status disconnected" id="statusDot"></div>
 
-        <div class="connecting-overlay" id="connectingOverlay">
-            <div class="connecting-text">
-                <div class="connecting-spinner"></div>
-                <span id="connectingLabel">Connecting…</span>
+    <!-- ============================================================
+         SETUP / DASHBOARD MODE
+         ============================================================ -->
+    <div id="setupView" style="display:none;">
+        <div class="setup-container">
+            <div class="setup-header">
+                <h1>
+                    <span class="logo-icon"><svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#FF0000"/><polygon points="10,8 16,12 10,16" fill="white"/></svg></span>
+                    BetterYTBwidget
+                </h1>
+                <p>YouTube Music now-playing overlay for OBS</p>
+            </div>
+
+            <div class="setup-layout">
+                <!-- Left: Settings -->
+                <div class="settings-panel">
+
+                    <!-- DATA SOURCE -->
+                    <div class="settings-section">
+                        <h3>Data Source</h3>
+                        <div class="field">
+                            <label>Source</label>
+                            <select id="cfgSource">
+                                <option value="ytmdesktop">ytmdesktop (WebSocket)</option>
+                                <option value="tuna">OBS Tuna Plugin (HTTP)</option>
+                                <option value="manual">Manual / Demo</option>
+                            </select>
+                        </div>
+                        <div id="ytmFields">
+                            <div class="field-row">
+                                <div class="field">
+                                    <label>Port</label>
+                                    <input type="number" id="cfgWsPort" value="9863" min="1" max="65535">
+                                </div>
+                                <div class="field">
+                                    <label>Auth Token (optional)</label>
+                                    <input type="text" id="cfgToken" placeholder="Leave empty if not needed">
+                                </div>
+                            </div>
+                        </div>
+                        <div id="tunaFields" style="display:none;">
+                            <div class="field">
+                                <label>Tuna Port</label>
+                                <input type="number" id="cfgTunaPort" value="1608" min="1" max="65535">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- APPEARANCE -->
+                    <div class="settings-section">
+                        <h3>Appearance</h3>
+                        <div class="field-row">
+                            <div class="field">
+                                <label>Theme</label>
+                                <select id="cfgTheme">
+                                    <option value="glass">Glass (Frosted)</option>
+                                    <option value="dark">Dark</option>
+                                    <option value="light">Light</option>
+                                    <option value="transparent">Transparent</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Size</label>
+                                <select id="cfgSize">
+                                    <option value="small">Small (250px)</option>
+                                    <option value="medium" selected>Medium (320px)</option>
+                                    <option value="large">Large (400px)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="field">
+                            <label>Position in OBS source</label>
+                            <select id="cfgPosition">
+                                <option value="bottom-left">Bottom Left</option>
+                                <option value="bottom-right">Bottom Right</option>
+                                <option value="top-left">Top Left</option>
+                                <option value="top-right">Top Right</option>
+                                <option value="center">Center</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- ANIMATION -->
+                    <div class="settings-section">
+                        <h3>Animation</h3>
+                        <div class="field-row">
+                            <div class="field">
+                                <label>Style</label>
+                                <select id="cfgAnimation">
+                                    <option value="slide">Slide</option>
+                                    <option value="fade">Fade</option>
+                                    <option value="pop">Pop</option>
+                                    <option value="none">None</option>
+                                </select>
+                            </div>
+                            <div class="field">
+                                <label>Direction</label>
+                                <select id="cfgDirection">
+                                    <option value="up">Up</option>
+                                    <option value="down">Down</option>
+                                    <option value="left">Left</option>
+                                    <option value="right">Right</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- DISPLAY OPTIONS -->
+                    <div class="settings-section">
+                        <h3>Display Options</h3>
+                        <div class="toggle-field">
+                            <span>Show Timeline</span>
+                            <label class="toggle"><input type="checkbox" id="cfgShowTimeline" checked><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="toggle-field">
+                            <span>Show Like Indicator</span>
+                            <label class="toggle"><input type="checkbox" id="cfgShowLikes" checked><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="toggle-field">
+                            <span>Show YT Music Icon</span>
+                            <label class="toggle"><input type="checkbox" id="cfgShowBrand" checked><span class="toggle-slider"></span></label>
+                        </div>
+                    </div>
+
+                    <!-- BEHAVIOR -->
+                    <div class="settings-section">
+                        <h3>Behavior</h3>
+                        <div class="toggle-field">
+                            <span>Hide When Paused</span>
+                            <label class="toggle"><input type="checkbox" id="cfgHideOnPause"><span class="toggle-slider"></span></label>
+                        </div>
+                        <div class="field">
+                            <label>Show On Song Switch (seconds, 0 = always visible)</label>
+                            <input type="number" id="cfgShowOnSwitch" value="0" min="0" max="120">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Preview + URL -->
+                <div class="preview-panel">
+                    <div class="preview-card">
+                        <h3>Live Preview</h3>
+                        <div class="preview-frame-wrap">
+                            <iframe id="previewFrame" sandbox="allow-scripts" loading="lazy"></iframe>
+                        </div>
+                        <div class="preview-dimensions" id="previewDimensions">Recommended: 380 x 120</div>
+                    </div>
+
+                    <div class="url-output">
+                        <h3>OBS Browser Source URL</h3>
+                        <div class="url-box">
+                            <input type="text" id="urlOutput" readonly>
+                            <button class="btn-copy" id="btnCopy">Copy</button>
+                        </div>
+                        <div class="url-hint">
+                            Paste this URL into OBS &rarr; Sources &rarr; Browser Source &rarr; URL field.<br>
+                            Enable <strong>"Shutdown source when not visible"</strong> for best performance.
+                        </div>
+                        <table class="size-table">
+                            <tr><th>Size</th><th>Width</th><th>Height</th></tr>
+                            <tr id="sizeRowSmall"><td>Small</td><td>300</td><td>80</td></tr>
+                            <tr id="sizeRowMedium"><td>Medium</td><td>380</td><td>120</td></tr>
+                            <tr id="sizeRowLarge"><td>Large</td><td>460</td><td>140</td></tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="setup-footer">
+                Part of <a href="../../index.html">AdHub</a> by Deerpfy
             </div>
         </div>
+    </div>
 
-        <div class="art-container" id="artContainer">
-            <img id="artImage" src="" alt="" style="display:none;">
-            <div class="art-placeholder" id="artPlaceholder">
-                <!-- Music note icon -->
-                <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+    <!-- ============================================================
+         WIDGET MODE (used by OBS browser source)
+         ============================================================ -->
+    <div id="widgetView" style="display:none;">
+        <div class="widget anim-hidden" id="widget">
+            <div class="connection-status disconnected" id="statusDot"></div>
+            <div class="connecting-overlay" id="connectingOverlay">
+                <div class="connecting-text">
+                    <div class="connecting-spinner"></div>
+                    <span id="connectingLabel">Connecting...</span>
+                </div>
             </div>
+            <div class="art-container" id="artContainer">
+                <img id="artImage" src="" alt="" style="display:none;">
+                <div class="art-placeholder" id="artPlaceholder">
+                    <svg viewBox="0 0 24 24"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+                </div>
+            </div>
+            <div class="track-info">
+                <div class="track-title" id="trackTitle">
+                    <span class="track-title-inner" id="trackTitleInner">Not Playing</span>
+                </div>
+                <div class="track-artist" id="trackArtist">&mdash;</div>
+                <div class="meta-row" id="metaRow">
+                    <div class="brand-icon" id="brandIcon" title="YouTube Music">
+                        <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#FF0000"/><polygon points="10,8 16,12 10,16" fill="white"/></svg>
+                    </div>
+                    <div class="like-icon" id="likeIcon" title="Liked">
+                        <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                    </div>
+                    <div class="state-icon" id="stateIcon">
+                        <svg viewBox="0 0 24 24" id="iconPlaying" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        <svg viewBox="0 0 24 24" id="iconPaused" style="display:none;"><path d="M8 5v14l11-7z"/></svg>
+                    </div>
+                </div>
+                <div class="timeline" id="timeline">
+                    <div class="timeline-bar">
+                        <div class="timeline-fill" id="timelineFill"></div>
+                    </div>
+                    <div class="timeline-times">
+                        <span id="timeElapsed">0:00</span>
+                        <span id="timeDuration">0:00</span>
+                    </div>
+                </div>
+            </div>
+            <div class="demo-badge" id="demoBadge" style="display:none;">DEMO</div>
         </div>
-
-        <div class="track-info">
-            <div class="track-title" id="trackTitle">
-                <span class="track-title-inner" id="trackTitleInner">Not Playing</span>
-            </div>
-            <div class="track-artist" id="trackArtist">—</div>
-
-            <div class="meta-row" id="metaRow">
-                <!-- YouTube Music brand icon -->
-                <div class="brand-icon" id="brandIcon" title="YouTube Music">
-                    <svg viewBox="0 0 24 24" fill="none">
-                        <circle cx="12" cy="12" r="10" fill="#FF0000"/>
-                        <polygon points="10,8 16,12 10,16" fill="white"/>
-                    </svg>
-                </div>
-
-                <!-- Like/heart icon -->
-                <div class="like-icon" id="likeIcon" title="Liked">
-                    <svg viewBox="0 0 24 24"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
-                </div>
-
-                <!-- Playback state icon -->
-                <div class="state-icon" id="stateIcon">
-                    <!-- Pause icon (shown when playing) -->
-                    <svg viewBox="0 0 24 24" id="iconPlaying" style="display:none;"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                    <!-- Play icon (shown when paused) -->
-                    <svg viewBox="0 0 24 24" id="iconPaused" style="display:none;"><path d="M8 5v14l11-7z"/></svg>
-                </div>
-            </div>
-
-            <div class="timeline" id="timeline">
-                <div class="timeline-bar">
-                    <div class="timeline-fill" id="timelineFill"></div>
-                </div>
-                <div class="timeline-times">
-                    <span id="timeElapsed">0:00</span>
-                    <span id="timeDuration">0:00</span>
-                </div>
-            </div>
-        </div>
-
-        <div class="demo-badge" id="demoBadge" style="display:none;">DEMO</div>
     </div>
 
     <script>
 /* ============================================================
-   CONFIGURATION PARSER — URL Parameters
+   MODE DETECTION
+   ============================================================
+   - If URL has ?mode=widget → render the OBS widget
+   - If URL has ?source=... (legacy, no mode param) → render widget
+   - Otherwise → render setup dashboard
    ============================================================ */
+const params = new URLSearchParams(window.location.search);
+const isWidgetMode = params.has('mode') && params.get('mode') === 'widget'
+    || (!params.has('mode') && params.has('source'));
+
+if (isWidgetMode) {
+    document.body.classList.add('widget-mode');
+    document.getElementById('widgetView').style.display = 'contents';
+    bootWidget();
+} else {
+    document.body.classList.add('setup-mode');
+    document.getElementById('setupView').style.display = 'block';
+    bootSetup();
+}
+
+/* ============================================================
+   SETUP DASHBOARD LOGIC
+   ============================================================ */
+function bootSetup() {
+    const $ = (id) => document.getElementById(id);
+
+    const els = {
+        source: $('cfgSource'),
+        wsPort: $('cfgWsPort'),
+        token: $('cfgToken'),
+        tunaPort: $('cfgTunaPort'),
+        theme: $('cfgTheme'),
+        size: $('cfgSize'),
+        position: $('cfgPosition'),
+        animation: $('cfgAnimation'),
+        direction: $('cfgDirection'),
+        showTimeline: $('cfgShowTimeline'),
+        showLikes: $('cfgShowLikes'),
+        showBrand: $('cfgShowBrand'),
+        hideOnPause: $('cfgHideOnPause'),
+        showOnSwitch: $('cfgShowOnSwitch'),
+        urlOutput: $('urlOutput'),
+        btnCopy: $('btnCopy'),
+        previewFrame: $('previewFrame'),
+        previewDimensions: $('previewDimensions'),
+        ytmFields: $('ytmFields'),
+        tunaFields: $('tunaFields'),
+    };
+
+    const sizeMap = {
+        small:  { w: 300, h: 80 },
+        medium: { w: 380, h: 120 },
+        large:  { w: 460, h: 140 },
+    };
+
+    // Build the widget URL from current settings
+    function buildURL() {
+        const base = window.location.origin + window.location.pathname;
+        const p = new URLSearchParams();
+        p.set('mode', 'widget');
+
+        const src = els.source.value;
+        p.set('source', src);
+
+        if (src === 'ytmdesktop') {
+            if (els.wsPort.value !== '9863') p.set('wsport', els.wsPort.value);
+            if (els.token.value.trim()) p.set('token', els.token.value.trim());
+        } else if (src === 'tuna') {
+            if (els.tunaPort.value !== '1608') p.set('tunaport', els.tunaPort.value);
+        }
+
+        if (els.theme.value !== 'glass') p.set('theme', els.theme.value);
+        if (els.size.value !== 'medium') p.set('size', els.size.value);
+        if (els.position.value !== 'bottom-left') p.set('position', els.position.value);
+        if (els.animation.value !== 'slide') p.set('animation', els.animation.value);
+        if (els.direction.value !== 'up') p.set('direction', els.direction.value);
+        if (!els.showTimeline.checked) p.set('showTimeline', 'false');
+        if (!els.showLikes.checked) p.set('showLikes', 'false');
+        if (!els.showBrand.checked) p.set('showBrand', 'false');
+        if (els.hideOnPause.checked) p.set('hideOnPause', 'true');
+        if (els.showOnSwitch.value !== '0') p.set('showOnSwitch', els.showOnSwitch.value);
+
+        return base + '?' + p.toString();
+    }
+
+    // Build a demo preview URL (always manual mode so it shows content)
+    function buildPreviewURL() {
+        const base = window.location.origin + window.location.pathname;
+        const p = new URLSearchParams();
+        p.set('mode', 'widget');
+        p.set('source', 'manual');
+        p.set('theme', els.theme.value);
+        p.set('size', els.size.value);
+        p.set('position', 'center');
+        p.set('animation', els.animation.value);
+        p.set('direction', els.direction.value);
+        if (!els.showTimeline.checked) p.set('showTimeline', 'false');
+        if (!els.showLikes.checked) p.set('showLikes', 'false');
+        if (!els.showBrand.checked) p.set('showBrand', 'false');
+        return base + '?' + p.toString();
+    }
+
+    function updateAll() {
+        // Update URL
+        els.urlOutput.value = buildURL();
+
+        // Update preview iframe
+        els.previewFrame.src = buildPreviewURL();
+
+        // Update recommended dimensions
+        const s = sizeMap[els.size.value] || sizeMap.medium;
+        els.previewDimensions.textContent = 'Recommended: ' + s.w + ' x ' + s.h;
+
+        // Highlight active size row
+        document.querySelectorAll('.size-table tr').forEach(r => r.classList.remove('active-size'));
+        const rowId = 'sizeRow' + els.size.value.charAt(0).toUpperCase() + els.size.value.slice(1);
+        const row = $(rowId);
+        if (row) row.classList.add('active-size');
+
+        // Show/hide source-specific fields
+        els.ytmFields.style.display = els.source.value === 'ytmdesktop' ? 'block' : 'none';
+        els.tunaFields.style.display = els.source.value === 'tuna' ? 'block' : 'none';
+    }
+
+    // Debounce for text inputs
+    let debounceTimer = null;
+    function onChangeDebounced() {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(updateAll, 400);
+    }
+
+    // Bind all controls
+    const selects = [els.source, els.theme, els.size, els.position, els.animation, els.direction];
+    selects.forEach(el => el.addEventListener('change', updateAll));
+
+    const checkboxes = [els.showTimeline, els.showLikes, els.showBrand, els.hideOnPause];
+    checkboxes.forEach(el => el.addEventListener('change', updateAll));
+
+    const textInputs = [els.wsPort, els.token, els.tunaPort, els.showOnSwitch];
+    textInputs.forEach(el => el.addEventListener('input', onChangeDebounced));
+
+    // Copy button
+    els.btnCopy.addEventListener('click', () => {
+        const url = els.urlOutput.value;
+        navigator.clipboard.writeText(url).then(() => {
+            els.btnCopy.textContent = 'Copied!';
+            els.btnCopy.classList.add('copied');
+            setTimeout(() => {
+                els.btnCopy.textContent = 'Copy';
+                els.btnCopy.classList.remove('copied');
+            }, 2000);
+        }).catch(() => {
+            els.urlOutput.select();
+            document.execCommand('copy');
+            els.btnCopy.textContent = 'Copied!';
+            els.btnCopy.classList.add('copied');
+            setTimeout(() => {
+                els.btnCopy.textContent = 'Copy';
+                els.btnCopy.classList.remove('copied');
+            }, 2000);
+        });
+    });
+
+    // Initial render
+    updateAll();
+}
+
+/* ============================================================
+   WIDGET MODE — All widget logic below
+   ============================================================ */
+function bootWidget() {
+
+/* CONFIGURATION PARSER */
 const Config = (() => {
     const params = new URLSearchParams(window.location.search);
-
-    function get(key, fallback) {
-        const v = params.get(key);
-        return v !== null ? v : fallback;
-    }
-
-    function getBool(key, fallback) {
-        const v = params.get(key);
-        if (v === null) return fallback;
-        return v === 'true' || v === '1';
-    }
-
-    function getInt(key, fallback) {
-        const v = parseInt(params.get(key), 10);
-        return isNaN(v) ? fallback : v;
-    }
+    function get(key, fallback) { const v = params.get(key); return v !== null ? v : fallback; }
+    function getBool(key, fallback) { const v = params.get(key); if (v === null) return fallback; return v === 'true' || v === '1'; }
+    function getInt(key, fallback) { const v = parseInt(params.get(key), 10); return isNaN(v) ? fallback : v; }
 
     return {
-        source:       get('source', 'ytmdesktop'),       // ytmdesktop | tuna | manual
-        wsPort:       getInt('wsport', 9863),             // ytmdesktop API port
-        tunaPort:     getInt('tunaport', 1608),           // Tuna HTTP port
-        token:        get('token', ''),                    // ytmdesktop auth token
-        appId:        get('appid', 'betterytbwidget'),     // ytmdesktop app ID
-        theme:        get('theme', 'glass'),               // dark | light | transparent | glass
-        position:     get('position', 'bottom-left'),      // bottom-left|bottom-right|top-left|top-right|center
-        size:         get('size', 'medium'),                // small | medium | large
+        source:       get('source', 'ytmdesktop'),
+        wsPort:       getInt('wsport', 9863),
+        tunaPort:     getInt('tunaport', 1608),
+        token:        get('token', ''),
+        appId:        get('appid', 'betterytbwidget'),
+        theme:        get('theme', 'glass'),
+        position:     get('position', 'bottom-left'),
+        size:         get('size', 'medium'),
         showTimeline: getBool('showTimeline', true),
         showLikes:    getBool('showLikes', true),
         showBrand:    getBool('showBrand', true),
         hideOnPause:  getBool('hideOnPause', false),
-        showOnSwitch: getInt('showOnSwitch', 0),          // seconds, 0 = always visible
-        animation:    get('animation', 'slide'),           // slide | fade | pop | none
-        direction:    get('direction', 'up'),              // left | right | up | down
-        // Manual mode params
+        showOnSwitch: getInt('showOnSwitch', 0),
+        animation:    get('animation', 'slide'),
+        direction:    get('direction', 'up'),
         manualTitle:    get('title', ''),
         manualArtist:   get('artist', ''),
         manualArtwork:  get('artwork', ''),
@@ -734,125 +979,82 @@ const Config = (() => {
     };
 })();
 
-/* ============================================================
-   UI RENDERER — DOM References & Update Functions
-   ============================================================ */
+/* UI RENDERER */
 const UI = (() => {
     const $ = (id) => document.getElementById(id);
-
     const els = {
-        widget:           $('widget'),
-        statusDot:        $('statusDot'),
-        connectingOverlay:$('connectingOverlay'),
-        connectingLabel:  $('connectingLabel'),
-        artContainer:     $('artContainer'),
-        artImage:         $('artImage'),
-        artPlaceholder:   $('artPlaceholder'),
-        trackTitle:       $('trackTitle'),
-        trackTitleInner:  $('trackTitleInner'),
-        trackArtist:      $('trackArtist'),
-        metaRow:          $('metaRow'),
-        brandIcon:        $('brandIcon'),
-        likeIcon:         $('likeIcon'),
-        stateIcon:        $('stateIcon'),
-        iconPlaying:      $('iconPlaying'),
-        iconPaused:       $('iconPaused'),
-        timeline:         $('timeline'),
-        timelineFill:     $('timelineFill'),
-        timeElapsed:      $('timeElapsed'),
-        timeDuration:     $('timeDuration'),
-        demoBadge:        $('demoBadge'),
+        widget: $('widget'), statusDot: $('statusDot'),
+        connectingOverlay: $('connectingOverlay'), connectingLabel: $('connectingLabel'),
+        artContainer: $('artContainer'), artImage: $('artImage'), artPlaceholder: $('artPlaceholder'),
+        trackTitle: $('trackTitle'), trackTitleInner: $('trackTitleInner'), trackArtist: $('trackArtist'),
+        metaRow: $('metaRow'), brandIcon: $('brandIcon'), likeIcon: $('likeIcon'),
+        stateIcon: $('stateIcon'), iconPlaying: $('iconPlaying'), iconPaused: $('iconPaused'),
+        timeline: $('timeline'), timelineFill: $('timelineFill'),
+        timeElapsed: $('timeElapsed'), timeDuration: $('timeDuration'), demoBadge: $('demoBadge'),
     };
 
     function init() {
         document.documentElement.setAttribute('data-theme', Config.theme);
         document.body.setAttribute('data-position', Config.position);
-
         els.widget.setAttribute('data-size', Config.size);
         els.widget.setAttribute('data-anim', Config.animation);
         els.widget.setAttribute('data-dir', Config.direction);
-
         if (!Config.showTimeline) els.timeline.style.display = 'none';
-        if (!Config.showBrand)    els.brandIcon.style.display = 'none';
-        if (!Config.showLikes)    els.likeIcon.style.display = 'none';
+        if (!Config.showBrand) els.brandIcon.style.display = 'none';
+        if (!Config.showLikes) els.likeIcon.style.display = 'none';
     }
 
     function formatTime(seconds) {
         if (!seconds || seconds < 0) return '0:00';
         const s = Math.floor(seconds);
-        const m = Math.floor(s / 60);
-        const sec = s % 60;
-        return m + ':' + String(sec).padStart(2, '0');
+        return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0');
     }
 
     let currentArtUrl = '';
 
     function updateTrack(data) {
-        // data: { title, artist, artwork, duration, elapsed, isPlaying, isLiked }
-
         els.trackTitleInner.textContent = data.title || 'Not Playing';
         checkMarquee();
-
         els.trackArtist.textContent = data.artist || '\u2014';
 
-        // Artwork
         if (data.artwork && data.artwork !== currentArtUrl) {
             currentArtUrl = data.artwork;
-            const img = els.artImage;
-            img.onload = () => {
-                img.style.display = 'block';
-                els.artPlaceholder.style.display = 'none';
-            };
-            img.onerror = () => {
-                img.style.display = 'none';
-                els.artPlaceholder.style.display = 'flex';
-            };
-            img.src = data.artwork;
+            els.artImage.onload = () => { els.artImage.style.display = 'block'; els.artPlaceholder.style.display = 'none'; };
+            els.artImage.onerror = () => { els.artImage.style.display = 'none'; els.artPlaceholder.style.display = 'flex'; };
+            els.artImage.src = data.artwork;
         } else if (!data.artwork) {
             currentArtUrl = '';
             els.artImage.style.display = 'none';
             els.artPlaceholder.style.display = 'flex';
         }
 
-        // Timeline
         if (Config.showTimeline) {
-            const dur = data.duration || 0;
-            const el = data.elapsed || 0;
+            const dur = data.duration || 0, el = data.elapsed || 0;
             const pct = dur > 0 ? Math.min((el / dur) * 100, 100) : 0;
             els.timelineFill.style.width = pct + '%';
             els.timeElapsed.textContent = formatTime(el);
             els.timeDuration.textContent = formatTime(dur);
         }
 
-        // Like status
-        if (Config.showLikes) {
-            els.likeIcon.classList.toggle('active', !!data.isLiked);
-        }
-
-        // Playback state icon
+        if (Config.showLikes) els.likeIcon.classList.toggle('active', !!data.isLiked);
         els.iconPlaying.style.display = data.isPlaying ? 'block' : 'none';
         els.iconPaused.style.display = data.isPlaying ? 'none' : 'block';
     }
 
     function checkMarquee() {
-        const container = els.trackTitle;
-        const inner = els.trackTitleInner;
-
+        const container = els.trackTitle, inner = els.trackTitleInner;
         container.classList.remove('marquee');
         inner.style.animation = 'none';
         inner.style.removeProperty('--marquee-distance');
         inner.style.removeProperty('--marquee-duration');
-
         void inner.offsetWidth;
-
         requestAnimationFrame(() => {
-            const containerW = container.offsetWidth;
-            const textW = inner.scrollWidth;
+            const containerW = container.offsetWidth, textW = inner.scrollWidth;
             if (textW > containerW + 2) {
                 const overflow = textW - containerW;
-                const duration = Math.max(5, overflow / 30);
+                const dur = Math.max(5, overflow / 30);
                 inner.style.setProperty('--marquee-distance', '-' + (overflow + 20) + 'px');
-                inner.style.setProperty('--marquee-duration', duration + 's');
+                inner.style.setProperty('--marquee-duration', dur + 's');
                 inner.style.animation = '';
                 container.classList.add('marquee');
             }
@@ -861,11 +1063,8 @@ const UI = (() => {
 
     function setConnectionStatus(status) {
         els.statusDot.className = 'connection-status ' + status;
-        if (status === 'connected') {
-            setTimeout(() => els.statusDot.classList.add('fade-out'), 3000);
-        } else {
-            els.statusDot.classList.remove('fade-out');
-        }
+        if (status === 'connected') setTimeout(() => els.statusDot.classList.add('fade-out'), 3000);
+        else els.statusDot.classList.remove('fade-out');
     }
 
     function showConnectingOverlay(show, label) {
@@ -876,670 +1075,234 @@ const UI = (() => {
     return { els, init, updateTrack, formatTime, setConnectionStatus, showConnectingOverlay, checkMarquee };
 })();
 
-/* ============================================================
-   ANIMATION CONTROLLER — Show/Hide Widget
-   ============================================================ */
+/* ANIMATION CONTROLLER */
 const Anim = (() => {
-    let isVisible = false;
-    let hideTimer = null;
-
-    function show() {
-        if (isVisible) return;
-        isVisible = true;
-        clearHideTimer();
-        const w = UI.els.widget;
-        w.classList.remove('anim-hidden');
-        w.classList.add('anim-visible');
-    }
-
-    function hide() {
-        if (!isVisible) return;
-        isVisible = false;
-        const w = UI.els.widget;
-        w.classList.remove('anim-visible');
-        w.classList.add('anim-hidden');
-    }
-
-    function clearHideTimer() {
-        if (hideTimer) {
-            clearTimeout(hideTimer);
-            hideTimer = null;
-        }
-    }
-
-    function showForDuration(seconds) {
-        show();
-        if (seconds > 0) {
-            clearHideTimer();
-            hideTimer = setTimeout(() => hide(), seconds * 1000);
-        }
-    }
-
-    function getVisible() { return isVisible; }
-
-    return { show, hide, showForDuration, clearHideTimer, getVisible };
+    let isVisible = false, hideTimer = null;
+    function show() { if (isVisible) return; isVisible = true; clearHideTimer(); UI.els.widget.classList.remove('anim-hidden'); UI.els.widget.classList.add('anim-visible'); }
+    function hide() { if (!isVisible) return; isVisible = false; UI.els.widget.classList.remove('anim-visible'); UI.els.widget.classList.add('anim-hidden'); }
+    function clearHideTimer() { if (hideTimer) { clearTimeout(hideTimer); hideTimer = null; } }
+    function showForDuration(sec) { show(); if (sec > 0) { clearHideTimer(); hideTimer = setTimeout(hide, sec * 1000); } }
+    return { show, hide, showForDuration, clearHideTimer, getVisible: () => isVisible };
 })();
 
 /* ============================================================
-   WEBSOCKET MODULE — ytmdesktop Companion Server API v1
-   ============================================================
-   ytmdesktop v2 uses Socket.IO over ws://127.0.0.1:9863.
-   Socket.IO protocol: Engine.IO frames prefixed with packet type.
-   EIO packet types: 0=open, 2=ping, 3=pong, 4=message
-   SIO packet types (inside EIO message): 0=connect, 2=event, 3=ack
-
-   We implement a minimal Socket.IO v4 client over raw WebSocket
-   to avoid external dependencies.
+   WEBSOCKET MODULE — ytmdesktop Companion Server API
    ============================================================ */
 const YTMDesktop = (() => {
-    let ws = null;
-    let reconnectAttempts = 0;
-    let reconnectTimer = null;
-    let pingTimer = null;
-    let connected = false;
-    let lastTrackId = '';
-    let currentTrackTitle = '';
-    let progressInterval = null;
+    let ws = null, reconnectAttempts = 0, reconnectTimer = null, pingTimer = null;
+    let connected = false, lastTrackId = '', currentTrackTitle = '', progressInterval = null;
+    const MAX_RECONNECT_DELAY = 30000, BASE_URL = '127.0.0.1';
 
-    const MAX_RECONNECT_DELAY = 30000;
-    const BASE_URL = '127.0.0.1';
+    function getReconnectDelay() { return Math.min(1000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY); }
 
-    function getReconnectDelay() {
-        return Math.min(1000 * Math.pow(2, reconnectAttempts), MAX_RECONNECT_DELAY);
-    }
-
-    // Step 1: Fetch Socket.IO session via HTTP polling handshake
     function connect() {
         cleanup();
         UI.setConnectionStatus('reconnecting');
         UI.showConnectingOverlay(true, 'Connecting to YTM Desktop\u2026');
 
-        // Socket.IO v4 handshake: GET with EIO=4 and transport=polling
-        const handshakeUrl = 'http://' + BASE_URL + ':' + Config.wsPort +
-            '/socket.io/?EIO=4&transport=polling';
-
-        fetch(handshakeUrl)
-            .then(r => {
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                return r.text();
-            })
+        const handshakeUrl = 'http://' + BASE_URL + ':' + Config.wsPort + '/socket.io/?EIO=4&transport=polling';
+        fetch(handshakeUrl).then(r => { if (!r.ok) throw new Error(); return r.text(); })
             .then(text => {
-                // Response is Engine.IO encoded: e.g. "0{"sid":"xxx","upgrades":["websocket"],...}"
-                // Strip the leading digit(s) + possible length prefix
-                const jsonStart = text.indexOf('{');
-                if (jsonStart === -1) throw new Error('Invalid handshake response');
-                const json = JSON.parse(text.substring(jsonStart));
-                if (!json.sid) throw new Error('No session ID');
-                openWebSocket(json.sid, json.pingInterval || 25000, json.pingTimeout || 20000);
+                const i = text.indexOf('{');
+                if (i === -1) throw new Error();
+                const json = JSON.parse(text.substring(i));
+                if (!json.sid) throw new Error();
+                openWS('ws://' + BASE_URL + ':' + Config.wsPort + '/socket.io/?EIO=4&transport=websocket&sid=' + json.sid, json.pingInterval || 25000);
             })
-            .catch(() => {
-                // Fallback: try direct WebSocket connection (some versions support it)
-                openWebSocketDirect();
-            });
+            .catch(() => { openWS('ws://' + BASE_URL + ':' + Config.wsPort + '/socket.io/?EIO=4&transport=websocket', 25000); });
     }
 
-    // Step 2a: Open WebSocket with Socket.IO session
-    function openWebSocket(sid, pingIntervalMs, pingTimeoutMs) {
-        const url = 'ws://' + BASE_URL + ':' + Config.wsPort +
-            '/socket.io/?EIO=4&transport=websocket&sid=' + sid;
-        initWS(url, pingIntervalMs);
-    }
-
-    // Step 2b: Direct WebSocket (fallback for non-Socket.IO servers or older versions)
-    function openWebSocketDirect() {
-        const url = 'ws://' + BASE_URL + ':' + Config.wsPort +
-            '/socket.io/?EIO=4&transport=websocket';
-        initWS(url, 25000);
-    }
-
-    function initWS(url, pingIntervalMs) {
-        try {
-            ws = new WebSocket(url);
-        } catch (e) {
-            scheduleReconnect();
-            return;
-        }
-
-        ws.onopen = () => {
-            // Send WebSocket upgrade probe
-            ws.send('2probe');
-        };
-
-        ws.onmessage = (event) => {
-            const data = event.data;
-            if (typeof data !== 'string' || data.length === 0) return;
-
-            const eioType = data.charAt(0);
-
-            switch (eioType) {
-                case '0': {
-                    // Engine.IO OPEN — received session info
-                    // May happen on direct WS connection (no prior polling handshake)
-                    try {
-                        const info = JSON.parse(data.substring(1));
-                        if (info.pingInterval) pingIntervalMs = info.pingInterval;
-                    } catch(e) {}
-                    // Send Socket.IO CONNECT to default namespace
-                    sendSIOConnect();
-                    break;
-                }
-                case '2': {
-                    // Engine.IO PING — respond with PONG
-                    ws.send('3');
-                    break;
-                }
-                case '3': {
-                    // Engine.IO PONG (response to our probe or ping)
-                    if (data === '3probe') {
-                        // Complete the upgrade
-                        ws.send('5'); // Engine.IO UPGRADE
-                        sendSIOConnect();
-                    }
-                    break;
-                }
-                case '4': {
-                    // Engine.IO MESSAGE — contains Socket.IO packet
-                    handleSIOPacket(data.substring(1));
-                    break;
-                }
+    function openWS(url, pingMs) {
+        try { ws = new WebSocket(url); } catch(e) { scheduleReconnect(); return; }
+        ws.onopen = () => { ws.send('2probe'); };
+        ws.onmessage = (ev) => {
+            const d = ev.data;
+            if (typeof d !== 'string' || !d.length) return;
+            switch (d.charAt(0)) {
+                case '0': try { const info = JSON.parse(d.substring(1)); if (info.pingInterval) pingMs = info.pingInterval; } catch(e){} sendSIOConnect(); break;
+                case '2': ws.send('3'); break;
+                case '3': if (d === '3probe') { ws.send('5'); sendSIOConnect(); } break;
+                case '4': handleSIO(d.substring(1)); break;
             }
         };
-
-        ws.onclose = () => {
-            onDisconnect();
-        };
-
-        ws.onerror = () => {
-            // onclose fires after this
-        };
-
-        // Heartbeat: send ping on interval
+        ws.onclose = () => { onDisconnect(); };
+        ws.onerror = () => {};
         if (pingTimer) clearInterval(pingTimer);
-        pingTimer = setInterval(() => {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-                ws.send('2'); // Engine.IO PING
-            }
-        }, pingIntervalMs);
+        pingTimer = setInterval(() => { if (ws && ws.readyState === WebSocket.OPEN) ws.send('2'); }, pingMs);
     }
 
-    function sendSIOConnect() {
-        // Socket.IO CONNECT packet with auth token
-        if (Config.token) {
-            ws.send('40' + JSON.stringify({ token: Config.token }));
-        } else {
-            ws.send('40');
+    function sendSIOConnect() { ws.send(Config.token ? '40' + JSON.stringify({ token: Config.token }) : '40'); }
+
+    function handleSIO(pkt) {
+        if (!pkt.length) return;
+        switch (pkt.charAt(0)) {
+            case '0': connected = true; reconnectAttempts = 0; UI.setConnectionStatus('connected'); UI.showConnectingOverlay(false); fetchREST(); break;
+            case '2': try { const a = JSON.parse(pkt.substring(1)); if (Array.isArray(a) && (a[0]==='state-update'||a[0]==='tick')) handleState(a[1]); } catch(e){} break;
+            case '4': connected = false; UI.setConnectionStatus('disconnected'); UI.showConnectingOverlay(true, 'Auth failed. Check token.'); break;
         }
     }
 
-    function handleSIOPacket(packet) {
-        if (packet.length === 0) return;
-        const sioType = packet.charAt(0);
-
-        switch (sioType) {
-            case '0': {
-                // SIO CONNECT — successfully connected to namespace
-                connected = true;
-                reconnectAttempts = 0;
-                UI.setConnectionStatus('connected');
-                UI.showConnectingOverlay(false);
-
-                // Fetch initial state via REST API
-                fetchRESTState();
-                break;
-            }
-            case '2': {
-                // SIO EVENT — ["eventName", data]
-                try {
-                    const arr = JSON.parse(packet.substring(1));
-                    if (Array.isArray(arr) && arr[0] === 'state-update') {
-                        handleStateUpdate(arr[1]);
-                    } else if (Array.isArray(arr) && arr[0] === 'tick') {
-                        handleStateUpdate(arr[1]);
-                    }
-                } catch(e) {}
-                break;
-            }
-            case '4': {
-                // SIO ERROR
-                connected = false;
-                UI.setConnectionStatus('disconnected');
-                UI.showConnectingOverlay(true, 'Auth failed. Check token.');
-                break;
-            }
-        }
+    function fetchREST() {
+        const h = {}; if (Config.token) h['Authorization'] = Config.token;
+        fetch('http://' + BASE_URL + ':' + Config.wsPort + '/api/v1/state', { headers: h })
+            .then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(handleState).catch(() => {});
     }
 
-    // Fetch current state via REST (initial load and fallback)
-    function fetchRESTState() {
-        const url = 'http://' + BASE_URL + ':' + Config.wsPort + '/api/v1/state';
-        const headers = {};
-        if (Config.token) headers['Authorization'] = Config.token;
-
-        fetch(url, { headers: headers })
-            .then(r => {
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                return r.json();
-            })
-            .then(state => {
-                handleStateUpdate(state);
-            })
-            .catch(() => {
-                // Non-fatal: we'll get state via WebSocket events
-            });
-    }
-
-    function handleStateUpdate(state) {
+    function handleState(state) {
         if (!state) return;
-        const trackData = parseState(state);
-        if (trackData && !trackData.isAd) {
-            const trackChanged = trackData.id !== lastTrackId ||
-                (trackData.title && trackData.title !== currentTrackTitle);
-
-            if (trackChanged) {
-                lastTrackId = trackData.id;
-                currentTrackTitle = trackData.title;
-            }
-
-            UI.updateTrack(trackData);
-            handleVisibility(trackData.isPlaying, trackChanged);
-            startProgressTracking(trackData);
-        }
+        const td = parseState(state);
+        if (!td || td.isAd) return;
+        const changed = td.id !== lastTrackId || (td.title && td.title !== currentTrackTitle);
+        if (changed) { lastTrackId = td.id; currentTrackTitle = td.title; }
+        UI.updateTrack(td);
+        handleVisibility(td.isPlaying, changed);
+        startProgress(td);
     }
 
-    // Parse ytmdesktop v2 state object
-    // v2: { player: { trackState, videoProgress, volume, adPlaying, queue },
-    //        video: { author, title, album, thumbnails[], durationSeconds, id, likeStatus } }
-    function parseState(state) {
-        const player = state.player || {};
-        const video = state.video || state.track || {};
-
-        // Playback state: trackState 0=Paused, 1=Playing, 2=Buffering
-        let isPlaying = false;
-        if ('trackState' in player) {
-            isPlaying = player.trackState === 1;
-        } else if ('isPaused' in player) {
-            isPlaying = !player.isPaused;
+    function parseState(s) {
+        const p = s.player || {}, v = s.video || s.track || {};
+        let isPlaying = 'trackState' in p ? p.trackState === 1 : !p.isPaused;
+        let elapsed = p.videoProgress || p.seekbarCurrentPosition || 0;
+        let duration = v.durationSeconds || 0;
+        if (!duration && v.duration) {
+            const d = v.duration;
+            if (typeof d === 'number') duration = d;
+            else if (typeof d === 'string' && d.includes(':')) { const pts = d.split(':').map(Number); duration = pts.length === 3 ? pts[0]*3600+pts[1]*60+pts[2] : pts[0]*60+(pts[1]||0); }
         }
-
-        // Elapsed time (seconds)
-        let elapsed = 0;
-        if ('videoProgress' in player) {
-            elapsed = player.videoProgress;
-        } else if ('seekbarCurrentPosition' in player) {
-            elapsed = player.seekbarCurrentPosition;
-        }
-
-        // Duration (seconds)
-        let duration = 0;
-        if ('durationSeconds' in video) {
-            duration = video.durationSeconds;
-        } else if ('duration' in video) {
-            const d = video.duration;
-            if (typeof d === 'number') {
-                duration = d;
-            } else if (typeof d === 'string' && d.includes(':')) {
-                // "3:45" → 225
-                const parts = d.split(':').map(Number);
-                duration = parts.length === 3
-                    ? parts[0] * 3600 + parts[1] * 60 + parts[2]
-                    : parts[0] * 60 + (parts[1] || 0);
-            }
-        }
-
-        // Like status: v2 uses numeric enum: 0=Dislike, 1=Indifferent, 2=Like
         let isLiked = false;
-        const ls = video.likeStatus !== undefined ? video.likeStatus : (player.likeStatus || null);
-        if (typeof ls === 'number') {
-            isLiked = ls === 2;
-        } else if (typeof ls === 'string') {
-            isLiked = ls.toUpperCase() === 'LIKE';
-        }
+        const ls = v.likeStatus !== undefined ? v.likeStatus : p.likeStatus;
+        if (typeof ls === 'number') isLiked = ls === 2;
+        else if (typeof ls === 'string') isLiked = ls.toUpperCase() === 'LIKE';
 
-        // Album art — prefer largest thumbnail from thumbnails array
-        let artwork = '';
-        if (video.thumbnails && Array.isArray(video.thumbnails) && video.thumbnails.length > 0) {
-            const sorted = [...video.thumbnails].sort((a, b) => (b.width || 0) - (a.width || 0));
-            artwork = sorted[0].url || '';
-        } else if (video.cover) {
-            artwork = video.cover;
-        } else if (video.imageSrc) {
-            artwork = video.imageSrc;
-        }
-        if (artwork && artwork.startsWith('//')) {
-            artwork = 'https:' + artwork;
-        }
+        let art = '';
+        if (v.thumbnails && Array.isArray(v.thumbnails) && v.thumbnails.length) { const sorted = [...v.thumbnails].sort((a,b)=>(b.width||0)-(a.width||0)); art = sorted[0].url||''; }
+        else art = v.cover || v.imageSrc || '';
+        if (art && art.startsWith('//')) art = 'https:' + art;
 
-        return {
-            title: video.title || '',
-            artist: video.author || video.artist || '',
-            artwork: artwork,
-            duration: duration,
-            elapsed: elapsed,
-            isPlaying: isPlaying,
-            isLiked: isLiked,
-            id: video.id || video.videoId || '',
-            isAd: !!player.adPlaying,
-        };
+        return { title: v.title||'', artist: v.author||v.artist||'', artwork: art, duration, elapsed, isPlaying, isLiked, id: v.id||v.videoId||'', isAd: !!p.adPlaying };
     }
 
-    function startProgressTracking(data) {
-        stopProgressTracking();
+    function startProgress(data) {
+        stopProgress();
         if (!data.isPlaying || !data.duration) return;
-
-        let elapsed = data.elapsed || 0;
-        const duration = data.duration;
-
+        let el = data.elapsed || 0; const dur = data.duration;
         progressInterval = setInterval(() => {
-            elapsed += 1;
-            if (elapsed > duration) elapsed = duration;
-            if (Config.showTimeline) {
-                const pct = Math.min((elapsed / duration) * 100, 100);
-                UI.els.timelineFill.style.width = pct + '%';
-                UI.els.timeElapsed.textContent = UI.formatTime(elapsed);
-            }
+            el += 1; if (el > dur) el = dur;
+            if (Config.showTimeline) { UI.els.timelineFill.style.width = Math.min((el/dur)*100,100)+'%'; UI.els.timeElapsed.textContent = UI.formatTime(el); }
         }, 1000);
     }
+    function stopProgress() { if (progressInterval) { clearInterval(progressInterval); progressInterval = null; } }
 
-    function stopProgressTracking() {
-        if (progressInterval) {
-            clearInterval(progressInterval);
-            progressInterval = null;
-        }
-    }
-
-    function onDisconnect() {
-        connected = false;
-        stopProgressTracking();
-        if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
-        UI.setConnectionStatus('disconnected');
-        scheduleReconnect();
-    }
-
+    function onDisconnect() { connected = false; stopProgress(); if (pingTimer){clearInterval(pingTimer);pingTimer=null;} UI.setConnectionStatus('disconnected'); scheduleReconnect(); }
     function scheduleReconnect() {
         if (reconnectTimer) return;
-        const delay = getReconnectDelay();
-        reconnectAttempts++;
+        const delay = getReconnectDelay(); reconnectAttempts++;
         UI.setConnectionStatus('reconnecting');
-        UI.showConnectingOverlay(true, 'Reconnecting in ' + Math.round(delay / 1000) + 's\u2026');
-        reconnectTimer = setTimeout(() => {
-            reconnectTimer = null;
-            connect();
-        }, delay);
+        UI.showConnectingOverlay(true, 'Reconnecting in ' + Math.round(delay/1000) + 's\u2026');
+        reconnectTimer = setTimeout(() => { reconnectTimer = null; connect(); }, delay);
     }
-
-    function cleanup() {
-        if (reconnectTimer) { clearTimeout(reconnectTimer); reconnectTimer = null; }
-        if (pingTimer) { clearInterval(pingTimer); pingTimer = null; }
-        stopProgressTracking();
-        if (ws) { try { ws.close(); } catch(e) {} ws = null; }
-        connected = false;
-    }
-
-    function disconnect() {
-        cleanup();
-    }
-
-    function isConnected() { return connected; }
-
-    return { connect, disconnect, isConnected };
+    function cleanup() { if(reconnectTimer){clearTimeout(reconnectTimer);reconnectTimer=null;} if(pingTimer){clearInterval(pingTimer);pingTimer=null;} stopProgress(); if(ws){try{ws.close();}catch(e){}ws=null;} connected=false; }
+    function disconnect() { cleanup(); }
+    return { connect, disconnect, isConnected: () => connected };
 })();
 
 /* ============================================================
    TUNA MODULE — OBS Tuna Plugin (HTTP polling)
-   ============================================================
-   Tuna exposes a simple HTTP JSON endpoint at localhost:1608.
-   GET / returns: { title, artists (array), album, cover_url,
-     progress (ms), duration (ms), status ("playing"|"paused"|"stopped") }
-   Cover art also available at /cover.png.
    ============================================================ */
 const Tuna = (() => {
-    let pollTimer = null;
-    let connected = false;
-    let lastTrackId = '';
-    let failCount = 0;
+    let pollTimer = null, connected = false, lastTrackId = '', failCount = 0;
     const MAX_FAIL = 5;
 
-    function connect() {
-        UI.setConnectionStatus('reconnecting');
-        UI.showConnectingOverlay(true, 'Connecting to Tuna\u2026');
-        poll();
-    }
+    function connect() { UI.setConnectionStatus('reconnecting'); UI.showConnectingOverlay(true, 'Connecting to Tuna\u2026'); poll(); }
 
     function poll() {
-        const url = 'http://127.0.0.1:' + Config.tunaPort + '/';
-
-        fetch(url)
-            .then(r => {
-                if (!r.ok) throw new Error('HTTP ' + r.status);
-                return r.json();
-            })
+        fetch('http://127.0.0.1:' + Config.tunaPort + '/')
+            .then(r => { if (!r.ok) throw new Error(); return r.json(); })
             .then(data => {
                 failCount = 0;
-                if (!connected) {
-                    connected = true;
-                    UI.setConnectionStatus('connected');
-                    UI.showConnectingOverlay(false);
-                }
-                handleTunaData(data);
-                schedulePoll(2000);
+                if (!connected) { connected = true; UI.setConnectionStatus('connected'); UI.showConnectingOverlay(false); }
+                handleData(data); schedulePoll(2000);
             })
             .catch(() => {
-                failCount++;
-                connected = false;
-                if (failCount >= MAX_FAIL) {
-                    UI.setConnectionStatus('disconnected');
-                    UI.showConnectingOverlay(true, 'Tuna not found. Retrying\u2026');
-                    schedulePoll(5000);
-                } else {
-                    UI.setConnectionStatus('reconnecting');
-                    schedulePoll(2000);
-                }
+                failCount++; connected = false;
+                if (failCount >= MAX_FAIL) { UI.setConnectionStatus('disconnected'); UI.showConnectingOverlay(true, 'Tuna not found. Retrying\u2026'); schedulePoll(5000); }
+                else { UI.setConnectionStatus('reconnecting'); schedulePoll(2000); }
             });
     }
 
-    function schedulePoll(ms) {
-        if (pollTimer) clearTimeout(pollTimer);
-        pollTimer = setTimeout(poll, ms);
-    }
+    function schedulePoll(ms) { if (pollTimer) clearTimeout(pollTimer); pollTimer = setTimeout(poll, ms); }
 
-    function handleTunaData(data) {
+    function handleData(data) {
         const isPlaying = data.status === 'playing';
+        let artist = Array.isArray(data.artists) ? data.artists.join(', ') : (data.artists || data.artist || '');
+        const trackId = (data.title||'') + '|' + artist;
+        const changed = trackId !== lastTrackId; lastTrackId = trackId;
+        let art = data.cover_url || data.artwork_url || '';
+        if (!art && connected) art = 'http://127.0.0.1:' + Config.tunaPort + '/cover.png';
 
-        // artists can be a string or an array
-        let artist = '';
-        if (Array.isArray(data.artists)) {
-            artist = data.artists.join(', ');
-        } else if (typeof data.artists === 'string') {
-            artist = data.artists;
-        } else if (data.artist) {
-            artist = data.artist;
-        }
-
-        const trackId = (data.title || '') + '|' + artist;
-        const trackChanged = trackId !== lastTrackId;
-        lastTrackId = trackId;
-
-        // Prefer cover_url, fall back to local cover.png served by Tuna
-        let artwork = data.cover_url || data.artwork_url || '';
-        if (!artwork && connected) {
-            artwork = 'http://127.0.0.1:' + Config.tunaPort + '/cover.png';
-        }
-
-        const trackData = {
-            title: data.title || '',
-            artist: artist,
-            artwork: artwork,
-            duration: data.duration ? data.duration / 1000 : 0,   // ms → s
-            elapsed: data.progress ? data.progress / 1000 : 0,    // ms → s
-            isPlaying: isPlaying,
-            isLiked: false,
-            id: trackId,
-            isAd: false,
-        };
-
-        UI.updateTrack(trackData);
-        handleVisibility(trackData.isPlaying, trackChanged);
+        const td = { title: data.title||'', artist, artwork: art, duration: data.duration ? data.duration/1000 : 0, elapsed: data.progress ? data.progress/1000 : 0, isPlaying, isLiked: false, id: trackId, isAd: false };
+        UI.updateTrack(td); handleVisibility(td.isPlaying, changed);
     }
 
-    function disconnect() {
-        if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
-        connected = false;
-    }
-
-    function isConnected() { return connected; }
-
-    return { connect, disconnect, isConnected };
+    function disconnect() { if(pollTimer){clearTimeout(pollTimer);pollTimer=null;} connected=false; }
+    return { connect, disconnect, isConnected: () => connected };
 })();
 
-/* ============================================================
-   MANUAL MODE — Static display from URL parameters
-   ============================================================ */
+/* MANUAL MODE */
 const Manual = (() => {
     function init() {
-        UI.setConnectionStatus('connected');
-        UI.showConnectingOverlay(false);
-
+        UI.setConnectionStatus('connected'); UI.showConnectingOverlay(false);
         const isDemo = !Config.manualTitle;
-
         const data = {
-            title: Config.manualTitle || 'Demo Track \u2014 Long Title That Should Scroll Across',
-            artist: Config.manualArtist || 'Demo Artist',
+            title: Config.manualTitle || 'Blinding Lights \u2014 The Weeknd (Extended Mix)',
+            artist: Config.manualArtist || 'The Weeknd',
             artwork: Config.manualArtwork || '',
-            duration: Config.manualDuration || 237,
-            elapsed: 0,
-            isPlaying: true,
-            isLiked: true,
-            id: 'manual',
-            isAd: false,
+            duration: Config.manualDuration || 237, elapsed: 0,
+            isPlaying: true, isLiked: true, id: 'manual', isAd: false,
         };
-
-        if (isDemo) {
-            UI.els.demoBadge.style.display = 'block';
-        }
-
-        UI.updateTrack(data);
-        Anim.show();
-
-        // Simulate playback progress
+        if (isDemo) UI.els.demoBadge.style.display = 'block';
+        UI.updateTrack(data); Anim.show();
         if (data.duration > 0) {
-            let elapsed = 0;
+            let el = 0;
             setInterval(() => {
-                elapsed += 1;
-                if (elapsed > data.duration) elapsed = 0;
-                if (Config.showTimeline) {
-                    const pct = (elapsed / data.duration) * 100;
-                    UI.els.timelineFill.style.width = pct + '%';
-                    UI.els.timeElapsed.textContent = UI.formatTime(elapsed);
-                }
+                el += 1; if (el > data.duration) el = 0;
+                if (Config.showTimeline) { UI.els.timelineFill.style.width = (el/data.duration)*100+'%'; UI.els.timeElapsed.textContent = UI.formatTime(el); }
             }, 1000);
         }
     }
-
     return { init };
 })();
 
-/* ============================================================
-   VISIBILITY LOGIC — hideOnPause / showOnSwitch
-   ============================================================ */
-let pauseHideTimer = null;
-let switchHideTimer = null;
-
+/* VISIBILITY LOGIC */
+let pauseHideTimer = null, switchHideTimer = null;
 function handleVisibility(isPlaying, trackChanged) {
-    if (pauseHideTimer) {
-        clearTimeout(pauseHideTimer);
-        pauseHideTimer = null;
-    }
-
+    if (pauseHideTimer) { clearTimeout(pauseHideTimer); pauseHideTimer = null; }
     if (Config.showOnSwitch > 0) {
-        // Show briefly on song change, then hide
-        if (trackChanged) {
-            Anim.show();
-            if (switchHideTimer) clearTimeout(switchHideTimer);
-            switchHideTimer = setTimeout(() => {
-                Anim.hide();
-                switchHideTimer = null;
-            }, Config.showOnSwitch * 1000);
-        }
-        if (!isPlaying && Config.hideOnPause) {
-            if (switchHideTimer) { clearTimeout(switchHideTimer); switchHideTimer = null; }
-            Anim.hide();
-        }
+        if (trackChanged) { Anim.show(); if (switchHideTimer) clearTimeout(switchHideTimer); switchHideTimer = setTimeout(() => { Anim.hide(); switchHideTimer = null; }, Config.showOnSwitch * 1000); }
+        if (!isPlaying && Config.hideOnPause) { if (switchHideTimer){clearTimeout(switchHideTimer);switchHideTimer=null;} Anim.hide(); }
     } else {
-        // Always-visible mode
-        if (Config.hideOnPause) {
-            if (isPlaying) {
-                Anim.show();
-            } else {
-                pauseHideTimer = setTimeout(() => {
-                    Anim.hide();
-                    pauseHideTimer = null;
-                }, 1500);
-            }
-        } else {
-            Anim.show();
-        }
+        if (Config.hideOnPause) { if (isPlaying) Anim.show(); else { pauseHideTimer = setTimeout(() => { Anim.hide(); pauseHideTimer = null; }, 1500); } }
+        else Anim.show();
     }
 }
 
-/* ============================================================
-   OBS BROWSER SOURCE EVENTS
-   ============================================================ */
-function setupOBSEvents() {
-    window.addEventListener('obsSourceActiveChanged', (event) => {
-        if (event.detail && event.detail.active) {
-            startSource();
-        } else {
-            stopSource();
-        }
-    });
+/* OBS EVENTS */
+window.addEventListener('obsSourceActiveChanged', (e) => { if (e.detail && e.detail.active) startSrc(); else stopSrc(); });
+window.addEventListener('obsSourceVisibleChanged', (e) => { if (e.detail && e.detail.visible) startSrc(); });
+function startSrc() { if (Config.source==='ytmdesktop' && !YTMDesktop.isConnected()) YTMDesktop.connect(); if (Config.source==='tuna' && !Tuna.isConnected()) Tuna.connect(); }
+function stopSrc() { if (Config.source==='ytmdesktop') YTMDesktop.disconnect(); if (Config.source==='tuna') Tuna.disconnect(); }
 
-    window.addEventListener('obsSourceVisibleChanged', (event) => {
-        if (event.detail && event.detail.visible) {
-            startSource();
-        }
-    });
-}
+/* BOOT */
+UI.init();
+setTimeout(() => {
+    switch (Config.source) {
+        case 'ytmdesktop': YTMDesktop.connect(); Anim.show(); break;
+        case 'tuna': Tuna.connect(); Anim.show(); break;
+        case 'manual': default: Manual.init(); break;
+    }
+}, 300);
 
-function startSource() {
-    if (Config.source === 'ytmdesktop' && !YTMDesktop.isConnected()) YTMDesktop.connect();
-    if (Config.source === 'tuna' && !Tuna.isConnected()) Tuna.connect();
-}
-
-function stopSource() {
-    if (Config.source === 'ytmdesktop') YTMDesktop.disconnect();
-    if (Config.source === 'tuna') Tuna.disconnect();
-}
-
-/* ============================================================
-   INITIALIZATION
-   ============================================================ */
-function boot() {
-    UI.init();
-    setupOBSEvents();
-
-    setTimeout(() => {
-        switch (Config.source) {
-            case 'ytmdesktop':
-                YTMDesktop.connect();
-                Anim.show();
-                break;
-            case 'tuna':
-                Tuna.connect();
-                Anim.show();
-                break;
-            case 'manual':
-            default:
-                Manual.init();
-                break;
-        }
-    }, 300);
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot);
-} else {
-    boot();
-}
+} // end bootWidget
     </script>
 </body>
 </html>
