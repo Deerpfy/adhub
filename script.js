@@ -331,6 +331,8 @@ const BASE_TRANSLATIONS = {
         tool_adanimations_desc: 'Editor animovaných bannerů a overlays pro OBS. Vytvářejte texty, obrázky s animacemi (slide, fade, zoom). Časovač pro opakování, 1:1 preview, export HTML.',
         tool_betterytbwidget_name: 'BetterYTBwidget',
         tool_betterytbwidget_desc: 'OBS overlay widget pro zobrazení aktuálně přehrávané skladby z YouTube Music. Propojení přes ytmdesktop nebo Tuna plugin. 4 témata, animace, timeline.',
+        tool_betterstats_name: 'BetterStats',
+        tool_betterstats_desc: 'OBS overlay pro real-time statistiky streamu. Kombinovaný počet diváků z Twitch a Kick, graf průběhu, uptime, followeři. Průhledné pozadí, konfigurovatelné rozložení.',
         category_gaming: 'gaming',
         category_documentation: 'dokumentace',
         link_ninite_name: 'Ninite – rychlá instalace Windows aplikací',
@@ -735,6 +737,8 @@ const BASE_TRANSLATIONS = {
         tool_adanimations_desc: 'Animated banner and overlay editor for OBS. Create texts, images with animations (slide, fade, zoom). Timer for repetition, 1:1 preview, HTML export.',
         tool_betterytbwidget_name: 'BetterYTBwidget',
         tool_betterytbwidget_desc: 'OBS overlay widget showing the currently playing YouTube Music track. Connects via ytmdesktop or Tuna plugin. 4 themes, animations, timeline.',
+        tool_betterstats_name: 'BetterStats',
+        tool_betterstats_desc: 'OBS overlay for real-time stream statistics. Combined viewer count from Twitch and Kick, session graph, uptime, followers. Transparent background, configurable layout.',
         category_gaming: 'gaming',
         category_documentation: 'documentation',
         link_ninite_name: 'Ninite – Quick Windows App Installation',
@@ -1751,6 +1755,17 @@ function getLocalizedConfig() {
                 "type": "local",
                 "enabled": true,
                 "tags": ["streaming", "obs", "youtube", "music", "now-playing", "widget", "overlay"]
+            },
+            {
+                "id": "betterstats",
+                "name": t('tool_betterstats_name'),
+                "description": t('tool_betterstats_desc'),
+                "category": "streaming",
+                "icon": "📊",
+                "url": "projects/betterstats/index.html",
+                "type": "local",
+                "enabled": true,
+                "tags": ["streaming", "obs", "twitch", "kick", "stats", "overlay", "viewers"]
             }
         ],
         "links": [
