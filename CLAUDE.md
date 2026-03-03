@@ -21,7 +21,7 @@ adhub/
 │   ├── artifacts/          # AI artefakty (4 + README)
 │   ├── twitch-api/         # Twitch API reference (18 souboru)
 │   └── kick-api/           # Kick API reference (13 souboru)
-├── projects/               # 26 projektu
+├── projects/               # 29 projektu
 │   ├── youtube-downloader/ # Chrome extension, yt-dlp
 │   ├── chat-panel/         # Multistream chat + WebSocket server
 │   ├── cardharvest/        # Steam farming (Chrome ext + Native Host)
@@ -45,6 +45,8 @@ adhub/
 │   ├── adanimations/       # Animation utilities
 │   ├── server-hub/         # Central hub server
 │   ├── samplehub/          # Sample project templates
+│   ├── betterstats/        # OBS streaming stats overlay (Twitch + Kick)
+│   ├── betterytbwidget/    # YouTube Music now-playing OBS overlay
 │   ├── spinning-wheel-giveaway/
 │   ├── resignation-bets/
 │   ├── komopizza/
@@ -190,7 +192,7 @@ Vsechny routing pravidla pouzivaji aliasy. Pri novem modelu aktualizuj POUZE tut
 
 ## Model Routing
 
-Profil projektu: Hub-and-spokes architektura, 26 vanilla JS/HTML/CSS projektu, 2 Chrome extensions s native hosty, 50K+ LOC, Twitch/Kick/Steam API integrace, zadne automaticke testy.
+Profil projektu: Hub-and-spokes architektura, 29 vanilla JS/HTML/CSS projektu, 2 Chrome extensions s native hosty, 50K+ LOC, Twitch/Kick/Steam API integrace, zadne automaticke testy.
 
 Vychozi model: **STANDARD**
 
@@ -277,7 +279,20 @@ Multi-agent orchestrace pres Agent Teams (experimental, flag `CLAUDE_CODE_EXPERI
 
 ### Doporuceni
 
-Pro tento projekt jsou **subagenty vhodnejsi nez Agent Teams** — 26 projektu je nezavislych, vetsina tasku se tyka 1-3 souboru. Agent Teams pouzij jen pro full hub redesign nebo cross-project refactoring.
+Pro tento projekt jsou **subagenty vhodnejsi nez Agent Teams** — 29 projektu je nezavislych, vetsina tasku se tyka 1-3 souboru. Agent Teams pouzij jen pro full hub redesign nebo cross-project refactoring.
+
+### Available Agents (`.claude/agents/`)
+
+All agents are on-demand and explicit-invocation only: `"Use the [agent-name] agent to [task]."`
+
+| Agent | File | Scope | Invocation Example |
+|---|---|---|---|
+| post-commit-reviewer | `.claude/agents/post-commit-reviewer.md` | CLAUDE.md, README.md, docs/ — doc sync, version consistency, hub registry | "Use the post-commit-reviewer agent to sync docs with recent changes" |
+| extension-developer | `.claude/agents/extension-developer.md` | youtube-downloader/, cardharvest/, chat-panel/extension/ | "Use the extension-developer agent to update YouTube Downloader version" |
+| hub-developer | `.claude/agents/hub-developer.md` | index.html, script.js, styles.css, standalone projects | "Use the hub-developer agent to add a new project to the hub" |
+| docs-maintainer | `.claude/agents/docs-maintainer.md` | docs/, CLAUDE.md, README.md, version headers | "Use the docs-maintainer agent to run a documentation lifecycle check" |
+
+Pipeline overview: `.claude/WORKFLOW.md`
 
 ---
 
@@ -301,6 +316,7 @@ Podrobna pravidla jsou v `docs/session-directives.md`. Klicove body:
 |---|---|---|---|---|---|---|
 | 2026-02-17 | opus-4.6 | N/A | Docs restructure, versioning headers, CLAUDE.md rewrite | 73 | ~15000 | 70 docs: 0→1.0.0, docs/README.md: 1.0.0→1.1.0, CLAUDE.md: full rewrite |
 | 2026-02-17 | opus-4.6 | N/A | Multi-agent upgrade: aliases, effort routing, agent teams, slash commands, prompt registry | 12 | ~18000 | CLAUDE.md: rewrite→2.0.0, session-directives: 1.0.0→1.1.0 |
+| 2026-03-03 | opus-4.6 | N/A | Agent bootstrap: .claude/agents/ infra, CLAUDE.md + README.md sync for BetterStats + BetterYTBwidget | 8 | ~8000 | CLAUDE.md: 2.0.0→2.1.0, 4 agent files created |
 
 ---
 

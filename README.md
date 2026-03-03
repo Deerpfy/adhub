@@ -2,7 +2,7 @@
 
 A central hub for various tools, utilities and projects. Everything accessible from one place with a modern and clear interface.
 
-![Status](https://img.shields.io/badge/status-active-success) ![License](https://img.shields.io/badge/license-MIT-blue) ![Version](https://img.shields.io/badge/version-1.3.1-purple) ![Projects](https://img.shields.io/badge/projects-18-orange)
+![Status](https://img.shields.io/badge/status-active-success) ![License](https://img.shields.io/badge/license-MIT-blue) ![Version](https://img.shields.io/badge/version-1.3.1-purple) ![Projects](https://img.shields.io/badge/projects-20-orange)
 
 ## Features
 
@@ -39,6 +39,8 @@ A central hub for various tools, utilities and projects. Everything accessible f
 | [Multistream Chat](#multistream-chat-panel) | Web App | Active | No | CZ | v2.0 |
 | [Spinning Wheel](#spinning-wheel-giveaway) | Web App | Complete | Yes | EN | v1.0 |
 | [KomoPizza](#komopizza-demo) | Demo | Complete | No | CZ | v1.0 |
+| [BetterStats](#betterstats) | Web App | Active | No | CZ/EN | v1.0 |
+| [BetterYTBwidget](#betterytbwidget) | Web App | Active | No | CZ/EN | v1.0 |
 
 **Legend:** PWA = Progressive Web App with Service Worker
 
@@ -387,6 +389,40 @@ Sample restaurant website demonstrating modern UI/UX principles.
 
 ---
 
+### BetterStats
+Real-time stream statistics overlay for OBS. Displays combined viewer count from Twitch and Kick, session graph, uptime, followers, and current game/category.
+
+**Features:**
+- Multi-platform: Twitch (Helix API) + Kick (Pusher WebSocket)
+- OBS overlay with transparent background, configurable layout and position
+- SVG mini-chart showing viewer count over time per platform
+- Configurable display: show/hide stats, compact/expanded/graph layouts
+- Token obfuscation in localStorage, CSP headers, DOM sanitization
+- Graceful degradation when one platform fails
+
+**Technology:** Vanilla JS (ES6+), single HTML file, no build tools
+
+**Status:** Active | **Version:** 1.0
+
+---
+
+### BetterYTBwidget
+OBS browser source overlay displaying the currently playing YouTube Music track. Supports ytmdesktop, OBS Tuna plugin, and manual/demo mode.
+
+**Features:**
+- Real-time now-playing display (track title, artist, album art)
+- Three data sources: ytmdesktop WebSocket, OBS Tuna plugin, manual mode
+- Four themes: glass, dark, light, transparent
+- Animations: slide, fade, pop, none
+- Hide on pause, show-on-switch mode
+- Automatic reconnection with exponential backoff
+
+**Technology:** Vanilla JS, single HTML file, no build tools
+
+**Status:** Active | **Version:** 1.0
+
+---
+
 ## External Links Directory
 
 AdHUB includes a comprehensive directory of **150+ free web tools** that require no registration. These are curated external links organized into 16 categories:
@@ -466,6 +502,8 @@ adhub/
     ├── chat-panel/         # Multistream chat
     │   ├── adapters/       # Platform adapters
     │   └── v1-archive/     # Previous version
+    ├── betterstats/        # OBS streaming stats overlay
+    ├── betterytbwidget/    # YouTube Music now-playing overlay
     ├── spinning-wheel-giveaway/
     └── komopizza/          # Restaurant demo
 ```
