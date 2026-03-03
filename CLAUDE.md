@@ -281,16 +281,16 @@ Multi-agent orchestrace pres Agent Teams (experimental, flag `CLAUDE_CODE_EXPERI
 
 Pro tento projekt jsou **subagenty vhodnejsi nez Agent Teams** — 29 projektu je nezavislych, vetsina tasku se tyka 1-3 souboru. Agent Teams pouzij jen pro full hub redesign nebo cross-project refactoring.
 
-### Auto-Discoverable Agents (`.claude/agents/`)
+### Available Agents (`.claude/agents/`)
 
-Claude Code automaticky nacte agenty z `.claude/agents/*.md` na zacatku kazde sese. Agenti jsou delegovani automaticky podle popisu, nebo explicitne: "Use the [agent-name] agent to [task]."
+All agents are on-demand and explicit-invocation only: `"Use the [agent-name] agent to [task]."`
 
-| Agent | Soubor | Scope | Auto-Invoke |
+| Agent | File | Scope | Invocation Example |
 |---|---|---|---|
-| post-commit-reviewer | `.claude/agents/post-commit-reviewer.md` | Review vsech commitu — doc sync, version konzistence, hub registry | Ano (po kazdem commitu) |
-| extension-developer | `.claude/agents/extension-developer.md` | youtube-downloader/, cardharvest/, chat-panel/extension/ | Ne |
-| hub-developer | `.claude/agents/hub-developer.md` | index.html, script.js, styles.css, standalone projekty | Ne |
-| docs-maintainer | `.claude/agents/docs-maintainer.md` | docs/, CLAUDE.md, README.md, version headers | Ne |
+| post-commit-reviewer | `.claude/agents/post-commit-reviewer.md` | CLAUDE.md, README.md, docs/ — doc sync, version consistency, hub registry | "Use the post-commit-reviewer agent to sync docs with recent changes" |
+| extension-developer | `.claude/agents/extension-developer.md` | youtube-downloader/, cardharvest/, chat-panel/extension/ | "Use the extension-developer agent to update YouTube Downloader version" |
+| hub-developer | `.claude/agents/hub-developer.md` | index.html, script.js, styles.css, standalone projects | "Use the hub-developer agent to add a new project to the hub" |
+| docs-maintainer | `.claude/agents/docs-maintainer.md` | docs/, CLAUDE.md, README.md, version headers | "Use the docs-maintainer agent to run a documentation lifecycle check" |
 
 Pipeline overview: `.claude/WORKFLOW.md`
 
