@@ -1,0 +1,2073 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src https://api.twitch.tv https://id.twitch.tv https://api.kick.com https://id.kick.com wss://ws-us2.pusher.com https://kick.com; img-src * data: blob:;">
+    <title>BetterStats - AdHUB</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+/* ============ RESET & BASE ============ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+    --bg-primary: #0a0a0f;
+    --bg-secondary: #12121a;
+    --bg-card: #1a1a2e;
+    --bg-input: #16162a;
+    --text-primary: #e4e4f0;
+    --text-secondary: #8888a8;
+    --text-muted: #555570;
+    --accent-purple: #8b5cf6;
+    --accent-pink: #ec4899;
+    --twitch-purple: #9146FF;
+    --kick-green: #53FC18;
+    --success: #22c55e;
+    --warning: #f59e0b;
+    --error: #ef4444;
+    --border: #2a2a40;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --transition: 0.3s ease;
+}
+html { font-size: 16px; }
+body {
+    font-family: var(--font);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+body.obs-mode { background: transparent !important; }
+a { color: var(--accent-purple); text-decoration: none; }
+a:hover { text-decoration: underline; }
+button { cursor: pointer; font-family: inherit; }
+input, select { font-family: inherit; }
+.hidden { display: none !important; }
+
+/* ============ BACK TO HUB ============ */
+.back-to-hub {
+    position: fixed; top: 16px; left: 16px; z-index: 1000;
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 16px; border-radius: var(--radius-sm);
+    background: var(--bg-card); border: 1px solid var(--border);
+    color: var(--text-primary); font-size: 14px; font-weight: 500;
+    transition: var(--transition); text-decoration: none;
+}
+.back-to-hub:hover { background: var(--accent-purple); color: white; text-decoration: none; }
+.back-to-hub svg { width: 16px; height: 16px; }
+
+/* ============ CONFIG PANEL ============ */
+.config-panel {
+    max-width: 900px; margin: 0 auto; padding: 80px 24px 40px;
+}
+.config-header { text-align: center; margin-bottom: 40px; }
+.config-header h1 {
+    font-size: 2.5rem; font-weight: 700;
+    background: linear-gradient(135deg, var(--accent-purple), var(--accent-pink));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; margin-bottom: 8px;
+}
+.config-header p { color: var(--text-secondary); font-size: 1.1rem; }
+.config-section {
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 24px; margin-bottom: 24px;
+}
+.config-section h2 {
+    font-size: 1.2rem; font-weight: 600; margin-bottom: 20px;
+    padding-bottom: 12px; border-bottom: 1px solid var(--border);
+}
+
+/* ============ CONNECTION CARDS ============ */
+.connection-card {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+    padding: 16px; border-radius: var(--radius-sm);
+    background: var(--bg-secondary); margin-bottom: 12px;
+}
+.connection-card:last-child { margin-bottom: 0; }
+.connection-icon { width: 32px; height: 32px; flex-shrink: 0; }
+.connection-info { display: flex; flex-direction: column; gap: 2px; min-width: 120px; }
+.platform-name { font-weight: 600; font-size: 15px; }
+.connection-status { font-size: 12px; color: var(--text-muted); }
+.connection-status.connected { color: var(--success); }
+.connection-status.error { color: var(--error); }
+.connection-status.connecting { color: var(--warning); }
+.connection-actions { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; justify-content: flex-end; }
+.connection-user {
+    display: flex; align-items: center; gap: 8px; width: 100%;
+    padding-top: 8px; border-top: 1px solid var(--border);
+}
+.connection-user img { width: 24px; height: 24px; border-radius: 50%; }
+.connection-user span { font-size: 13px; color: var(--text-secondary); }
+
+/* ============ FORM CONTROLS ============ */
+.form-input {
+    padding: 8px 12px; border-radius: var(--radius-sm);
+    background: var(--bg-input); border: 1px solid var(--border);
+    color: var(--text-primary); font-size: 13px;
+    transition: var(--transition); min-width: 0;
+}
+.form-input:focus { outline: none; border-color: var(--accent-purple); }
+.form-input::placeholder { color: var(--text-muted); }
+.btn {
+    padding: 8px 16px; border-radius: var(--radius-sm); border: none;
+    font-size: 13px; font-weight: 500; transition: var(--transition);
+    white-space: nowrap;
+}
+.btn-primary { background: var(--accent-purple); color: white; }
+.btn-primary:hover { background: #7c4dec; }
+.btn-danger { background: var(--error); color: white; }
+.btn-danger:hover { background: #dc2626; }
+.btn-secondary { background: var(--bg-input); color: var(--text-primary); border: 1px solid var(--border); }
+.btn-secondary:hover { border-color: var(--accent-purple); }
+.btn-copy { background: var(--success); color: white; }
+.btn-copy:hover { background: #16a34a; }
+
+/* ============ SETTINGS GRID ============ */
+.settings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+.setting-item { display: flex; flex-direction: column; gap: 6px; }
+.setting-label { font-size: 12px; color: var(--text-secondary); font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+.setting-row { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.setting-row label { font-size: 14px; min-width: 140px; color: var(--text-secondary); }
+.range-wrapper { display: flex; align-items: center; gap: 12px; flex: 1; }
+.range-wrapper input[type="range"] { flex: 1; accent-color: var(--accent-purple); }
+.range-value { font-size: 13px; color: var(--text-primary); min-width: 40px; text-align: right; }
+.checkbox-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; }
+.checkbox-row input[type="checkbox"] { accent-color: var(--accent-purple); width: 16px; height: 16px; }
+.checkbox-row label { font-size: 14px; color: var(--text-secondary); cursor: pointer; }
+select.form-input { padding-right: 32px; appearance: auto; }
+
+/* ============ URL GENERATOR ============ */
+.url-output {
+    display: flex; gap: 8px; margin-top: 12px;
+}
+.url-display {
+    flex: 1; padding: 10px 14px; border-radius: var(--radius-sm);
+    background: var(--bg-input); border: 1px solid var(--border);
+    color: var(--text-secondary); font-size: 12px; font-family: monospace;
+    word-break: break-all; max-height: 80px; overflow-y: auto;
+}
+.obs-dimensions { margin-top: 12px; font-size: 13px; color: var(--text-muted); }
+
+/* ============ PREVIEW ============ */
+.preview-section { margin-bottom: 24px; }
+.preview-section h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: 16px; }
+.preview-frame {
+    background: #1a0a2e; border: 2px dashed var(--border); border-radius: var(--radius);
+    min-height: 200px; position: relative; overflow: hidden; padding: 20px;
+}
+
+/* ============ OVERLAY VIEW ============ */
+.overlay-view {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    display: flex; align-items: flex-start; justify-content: flex-start;
+    padding: 20px; pointer-events: none;
+}
+.overlay-view.pos-top-right { justify-content: flex-end; }
+.overlay-view.pos-bottom-left { align-items: flex-end; }
+.overlay-view.pos-bottom-right { align-items: flex-end; justify-content: flex-end; }
+.overlay-view.pos-center { align-items: center; justify-content: center; }
+
+.stats-container {
+    display: flex; flex-direction: column; gap: 8px;
+    pointer-events: auto; min-width: 200px;
+}
+.stats-container.layout-compact {
+    flex-direction: row; flex-wrap: wrap; align-items: center; gap: 16px;
+}
+.stats-container.layout-compact .graph-container { width: 100%; }
+
+/* ============ LIVE INDICATOR ============ */
+.live-indicator {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 700; letter-spacing: 1px;
+}
+.live-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--error); animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+    0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+    50% { opacity: 0.8; box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+}
+.live-text { color: var(--error); text-shadow: 0 0 8px rgba(239, 68, 68, 0.3); }
+
+/* ============ STAT ITEMS ============ */
+.stat-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px; border-radius: var(--radius-sm);
+    background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px); font-size: 14px;
+}
+.stat-icon { font-size: 16px; opacity: 0.8; flex-shrink: 0; }
+.stat-value {
+    font-weight: 600; font-variant-numeric: tabular-nums;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.5);
+}
+.stat-viewers .stat-value { font-size: 20px; font-weight: 700; }
+
+/* ============ PLATFORM STATS ============ */
+.platform-stats {
+    display: flex; gap: 8px;
+}
+.platform-stat {
+    display: flex; align-items: center; gap: 6px;
+    padding: 4px 10px; border-radius: var(--radius-sm);
+    background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px); font-size: 13px; font-weight: 500;
+}
+.platform-stat svg { width: 14px; height: 14px; }
+.platform-stat.twitch { color: var(--twitch-purple); }
+.platform-stat.kick { color: var(--kick-green); }
+
+/* ============ GRAPH ============ */
+.graph-container {
+    padding: 8px 12px; border-radius: var(--radius-sm);
+    background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+.graph-container svg { width: 100%; height: 80px; display: block; }
+.graph-line { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.graph-area { opacity: 0.15; }
+.graph-line.twitch { stroke: var(--twitch-purple); }
+.graph-area.twitch { fill: var(--twitch-purple); }
+.graph-line.kick { stroke: var(--kick-green); }
+.graph-area.kick { fill: var(--kick-green); }
+.graph-line.total { stroke: #ffffff; stroke-width: 2.5; }
+.graph-area.total { fill: #ffffff; opacity: 0.08; }
+
+/* ============ STATUS OVERLAYS ============ */
+.offline-overlay, .connecting-overlay, .error-overlay {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    padding: 12px 20px; border-radius: var(--radius-sm);
+    background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px); font-size: 14px;
+}
+.offline-overlay { color: var(--text-muted); }
+.connecting-overlay { color: var(--warning); }
+.error-overlay { color: var(--error); font-size: 12px; }
+.spinner {
+    width: 24px; height: 24px; border: 3px solid var(--border);
+    border-top-color: var(--accent-purple); border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============ STATUS BAR ============ */
+.status-bar {
+    display: flex; gap: 6px; padding: 4px 0;
+}
+.status-indicator {
+    width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted);
+    transition: var(--transition);
+}
+.status-indicator.ok { background: var(--success); }
+.status-indicator.warn { background: var(--warning); }
+.status-indicator.err { background: var(--error); }
+
+/* ============ SESSION CONTROLS ============ */
+.session-controls { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+
+/* ============ FADE TRANSITIONS ============ */
+.fade-enter { opacity: 0; transform: translateY(-4px); }
+.fade-active { opacity: 1; transform: translateY(0); transition: opacity 0.4s ease, transform 0.4s ease; }
+
+/* ============ HIGH CONTRAST ============ */
+body.high-contrast .stat-item { background: rgba(0, 0, 0, 0.85); }
+body.high-contrast .stat-value { text-shadow: 0 2px 6px rgba(0, 0, 0, 0.8); font-weight: 700; }
+body.high-contrast .platform-stat { background: rgba(0, 0, 0, 0.8); }
+
+/* ============ RESPONSIVE ============ */
+@media (max-width: 640px) {
+    .config-panel { padding: 60px 16px 24px; }
+    .config-header h1 { font-size: 1.8rem; }
+    .settings-grid { grid-template-columns: 1fr; }
+    .connection-actions { justify-content: flex-start; width: 100%; }
+}
+    </style>
+</head>
+<body>
+    <!-- Back to Hub -->
+    <a href="../../index.html" class="back-to-hub" id="backToHub" title="Back to AdHUB">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+        <span>Hub</span>
+    </a>
+
+    <!-- ============ CONFIG PANEL ============ -->
+    <div id="configPanel" class="config-panel">
+        <header class="config-header">
+            <h1>BetterStats</h1>
+            <p>Real-time stream statistics overlay for OBS</p>
+        </header>
+
+        <!-- Platform Connections -->
+        <section class="config-section" id="connectionsSection">
+            <h2>Platform Connections</h2>
+
+            <!-- Twitch -->
+            <div class="connection-card" id="twitchConnection">
+                <svg class="connection-icon" viewBox="0 0 24 24" fill="currentColor" style="color: var(--twitch-purple)"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+                <div class="connection-info">
+                    <span class="platform-name">Twitch</span>
+                    <span class="connection-status" id="twitchStatus">Disconnected</span>
+                </div>
+                <div class="connection-actions">
+                    <input type="text" id="twitchClientId" class="form-input" placeholder="Twitch Client ID" style="width: 180px" autocomplete="off">
+                    <button class="btn btn-primary" id="twitchConnectBtn">Connect</button>
+                    <button class="btn btn-danger hidden" id="twitchDisconnectBtn">Disconnect</button>
+                </div>
+                <div class="connection-user hidden" id="twitchUserInfo">
+                    <img id="twitchAvatar" src="" alt="" loading="lazy">
+                    <span id="twitchUsername"></span>
+                </div>
+            </div>
+
+            <!-- Kick -->
+            <div class="connection-card" id="kickConnection">
+                <svg class="connection-icon" viewBox="0 0 24 24" fill="currentColor" style="color: var(--kick-green)"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm3.5 14.5L12 13l-3.5 3.5L7 15l3.5-3.5L7 8l1.5-1.5L12 10l3.5-3.5L17 8l-3.5 3.5L17 15z"/></svg>
+                <div class="connection-info">
+                    <span class="platform-name">Kick</span>
+                    <span class="connection-status" id="kickStatus">Disconnected</span>
+                </div>
+                <div class="connection-actions">
+                    <input type="text" id="kickChannelSlug" class="form-input" placeholder="Channel slug (e.g. xqc)" style="width: 170px" autocomplete="off">
+                    <input type="text" id="kickChannelId" class="form-input" placeholder="Channel ID (number)" style="width: 140px" autocomplete="off">
+                    <button class="btn btn-primary" id="kickConnectBtn">Connect</button>
+                    <button class="btn btn-danger hidden" id="kickDisconnectBtn">Disconnect</button>
+                </div>
+            </div>
+
+            <p style="margin-top: 12px; font-size: 12px; color: var(--text-muted)">
+                Twitch: Create an app at <a href="https://dev.twitch.tv/console" target="_blank" rel="noopener">dev.twitch.tv/console</a> with redirect URI pointing to this page.<br>
+                Kick: Enter your channel slug and numeric channel ID. Real-time data via Pusher WebSocket (no OAuth needed for read-only).
+            </p>
+        </section>
+
+        <!-- Display Settings -->
+        <section class="config-section">
+            <h2>Display Settings</h2>
+            <div class="settings-grid" style="margin-bottom: 16px">
+                <div class="checkbox-row"><input type="checkbox" id="showViewers" checked><label for="showViewers">Viewer count</label></div>
+                <div class="checkbox-row"><input type="checkbox" id="showFollowers" checked><label for="showFollowers">Follower count</label></div>
+                <div class="checkbox-row"><input type="checkbox" id="showUptime" checked><label for="showUptime">Stream uptime</label></div>
+                <div class="checkbox-row"><input type="checkbox" id="showGame" checked><label for="showGame">Game / Category</label></div>
+                <div class="checkbox-row"><input type="checkbox" id="showGraph" checked><label for="showGraph">Session graph</label></div>
+                <div class="checkbox-row"><input type="checkbox" id="showPlatformBreakdown" checked><label for="showPlatformBreakdown">Platform breakdown</label></div>
+            </div>
+            <div class="setting-row">
+                <label for="overlayLayout">Layout</label>
+                <select id="overlayLayout" class="form-input">
+                    <option value="expanded">Expanded (card)</option>
+                    <option value="compact">Compact (single line)</option>
+                    <option value="graph">Graph only</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <label for="overlayPosition">Position</label>
+                <select id="overlayPosition" class="form-input">
+                    <option value="top-left">Top Left</option>
+                    <option value="top-right">Top Right</option>
+                    <option value="bottom-left">Bottom Left</option>
+                    <option value="bottom-right">Bottom Right</option>
+                    <option value="center">Center</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <label for="overlayScale">Scale</label>
+                <div class="range-wrapper">
+                    <input type="range" id="overlayScale" min="50" max="200" value="100" step="10">
+                    <span class="range-value" id="scaleValue">100%</span>
+                </div>
+            </div>
+            <div class="setting-row">
+                <label for="overlayTheme">Theme</label>
+                <select id="overlayTheme" class="form-input">
+                    <option value="dark">Dark (default)</option>
+                    <option value="light">Light</option>
+                    <option value="glass">Glass</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <label for="accentColor">Accent color</label>
+                <input type="color" id="accentColor" value="#8b5cf6" class="form-input" style="width: 50px; height: 32px; padding: 2px;">
+            </div>
+            <div class="checkbox-row"><input type="checkbox" id="highContrast"><label for="highContrast">High contrast mode</label></div>
+        </section>
+
+        <!-- Polling Settings -->
+        <section class="config-section">
+            <h2>Polling Settings</h2>
+            <div class="setting-row">
+                <label for="pollInterval">Refresh interval</label>
+                <div class="range-wrapper">
+                    <input type="range" id="pollInterval" min="30" max="300" value="60" step="10">
+                    <span class="range-value" id="intervalValue">60s</span>
+                </div>
+            </div>
+            <div class="settings-grid">
+                <div class="checkbox-row"><input type="checkbox" id="enableTwitchPolling" checked><label for="enableTwitchPolling">Poll Twitch</label></div>
+                <div class="checkbox-row"><input type="checkbox" id="enableKickPolling" checked><label for="enableKickPolling">Poll Kick</label></div>
+            </div>
+        </section>
+
+        <!-- OBS URL Generator -->
+        <section class="config-section">
+            <h2>OBS Browser Source URL</h2>
+            <p style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px">
+                Copy this URL and paste it as a Browser Source in OBS. Twitch OAuth token must be configured separately in the OBS browser source (visit this page in OBS browser to authenticate).
+            </p>
+            <button class="btn btn-primary" id="generateUrlBtn">Generate URL</button>
+            <div class="url-output hidden" id="urlOutput">
+                <div class="url-display" id="urlDisplay"></div>
+                <button class="btn btn-copy" id="copyUrlBtn">Copy</button>
+            </div>
+            <div class="obs-dimensions hidden" id="obsDimensions"></div>
+        </section>
+
+        <!-- Session Data -->
+        <section class="config-section">
+            <h2>Session Data</h2>
+            <div class="session-controls">
+                <button class="btn btn-secondary" id="exportSessionBtn">Export JSON</button>
+                <label class="btn btn-secondary" style="display: inline-flex; align-items: center; cursor: pointer;">
+                    Import JSON
+                    <input type="file" id="importSessionInput" accept=".json" style="display: none;">
+                </label>
+                <button class="btn btn-danger" id="clearSessionBtn">Clear Session</button>
+            </div>
+        </section>
+
+        <!-- Live Preview -->
+        <section class="preview-section">
+            <h2>Live Preview</h2>
+            <div class="preview-frame" id="previewFrame">
+                <div id="previewOverlay"></div>
+            </div>
+        </section>
+    </div>
+
+    <!-- ============ OVERLAY VIEW ============ -->
+    <div id="overlayView" class="overlay-view hidden">
+        <div class="stats-container" id="statsContainer">
+            <!-- Live indicator -->
+            <div class="live-indicator hidden" id="liveIndicator">
+                <span class="live-dot"></span>
+                <span class="live-text">LIVE</span>
+            </div>
+            <!-- Combined viewers -->
+            <div class="stat-item stat-viewers" id="combinedViewersStat">
+                <span class="stat-icon" aria-hidden="true">&#128065;</span>
+                <span class="stat-value" id="totalViewerCount" aria-label="Total viewers">0</span>
+            </div>
+            <!-- Platform breakdown -->
+            <div class="platform-stats" id="platformStats">
+                <div class="platform-stat twitch" id="twitchViewerStat">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M11.571 4.714h1.715v5.143H11.57zm4.715 0H18v5.143h-1.714zM6 0L1.714 4.286v15.428h5.143V24l4.286-4.286h3.428L22.286 12V0zm14.571 11.143l-3.428 3.428h-3.429l-3 3v-3H6.857V1.714h13.714z"/></svg>
+                    <span id="twitchViewerCount">0</span>
+                </div>
+                <div class="platform-stat kick" id="kickViewerStat">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.477 2 12s4.477 10 10 10 10-4.477 10-10S17.523 2 12 2zm3.5 14.5L12 13l-3.5 3.5L7 15l3.5-3.5L7 8l1.5-1.5L12 10l3.5-3.5L17 8l-3.5 3.5L17 15z"/></svg>
+                    <span id="kickViewerCount">0</span>
+                </div>
+            </div>
+            <!-- Uptime -->
+            <div class="stat-item" id="uptimeStat">
+                <span class="stat-icon" aria-hidden="true">&#9201;</span>
+                <span class="stat-value" id="uptimeValue" aria-label="Stream uptime">0:00:00</span>
+            </div>
+            <!-- Followers -->
+            <div class="stat-item" id="followerStat">
+                <span class="stat-icon" aria-hidden="true">&#10084;</span>
+                <span class="stat-value" id="followerCount" aria-label="Total followers">0</span>
+            </div>
+            <!-- Game -->
+            <div class="stat-item" id="gameStat">
+                <span class="stat-icon" aria-hidden="true">&#127918;</span>
+                <span class="stat-value" id="gameValue" aria-label="Current game">—</span>
+            </div>
+            <!-- Graph -->
+            <div class="graph-container" id="graphContainer">
+                <svg id="statsGraph" viewBox="0 0 400 80" preserveAspectRatio="none" role="img" aria-label="Viewer count graph"></svg>
+            </div>
+            <!-- Status bar -->
+            <div class="status-bar" id="statusBar">
+                <span class="status-indicator" id="twitchIndicator" title="Twitch"></span>
+                <span class="status-indicator" id="kickIndicator" title="Kick"></span>
+            </div>
+        </div>
+        <!-- Offline overlay -->
+        <div class="offline-overlay hidden" id="offlineOverlay">
+            <span>Stream Offline</span>
+        </div>
+        <!-- Connecting overlay -->
+        <div class="connecting-overlay hidden" id="connectingOverlay">
+            <div class="spinner"></div>
+            <span>Connecting...</span>
+        </div>
+    </div>
+
+    <script>
+
+'use strict';
+
+// ============ CONSTANTS ============
+const TWITCH_API_BASE = 'https://api.twitch.tv/helix';
+const TWITCH_AUTH_BASE = 'https://id.twitch.tv/oauth2';
+const KICK_API_BASE = 'https://api.kick.com/public/v1';
+const KICK_PUSHER_URL = 'wss://ws-us2.pusher.com/app/eb1d5f283081a78b932c?protocol=7&client=js&version=7.6.0';
+const STORAGE_PREFIX = 'betterstats_';
+const MAX_GRAPH_POINTS = 360;
+const MIN_POLL_INTERVAL = 30;
+const MAX_POLL_INTERVAL = 300;
+const DEFAULT_POLL_INTERVAL = 60;
+const REQUEST_TIMEOUT = 10000;
+const BACKOFF_BASE = 5000;
+const BACKOFF_MAX = 120000;
+const RATE_LIMIT_THRESHOLD = 50;
+const TOKEN_VALIDATE_INTERVAL = 3600000; // 1 hour
+const SESSION_RESUME_WINDOW = 7200000; // 2 hours
+const REDIRECT_URI = window.location.origin + window.location.pathname;
+
+// ============ UTILITY FUNCTIONS ============
+
+/** Sanitize string for safe DOM insertion */
+function sanitize(str) {
+    if (typeof str !== 'string') return '';
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+}
+
+/** Format large numbers with K/M suffixes */
+function formatNumber(n) {
+    if (n == null || isNaN(n)) return '0';
+    n = Number(n);
+    if (n >= 1000000) return (n / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (n >= 1000) return (n / 1000).toFixed(1).replace(/\.0$/, '') + 'K';
+    return String(n);
+}
+
+/** Format uptime from ISO start time */
+function formatUptime(startedAt) {
+    if (!startedAt) return '0:00:00';
+    const start = new Date(startedAt);
+    if (isNaN(start.getTime())) return '0:00:00';
+    const diff = Math.max(0, Math.floor((Date.now() - start.getTime()) / 1000));
+    const h = Math.floor(diff / 3600);
+    const m = Math.floor((diff % 3600) / 60);
+    const s = diff % 60;
+    return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+/** Generate random state string for OAuth */
+function generateState() {
+    const arr = new Uint8Array(16);
+    crypto.getRandomValues(arr);
+    return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('');
+}
+
+/** Generate PKCE code verifier and challenge */
+async function generatePKCE() {
+    const arr = new Uint8Array(32);
+    crypto.getRandomValues(arr);
+    const verifier = btoa(String.fromCharCode(...arr))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+    const challenge = btoa(String.fromCharCode(...new Uint8Array(hash)))
+        .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    return { verifier, challenge };
+}
+
+/** Rate-limited console logger */
+const logger = (() => {
+    const counts = {};
+    const LIMIT = 10;
+    const WINDOW = 60000;
+    return {
+        log(...args) { console.log('[BetterStats]', ...args); },
+        warn(key, ...args) {
+            const now = Date.now();
+            if (!counts[key]) counts[key] = { count: 0, reset: now + WINDOW };
+            if (now > counts[key].reset) { counts[key] = { count: 0, reset: now + WINDOW }; }
+            if (counts[key].count < LIMIT) {
+                counts[key].count++;
+                console.warn('[BetterStats]', ...args);
+            }
+        },
+        error(key, ...args) {
+            const now = Date.now();
+            if (!counts[key]) counts[key] = { count: 0, reset: now + WINDOW };
+            if (now > counts[key].reset) { counts[key] = { count: 0, reset: now + WINDOW }; }
+            if (counts[key].count < LIMIT) {
+                counts[key].count++;
+                console.error('[BetterStats]', ...args);
+            }
+        }
+    };
+})();
+
+// ============ TOKEN MANAGER ============
+class TokenManager {
+    /** Store a token with timestamp obfuscation */
+    store(platform, data) {
+        const payload = { d: data, t: Date.now(), v: 1 };
+        const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+        try {
+            localStorage.setItem(STORAGE_PREFIX + 'token_' + platform, encoded);
+        } catch (e) {
+            logger.warn('storage', 'Failed to store token');
+        }
+    }
+
+    /** Retrieve and decode a stored token */
+    retrieve(platform) {
+        try {
+            const raw = localStorage.getItem(STORAGE_PREFIX + 'token_' + platform);
+            if (!raw) return null;
+            const json = decodeURIComponent(escape(atob(raw)));
+            const payload = JSON.parse(json);
+            if (!payload || !payload.d) return null;
+            return payload.d;
+        } catch {
+            return null;
+        }
+    }
+
+    /** Get token storage timestamp */
+    getTimestamp(platform) {
+        try {
+            const raw = localStorage.getItem(STORAGE_PREFIX + 'token_' + platform);
+            if (!raw) return 0;
+            const json = decodeURIComponent(escape(atob(raw)));
+            return JSON.parse(json).t || 0;
+        } catch {
+            return 0;
+        }
+    }
+
+    /** Clear token for a platform */
+    clear(platform) {
+        localStorage.removeItem(STORAGE_PREFIX + 'token_' + platform);
+    }
+
+    /** Clear all tokens */
+    clearAll() {
+        this.clear('twitch');
+        this.clear('kick');
+        localStorage.removeItem(STORAGE_PREFIX + 'twitch_user');
+        localStorage.removeItem(STORAGE_PREFIX + 'twitch_client_id');
+        localStorage.removeItem(STORAGE_PREFIX + 'kick_config');
+    }
+}
+
+// ============ TWITCH FETCHER ============
+class TwitchFetcher {
+    constructor(tokenManager) {
+        this.tokenManager = tokenManager;
+        this.clientId = '';
+        this.accessToken = '';
+        this.userId = '';
+        this.userLogin = '';
+        this.displayName = '';
+        this.profileImage = '';
+        this.rateLimitRemaining = 800;
+        this.rateLimitReset = 0;
+        this.connected = false;
+        this.backoff = { delay: BACKOFF_BASE, failures: 0 };
+    }
+
+    /** Initialize from stored credentials */
+    async init() {
+        const storedClientId = localStorage.getItem(STORAGE_PREFIX + 'twitch_client_id');
+        const tokenData = this.tokenManager.retrieve('twitch');
+        if (storedClientId && tokenData) {
+            this.clientId = storedClientId;
+            this.accessToken = tokenData.access_token;
+            const valid = await this.validateToken();
+            if (valid) {
+                this.connected = true;
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Validate current token via Twitch endpoint */
+    async validateToken() {
+        if (!this.accessToken) return false;
+        try {
+            const resp = await this._fetchWithTimeout(TWITCH_AUTH_BASE + '/validate', {
+                headers: { 'Authorization': 'OAuth ' + this.accessToken }
+            });
+            if (!resp.ok) {
+                this.connected = false;
+                return false;
+            }
+            const data = await resp.json();
+            this.userId = data.user_id || '';
+            this.userLogin = data.login || '';
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    /** Start OAuth Implicit Grant flow */
+    startAuth(clientId) {
+        this.clientId = clientId;
+        localStorage.setItem(STORAGE_PREFIX + 'twitch_client_id', clientId);
+        const state = generateState();
+        localStorage.setItem(STORAGE_PREFIX + 'twitch_oauth_state', state);
+        const scopes = 'moderator:read:followers';
+        const url = TWITCH_AUTH_BASE + '/authorize?' + new URLSearchParams({
+            client_id: clientId,
+            redirect_uri: REDIRECT_URI,
+            response_type: 'token',
+            scope: scopes,
+            state: state,
+            force_verify: 'false'
+        }).toString();
+        window.location.href = url;
+    }
+
+    /** Handle OAuth callback from URL hash */
+    async handleCallback() {
+        const hash = window.location.hash;
+        if (!hash || !hash.includes('access_token')) return false;
+        const params = new URLSearchParams(hash.substring(1));
+        const accessToken = params.get('access_token');
+        const state = params.get('state');
+        const storedState = localStorage.getItem(STORAGE_PREFIX + 'twitch_oauth_state');
+        // Clear hash from URL
+        history.replaceState(null, '', window.location.pathname + window.location.search);
+        localStorage.removeItem(STORAGE_PREFIX + 'twitch_oauth_state');
+        if (!accessToken) return false;
+        if (storedState && state !== storedState) {
+            logger.warn('auth', 'OAuth state mismatch');
+            return false;
+        }
+        this.accessToken = accessToken;
+        this.clientId = localStorage.getItem(STORAGE_PREFIX + 'twitch_client_id') || '';
+        this.tokenManager.store('twitch', { access_token: accessToken });
+        const valid = await this.validateToken();
+        if (valid) {
+            this.connected = true;
+            await this.fetchUserProfile();
+            return true;
+        }
+        return false;
+    }
+
+    /** Fetch authenticated user profile */
+    async fetchUserProfile() {
+        if (!this.userLogin) return null;
+        try {
+            const data = await this._apiGet('/users?login=' + encodeURIComponent(this.userLogin));
+            if (data && data.data && data.data.length > 0) {
+                const user = data.data[0];
+                this.userId = user.id;
+                this.displayName = user.display_name;
+                this.profileImage = user.profile_image_url;
+                localStorage.setItem(STORAGE_PREFIX + 'twitch_user', JSON.stringify({
+                    id: user.id, login: user.login,
+                    display_name: user.display_name,
+                    profile_image_url: user.profile_image_url
+                }));
+                return user;
+            }
+        } catch { /* handled by caller */ }
+        return null;
+    }
+
+    /** Get cached user data */
+    getCachedUser() {
+        try {
+            const raw = localStorage.getItem(STORAGE_PREFIX + 'twitch_user');
+            return raw ? JSON.parse(raw) : null;
+        } catch { return null; }
+    }
+
+    /** Fetch stream data for a channel */
+    async getStream(userLogin) {
+        return this._apiGet('/streams?user_login=' + encodeURIComponent(userLogin));
+    }
+
+    /** Fetch user data */
+    async getUser(login) {
+        return this._apiGet('/users?login=' + encodeURIComponent(login));
+    }
+
+    /** Fetch follower count */
+    async getFollowers(broadcasterId) {
+        return this._apiGet('/channels/followers?broadcaster_id=' + encodeURIComponent(broadcasterId) + '&first=1');
+    }
+
+    /** Make authenticated API GET request */
+    async _apiGet(path) {
+        if (!this.accessToken || !this.clientId) throw new Error('Not authenticated');
+        // Check rate limit
+        if (this.rateLimitRemaining < RATE_LIMIT_THRESHOLD && Date.now() / 1000 < this.rateLimitReset) {
+            const waitMs = (this.rateLimitReset - Date.now() / 1000 + 1) * 1000;
+            logger.warn('ratelimit', 'Approaching rate limit, waiting ' + Math.ceil(waitMs / 1000) + 's');
+            await new Promise(r => setTimeout(r, Math.min(waitMs, 30000)));
+        }
+        const resp = await this._fetchWithTimeout(TWITCH_API_BASE + path, {
+            headers: {
+                'Authorization': 'Bearer ' + this.accessToken,
+                'Client-Id': this.clientId
+            }
+        });
+        // Track rate limits from headers
+        const rlRemaining = resp.headers.get('Ratelimit-Remaining');
+        const rlReset = resp.headers.get('Ratelimit-Reset');
+        if (rlRemaining != null) this.rateLimitRemaining = parseInt(rlRemaining, 10);
+        if (rlReset != null) this.rateLimitReset = parseInt(rlReset, 10);
+        if (resp.status === 401) {
+            this.connected = false;
+            throw new Error('TOKEN_EXPIRED');
+        }
+        if (resp.status === 429) {
+            const resetTime = this.rateLimitReset || (Date.now() / 1000 + 60);
+            throw new Error('RATE_LIMITED:' + resetTime);
+        }
+        if (!resp.ok) throw new Error('HTTP_' + resp.status);
+        this.backoff = { delay: BACKOFF_BASE, failures: 0 };
+        return resp.json();
+    }
+
+    /** Fetch with timeout */
+    async _fetchWithTimeout(url, options = {}) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT);
+        try {
+            return await fetch(url, { ...options, signal: controller.signal });
+        } finally {
+            clearTimeout(timeoutId);
+        }
+    }
+
+    /** Disconnect */
+    disconnect() {
+        this.accessToken = '';
+        this.userId = '';
+        this.userLogin = '';
+        this.displayName = '';
+        this.profileImage = '';
+        this.connected = false;
+        this.tokenManager.clear('twitch');
+        localStorage.removeItem(STORAGE_PREFIX + 'twitch_user');
+        localStorage.removeItem(STORAGE_PREFIX + 'twitch_client_id');
+    }
+}
+
+// ============ KICK FETCHER ============
+class KickFetcher {
+    constructor() {
+        this.channelSlug = '';
+        this.channelId = '';
+        this.ws = null;
+        this.connected = false;
+        this.connectionMethod = 'none'; // 'websocket' | 'none'
+        this.lastData = null;
+        this.backoff = { delay: BACKOFF_BASE, failures: 0 };
+        this.reconnectTimer = null;
+        this.activityTimeout = null;
+        this._onDataCallback = null;
+    }
+
+    /** Set callback for real-time data */
+    onData(cb) { this._onDataCallback = cb; }
+
+    /** Connect to Kick via Pusher WebSocket */
+    connect(slug, channelId) {
+        this.channelSlug = slug;
+        this.channelId = channelId;
+        localStorage.setItem(STORAGE_PREFIX + 'kick_config', JSON.stringify({ slug, channelId }));
+        if (channelId) {
+            this._connectPusher();
+        } else {
+            this.connected = true;
+            this.connectionMethod = 'none';
+        }
+    }
+
+    /** Load stored config */
+    loadStored() {
+        try {
+            const raw = localStorage.getItem(STORAGE_PREFIX + 'kick_config');
+            if (raw) {
+                const cfg = JSON.parse(raw);
+                if (cfg.slug) {
+                    this.channelSlug = cfg.slug;
+                    this.channelId = cfg.channelId || '';
+                    return true;
+                }
+            }
+        } catch { /* ignore */ }
+        return false;
+    }
+
+    /** Establish Pusher WebSocket connection */
+    _connectPusher() {
+        if (this.ws) this._closePusher();
+        try {
+            this.ws = new WebSocket(KICK_PUSHER_URL);
+        } catch (e) {
+            logger.error('kick-ws', 'WebSocket creation failed');
+            this._scheduleReconnect();
+            return;
+        }
+        this.ws.onopen = () => {
+            logger.log('Kick Pusher WebSocket opened');
+        };
+        this.ws.onmessage = (event) => {
+            try {
+                const msg = JSON.parse(event.data);
+                this._handlePusherMessage(msg);
+            } catch { /* ignore malformed messages */ }
+        };
+        this.ws.onerror = () => {
+            logger.warn('kick-ws', 'Kick WebSocket error');
+        };
+        this.ws.onclose = () => {
+            this.connected = false;
+            this.connectionMethod = 'none';
+            logger.log('Kick Pusher WebSocket closed');
+            this._scheduleReconnect();
+        };
+    }
+
+    /** Handle incoming Pusher protocol messages */
+    _handlePusherMessage(msg) {
+        const event = msg.event;
+        if (event === 'pusher:connection_established') {
+            this.connected = true;
+            this.connectionMethod = 'websocket';
+            this.backoff = { delay: BACKOFF_BASE, failures: 0 };
+            // Subscribe to channel events
+            if (this.channelId) {
+                this._pusherSubscribe('channel.' + this.channelId);
+            }
+            // Reset activity timeout
+            this._resetActivityTimeout(msg);
+        } else if (event === 'pusher:pong') {
+            // Keep-alive response
+        } else if (event === 'pusher_internal:subscription_succeeded') {
+            logger.log('Subscribed to Kick channel ' + msg.channel);
+        } else if (event === 'App\\Events\\LivestreamUpdated' || event === 'App\\Events\\StreamerIsLive' || event === 'livestream.updated') {
+            // Real-time viewer count update
+            try {
+                const data = typeof msg.data === 'string' ? JSON.parse(msg.data) : msg.data;
+                this.lastData = data;
+                if (this._onDataCallback) this._onDataCallback(data);
+            } catch { /* ignore */ }
+        }
+    }
+
+    /** Subscribe to a Pusher channel */
+    _pusherSubscribe(channel) {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify({
+                event: 'pusher:subscribe',
+                data: { channel }
+            }));
+        }
+    }
+
+    /** Send Pusher ping for keep-alive */
+    _pusherPing() {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            this.ws.send(JSON.stringify({ event: 'pusher:ping', data: {} }));
+        }
+    }
+
+    /** Reset activity timeout (Pusher requires ping within timeout) */
+    _resetActivityTimeout(msg) {
+        clearTimeout(this.activityTimeout);
+        let timeout = 120;
+        try {
+            const connData = typeof msg.data === 'string' ? JSON.parse(msg.data) : msg.data;
+            if (connData.activity_timeout) timeout = connData.activity_timeout;
+        } catch { /* use default */ }
+        this.activityTimeout = setInterval(() => this._pusherPing(), (timeout - 5) * 1000);
+    }
+
+    /** Schedule reconnection with exponential backoff */
+    _scheduleReconnect() {
+        clearTimeout(this.reconnectTimer);
+        if (!this.channelId) return;
+        this.backoff.failures++;
+        const delay = Math.min(this.backoff.delay * Math.pow(2, this.backoff.failures - 1), BACKOFF_MAX);
+        this.reconnectTimer = setTimeout(() => this._connectPusher(), delay);
+    }
+
+    /** Close Pusher WebSocket */
+    _closePusher() {
+        clearTimeout(this.reconnectTimer);
+        clearInterval(this.activityTimeout);
+        if (this.ws) {
+            this.ws.onclose = null;
+            this.ws.onerror = null;
+            try { this.ws.close(); } catch { /* ignore */ }
+            this.ws = null;
+        }
+    }
+
+    /** Disconnect from Kick */
+    disconnect() {
+        this._closePusher();
+        this.channelSlug = '';
+        this.channelId = '';
+        this.connected = false;
+        this.connectionMethod = 'none';
+        this.lastData = null;
+        localStorage.removeItem(STORAGE_PREFIX + 'kick_config');
+    }
+}
+
+// ============ STATS ENGINE ============
+class StatsEngine extends EventTarget {
+    constructor(twitchFetcher, kickFetcher) {
+        super();
+        this.twitch = twitchFetcher;
+        this.kick = kickFetcher;
+        this.pollInterval = DEFAULT_POLL_INTERVAL * 1000;
+        this.twitchTimer = null;
+        this.kickTimer = null;
+        this.uptimeTimer = null;
+        this.running = false;
+        this.twitchChannel = '';
+        this.kickChannel = '';
+        this.enableTwitch = true;
+        this.enableKick = true;
+        this.history = { twitch: [], kick: [], total: [] };
+        this.lastTwitchData = null;
+        this.lastKickData = null;
+        this.twitchBackoff = { delay: BACKOFF_BASE, failures: 0 };
+        this.kickBackoff = { delay: BACKOFF_BASE, failures: 0 };
+
+        // Listen for real-time Kick data
+        this.kick.onData((data) => this._handleKickRealtime(data));
+    }
+
+    /** Start the polling engine */
+    start(config) {
+        this.stop();
+        this.running = true;
+        this.pollInterval = (config.interval || DEFAULT_POLL_INTERVAL) * 1000;
+        this.twitchChannel = config.twitchChannel || '';
+        this.kickChannel = config.kickChannel || '';
+        this.enableTwitch = config.enableTwitch !== false;
+        this.enableKick = config.enableKick !== false;
+        // Load previous session history if available
+        this._loadSessionHistory();
+        // Initial poll
+        if (this.enableTwitch && this.twitch.connected && this.twitchChannel) {
+            this._pollTwitch();
+        }
+        if (this.enableKick && this.kick.connected && this.kickChannel) {
+            this._pollKick();
+        }
+        // Start poll timers
+        this.twitchTimer = setInterval(() => {
+            if (this.enableTwitch && this.twitch.connected && this.twitchChannel) this._pollTwitch();
+        }, this.pollInterval);
+        this.kickTimer = setInterval(() => {
+            if (this.enableKick && this.kick.connected && this.kickChannel) this._pollKick();
+        }, this.pollInterval);
+        // Uptime ticker
+        this.uptimeTimer = setInterval(() => {
+            this.dispatchEvent(new CustomEvent('uptick'));
+        }, 1000);
+        this.dispatchEvent(new CustomEvent('started'));
+    }
+
+    /** Stop the polling engine */
+    stop() {
+        this.running = false;
+        clearInterval(this.twitchTimer);
+        clearInterval(this.kickTimer);
+        clearInterval(this.uptimeTimer);
+        this.twitchTimer = null;
+        this.kickTimer = null;
+        this.uptimeTimer = null;
+    }
+
+    /** Pause polling (e.g., OBS scene change) */
+    pause() {
+        clearInterval(this.twitchTimer);
+        clearInterval(this.kickTimer);
+        this.twitchTimer = null;
+        this.kickTimer = null;
+    }
+
+    /** Resume polling */
+    resume() {
+        if (!this.running) return;
+        if (!this.twitchTimer && this.enableTwitch) {
+            this._pollTwitch();
+            this.twitchTimer = setInterval(() => {
+                if (this.enableTwitch && this.twitch.connected) this._pollTwitch();
+            }, this.pollInterval);
+        }
+        if (!this.kickTimer && this.enableKick) {
+            this._pollKick();
+            this.kickTimer = setInterval(() => {
+                if (this.enableKick && this.kick.connected) this._pollKick();
+            }, this.pollInterval);
+        }
+    }
+
+    /** Poll Twitch API */
+    async _pollTwitch() {
+        try {
+            const streamResp = await this.twitch.getStream(this.twitchChannel);
+            const isLive = streamResp && streamResp.data && streamResp.data.length > 0;
+            let normalized;
+            if (isLive) {
+                const s = streamResp.data[0];
+                normalized = {
+                    platform: 'twitch', channel: this.twitchChannel,
+                    isLive: true, viewerCount: s.viewer_count || 0,
+                    followerCount: 0, title: s.title || '',
+                    game: s.game_name || '', startedAt: s.started_at || null,
+                    thumbnailUrl: (s.thumbnail_url || '').replace('{width}', '440').replace('{height}', '248'),
+                    profileImageUrl: this.twitch.profileImage || '',
+                    timestamp: new Date()
+                };
+                // Fetch follower count (separate request)
+                try {
+                    const followResp = await this.twitch.getFollowers(this.twitch.userId);
+                    if (followResp && followResp.total != null) {
+                        normalized.followerCount = followResp.total;
+                    }
+                } catch (e) {
+                    if (e.message !== 'TOKEN_EXPIRED') {
+                        // Follower fetch may fail if not broadcaster/mod - use cached value
+                        if (this.lastTwitchData) normalized.followerCount = this.lastTwitchData.followerCount;
+                    }
+                }
+            } else {
+                normalized = {
+                    platform: 'twitch', channel: this.twitchChannel,
+                    isLive: false, viewerCount: 0,
+                    followerCount: this.lastTwitchData ? this.lastTwitchData.followerCount : 0,
+                    title: '', game: '', startedAt: null,
+                    thumbnailUrl: '', profileImageUrl: this.twitch.profileImage || '',
+                    timestamp: new Date()
+                };
+                // Still try to fetch followers when offline
+                try {
+                    const followResp = await this.twitch.getFollowers(this.twitch.userId);
+                    if (followResp && followResp.total != null) {
+                        normalized.followerCount = followResp.total;
+                    }
+                } catch { /* use cached */ }
+            }
+            this.lastTwitchData = normalized;
+            this.twitchBackoff = { delay: BACKOFF_BASE, failures: 0 };
+            this._addHistoryPoint('twitch', normalized.viewerCount);
+            this._emitUpdate();
+            this.dispatchEvent(new CustomEvent('twitch-status', { detail: 'ok' }));
+        } catch (e) {
+            this.twitchBackoff.failures++;
+            if (e.message === 'TOKEN_EXPIRED') {
+                this.dispatchEvent(new CustomEvent('twitch-status', { detail: 'token-expired' }));
+            } else if (e.message && e.message.startsWith('RATE_LIMITED:')) {
+                this.dispatchEvent(new CustomEvent('twitch-status', { detail: 'rate-limited' }));
+            } else {
+                this.dispatchEvent(new CustomEvent('twitch-status', { detail: 'error' }));
+            }
+        }
+    }
+
+    /** Poll Kick (via API or use WebSocket cached data) */
+    async _pollKick() {
+        // If we have real-time WebSocket data, use it
+        if (this.kick.lastData) {
+            this._processKickData(this.kick.lastData);
+            return;
+        }
+        // Otherwise try the official API if we have a slug
+        if (this.kickChannel) {
+            try {
+                const resp = await fetch(KICK_API_BASE + '/channels?slug=' + encodeURIComponent(this.kickChannel), {
+                    headers: { 'Accept': 'application/json' },
+                    signal: AbortSignal.timeout(REQUEST_TIMEOUT)
+                });
+                if (resp.ok) {
+                    const json = await resp.json();
+                    if (json && json.data && json.data.length > 0) {
+                        this._processKickChannelData(json.data[0]);
+                        this.kickBackoff = { delay: BACKOFF_BASE, failures: 0 };
+                        this.dispatchEvent(new CustomEvent('kick-status', { detail: 'ok' }));
+                        return;
+                    }
+                }
+            } catch { /* fallback below */ }
+        }
+        // If we have cached data from previous polls, keep showing it
+        if (!this.lastKickData && this.kickChannel) {
+            this.dispatchEvent(new CustomEvent('kick-status', { detail: 'error' }));
+        }
+    }
+
+    /** Process Kick channel API data into normalized format */
+    _processKickChannelData(ch) {
+        const stream = ch.stream || null;
+        const normalized = {
+            platform: 'kick', channel: ch.slug || this.kickChannel,
+            isLive: stream ? stream.is_live === true : false,
+            viewerCount: stream ? (stream.viewer_count || 0) : 0,
+            followerCount: ch.follower_count || 0,
+            title: stream ? (stream.stream_title || '') : '',
+            game: stream && stream.category ? (stream.category.name || '') : '',
+            startedAt: stream ? (stream.started_at || null) : null,
+            thumbnailUrl: stream ? (stream.thumbnail || '') : '',
+            profileImageUrl: ch.profile_picture || '',
+            timestamp: new Date()
+        };
+        this.lastKickData = normalized;
+        this._addHistoryPoint('kick', normalized.viewerCount);
+        this._emitUpdate();
+    }
+
+    /** Process real-time Kick WebSocket data */
+    _handleKickRealtime(data) {
+        // Pusher livestream.updated events have varying structures
+        const viewerCount = data.viewer_count ?? data.viewers ?? 0;
+        if (this.lastKickData) {
+            this.lastKickData.viewerCount = viewerCount;
+            this.lastKickData.timestamp = new Date();
+            if (data.title) this.lastKickData.title = data.title;
+            if (data.category) this.lastKickData.game = data.category.name || data.category;
+        } else {
+            this.lastKickData = {
+                platform: 'kick', channel: this.kickChannel,
+                isLive: true, viewerCount,
+                followerCount: 0, title: data.title || '',
+                game: data.category ? (data.category.name || '') : '',
+                startedAt: data.started_at || null,
+                thumbnailUrl: '', profileImageUrl: '',
+                timestamp: new Date()
+            };
+        }
+        this._addHistoryPoint('kick', viewerCount);
+        this._emitUpdate();
+        this.dispatchEvent(new CustomEvent('kick-status', { detail: 'ok' }));
+    }
+
+    /** Process Kick data from various sources */
+    _processKickData(data) {
+        this._handleKickRealtime(data);
+    }
+
+    /** Add a data point to history */
+    _addHistoryPoint(platform, value) {
+        const now = Date.now();
+        this.history[platform].push({ t: now, v: value });
+        if (this.history[platform].length > MAX_GRAPH_POINTS) {
+            this.history[platform].shift();
+        }
+        // Calculate total
+        const twitchVal = this.lastTwitchData ? this.lastTwitchData.viewerCount : 0;
+        const kickVal = this.lastKickData ? this.lastKickData.viewerCount : 0;
+        this.history.total.push({ t: now, v: twitchVal + kickVal });
+        if (this.history.total.length > MAX_GRAPH_POINTS) {
+            this.history.total.shift();
+        }
+    }
+
+    /** Emit combined update event */
+    _emitUpdate() {
+        const twitchViewers = this.lastTwitchData ? this.lastTwitchData.viewerCount : 0;
+        const kickViewers = this.lastKickData ? this.lastKickData.viewerCount : 0;
+        const twitchFollowers = this.lastTwitchData ? this.lastTwitchData.followerCount : 0;
+        const kickFollowers = this.lastKickData ? this.lastKickData.followerCount : 0;
+        const detail = {
+            twitch: this.lastTwitchData,
+            kick: this.lastKickData,
+            combined: {
+                viewerCount: twitchViewers + kickViewers,
+                followerCount: twitchFollowers + kickFollowers,
+                isLive: (this.lastTwitchData && this.lastTwitchData.isLive) || (this.lastKickData && this.lastKickData.isLive),
+                title: (this.lastTwitchData && this.lastTwitchData.title) || (this.lastKickData && this.lastKickData.title) || '',
+                game: (this.lastTwitchData && this.lastTwitchData.game) || (this.lastKickData && this.lastKickData.game) || '',
+                startedAt: this._getEarliestStart()
+            },
+            history: this.history
+        };
+        this.dispatchEvent(new CustomEvent('update', { detail }));
+    }
+
+    /** Get the earliest stream start time */
+    _getEarliestStart() {
+        const starts = [];
+        if (this.lastTwitchData && this.lastTwitchData.startedAt) starts.push(this.lastTwitchData.startedAt);
+        if (this.lastKickData && this.lastKickData.startedAt) starts.push(this.lastKickData.startedAt);
+        if (starts.length === 0) return null;
+        return starts.sort()[0];
+    }
+
+    /** Save session history to localStorage */
+    saveSession() {
+        try {
+            localStorage.setItem(STORAGE_PREFIX + 'session', JSON.stringify({
+                history: this.history,
+                savedAt: Date.now()
+            }));
+        } catch { /* storage full */ }
+    }
+
+    /** Load session history from localStorage */
+    _loadSessionHistory() {
+        try {
+            const raw = localStorage.getItem(STORAGE_PREFIX + 'session');
+            if (!raw) return;
+            const session = JSON.parse(raw);
+            if (session.savedAt && Date.now() - session.savedAt < SESSION_RESUME_WINDOW) {
+                if (session.history) {
+                    this.history = {
+                        twitch: session.history.twitch || [],
+                        kick: session.history.kick || [],
+                        total: session.history.total || []
+                    };
+                }
+            }
+        } catch { /* ignore corrupted session */ }
+    }
+
+    /** Clear session */
+    clearSession() {
+        this.history = { twitch: [], kick: [], total: [] };
+        localStorage.removeItem(STORAGE_PREFIX + 'session');
+    }
+
+    /** Export session as JSON */
+    exportSession() {
+        return JSON.stringify({
+            history: this.history,
+            twitch: this.lastTwitchData,
+            kick: this.lastKickData,
+            exportedAt: new Date().toISOString()
+        }, null, 2);
+    }
+}
+
+// ============ OVERLAY RENDERER ============
+class OverlayRenderer {
+    constructor() {
+        this.elements = {};
+        this.animationFrames = {};
+        this.currentState = 'connecting'; // connecting | live | offline | error
+        this.config = {
+            showViewers: true, showFollowers: true, showUptime: true,
+            showGame: true, showGraph: true, showPlatformBreakdown: true,
+            layout: 'expanded', position: 'top-left', scale: 100,
+            theme: 'dark', accentColor: '#8b5cf6', highContrast: false
+        };
+    }
+
+    /** Initialize DOM references */
+    init(container) {
+        this.container = container || document;
+        this.elements = {
+            overlayView: this.container.querySelector('#overlayView') || document.getElementById('overlayView'),
+            statsContainer: document.getElementById('statsContainer'),
+            liveIndicator: document.getElementById('liveIndicator'),
+            combinedViewersStat: document.getElementById('combinedViewersStat'),
+            totalViewerCount: document.getElementById('totalViewerCount'),
+            platformStats: document.getElementById('platformStats'),
+            twitchViewerStat: document.getElementById('twitchViewerStat'),
+            kickViewerStat: document.getElementById('kickViewerStat'),
+            twitchViewerCount: document.getElementById('twitchViewerCount'),
+            kickViewerCount: document.getElementById('kickViewerCount'),
+            uptimeStat: document.getElementById('uptimeStat'),
+            uptimeValue: document.getElementById('uptimeValue'),
+            followerStat: document.getElementById('followerStat'),
+            followerCount: document.getElementById('followerCount'),
+            gameStat: document.getElementById('gameStat'),
+            gameValue: document.getElementById('gameValue'),
+            graphContainer: document.getElementById('graphContainer'),
+            statsGraph: document.getElementById('statsGraph'),
+            statusBar: document.getElementById('statusBar'),
+            twitchIndicator: document.getElementById('twitchIndicator'),
+            kickIndicator: document.getElementById('kickIndicator'),
+            offlineOverlay: document.getElementById('offlineOverlay'),
+            connectingOverlay: document.getElementById('connectingOverlay')
+        };
+    }
+
+    /** Apply config to display */
+    applyConfig(config) {
+        Object.assign(this.config, config);
+        const el = this.elements;
+        // Visibility
+        this._toggle(el.combinedViewersStat, this.config.showViewers);
+        this._toggle(el.followerStat, this.config.showFollowers);
+        this._toggle(el.uptimeStat, this.config.showUptime);
+        this._toggle(el.gameStat, this.config.showGame);
+        this._toggle(el.graphContainer, this.config.showGraph);
+        this._toggle(el.platformStats, this.config.showPlatformBreakdown);
+        // Layout
+        if (el.statsContainer) {
+            el.statsContainer.className = 'stats-container' + (this.config.layout === 'compact' ? ' layout-compact' : '');
+        }
+        // Position
+        if (el.overlayView) {
+            el.overlayView.className = 'overlay-view pos-' + (this.config.position || 'top-left');
+        }
+        // Scale
+        if (el.statsContainer) {
+            el.statsContainer.style.transform = `scale(${this.config.scale / 100})`;
+            el.statsContainer.style.transformOrigin = this._getTransformOrigin();
+        }
+        // Theme
+        if (this.config.theme === 'light') {
+            document.body.style.setProperty('--text-primary', '#1a1a2e');
+        } else {
+            document.body.style.removeProperty('--text-primary');
+        }
+        // High contrast
+        document.body.classList.toggle('high-contrast', this.config.highContrast);
+    }
+
+    /** Update display with new data */
+    update(detail) {
+        if (!detail) return;
+        const { twitch, kick, combined, history } = detail;
+        if (combined.isLive) {
+            this.setState('live');
+        } else if (this.currentState === 'connecting') {
+            // Stay connecting
+        } else {
+            this.setState('offline');
+        }
+        // Combined viewers
+        this._animateValue(this.elements.totalViewerCount, combined.viewerCount);
+        // Platform breakdown
+        if (twitch) this._animateValue(this.elements.twitchViewerCount, twitch.viewerCount);
+        if (kick) this._animateValue(this.elements.kickViewerCount, kick.viewerCount);
+        // Followers
+        this._animateValue(this.elements.followerCount, combined.followerCount);
+        // Game
+        if (this.elements.gameValue) {
+            const gameText = sanitize(combined.game || '\u2014');
+            this.elements.gameValue.textContent = gameText;
+        }
+        // Graph
+        if (this.config.showGraph && history) {
+            this._renderGraph(history);
+        }
+    }
+
+    /** Update uptime display */
+    updateUptime(startedAt) {
+        if (this.elements.uptimeValue) {
+            this.elements.uptimeValue.textContent = formatUptime(startedAt);
+        }
+    }
+
+    /** Set visual state */
+    setState(state) {
+        if (this.currentState === state) return;
+        this.currentState = state;
+        const el = this.elements;
+        this._toggle(el.liveIndicator, state === 'live');
+        this._toggle(el.offlineOverlay, state === 'offline');
+        this._toggle(el.connectingOverlay, state === 'connecting');
+        if (state === 'live' || state === 'offline') {
+            this._toggle(el.statsContainer, true);
+        }
+    }
+
+    /** Set platform status indicator */
+    setPlatformStatus(platform, status) {
+        const el = platform === 'twitch' ? this.elements.twitchIndicator : this.elements.kickIndicator;
+        if (!el) return;
+        el.className = 'status-indicator';
+        if (status === 'ok') el.classList.add('ok');
+        else if (status === 'warn' || status === 'rate-limited' || status === 'token-expired') el.classList.add('warn');
+        else if (status === 'error') el.classList.add('err');
+    }
+
+    /** Animate number change */
+    _animateValue(el, targetValue) {
+        if (!el) return;
+        const formatted = formatNumber(targetValue);
+        const current = el.textContent;
+        if (current === formatted) return;
+        // Simple smooth transition via CSS
+        el.style.transition = 'none';
+        el.style.opacity = '0.6';
+        requestAnimationFrame(() => {
+            el.textContent = formatted;
+            el.style.transition = 'opacity 0.3s ease';
+            el.style.opacity = '1';
+        });
+    }
+
+    /** Render SVG graph */
+    _renderGraph(history) {
+        const svg = this.elements.statsGraph;
+        if (!svg) return;
+        const W = 400, H = 80;
+        let html = '';
+        const renderLine = (points, cssClass) => {
+            if (!points || points.length < 2) return;
+            const maxV = Math.max(...points.map(p => p.v), 1);
+            const minT = points[0].t;
+            const maxT = points[points.length - 1].t;
+            const rangeT = Math.max(maxT - minT, 1);
+            const coords = points.map(p => ({
+                x: ((p.t - minT) / rangeT) * W,
+                y: H - (p.v / maxV) * (H - 4) - 2
+            }));
+            const pathD = coords.map((c, i) => (i === 0 ? 'M' : 'L') + c.x.toFixed(1) + ',' + c.y.toFixed(1)).join(' ');
+            html += `<path class="graph-line ${cssClass}" d="${pathD}"/>`;
+            // Area fill
+            const areaD = pathD + ` L${coords[coords.length-1].x.toFixed(1)},${H} L${coords[0].x.toFixed(1)},${H} Z`;
+            html += `<path class="graph-area ${cssClass}" d="${areaD}"/>`;
+        };
+        renderLine(history.twitch, 'twitch');
+        renderLine(history.kick, 'kick');
+        renderLine(history.total, 'total');
+        svg.innerHTML = html;
+    }
+
+    /** Toggle element visibility */
+    _toggle(el, show) {
+        if (!el) return;
+        el.classList.toggle('hidden', !show);
+    }
+
+    /** Get transform origin based on position */
+    _getTransformOrigin() {
+        const p = this.config.position;
+        if (p === 'top-left') return 'top left';
+        if (p === 'top-right') return 'top right';
+        if (p === 'bottom-left') return 'bottom left';
+        if (p === 'bottom-right') return 'bottom right';
+        return 'center center';
+    }
+}
+
+// ============ CONFIG MANAGER ============
+class ConfigManager {
+    constructor() {
+        this.defaults = {
+            showViewers: true, showFollowers: true, showUptime: true,
+            showGame: true, showGraph: true, showPlatformBreakdown: true,
+            layout: 'expanded', position: 'top-left', scale: 100,
+            theme: 'dark', accentColor: '#8b5cf6', highContrast: false,
+            pollInterval: DEFAULT_POLL_INTERVAL,
+            enableTwitch: true, enableKick: true,
+            twitchChannel: '', kickChannel: ''
+        };
+        this.config = { ...this.defaults };
+    }
+
+    /** Load config from localStorage */
+    load() {
+        try {
+            const raw = localStorage.getItem(STORAGE_PREFIX + 'config');
+            if (raw) {
+                const saved = JSON.parse(raw);
+                Object.assign(this.config, saved);
+            }
+        } catch { /* use defaults */ }
+        return this.config;
+    }
+
+    /** Save config to localStorage */
+    save() {
+        try {
+            localStorage.setItem(STORAGE_PREFIX + 'config', JSON.stringify(this.config));
+        } catch { /* storage full */ }
+    }
+
+    /** Parse config from URL query parameters */
+    getFromURL() {
+        const params = new URLSearchParams(window.location.search);
+        if (!params.has('mode')) return null;
+        const cfg = { ...this.defaults };
+        if (params.has('twitch')) cfg.twitchChannel = params.get('twitch');
+        if (params.has('kick')) cfg.kickChannel = params.get('kick');
+        if (params.has('interval')) cfg.pollInterval = Math.max(MIN_POLL_INTERVAL, Math.min(MAX_POLL_INTERVAL, parseInt(params.get('interval'), 10) || DEFAULT_POLL_INTERVAL));
+        if (params.has('theme')) cfg.theme = params.get('theme');
+        if (params.has('layout')) cfg.layout = params.get('layout');
+        if (params.has('position')) cfg.position = params.get('position');
+        if (params.has('scale')) cfg.scale = Math.max(50, Math.min(200, parseInt(params.get('scale'), 10) || 100));
+        if (params.has('accent')) cfg.accentColor = '#' + params.get('accent');
+        if (params.has('contrast')) cfg.highContrast = params.get('contrast') === '1';
+        if (params.has('show')) {
+            const show = params.get('show').split(',');
+            cfg.showViewers = show.includes('viewers');
+            cfg.showFollowers = show.includes('followers');
+            cfg.showUptime = show.includes('uptime');
+            cfg.showGame = show.includes('game');
+            cfg.showGraph = show.includes('graph');
+            cfg.showPlatformBreakdown = show.includes('platforms');
+        }
+        return cfg;
+    }
+
+    /** Generate OBS browser source URL */
+    generateOBSUrl() {
+        const c = this.config;
+        const params = new URLSearchParams();
+        params.set('mode', 'obs');
+        if (c.twitchChannel) params.set('twitch', c.twitchChannel);
+        if (c.kickChannel) params.set('kick', c.kickChannel);
+        params.set('interval', String(c.pollInterval));
+        params.set('theme', c.theme);
+        params.set('layout', c.layout);
+        params.set('position', c.position);
+        params.set('scale', String(c.scale));
+        params.set('accent', c.accentColor.replace('#', ''));
+        if (c.highContrast) params.set('contrast', '1');
+        const showParts = [];
+        if (c.showViewers) showParts.push('viewers');
+        if (c.showFollowers) showParts.push('followers');
+        if (c.showUptime) showParts.push('uptime');
+        if (c.showGame) showParts.push('game');
+        if (c.showGraph) showParts.push('graph');
+        if (c.showPlatformBreakdown) showParts.push('platforms');
+        params.set('show', showParts.join(','));
+        const base = window.location.origin + window.location.pathname;
+        return base + '?' + params.toString();
+    }
+
+    /** Update a single config value */
+    set(key, value) {
+        this.config[key] = value;
+    }
+
+    /** Get current config */
+    get() {
+        return { ...this.config };
+    }
+}
+
+// ============ APP ============
+class App {
+    constructor() {
+        this.tokenManager = new TokenManager();
+        this.twitchFetcher = new TwitchFetcher(this.tokenManager);
+        this.kickFetcher = new KickFetcher();
+        this.configManager = new ConfigManager();
+        this.renderer = new OverlayRenderer();
+        this.engine = null;
+        this.isOBS = false;
+        this.isOverlayMode = false;
+    }
+
+    /** Main initialization */
+    async init() {
+        // Detect OBS
+        this.isOBS = !!window.obsstudio;
+        // Check URL mode
+        const urlConfig = this.configManager.getFromURL();
+        this.isOverlayMode = !!urlConfig || this.isOBS;
+        // Handle OAuth callback (Twitch token in hash)
+        const hashHandled = await this.twitchFetcher.handleCallback();
+        // Load saved config
+        const savedConfig = this.configManager.load();
+        const activeConfig = urlConfig || savedConfig;
+        // Initialize renderer
+        this.renderer.init(document);
+        if (this.isOverlayMode) {
+            this._setupOverlayMode(activeConfig);
+        } else {
+            this._setupConfigMode(activeConfig, hashHandled);
+        }
+        // Global error handler
+        window.addEventListener('error', (e) => {
+            logger.error('global', 'Unhandled error');
+            e.preventDefault();
+        });
+        window.addEventListener('unhandledrejection', (e) => {
+            logger.error('global', 'Unhandled promise rejection');
+            e.preventDefault();
+        });
+        // Online/offline detection
+        window.addEventListener('online', () => {
+            if (this.engine && this.engine.running) this.engine.resume();
+        });
+        window.addEventListener('offline', () => {
+            if (this.engine) this.engine.pause();
+        });
+        // Save session on unload
+        window.addEventListener('beforeunload', () => {
+            if (this.engine) this.engine.saveSession();
+        });
+    }
+
+    /** Setup overlay/OBS mode */
+    async _setupOverlayMode(config) {
+        document.body.classList.add('obs-mode');
+        document.getElementById('configPanel').classList.add('hidden');
+        document.getElementById('backToHub').classList.add('hidden');
+        const overlayView = document.getElementById('overlayView');
+        overlayView.classList.remove('hidden');
+        this.renderer.applyConfig(config);
+        this.renderer.setState('connecting');
+        // Initialize connections
+        await this._initConnections(config);
+        // Start stats engine
+        this._startEngine(config);
+        // OBS visibility handling
+        if (window.obsstudio) {
+            window.obsstudio.onActiveChange = (active) => {
+                if (active && this.engine) this.engine.resume();
+                else if (this.engine) this.engine.pause();
+            };
+        }
+    }
+
+    /** Setup configuration panel mode */
+    async _setupConfigMode(config, justAuthenticated) {
+        document.getElementById('overlayView').classList.add('hidden');
+        // Try to restore connections
+        const twitchReady = await this.twitchFetcher.init();
+        const kickReady = this.kickFetcher.loadStored();
+        // Populate config UI
+        this._populateConfigUI(config);
+        // Update connection status
+        if (twitchReady || justAuthenticated) {
+            this._updateTwitchUI(true);
+        }
+        if (kickReady) {
+            this._updateKickUI(true);
+            if (this.kickFetcher.channelId) {
+                this.kickFetcher.connect(this.kickFetcher.channelSlug, this.kickFetcher.channelId);
+            }
+        }
+        // Bind UI events
+        this._bindConfigEvents();
+        // Start engine for live preview if connected
+        if (twitchReady || kickReady) {
+            const previewConfig = this.configManager.get();
+            if (twitchReady) previewConfig.twitchChannel = this.twitchFetcher.userLogin || previewConfig.twitchChannel;
+            if (kickReady) previewConfig.kickChannel = this.kickFetcher.channelSlug || previewConfig.kickChannel;
+            // Show overlay in preview
+            const overlayView = document.getElementById('overlayView');
+            overlayView.classList.remove('hidden');
+            overlayView.style.position = 'relative';
+            overlayView.style.width = '100%';
+            overlayView.style.height = 'auto';
+            overlayView.style.minHeight = '200px';
+            const previewFrame = document.getElementById('previewFrame');
+            if (previewFrame) previewFrame.appendChild(overlayView);
+            this.renderer.applyConfig(previewConfig);
+            this._startEngine(previewConfig);
+        }
+    }
+
+    /** Initialize connections from config */
+    async _initConnections(config) {
+        // Twitch
+        if (config.twitchChannel) {
+            const twitchReady = await this.twitchFetcher.init();
+            if (twitchReady) {
+                if (!this.twitchFetcher.userLogin) {
+                    this.twitchFetcher.userLogin = config.twitchChannel;
+                }
+                // Fetch user profile for userId needed by followers
+                if (!this.twitchFetcher.userId) {
+                    try {
+                        const userData = await this.twitchFetcher.getUser(config.twitchChannel);
+                        if (userData && userData.data && userData.data[0]) {
+                            this.twitchFetcher.userId = userData.data[0].id;
+                            this.twitchFetcher.profileImage = userData.data[0].profile_image_url;
+                        }
+                    } catch { /* continue without profile */ }
+                }
+            }
+        }
+        // Kick
+        if (config.kickChannel) {
+            const kickReady = this.kickFetcher.loadStored();
+            if (kickReady && this.kickFetcher.channelId) {
+                this.kickFetcher.connect(this.kickFetcher.channelSlug, this.kickFetcher.channelId);
+            } else {
+                this.kickFetcher.channelSlug = config.kickChannel;
+                this.kickFetcher.connected = true;
+            }
+        }
+    }
+
+    /** Start the stats engine */
+    _startEngine(config) {
+        this.engine = new StatsEngine(this.twitchFetcher, this.kickFetcher);
+        this.engine.addEventListener('update', (e) => {
+            this.renderer.update(e.detail);
+        });
+        this.engine.addEventListener('uptick', () => {
+            const startedAt = this.engine.lastTwitchData?.startedAt || this.engine.lastKickData?.startedAt;
+            if (startedAt) this.renderer.updateUptime(startedAt);
+        });
+        this.engine.addEventListener('twitch-status', (e) => {
+            this.renderer.setPlatformStatus('twitch', e.detail);
+        });
+        this.engine.addEventListener('kick-status', (e) => {
+            this.renderer.setPlatformStatus('kick', e.detail);
+        });
+        this.engine.start({
+            interval: config.pollInterval || DEFAULT_POLL_INTERVAL,
+            twitchChannel: config.twitchChannel || this.twitchFetcher.userLogin || '',
+            kickChannel: config.kickChannel || this.kickFetcher.channelSlug || '',
+            enableTwitch: config.enableTwitch !== false,
+            enableKick: config.enableKick !== false
+        });
+    }
+
+    /** Populate config panel UI with saved values */
+    _populateConfigUI(config) {
+        const setChecked = (id, val) => { const el = document.getElementById(id); if (el) el.checked = val; };
+        const setValue = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+        setChecked('showViewers', config.showViewers);
+        setChecked('showFollowers', config.showFollowers);
+        setChecked('showUptime', config.showUptime);
+        setChecked('showGame', config.showGame);
+        setChecked('showGraph', config.showGraph);
+        setChecked('showPlatformBreakdown', config.showPlatformBreakdown);
+        setValue('overlayLayout', config.layout);
+        setValue('overlayPosition', config.position);
+        setValue('overlayScale', config.scale);
+        setValue('overlayTheme', config.theme);
+        setValue('accentColor', config.accentColor);
+        setChecked('highContrast', config.highContrast);
+        setValue('pollInterval', config.pollInterval);
+        setChecked('enableTwitchPolling', config.enableTwitch);
+        setChecked('enableKickPolling', config.enableKick);
+        // Range display values
+        const scaleVal = document.getElementById('scaleValue');
+        if (scaleVal) scaleVal.textContent = config.scale + '%';
+        const intervalVal = document.getElementById('intervalValue');
+        if (intervalVal) intervalVal.textContent = config.pollInterval + 's';
+        // Restore Twitch client ID
+        const storedClientId = localStorage.getItem(STORAGE_PREFIX + 'twitch_client_id');
+        if (storedClientId) setValue('twitchClientId', storedClientId);
+        // Restore Kick config
+        if (this.kickFetcher.channelSlug) setValue('kickChannelSlug', this.kickFetcher.channelSlug);
+        if (this.kickFetcher.channelId) setValue('kickChannelId', this.kickFetcher.channelId);
+    }
+
+    /** Bind all config panel event listeners */
+    _bindConfigEvents() {
+        // Twitch connect
+        document.getElementById('twitchConnectBtn')?.addEventListener('click', () => {
+            const clientId = document.getElementById('twitchClientId')?.value?.trim();
+            if (!clientId) { alert('Please enter your Twitch Client ID'); return; }
+            this.twitchFetcher.startAuth(clientId);
+        });
+        // Twitch disconnect
+        document.getElementById('twitchDisconnectBtn')?.addEventListener('click', () => {
+            this.twitchFetcher.disconnect();
+            this._updateTwitchUI(false);
+        });
+        // Kick connect
+        document.getElementById('kickConnectBtn')?.addEventListener('click', () => {
+            const slug = document.getElementById('kickChannelSlug')?.value?.trim();
+            const channelId = document.getElementById('kickChannelId')?.value?.trim();
+            if (!slug) { alert('Please enter a Kick channel slug'); return; }
+            this.kickFetcher.connect(slug, channelId);
+            this._updateKickUI(true);
+            this.configManager.set('kickChannel', slug);
+            this.configManager.save();
+        });
+        // Kick disconnect
+        document.getElementById('kickDisconnectBtn')?.addEventListener('click', () => {
+            this.kickFetcher.disconnect();
+            this._updateKickUI(false);
+        });
+        // Settings changes
+        const settingIds = ['showViewers', 'showFollowers', 'showUptime', 'showGame', 'showGraph', 'showPlatformBreakdown',
+            'overlayLayout', 'overlayPosition', 'overlayTheme', 'accentColor', 'highContrast',
+            'enableTwitchPolling', 'enableKickPolling'];
+        settingIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.addEventListener('change', () => {
+                this._syncConfigFromUI();
+                this.renderer.applyConfig(this.configManager.get());
+            });
+        });
+        // Range inputs
+        const scaleRange = document.getElementById('overlayScale');
+        const scaleVal = document.getElementById('scaleValue');
+        scaleRange?.addEventListener('input', () => {
+            if (scaleVal) scaleVal.textContent = scaleRange.value + '%';
+            this._syncConfigFromUI();
+            this.renderer.applyConfig(this.configManager.get());
+        });
+        const intervalRange = document.getElementById('pollInterval');
+        const intervalVal = document.getElementById('intervalValue');
+        intervalRange?.addEventListener('input', () => {
+            if (intervalVal) intervalVal.textContent = intervalRange.value + 's';
+            this._syncConfigFromUI();
+        });
+        // URL generator
+        document.getElementById('generateUrlBtn')?.addEventListener('click', () => {
+            this._syncConfigFromUI();
+            const url = this.configManager.generateOBSUrl();
+            const urlDisplay = document.getElementById('urlDisplay');
+            const urlOutput = document.getElementById('urlOutput');
+            const obsDims = document.getElementById('obsDimensions');
+            if (urlDisplay) urlDisplay.textContent = url;
+            urlOutput?.classList.remove('hidden');
+            if (obsDims) {
+                const layout = this.configManager.get().layout;
+                const dims = layout === 'compact' ? '600 x 60' : layout === 'graph' ? '440 x 120' : '280 x 340';
+                obsDims.textContent = 'Recommended OBS size: ' + dims + ' px';
+                obsDims.classList.remove('hidden');
+            }
+        });
+        // Copy URL
+        document.getElementById('copyUrlBtn')?.addEventListener('click', () => {
+            const urlDisplay = document.getElementById('urlDisplay');
+            if (urlDisplay) {
+                navigator.clipboard.writeText(urlDisplay.textContent).then(() => {
+                    const btn = document.getElementById('copyUrlBtn');
+                    if (btn) { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = 'Copy', 2000); }
+                }).catch(() => {
+                    // Fallback
+                    const ta = document.createElement('textarea');
+                    ta.value = urlDisplay.textContent;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                });
+            }
+        });
+        // Session controls
+        document.getElementById('exportSessionBtn')?.addEventListener('click', () => {
+            if (!this.engine) return;
+            const json = this.engine.exportSession();
+            const blob = new Blob([json], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'betterstats-session-' + new Date().toISOString().slice(0, 10) + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+        document.getElementById('importSessionInput')?.addEventListener('change', (e) => {
+            const file = e.target.files?.[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if (data.history && this.engine) {
+                        this.engine.history = {
+                            twitch: data.history.twitch || [],
+                            kick: data.history.kick || [],
+                            total: data.history.total || []
+                        };
+                        this.engine.saveSession();
+                    }
+                } catch { alert('Invalid session file'); }
+            };
+            reader.readAsText(file);
+        });
+        document.getElementById('clearSessionBtn')?.addEventListener('click', () => {
+            if (this.engine) this.engine.clearSession();
+        });
+    }
+
+    /** Sync config from UI inputs to ConfigManager */
+    _syncConfigFromUI() {
+        const getChecked = (id) => document.getElementById(id)?.checked ?? true;
+        const getValue = (id) => document.getElementById(id)?.value ?? '';
+        this.configManager.set('showViewers', getChecked('showViewers'));
+        this.configManager.set('showFollowers', getChecked('showFollowers'));
+        this.configManager.set('showUptime', getChecked('showUptime'));
+        this.configManager.set('showGame', getChecked('showGame'));
+        this.configManager.set('showGraph', getChecked('showGraph'));
+        this.configManager.set('showPlatformBreakdown', getChecked('showPlatformBreakdown'));
+        this.configManager.set('layout', getValue('overlayLayout'));
+        this.configManager.set('position', getValue('overlayPosition'));
+        this.configManager.set('scale', parseInt(getValue('overlayScale'), 10) || 100);
+        this.configManager.set('theme', getValue('overlayTheme'));
+        this.configManager.set('accentColor', getValue('accentColor'));
+        this.configManager.set('highContrast', getChecked('highContrast'));
+        this.configManager.set('pollInterval', parseInt(getValue('pollInterval'), 10) || DEFAULT_POLL_INTERVAL);
+        this.configManager.set('enableTwitch', getChecked('enableTwitchPolling'));
+        this.configManager.set('enableKick', getChecked('enableKickPolling'));
+        // Channel names
+        if (this.twitchFetcher.userLogin) this.configManager.set('twitchChannel', this.twitchFetcher.userLogin);
+        if (this.kickFetcher.channelSlug) this.configManager.set('kickChannel', this.kickFetcher.channelSlug);
+        this.configManager.save();
+    }
+
+    /** Update Twitch connection UI */
+    _updateTwitchUI(connected) {
+        const status = document.getElementById('twitchStatus');
+        const connectBtn = document.getElementById('twitchConnectBtn');
+        const disconnectBtn = document.getElementById('twitchDisconnectBtn');
+        const clientIdInput = document.getElementById('twitchClientId');
+        const userInfo = document.getElementById('twitchUserInfo');
+        if (connected) {
+            if (status) { status.textContent = 'Connected'; status.className = 'connection-status connected'; }
+            connectBtn?.classList.add('hidden');
+            clientIdInput?.classList.add('hidden');
+            disconnectBtn?.classList.remove('hidden');
+            // Show user info
+            const cached = this.twitchFetcher.getCachedUser();
+            if (cached && userInfo) {
+                userInfo.classList.remove('hidden');
+                const avatar = document.getElementById('twitchAvatar');
+                const username = document.getElementById('twitchUsername');
+                if (avatar) avatar.src = cached.profile_image_url || '';
+                if (username) username.textContent = cached.display_name || cached.login || '';
+            }
+        } else {
+            if (status) { status.textContent = 'Disconnected'; status.className = 'connection-status'; }
+            connectBtn?.classList.remove('hidden');
+            clientIdInput?.classList.remove('hidden');
+            disconnectBtn?.classList.add('hidden');
+            userInfo?.classList.add('hidden');
+        }
+    }
+
+    /** Update Kick connection UI */
+    _updateKickUI(connected) {
+        const status = document.getElementById('kickStatus');
+        const connectBtn = document.getElementById('kickConnectBtn');
+        const disconnectBtn = document.getElementById('kickDisconnectBtn');
+        const slugInput = document.getElementById('kickChannelSlug');
+        const idInput = document.getElementById('kickChannelId');
+        if (connected) {
+            const method = this.kickFetcher.channelId ? 'WebSocket' : 'Polling';
+            if (status) { status.textContent = 'Connected (' + method + ')'; status.className = 'connection-status connected'; }
+            connectBtn?.classList.add('hidden');
+            slugInput?.setAttribute('disabled', 'true');
+            idInput?.setAttribute('disabled', 'true');
+            disconnectBtn?.classList.remove('hidden');
+        } else {
+            if (status) { status.textContent = 'Disconnected'; status.className = 'connection-status'; }
+            connectBtn?.classList.remove('hidden');
+            slugInput?.removeAttribute('disabled');
+            idInput?.removeAttribute('disabled');
+            disconnectBtn?.classList.add('hidden');
+        }
+    }
+}
+
+// ============ INITIALIZATION ============
+document.addEventListener('DOMContentLoaded', () => {
+    const app = new App();
+    app.init().catch(e => {
+        logger.error('init', 'App initialization failed');
+    });
+});
+
+    </script>
+</body>
+</html>
