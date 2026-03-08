@@ -171,8 +171,8 @@
 
 ### Context Window
 
-- **256K tokens** (standard) with near-perfect recall
-- 400K tokens context window (Codex/extended)
+- **400K tokens** context window with near-perfect recall across 256K tokens
+- 128K max output tokens
 
 ### Reasoning / Thinking Modes
 
@@ -449,7 +449,7 @@ Before finalizing, verify the output satisfies every requirement in the prompt.
 | Feature | GPT-5 | GPT-5.1 | GPT-5.2 | GPT-5.3 Codex | GPT-5.3 Instant | GPT-5.4 |
 |---|---|---|---|---|---|---|
 | **Release Date** | Aug 7, 2025 | Nov 12, 2025 | Dec 10, 2025 | ~Feb 5, 2026 | Mar 3, 2026 | Mar 5, 2026 |
-| **Context Window** | 400K | 400K | 256K (400K Codex) | — | 400K | 1,050K |
+| **Context Window** | 400K | 400K | 400K | 256K | 400K | 1,050K |
 | **API Model String** | `gpt-5` | `gpt-5.1` | `gpt-5.2` | `gpt-5.3-codex` | `gpt-5.3-chat-latest` | `gpt-5.4` |
 | **Reasoning Effort** | none/minimal/low/medium/high | Adaptive | none/low/medium/high (xhigh Codex) | low/medium/high/xhigh | Adaptive (Instant) | none/low/medium/high/xhigh |
 | **Thinking Mode** | Yes (router) | Yes (adaptive) | Yes (3 tiers) | Yes | No (Instant only) | Yes |
