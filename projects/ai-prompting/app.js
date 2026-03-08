@@ -565,6 +565,26 @@ const BASE_TRANSLATIONS = {
           name: 'Memory',
           desc: 'Remember context across chats',
           promptTag: 'Remember this for future conversations.'
+        },
+        thinking_mode: {
+          name: 'Thinking Mode',
+          desc: 'Extended reasoning for complex problems',
+          promptTag: 'Use extended thinking to reason through this step by step.'
+        },
+        computer_use: {
+          name: 'Computer Use',
+          desc: 'Native desktop/browser automation via Playwright',
+          promptTag: 'Use computer use capabilities to interact with the application.'
+        },
+        tool_search: {
+          name: 'Tool Search',
+          desc: 'Deferred tool loading for large tool ecosystems',
+          promptTag: 'Use tool search to find and load the appropriate tool.'
+        },
+        reasoning_effort: {
+          name: 'Reasoning Effort',
+          desc: 'Calibrate thinking depth (none/low/medium/high/xhigh)',
+          promptTag: 'Calibrate reasoning effort based on task complexity.'
         }
       },
       gemini: {
@@ -893,7 +913,7 @@ const BASE_TRANSLATIONS = {
       poweredBy: 'Powered by Pollinations.ai 🌸',
       modelInfo: 'Model Details',
       modelName: 'Model',
-      modelValue: 'OpenAI (GPT-4o mini)',
+      modelValue: 'OpenAI (GPT-5 Mini)',
       modelSettings: 'Settings',
       modelTemperature: 'Temperature: default',
       modelSeed: 'Seed: random',
@@ -1768,7 +1788,7 @@ Prompt to analyze:
       poweredBy: 'Poháněno Pollinations.ai 🌸',
       modelInfo: 'Detaily modelu',
       modelName: 'Model',
-      modelValue: 'OpenAI (GPT-4o mini)',
+      modelValue: 'OpenAI (GPT-5 Mini)',
       modelSettings: 'Nastavení',
       modelTemperature: 'Teplota: výchozí',
       modelSeed: 'Seed: náhodný',
@@ -2017,6 +2037,26 @@ Prompt k analýze:
           name: 'Paměť',
           desc: 'Pamatování kontextu mezi chaty',
           promptTag: 'Zapamatuj si toto pro budoucí konverzace.'
+        },
+        thinking_mode: {
+          name: 'Režim myšlení',
+          desc: 'Rozšířené uvažování pro složité problémy',
+          promptTag: 'Použij rozšířené myšlení pro krok za krokem reasoning.'
+        },
+        computer_use: {
+          name: 'Ovládání počítače',
+          desc: 'Nativní automatizace desktopu/prohlížeče přes Playwright',
+          promptTag: 'Použij ovládání počítače pro interakci s aplikací.'
+        },
+        tool_search: {
+          name: 'Vyhledávání nástrojů',
+          desc: 'Odložené načítání nástrojů pro velké ekosystémy',
+          promptTag: 'Použij vyhledávání nástrojů pro nalezení správného nástroje.'
+        },
+        reasoning_effort: {
+          name: 'Úroveň uvažování',
+          desc: 'Kalibrace hloubky myšlení (none/low/medium/high/xhigh)',
+          promptTag: 'Kalibruj úroveň uvažování podle složitosti úlohy.'
         }
       },
       gemini: {
@@ -2944,8 +2984,8 @@ const MODEL_TOKEN_LIMITS = {
   },
   gpt: {
     name: 'ChatGPT',
-    limit: 128000,
-    warning: 100000
+    limit: 1050000,
+    warning: 800000
   },
   gemini: {
     name: 'Gemini',
@@ -2983,6 +3023,30 @@ const MODEL_TOKEN_LIMITS = {
     warning: 25000
   }
 };
+
+// GPT Model Variants — full history from chatgpt-model-evolution.md
+const GPT_VARIANTS = [
+  // GPT-5 family (Aug 2025)
+  { id: 'gpt-5', name: 'GPT-5', api: 'gpt-5', context: 400000, maxOutput: 128000, released: '2025-08-07', status: 'deprecated', format: 'markdown', reasoning: 'minimal/low/medium/high', features: ['web_browsing', 'dalle', 'code_interpreter', 'canvas', 'memory'], desc: 'Flagship reasoning model' },
+  { id: 'gpt-5-mini', name: 'GPT-5 Mini', api: 'gpt-5-mini', context: 400000, maxOutput: 128000, released: '2025-08-07', status: 'deprecated', format: 'markdown', reasoning: 'minimal/low/medium/high', features: ['web_browsing', 'dalle', 'code_interpreter', 'canvas', 'memory'], desc: 'Faster, cost-efficient' },
+  { id: 'gpt-5-nano', name: 'GPT-5 Nano', api: 'gpt-5-nano', context: 400000, maxOutput: 128000, released: '2025-08-07', status: 'deprecated', format: 'markdown', reasoning: 'minimal/low/medium/high', features: ['web_browsing', 'dalle', 'code_interpreter'], desc: 'Fastest, cheapest' },
+  { id: 'gpt-5-pro', name: 'GPT-5 Pro', api: 'gpt-5-pro', context: 400000, maxOutput: 128000, released: '2025-08-07', status: 'deprecated', format: 'markdown', reasoning: 'minimal/low/medium/high', features: ['web_browsing', 'dalle', 'code_interpreter', 'canvas', 'memory'], desc: 'Highest capability (Pro plan)' },
+  // GPT-5.1 family (Nov 2025)
+  { id: 'gpt-5.1', name: 'GPT-5.1', api: 'gpt-5.1', context: 400000, maxOutput: 128000, released: '2025-11-12', status: 'deprecated', format: 'markdown', reasoning: 'none/low/medium/high', features: ['web_browsing', 'dalle', 'code_interpreter', 'canvas', 'memory'], desc: 'Warmer, personality presets' },
+  { id: 'gpt-5.1-codex', name: 'GPT-5.1 Codex', api: 'gpt-5.1-codex', context: 400000, maxOutput: 128000, released: '2025-11-19', status: 'deprecated', format: 'markdown', reasoning: 'none/low/medium/high', features: ['code_interpreter'], desc: 'Coding-optimized' },
+  { id: 'gpt-5.1-codex-mini', name: 'GPT-5.1 Codex Mini', api: 'gpt-5.1-codex-mini', context: 400000, maxOutput: 128000, released: '2025-11-19', status: 'deprecated', format: 'markdown', reasoning: 'none/low/medium/high', features: ['code_interpreter'], desc: 'Lighter coding variant' },
+  { id: 'gpt-5.1-codex-max', name: 'GPT-5.1 Codex Max', api: 'gpt-5.1-codex-max', context: 1050000, maxOutput: 128000, released: '2025-11-19', status: 'deprecated', format: 'markdown', reasoning: 'none/low/medium/high', features: ['code_interpreter'], desc: 'Frontier agentic, 1M context' },
+  // GPT-5.2 family (Dec 2025)
+  { id: 'gpt-5.2', name: 'GPT-5.2', api: 'gpt-5.2', context: 400000, maxOutput: 128000, released: '2025-12-10', status: 'deprecated', format: 'markdown-xml', reasoning: 'none/low/medium/high', features: ['web_browsing', 'dalle', 'code_interpreter', 'canvas', 'memory'], desc: 'Vision + long context' },
+  { id: 'gpt-5.2-pro', name: 'GPT-5.2 Pro', api: 'gpt-5.2-pro', context: 400000, maxOutput: 128000, released: '2025-12-10', status: 'retiring', format: 'markdown-xml', reasoning: 'none/low/medium/high', features: ['web_browsing', 'dalle', 'code_interpreter', 'canvas', 'memory'], desc: 'Highest capability (Pro)' },
+  { id: 'gpt-5.2-codex', name: 'GPT-5.2 Codex', api: 'gpt-5.2-codex', context: 400000, maxOutput: 128000, released: '2025-12-10', status: 'deprecated', format: 'markdown-xml', reasoning: 'low/medium/high/xhigh', features: ['code_interpreter'], desc: 'Agentic coding' },
+  // GPT-5.3 family (Feb-Mar 2026)
+  { id: 'gpt-5.3-codex', name: 'GPT-5.3 Codex', api: 'gpt-5.3-codex', context: 256000, maxOutput: 128000, released: '2026-02-05', status: 'active', format: 'markdown-xml', reasoning: 'low/medium/high/xhigh', features: ['code_interpreter'], desc: 'SOTA coding, 25% faster' },
+  { id: 'gpt-5.3-instant', name: 'GPT-5.3 Instant', api: 'gpt-5.3-chat-latest', context: 400000, maxOutput: 128000, released: '2026-03-03', status: 'active', format: 'markdown-xml', reasoning: 'adaptive', features: ['web_browsing', 'dalle', 'code_interpreter', 'canvas', 'memory'], desc: 'Anti-cringe, natural tone' },
+  // GPT-5.4 family (Mar 2026) — current flagship
+  { id: 'gpt-5.4', name: 'GPT-5.4', api: 'gpt-5.4', context: 1050000, maxOutput: 128000, released: '2026-03-05', status: 'active', format: 'xml', reasoning: 'none/low/medium/high/xhigh', features: ['web_browsing', 'dalle', 'code_interpreter', 'canvas', 'memory', 'thinking_mode', 'computer_use', 'tool_search', 'reasoning_effort'], desc: 'Flagship, computer use, 1M ctx' },
+  { id: 'gpt-5.4-pro', name: 'GPT-5.4 Pro', api: 'gpt-5.4-pro', context: 1050000, maxOutput: 128000, released: '2026-03-05', status: 'active', format: 'xml', reasoning: 'medium/high/xhigh', features: ['web_browsing', 'dalle', 'code_interpreter', 'canvas', 'memory', 'thinking_mode', 'computer_use', 'tool_search', 'reasoning_effort'], desc: 'Highest capability, Responses API' }
+];
 
 // ==================== PROMPT QUALITY SCORING ====================
 const calculatePromptScore = (fields, methods, template, extendedFields) => {
@@ -3731,6 +3795,7 @@ const App = () => {
   const [lang, setLangState] = useState(() => localStorage.getItem('ai-prompt-lang') || 'en');
   const [template, setTemplate] = useState('general');
   const [target, setTarget] = useState('claude');
+  const [gptVariant, setGptVariant] = useState('gpt-5.4');
   const [copied, setCopied] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [selectedMethods, setSelectedMethods] = useState([]);
@@ -3996,6 +4061,7 @@ const App = () => {
         fields,
         template,
         target,
+        gptVariant,
         selectedMethods,
         exampleFileType,
         exampleHeaders,
@@ -4009,6 +4075,7 @@ const App = () => {
         fields,
         template,
         target,
+        gptVariant,
         selectedMethods,
         lang,
         exampleFileType,
@@ -4099,6 +4166,7 @@ const App = () => {
     if (recoveryDraft) {
       setTemplate(recoveryDraft.template || 'general');
       setTarget(recoveryDraft.target || 'claude');
+      if (recoveryDraft.gptVariant) setGptVariant(recoveryDraft.gptVariant);
       setFields(recoveryDraft.fields || {
         role: '',
         task: '',
@@ -4137,6 +4205,7 @@ const App = () => {
   const loadDraftFromHistory = draft => {
     setTemplate(draft.template || 'general');
     setTarget(draft.target || 'claude');
+    if (draft.gptVariant) setGptVariant(draft.gptVariant);
     setFields(draft.fields || {
       role: '',
       task: '',
@@ -4218,10 +4287,16 @@ const App = () => {
     return calculatePromptScore(fields, selectedMethods, template, extendedFields);
   }, [fields, selectedMethods, template, extendedFields]);
 
-  // Get current model's token limits (doesn't depend on formattedPrompt)
+  // Get current model's token limits (uses variant-specific limits for GPT)
   const currentModelLimits = useMemo(() => {
+    if (target === 'gpt') {
+      const variant = GPT_VARIANTS.find(v => v.id === gptVariant);
+      if (variant) {
+        return { name: variant.name, limit: variant.context, warning: Math.floor(variant.context * 0.8) };
+      }
+    }
     return MODEL_TOKEN_LIMITS[target] || MODEL_TOKEN_LIMITS.general;
-  }, [target]);
+  }, [target, gptVariant]);
 
   // NOTE: tokenCount and tokenWarning are defined after formattedPrompt
 
@@ -4580,12 +4655,29 @@ const App = () => {
       role: (role, p) => `${p.youAre} ${role}.`,
       section: (label, content) => `<${label.toLowerCase().replace(/\s+/g, '_')}>\n${content}\n</${label.toLowerCase().replace(/\s+/g, '_')}>`
     },
-    // GPT: Markdown structure, literal instructions
-    gpt: {
-      wrap: (tag, content) => `**${tag}:**\n${content}`,
-      role: (role, p) => `${p.actAs} ${role}.`,
-      section: (label, content) => `**${label}:**\n${content}`
-    },
+    // GPT: Format depends on variant (markdown for <=5.1, markdown-xml for 5.2-5.3, xml for 5.4+)
+    gpt: (() => {
+      const variant = GPT_VARIANTS.find(v => v.id === gptVariant);
+      const fmt = variant?.format || 'xml';
+      if (fmt === 'markdown') {
+        return {
+          wrap: (tag, content) => `**${tag}:**\n${content}`,
+          role: (role, p) => `${p.actAs} ${role}.`,
+          section: (label, content) => `**${label}:**\n${content}`
+        };
+      } else if (fmt === 'markdown-xml') {
+        return {
+          wrap: (tag, content) => `**${tag}:**\n${content}`,
+          role: (role, p) => `${p.actAs} ${role}.`,
+          section: (label, content) => `<${label.toLowerCase().replace(/\s+/g, '_')}>\n${content}\n</${label.toLowerCase().replace(/\s+/g, '_')}>`
+        };
+      }
+      return {
+        wrap: (tag, content) => `<${tag.toLowerCase().replace(/\s+/g, '_')}>\n${content}\n</${tag.toLowerCase().replace(/\s+/g, '_')}>`,
+        role: (role, p) => `<role>\n${p.actAs} ${role}.\n</role>`,
+        section: (label, content) => `<${label.toLowerCase().replace(/\s+/g, '_')}>\n${content}\n</${label.toLowerCase().replace(/\s+/g, '_')}>`
+      };
+    })(),
     // Gemini: XML or Markdown consistently, context first
     gemini: {
       wrap: (tag, content) => `## ${tag}\n${content}`,
@@ -4670,6 +4762,12 @@ const App = () => {
           type: 'context',
           text: `[INST] Context: ${fields.context} [/INST]`
         });
+      } else if (target === 'gpt') {
+        const vFmt = GPT_VARIANTS.find(v => v.id === gptVariant)?.format || 'xml';
+        sections.push({
+          type: 'context',
+          text: vFmt === 'markdown' ? `**${p.context}:**\n${fields.context}` : `<context>\n${fields.context}\n</context>`
+        });
       } else {
         sections.push({
           type: 'context',
@@ -4699,6 +4797,12 @@ const App = () => {
         sections.push({
           type: 'task',
           text: `## Task & Context\n${fields.task}`
+        });
+      } else if (target === 'gpt') {
+        const vFmt = GPT_VARIANTS.find(v => v.id === gptVariant)?.format || 'xml';
+        sections.push({
+          type: 'task',
+          text: vFmt === 'markdown' ? `**${p.task}:**\n${fields.task}` : `<task>\n${fields.task}\n</task>`
         });
       } else {
         sections.push({
@@ -4872,9 +4976,10 @@ const App = () => {
             text: `<model_capabilities>\n${featuresText}\n</model_capabilities>`
           });
         } else if (target === 'gpt') {
+          const vFmt = GPT_VARIANTS.find(v => v.id === gptVariant)?.format || 'xml';
           sections.push({
             type: 'features',
-            text: `## Special Instructions\n${featuresText}`
+            text: vFmt === 'markdown' ? `## Special Instructions\n${featuresText}` : `<model_capabilities>\n${featuresText}\n</model_capabilities>`
           });
         } else if (target === 'gemini') {
           sections.push({
@@ -5084,7 +5189,7 @@ const App = () => {
       }
     }
     return sections;
-  }, [fields, target, selectedMethods, t, template, generateFormattedExamples, selectedFeatures, extendedFields]);
+  }, [fields, target, gptVariant, selectedMethods, t, template, generateFormattedExamples, selectedFeatures, extendedFields]);
 
   // Plain text version for copying
   const formattedPrompt = useMemo(() => {
@@ -5229,6 +5334,7 @@ const App = () => {
       name: promptName,
       template,
       target,
+      gptVariant,
       fields,
       selectedMethods,
       lang,
@@ -5282,6 +5388,7 @@ const App = () => {
   const loadPrompt = prompt => {
     setTemplate(prompt.template || 'general');
     setTarget(prompt.target || 'claude');
+    if (prompt.gptVariant) setGptVariant(prompt.gptVariant);
     setFields(prompt.fields || {
       role: '',
       task: '',
@@ -5414,6 +5521,7 @@ const App = () => {
     const promptData = {
       template,
       target,
+      gptVariant,
       selectedMethods,
       lang,
       fields,
@@ -5444,6 +5552,7 @@ const App = () => {
     if (decoded) {
       setTemplate(decoded.template);
       setTarget(decoded.target);
+      if (decoded.gptVariant) setGptVariant(decoded.gptVariant);
       setSelectedMethods(decoded.selectedMethods);
       setLang(decoded.lang);
       setFields(decoded.fields);
@@ -5474,6 +5583,7 @@ const App = () => {
       if (decoded) {
         setTemplate(decoded.template);
         setTarget(decoded.target);
+        if (decoded.gptVariant) setGptVariant(decoded.gptVariant);
         setSelectedMethods(decoded.selectedMethods);
         setLang(decoded.lang);
         setFields(decoded.fields);
@@ -5509,8 +5619,8 @@ const App = () => {
     name: 'ChatGPT',
     color: '#10A37F',
     icon: '💚',
-    desc: 'Markdown, literal instructions',
-    features: ['web_browsing', 'dalle', 'code_interpreter', 'canvas', 'memory']
+    desc: 'XML tags + Markdown, structured contracts',
+    features: ['web_browsing', 'dalle', 'code_interpreter', 'canvas', 'memory', 'thinking_mode', 'computer_use', 'tool_search', 'reasoning_effort']
   }, {
     id: 'gemini',
     name: 'Gemini',
@@ -5810,7 +5920,7 @@ const App = () => {
     className: "text-xs text-slate-400"
   }, t.verify?.modelName || 'Model', ":"), /*#__PURE__*/React.createElement("span", {
     className: "text-sm text-white font-medium"
-  }, t.verify?.modelValue || 'OpenAI (GPT-4o mini)')), /*#__PURE__*/React.createElement("div", {
+  }, t.verify?.modelValue || `OpenAI (${GPT_VARIANTS.find(v => v.id === gptVariant)?.name || 'GPT-5.4'})`)), /*#__PURE__*/React.createElement("div", {
     className: "flex flex-wrap gap-2 mt-2"
   }, /*#__PURE__*/React.createElement("span", {
     className: "px-2 py-0.5 bg-slate-600/50 rounded text-xs text-slate-300"
@@ -5900,7 +6010,7 @@ const App = () => {
     className: "text-xs text-slate-400 flex items-center justify-center gap-1"
   }, "\uD83C\uDF38 Pollinations.ai"), /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-slate-500 mt-1"
-  }, t.verify?.modelValue || 'OpenAI (GPT-4o mini)'))), verifyError && !verifyLoading && /*#__PURE__*/React.createElement("div", {
+  }, t.verify?.modelValue || `OpenAI (${GPT_VARIANTS.find(v => v.id === gptVariant)?.name || 'GPT-5.4'})`))), verifyError && !verifyLoading && /*#__PURE__*/React.createElement("div", {
     className: "flex flex-col items-center justify-center py-8"
   }, /*#__PURE__*/React.createElement("div", {
     className: "w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4"
@@ -5946,7 +6056,7 @@ const App = () => {
     className: "text-xs text-slate-500 flex items-center gap-1"
   }, "\uD83C\uDF38 ", t.verify?.poweredBy || 'Powered by Pollinations.ai'), /*#__PURE__*/React.createElement("span", {
     className: "text-xs text-slate-600 ml-5"
-  }, t.verify?.modelValue || 'OpenAI (GPT-4o mini)')), /*#__PURE__*/React.createElement("button", {
+  }, t.verify?.modelValue || `OpenAI (${GPT_VARIANTS.find(v => v.id === gptVariant)?.name || 'GPT-5.4'})`)), /*#__PURE__*/React.createElement("button", {
     onClick: () => setShowVerifyModal(false),
     className: "px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600"
   }, t.verify?.close || 'Close')))), showDraftRecovery && recoveryDraft && /*#__PURE__*/React.createElement("div", {
@@ -7192,7 +7302,7 @@ const App = () => {
     className: "text-amber-400"
   }), lang === 'cs' ? 'Optimalizovat pro AI model' : 'Optimize for AI model'), /*#__PURE__*/React.createElement("span", {
     className: "text-xs text-slate-500"
-  }, aiTargets.find(a => a.id === target)?.desc)), /*#__PURE__*/React.createElement("div", {
+  }, target === 'gpt' ? (GPT_VARIANTS.find(v => v.id === gptVariant)?.desc || aiTargets.find(a => a.id === target)?.desc) : aiTargets.find(a => a.id === target)?.desc)), /*#__PURE__*/React.createElement("div", {
     className: "grid grid-cols-3 sm:grid-cols-5 lg:grid-cols-9 gap-1.5"
   }, aiTargets.map(ai => /*#__PURE__*/React.createElement("button", {
     key: ai.id,
@@ -7218,9 +7328,39 @@ const App = () => {
     name: "Check",
     size: 8,
     className: "text-white absolute top-0.5 left-0.5"
-  }))))), (() => {
+  }))))), target === 'gpt' && /*#__PURE__*/React.createElement("div", {
+    className: "mt-3 pt-3 border-t border-slate-700/50"
+  }, /*#__PURE__*/React.createElement("div", {
+    className: "flex items-center gap-2 mb-2"
+  }, /*#__PURE__*/React.createElement(Icon, {
+    name: "Layers",
+    size: 12,
+    className: "text-emerald-400"
+  }), /*#__PURE__*/React.createElement("span", {
+    className: "text-[10px] text-slate-400"
+  }, lang === 'cs' ? 'Varianta modelu' : 'Model Variant'), /*#__PURE__*/React.createElement("span", {
+    className: "text-[10px] px-1.5 py-0.5 bg-emerald-500/20 text-emerald-400 rounded"
+  }, (() => { const v = GPT_VARIANTS.find(v => v.id === gptVariant); return v ? `${(v.context/1000).toFixed(0)}K ctx` : ''; })())), /*#__PURE__*/React.createElement("div", {
+    className: "flex flex-wrap gap-1"
+  }, GPT_VARIANTS.map(v => {
+    const isSelected = gptVariant === v.id;
+    const statusColor = v.status === 'active' ? 'bg-green-500' : v.status === 'retiring' ? 'bg-yellow-500' : 'bg-slate-500';
+    return /*#__PURE__*/React.createElement("button", {
+      key: v.id,
+      onClick: () => setGptVariant(v.id),
+      className: `relative px-2 py-1 rounded text-[10px] font-medium transition-all ${isSelected ? 'bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-500/50' : 'bg-slate-700/30 text-slate-400 hover:bg-slate-700/60 hover:text-slate-300'}`,
+      title: `${v.desc} | API: ${v.api} | ${(v.context/1000).toFixed(0)}K tokens | ${v.reasoning} | ${v.status}`
+    }, /*#__PURE__*/React.createElement("span", {
+      className: `inline-block w-1.5 h-1.5 rounded-full ${statusColor} mr-1`
+    }), v.name);
+  }))), (() => {
     const currentTarget = aiTargets.find(a => a.id === target);
-    const availableFeatures = currentTarget?.features || [];
+    let availableFeatures = currentTarget?.features || [];
+    // Override features with variant-specific list when GPT is selected
+    if (target === 'gpt') {
+      const variant = GPT_VARIANTS.find(v => v.id === gptVariant);
+      if (variant) availableFeatures = variant.features;
+    }
     const featureTranslations = t.modelFeatures?.[target] || {};
     if (availableFeatures.length === 0) return null;
     return /*#__PURE__*/React.createElement("div", {
