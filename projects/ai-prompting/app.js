@@ -565,6 +565,26 @@ const BASE_TRANSLATIONS = {
           name: 'Memory',
           desc: 'Remember context across chats',
           promptTag: 'Remember this for future conversations.'
+        },
+        thinking_mode: {
+          name: 'Thinking Mode',
+          desc: 'Extended reasoning for complex problems',
+          promptTag: 'Use extended thinking to reason through this step by step.'
+        },
+        computer_use: {
+          name: 'Computer Use',
+          desc: 'Native desktop/browser automation via Playwright',
+          promptTag: 'Use computer use capabilities to interact with the application.'
+        },
+        tool_search: {
+          name: 'Tool Search',
+          desc: 'Deferred tool loading for large tool ecosystems',
+          promptTag: 'Use tool search to find and load the appropriate tool.'
+        },
+        reasoning_effort: {
+          name: 'Reasoning Effort',
+          desc: 'Calibrate thinking depth (none/low/medium/high/xhigh)',
+          promptTag: 'Calibrate reasoning effort based on task complexity.'
         }
       },
       gemini: {
@@ -893,7 +913,7 @@ const BASE_TRANSLATIONS = {
       poweredBy: 'Powered by Pollinations.ai 🌸',
       modelInfo: 'Model Details',
       modelName: 'Model',
-      modelValue: 'OpenAI (GPT-4o mini)',
+      modelValue: 'OpenAI (GPT-5 Mini)',
       modelSettings: 'Settings',
       modelTemperature: 'Temperature: default',
       modelSeed: 'Seed: random',
@@ -1768,7 +1788,7 @@ Prompt to analyze:
       poweredBy: 'Poháněno Pollinations.ai 🌸',
       modelInfo: 'Detaily modelu',
       modelName: 'Model',
-      modelValue: 'OpenAI (GPT-4o mini)',
+      modelValue: 'OpenAI (GPT-5 Mini)',
       modelSettings: 'Nastavení',
       modelTemperature: 'Teplota: výchozí',
       modelSeed: 'Seed: náhodný',
@@ -2017,6 +2037,26 @@ Prompt k analýze:
           name: 'Paměť',
           desc: 'Pamatování kontextu mezi chaty',
           promptTag: 'Zapamatuj si toto pro budoucí konverzace.'
+        },
+        thinking_mode: {
+          name: 'Režim myšlení',
+          desc: 'Rozšířené uvažování pro složité problémy',
+          promptTag: 'Použij rozšířené myšlení pro krok za krokem reasoning.'
+        },
+        computer_use: {
+          name: 'Ovládání počítače',
+          desc: 'Nativní automatizace desktopu/prohlížeče přes Playwright',
+          promptTag: 'Použij ovládání počítače pro interakci s aplikací.'
+        },
+        tool_search: {
+          name: 'Vyhledávání nástrojů',
+          desc: 'Odložené načítání nástrojů pro velké ekosystémy',
+          promptTag: 'Použij vyhledávání nástrojů pro nalezení správného nástroje.'
+        },
+        reasoning_effort: {
+          name: 'Úroveň uvažování',
+          desc: 'Kalibrace hloubky myšlení (none/low/medium/high/xhigh)',
+          promptTag: 'Kalibruj úroveň uvažování podle složitosti úlohy.'
         }
       },
       gemini: {
@@ -2944,8 +2984,8 @@ const MODEL_TOKEN_LIMITS = {
   },
   gpt: {
     name: 'ChatGPT',
-    limit: 128000,
-    warning: 100000
+    limit: 1050000,
+    warning: 800000
   },
   gemini: {
     name: 'Gemini',
@@ -4580,11 +4620,11 @@ const App = () => {
       role: (role, p) => `${p.youAre} ${role}.`,
       section: (label, content) => `<${label.toLowerCase().replace(/\s+/g, '_')}>\n${content}\n</${label.toLowerCase().replace(/\s+/g, '_')}>`
     },
-    // GPT: Markdown structure, literal instructions
+    // GPT: XML tags + Markdown (GPT-5.4 recommended)
     gpt: {
-      wrap: (tag, content) => `**${tag}:**\n${content}`,
-      role: (role, p) => `${p.actAs} ${role}.`,
-      section: (label, content) => `**${label}:**\n${content}`
+      wrap: (tag, content) => `<${tag.toLowerCase().replace(/\s+/g, '_')}>\n${content}\n</${tag.toLowerCase().replace(/\s+/g, '_')}>`,
+      role: (role, p) => `<role>\n${p.actAs} ${role}.\n</role>`,
+      section: (label, content) => `<${label.toLowerCase().replace(/\s+/g, '_')}>\n${content}\n</${label.toLowerCase().replace(/\s+/g, '_')}>`
     },
     // Gemini: XML or Markdown consistently, context first
     gemini: {
@@ -4670,6 +4710,11 @@ const App = () => {
           type: 'context',
           text: `[INST] Context: ${fields.context} [/INST]`
         });
+      } else if (target === 'gpt') {
+        sections.push({
+          type: 'context',
+          text: `<context>\n${fields.context}\n</context>`
+        });
       } else {
         sections.push({
           type: 'context',
@@ -4699,6 +4744,11 @@ const App = () => {
         sections.push({
           type: 'task',
           text: `## Task & Context\n${fields.task}`
+        });
+      } else if (target === 'gpt') {
+        sections.push({
+          type: 'task',
+          text: `<task>\n${fields.task}\n</task>`
         });
       } else {
         sections.push({
@@ -4874,7 +4924,7 @@ const App = () => {
         } else if (target === 'gpt') {
           sections.push({
             type: 'features',
-            text: `## Special Instructions\n${featuresText}`
+            text: `<model_capabilities>\n${featuresText}\n</model_capabilities>`
           });
         } else if (target === 'gemini') {
           sections.push({
@@ -5509,8 +5559,8 @@ const App = () => {
     name: 'ChatGPT',
     color: '#10A37F',
     icon: '💚',
-    desc: 'Markdown, literal instructions',
-    features: ['web_browsing', 'dalle', 'code_interpreter', 'canvas', 'memory']
+    desc: 'XML tags + Markdown, structured contracts',
+    features: ['web_browsing', 'dalle', 'code_interpreter', 'canvas', 'memory', 'thinking_mode', 'computer_use', 'tool_search', 'reasoning_effort']
   }, {
     id: 'gemini',
     name: 'Gemini',
@@ -5810,7 +5860,7 @@ const App = () => {
     className: "text-xs text-slate-400"
   }, t.verify?.modelName || 'Model', ":"), /*#__PURE__*/React.createElement("span", {
     className: "text-sm text-white font-medium"
-  }, t.verify?.modelValue || 'OpenAI (GPT-4o mini)')), /*#__PURE__*/React.createElement("div", {
+  }, t.verify?.modelValue || 'OpenAI (GPT-5 Mini)')), /*#__PURE__*/React.createElement("div", {
     className: "flex flex-wrap gap-2 mt-2"
   }, /*#__PURE__*/React.createElement("span", {
     className: "px-2 py-0.5 bg-slate-600/50 rounded text-xs text-slate-300"
@@ -5900,7 +5950,7 @@ const App = () => {
     className: "text-xs text-slate-400 flex items-center justify-center gap-1"
   }, "\uD83C\uDF38 Pollinations.ai"), /*#__PURE__*/React.createElement("p", {
     className: "text-xs text-slate-500 mt-1"
-  }, t.verify?.modelValue || 'OpenAI (GPT-4o mini)'))), verifyError && !verifyLoading && /*#__PURE__*/React.createElement("div", {
+  }, t.verify?.modelValue || 'OpenAI (GPT-5 Mini)'))), verifyError && !verifyLoading && /*#__PURE__*/React.createElement("div", {
     className: "flex flex-col items-center justify-center py-8"
   }, /*#__PURE__*/React.createElement("div", {
     className: "w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mb-4"
@@ -5946,7 +5996,7 @@ const App = () => {
     className: "text-xs text-slate-500 flex items-center gap-1"
   }, "\uD83C\uDF38 ", t.verify?.poweredBy || 'Powered by Pollinations.ai'), /*#__PURE__*/React.createElement("span", {
     className: "text-xs text-slate-600 ml-5"
-  }, t.verify?.modelValue || 'OpenAI (GPT-4o mini)')), /*#__PURE__*/React.createElement("button", {
+  }, t.verify?.modelValue || 'OpenAI (GPT-5 Mini)')), /*#__PURE__*/React.createElement("button", {
     onClick: () => setShowVerifyModal(false),
     className: "px-4 py-2 bg-slate-700 text-white rounded-lg hover:bg-slate-600"
   }, t.verify?.close || 'Close')))), showDraftRecovery && recoveryDraft && /*#__PURE__*/React.createElement("div", {
