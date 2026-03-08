@@ -60,8 +60,11 @@
 
 - **Instant mode:** Fast responses for straightforward queries
 - **Thinking mode:** Extended reasoning for complex problems
-- **Reasoning effort parameter:** `none` / `minimal` / `low` / `medium` / `high`
+- **Reasoning effort parameter:** `minimal` / `low` / `medium` (default) / `high`
+- `minimal` is the fastest option, best for latency-sensitive use cases
 - Real-time router automatically selects mode based on conversation type, complexity, tool needs, and explicit intent
+- **Verbosity parameter:** Separate from reasoning effort — controls output length (`low` / `medium` / `high`)
+- **Knowledge cutoff:** September 30, 2024 (mini/nano: May 31, 2024)
 
 ### Tool Use / Agent Capabilities
 
@@ -70,6 +73,8 @@
 - Code Interpreter (Python execution)
 - Canvas (collaborative editing)
 - Memory (cross-chat context retention)
+- **Freeform function calling:** Can emit raw executable content (Python, Bash, SQL) — not limited to rigid tool calls
+- **`allowed_tools` parameter:** Restrict model to a subset of defined tools
 
 ### API Details
 
@@ -110,17 +115,23 @@
 | GPT-5.1 Auto | — | Routes queries to best-suited model |
 | GPT-5.1 Codex | `gpt-5.1-codex` | Coding-optimized |
 | GPT-5.1 Codex Mini | `gpt-5.1-codex-mini` | Lighter coding variant |
+| GPT-5.1 Codex Max | `gpt-5.1-codex-max` | Frontier agentic coding, compaction, 1M context |
 
 ### Context Window
 
-- Same 400K token context as GPT-5 base
+- **API:** 400K tokens (same as GPT-5 base); 128K max output
+- **ChatGPT Instant:** ~128K tokens; **ChatGPT Thinking:** ~196K tokens
+- **Codex-Max:** 1,050,000 tokens (compaction-enabled, Responses API only)
 - Extended prompt caching: up to 24-hour cache retention (new)
+- **Knowledge cutoff:** September 30, 2024 (same as GPT-5)
 
 ### Reasoning / Thinking Modes
 
-- Adaptive reasoning in Instant mode (new) — model decides when to engage deeper thinking
-- "No reasoning" mode available for API developers
-- Dynamic thinking time adaptation based on task complexity
+- **Reasoning effort:** `none` (default) / `low` / `medium` / `high`
+- `none` is new — model never uses reasoning tokens, behaves like a non-reasoning model but retains GPT-5.1 intelligence
+- Changed default from `medium` (GPT-5) to `none` (GPT-5.1)
+- Adaptive reasoning in Instant mode — model decides when to engage deeper thinking
+- Dynamic thinking time: ~2x faster on simple tasks, ~2x slower on hardest tasks vs GPT-5
 
 ### Tool Use / Agent Capabilities
 
@@ -130,8 +141,9 @@
 
 ### API Details
 
-- **Model string:** `gpt-5.1`, `gpt-5.1-chat-latest`, `gpt-5.1-codex`, `gpt-5.1-codex-mini`
-- **Pricing:** $1.25 / $10.00 per 1M tokens (input/output) — same as GPT-5
+- **Model strings:** `gpt-5.1`, `gpt-5.1-chat-latest`, `gpt-5.1-codex`, `gpt-5.1-codex-mini`, `gpt-5.1-codex-max`
+- **Pricing:** $1.25 / $10.00 per 1M tokens (input/output) — same as GPT-5; cached: $0.125 (90% discount)
+- **Note:** "Instant" and "Thinking" are ChatGPT product labels, not API model IDs; reasoning is controlled via `reasoning_effort` on the unified `gpt-5.1` model
 
 ### Deprecated / Retired
 
@@ -451,7 +463,7 @@ Before finalizing, verify the output satisfies every requirement in the prompt.
 | **Release Date** | Aug 7, 2025 | Nov 12, 2025 | Dec 10, 2025 | ~Feb 5, 2026 | Mar 3, 2026 | Mar 5, 2026 |
 | **Context Window** | 400K | 400K | 400K | 256K | 400K | 1,050K |
 | **API Model String** | `gpt-5` | `gpt-5.1` | `gpt-5.2` | `gpt-5.3-codex` | `gpt-5.3-chat-latest` | `gpt-5.4` |
-| **Reasoning Effort** | none/minimal/low/medium/high | Adaptive | none/low/medium/high (xhigh Codex) | low/medium/high/xhigh | Adaptive (Instant) | none/low/medium/high/xhigh |
+| **Reasoning Effort** | minimal/low/medium (default)/high | none (default)/low/medium/high | none/low/medium/high (xhigh Codex) | low/medium/high/xhigh | Adaptive (Instant) | none/low/medium/high/xhigh |
 | **Thinking Mode** | Yes (router) | Yes (adaptive) | Yes (3 tiers) | Yes | No (Instant only) | Yes |
 | **Computer Use** | No | No | No | No | No | Yes (native) |
 | **Tool Search** | No | No | No | No | No | Yes |
@@ -486,8 +498,8 @@ Before finalizing, verify the output satisfies every requirement in the prompt.
 
 | Version | Approach |
 |---|---|
-| GPT-5 | Automatic router (Instant vs Thinking); `reasoning_effort` parameter: none/minimal/low/medium/high |
-| GPT-5.1 | Adaptive reasoning (model decides); "no reasoning" mode in API |
+| GPT-5 | Automatic router (Instant vs Thinking); `reasoning_effort`: minimal/low/medium (default)/high; separate `verbosity` parameter |
+| GPT-5.1 | Adaptive reasoning; `reasoning_effort`: none (default)/low/medium/high; `none` = never uses reasoning tokens |
 | GPT-5.2 | Explicit effort tiers (none/low/medium/high); `xhigh` for Codex; ChatGPT toggle (Standard/Extended/Light/Heavy) |
 | GPT-5.3-Codex | Full effort range: low/medium/high/xhigh |
 | GPT-5.4 | Full range: none/low/medium/high/xhigh; treat as "last-mile tuning knob"; calibrate by task type |
