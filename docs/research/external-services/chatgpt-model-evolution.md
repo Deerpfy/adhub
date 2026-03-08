@@ -318,24 +318,29 @@
 
 ### Reasoning / Thinking Modes
 
-- **Effort levels:** `none`, `low`, `medium`, `high`, `xhigh`
+- **Effort levels:** `none` (default), `low`, `medium`, `high`, `xhigh`
+- **GPT-5.4 Pro:** supports `medium`, `high`, `xhigh` only
 - **Guidance:** Use `none` for execution-heavy workloads (workflow steps, field extraction, short transforms); use `medium`+ for research-heavy workloads (long-context synthesis, multi-document review, strategy writing)
 - Treat reasoning effort as a "last-mile tuning knob," not the primary quality lever
+- **Verbosity parameter:** Controls output length separately — `minimal` / `low` / `medium` (default) / `high`
 
 ### Tool Use / Agent Capabilities
 
-- **Tool search:** Deferred tool loading — model looks up definitions only when needed
-- **Computer use:** Reads screenshots, writes Playwright code, clicks/types/navigates
+- **Tool search:** Deferred tool loading via hosted or client-executed modes — 47% token reduction
+- **Computer use (dual approach):** (1) Playwright/code-based automation; (2) Screenshot-based interaction with structured mouse/keyboard actions
 - **Function calling:** Full support with structured outputs
-- **Compaction:** For longer agent trajectories
-- **Skills:** Experimental Codex skills (Playwright Interactive)
+- **Compaction:** Server-side via `compact_threshold` in `context_management`; client-side via `POST /responses/compact`
+- **Skills:** Reusable workflow templates (prompt + data sources + output formatting); Playwright Interactive skill
 - **Preamble messages:** "Before you call a tool, explain why you are calling it"
+- **Phase field:** `phase: "commentary"` for intermediate updates; `phase: "final_answer"` for completed answer — prevents early stopping
+- Full tool stack: web search, file search, image gen, code interpreter, shell, apply_patch, MCP
 
 ### API Details
 
 - **Model strings:** `gpt-5.4`, `gpt-5.4-pro`, `gpt-5.4-2026-03-05`
 - **Pricing:** GPT-5.4: $2.50 / $15.00 per 1M tokens (input/output); cached: $0.25; Pro: $30.00 / $180.00
-- **Responses API:** Chain-of-thought passing between turns; phase field support
+- **Responses API:** Chain-of-thought passing between turns; phase field support; GPT-5.4 Pro is Responses API only
+- **Developer messages:** `"role": "developer"` is functionally equivalent to `"role": "system"` — do not use both in same request
 
 ### Benchmarks
 
